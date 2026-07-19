@@ -2,8 +2,6 @@ node_modules/
 .next/
 out/
 build/
-.env
-.env.local
 .env*.local
 *.tsbuildinfo
 next-env.d.ts
@@ -12,3 +10,11 @@ next-env.d.ts
 /tmp
 .DS_Store
 npm-debug.log*
+
+.projects/cache
+.projects/vault
+.projects/state.test.json
+.projects/state.local.test.json
+.env
+.env.*
+!.env.example
