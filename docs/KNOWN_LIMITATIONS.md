@@ -1,35 +1,32 @@
 # Known limitations
 
-Honest inventory of what is incomplete, thin, or environment-dependent as of 2026-07-19.
+Honest inventory as of 2026-07-19 (post product-polish pass).
 
 ## Product
 
-- **Contact detail edit UI** — PATCH API exists; no dedicated contact edit page.
+- **Email builder polish** — Simple/Advanced modes work; drag handle polish, undo stack, and unsaved-change warnings are still incremental (not full Figma-level builder UX).
 - **Hosted landing-page builder** — `LandingPage` model exists; no editor UI beyond signup forms at `/f/[slug]`.
-- **Shareable template public pages** — `Template.shareSlug` seeded for platform templates; no public `/t/[slug]` viewer yet.
-- **Public campaign archive UX** — route `/a/[slug]` renders opt-in archives; workspace/campaign toggles in settings UI are minimal/partial (schema flags exist).
-- **Follow-up kinds in UI** — report supports delivered-no-engagement, clicked-any, newly-subscribed; link-specific and exclude-recently-contacted are API-ready but not fully exposed in UI.
-- **Brand settings outside onboarding** — brand import + onboarding save work; dedicated brand settings PATCH surface is limited.
-- **Admin hold UI** — `sendingHeldAt` enforced in quota/confidence; no in-app admin console to set/clear holds (DB/manual only).
-- **Audit log UI** — writes exist for some actions; no owner-facing audit browser.
-- **SNS signature verify in local fixtures** — strict by default; set `SNS_VERIFY_STRICT=false` for fixture tests without Amazon certs.
-- **SES readiness screen** — reports env/connectivity flags; does not call AWS live APIs to read sandbox/production or DKIM state (by design — no live AWS changes from the app without credentials, and readiness avoids secret exposure).
+- **Shareable template public pages** — platform templates seeded; no public `/t/[slug]` viewer yet.
+- **Public campaign archive UX** — `/a/[slug]` works when enabled; controls are basic.
+- **Admin hold UI** — holds enforced in send path; admin can see held users but not yet toggle holds from UI (DB/manual).
+- **MEMBER role matrix** — only OWNER account exists in production today; cross-role E2E not fully exercised live.
+- **Structured data** — homepage OG tags present; JSON-LD Product/Organization not yet added.
+- **Screenshot set** — viewport screenshot pack under `docs/screenshots/product-polish/` may be incomplete until captured post-deploy.
 
 ## SEO / marketing
 
-- Competitor pricing in `src/data/competitor-pricing.ts` is a dated snapshot — not live.
-- Industry/compare pages are substantial but not a substitute for ongoing editorial review.
-- Image sitemap not separate (single `sitemap.ts`).
+- Competitor pricing snapshots in `src/data/competitor-pricing.ts` are dated — not live scraped.
+- Industry/compare pages are template-driven; keep claims conservative.
 
-## Infra / tests
+## Infra / delivery
 
-- **Docker Compose** not validated on this host (Docker CLI missing).
-- **Integration / E2E suite** is thin — unit tests cover merge, confidence, SSRF, SNS URL allowlist, HTML sanitize, migration presets, isolation contract helpers. No Playwright auth E2E suite in CI.
-- **Redis** optional locally; queue falls back to inline processing.
-- Open rates are estimates (privacy proxies); product copy states this on reports.
+- **SES inactive** — blank AWS keys; mail goes to console/outbox `.eml` only.
+- **Stripe inactive** — blank keys; no charges.
+- **Public signup closed** — early-access waitlist only.
+- **Redis** required in production Compose; optional locally with inline queue fallback.
 
 ## Security posture notes
 
-- Workspace isolation is enforced in API queries by `workspaceId`; automated cross-tenant HTTP tests are not yet comprehensive.
-- Raw HTML is sanitized on save/compile paths; sanitizer is regex/heuristic MVP, not a full HTML policy engine.
-- Do not expose AWS secret keys in client code or public docs (not done; keep it that way).
+- Admin APIs require platform owner (`PLATFORM_OWNER_EMAIL` or first user).
+- Workspace isolation via `workspaceId` on queries; expand HTTP cross-tenant tests over time.
+- Raw HTML sanitized on compile paths (heuristic MVP, not a full HTML policy engine).

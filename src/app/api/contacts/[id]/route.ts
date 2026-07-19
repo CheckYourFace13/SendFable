@@ -17,10 +17,35 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
   const contact = await prisma.contact.findFirst({
     where: { id: params.id, workspaceId: ctx.workspace.id },
-    include: { tags: { include: { tag: true } } },
+    include: {
+      tags: { include: { tag: true } },
+      recipients: {
+        orderBy: { sentAt: "desc" },
+        take: 25,
+        include: { campaign: { select: { id: true, name: true } } },
+      },
+    },
   });
   if (!contact) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ contact });
+
+  const suppression = await prisma.suppressionEntry.findFirst({
+    where: { workspaceId: ctx.workspace.id, email: contact.email },
+    select: { reason: true, createdAt: true },
+  });
+
+  const activity = contact.recipients.map((r) => ({
+    campaignId: r.campaign.id,
+    campaignName: r.campaign.name,
+    status: r.status,
+    sentAt: r.sentAt,
+    openedAt: r.openedAt,
+    firstClickedAt: r.firstClickedAt,
+  }));
+
+  const { recipients: _r, ...rest } = contact;
+  return NextResponse.json({
+    contact: { ...rest, suppression, activity },
+  });
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -40,6 +65,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  if (
+    parsed.data.status === "SUBSCRIBED" &&
+    (existing.status === "BOUNCED" || existing.status === "COMPLAINED")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Contacts who bounced or complained cannot be set back to subscribed. Keep them suppressed.",
+      },
+      { status: 400 }
+    );
+  }
+
   if (parsed.data.status === "UNSUBSCRIBED" && existing.status !== "UNSUBSCRIBED") {
     await unsubscribeContact(ctx.workspace.id, existing.email, "manual");
   }
@@ -50,7 +88,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       firstName: parsed.data.firstName === undefined ? undefined : parsed.data.firstName,
       lastName: parsed.data.lastName === undefined ? undefined : parsed.data.lastName,
       customFields: parsed.data.customFields,
-      status: parsed.data.status,
+      status:
+        existing.status === "BOUNCED" || existing.status === "COMPLAINED"
+          ? undefined
+          : parsed.data.status,
       unsubscribedAt: parsed.data.status === "UNSUBSCRIBED" ? new Date() : undefined,
     },
     include: { tags: { include: { tag: true } } },

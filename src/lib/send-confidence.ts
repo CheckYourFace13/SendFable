@@ -9,6 +9,10 @@ export interface ConfidenceCheck {
   level: ConfidenceLevel;
   label: string;
   detail: string;
+  /** Plain-language “why this matters” for non-marketers. */
+  why?: string;
+  /** In-app path to fix the issue (one-click). */
+  fixHref?: string;
   blocksSend: boolean;
 }
 
@@ -340,18 +344,98 @@ export function computeSendConfidence(input: ConfidenceInput): ConfidenceResult 
     });
   }
 
-  const errors = checks.filter((c) => c.level === "error").length;
-  const warnings = checks.filter((c) => c.level === "warning").length;
-  const oks = checks.filter((c) => c.level === "ok").length;
+  const withFixes = checks.map((c) => enrichCheck(c));
+
+  const errors = withFixes.filter((c) => c.level === "error").length;
+  const warnings = withFixes.filter((c) => c.level === "warning").length;
+  const oks = withFixes.filter((c) => c.level === "ok").length;
   let score = 100 - errors * 25 - warnings * 8;
   score = Math.max(0, Math.min(100, score + Math.min(10, oks)));
 
   return {
     score,
-    checks,
-    canSend: checks.every((c) => !c.blocksSend),
+    checks: withFixes,
+    canSend: withFixes.every((c) => !c.blocksSend),
     disclaimer:
       "This is a readiness checklist, not a spam score or inbox-placement guarantee. Filters vary by mailbox provider.",
+  };
+}
+
+const FIX_MAP: Record<string, { why: string; fixHref?: string }> = {
+  "email-verified": {
+    why: "Providers treat unverified accounts as higher risk.",
+    fixHref: "/settings",
+  },
+  "admin-hold": {
+    why: "A hold protects your domain reputation until issues are resolved.",
+  },
+  sender: {
+    why: "Mailbox providers reject or junk mail from unverified From addresses.",
+    fixHref: "/settings/senders",
+  },
+  rewrite: {
+    why: "Rewriting keeps delivery working when your domain has strict DMARC.",
+    fixHref: "/settings/senders",
+  },
+  address: {
+    why: "US law (CAN-SPAM) requires a physical mailing address in every commercial email.",
+    fixHref: "/settings",
+  },
+  subject: {
+    why: "Subject lines decide whether someone opens — and all-caps or missing subjects hurt trust.",
+  },
+  "subject-caps": {
+    why: "ALL CAPS often looks like spam to people and filters.",
+  },
+  preview: {
+    why: "Inbox preview text is the second line people see next to the subject.",
+  },
+  content: {
+    why: "An empty email cannot be delivered meaningfully.",
+  },
+  unsub: {
+    why: "Every marketing email must offer an easy unsubscribe.",
+  },
+  links: {
+    why: "Broken or empty links frustrate readers and can look phishing-like.",
+  },
+  alt: {
+    why: "Alt text helps screen readers and some content filters.",
+  },
+  text: {
+    why: "Emails that are almost only images are often treated as promotional.",
+  },
+  merge: {
+    why: "Missing merge data can show blank names in the inbox.",
+  },
+  audience: {
+    why: "There must be at least one eligible subscribed contact.",
+    fixHref: "/contacts",
+  },
+  quota: {
+    why: "Your plan caps how many emails you can send each month.",
+    fixHref: "/billing",
+  },
+  "bounce-health": {
+    why: "High bounces damage sender reputation and can pause sending.",
+    fixHref: "/contacts",
+  },
+  "complaint-health": {
+    why: "Spam complaints are the fastest way to lose inbox placement.",
+    fixHref: "/contacts",
+  },
+  test: {
+    why: "A test catch typos and broken links before customers see them.",
+  },
+};
+
+function enrichCheck(c: ConfidenceCheck): ConfidenceCheck {
+  const meta = FIX_MAP[c.id];
+  if (!meta) return c;
+  return {
+    ...c,
+    why: c.why || meta.why,
+    fixHref: c.fixHref || meta.fixHref,
   };
 }
 

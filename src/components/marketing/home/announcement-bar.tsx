@@ -7,7 +7,7 @@ export function AnnouncementBar() {
         <p className="text-page/90">
           Sendfable is being written now —{" "}
           <Link
-            href="/signup"
+            href="/early-access"
             className="font-medium text-coral underline decoration-coral/40 underline-offset-2 transition-colors hover:text-page hover:decoration-page"
           >
             join the early-access list

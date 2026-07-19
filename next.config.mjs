@@ -10,6 +10,9 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["bullmq", "ioredis", "bcryptjs"],
   },
+  async redirects() {
+    return [{ source: "/favicon.ico", destination: "/icon.svg", permanent: false }];
+  },
 };
 
 export default nextConfig;

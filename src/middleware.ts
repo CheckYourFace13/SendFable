@@ -29,6 +29,7 @@ const PUBLIC_EXACT = new Set([
   "/feed.xml",
   "/llms.txt",
   "/early-access",
+  "/early-access/thanks",
 ]);
 
 /** Public path prefixes (trailing segment routes). */

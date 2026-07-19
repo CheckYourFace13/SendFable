@@ -242,7 +242,11 @@ export default function ContactsPage() {
                       }}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{c.email}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link href={`/contacts/${c.id}`} className="text-coral hover:underline">
+                      {c.email}
+                    </Link>
+                  </TableCell>
                   <TableCell>
                     {[c.firstName, c.lastName].filter(Boolean).join(" ") || "—"}
                   </TableCell>

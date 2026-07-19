@@ -547,3 +547,24 @@ model ReferralAttribution {
 
   @@index([referralCode])
 }
+
+/// Public early-access waitlist (not a full app account).
+model EarlyAccessLead {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  firstName          String?
+  businessName       String?
+  website            String?
+  contactCountApprox String?
+  currentPlatform    String?
+  mainGoal           String?
+  consentAt          DateTime
+  source             String   @default("early-access")
+  notes              String?  @db.Text
+  inviteStatus       String   @default("NEW") // NEW | CONTACTED | INVITED | DECLINED
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([inviteStatus])
+}

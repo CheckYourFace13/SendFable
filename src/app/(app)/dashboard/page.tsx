@@ -8,6 +8,8 @@ import { PLANS } from "@/lib/plans";
 import { ensureSendCountReset } from "@/lib/quota";
 import { formatNumber } from "@/lib/utils";
 import { DashboardCharts } from "./dashboard-charts";
+import { SetupChecklist } from "./setup-checklist";
+import { externalEmailActive } from "@/lib/early-launch";
 
 export default async function DashboardPage() {
   const { user, workspace } = await requireWorkspaceContext();
@@ -24,20 +26,78 @@ export default async function DashboardPage() {
   const owner = await ensureSendCountReset(await getWorkspaceOwner(workspace.id));
   const plan = PLANS[owner.plan];
 
-  const [contactCount, campaignCount, recentCampaigns, completedCount] = await Promise.all([
-    prisma.contact.count({ where: { workspaceId: workspace.id } }),
-    prisma.campaign.count({ where: { workspaceId: workspace.id } }),
-    prisma.campaign.findMany({
-      where: { workspaceId: workspace.id, status: { in: ["COMPLETED", "SENDING"] } },
-      orderBy: { updatedAt: "desc" },
-      take: 5,
-    }),
-    prisma.campaign.count({
-      where: { workspaceId: workspace.id, status: "COMPLETED" },
-    }),
-  ]);
+  const [contactCount, campaignCount, recentCampaigns, completedCount, verifiedSender, testedCampaign] =
+    await Promise.all([
+      prisma.contact.count({ where: { workspaceId: workspace.id } }),
+      prisma.campaign.count({ where: { workspaceId: workspace.id } }),
+      prisma.campaign.findMany({
+        where: { workspaceId: workspace.id, status: { in: ["COMPLETED", "SENDING"] } },
+        orderBy: { updatedAt: "desc" },
+        take: 5,
+      }),
+      prisma.campaign.count({
+        where: { workspaceId: workspace.id, status: "COMPLETED" },
+      }),
+      prisma.senderIdentity.count({
+        where: { workspaceId: workspace.id, status: "VERIFIED" },
+      }),
+      prisma.campaign.count({
+        where: { workspaceId: workspace.id, testSentAt: { not: null } },
+      }),
+    ]);
 
   const firstRun = completedCount === 0;
+  const checklist = [
+    {
+      id: "profile",
+      label: "Complete business profile",
+      href: "/settings",
+      done: !!(workspace.name?.trim() && workspace.businessDescription?.trim()),
+      hint: "Add your business name and a short description.",
+    },
+    {
+      id: "address",
+      label: "Add physical mailing address",
+      href: "/settings",
+      done: !!workspace.mailingAddress?.trim(),
+      hint: "Required by law in every email footer.",
+    },
+    {
+      id: "sender",
+      label: "Verify sender",
+      href: "/settings/senders",
+      done: verifiedSender > 0,
+      hint: "Confirm the From address people will see.",
+    },
+    {
+      id: "contacts",
+      label: "Import contacts",
+      href: "/contacts/import",
+      done: contactCount > 0,
+      hint: "Only people who asked to hear from you.",
+    },
+    {
+      id: "campaign",
+      label: "Create first campaign",
+      href: "/campaigns/new",
+      done: campaignCount > 0,
+      hint: "Pick a goal and write a short message.",
+    },
+    {
+      id: "test",
+      label: "Send a test",
+      href: campaignCount ? "/campaigns" : "/campaigns/new",
+      done: testedCampaign > 0,
+      hint: "Preview in your own inbox (local outbox until SES is on).",
+    },
+    {
+      id: "delivery",
+      label: "Activate delivery",
+      href: "/settings/ses",
+      done: externalEmailActive(),
+      hint: "Amazon SES must be configured before real customer sends.",
+    },
+  ];
 
   if (firstRun) {
     return (
@@ -70,6 +130,8 @@ export default async function DashboardPage() {
             muted={!recentCampaigns.length}
           />
         </div>
+
+        <SetupChecklist items={checklist} />
 
         <div className="mt-8 flex flex-wrap gap-3 text-sm">
           <Link href="/onboarding" className="text-teal hover:underline">

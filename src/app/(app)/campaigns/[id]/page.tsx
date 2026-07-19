@@ -339,7 +339,7 @@ export default function CampaignDetailPage() {
             <div className="rounded-xl border bg-white p-5">
               <div className="text-3xl font-bold tracking-tight">{confidence.score}/100</div>
               <p className="mt-1 text-xs text-muted-foreground">{confidence.disclaimer}</p>
-              <ul className="mt-4 space-y-2 text-sm">
+              <ul className="mt-4 space-y-3 text-sm">
                 {confidence.checks.map((c: any) => (
                   <li
                     key={c.id}
@@ -351,7 +351,21 @@ export default function CampaignDetailPage() {
                           : "text-emerald-800"
                     }
                   >
-                    <span className="font-medium">{c.label}</span> — {c.detail}
+                    <div className="font-medium">
+                      {c.label}
+                      {c.blocksSend ? (
+                        <span className="ml-2 text-xs font-normal uppercase tracking-wide">
+                          blocks send
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-ink/80">{c.detail}</p>
+                    {c.why ? <p className="text-xs text-muted-foreground">Why it matters: {c.why}</p> : null}
+                    {c.fixHref && c.level !== "ok" ? (
+                      <a href={c.fixHref} className="text-xs font-medium text-coral underline">
+                        Fix this
+                      </a>
+                    ) : null}
                   </li>
                 ))}
               </ul>

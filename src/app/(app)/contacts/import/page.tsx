@@ -52,6 +52,12 @@ export default function ImportContactsPage() {
   const [loading, setLoading] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
   const [rampLevel, setRampLevel] = useState(1);
+  const [serverPreview, setServerPreview] = useState<{
+    existing?: number;
+    suppressed?: number;
+    wouldCreate?: number;
+  } | null>(null);
+  const [step, setStep] = useState<"upload" | "map" | "review">("upload");
 
   function onFile(file: File) {
     Papa.parse<string[]>(file, {
@@ -72,9 +78,30 @@ export default function ImportContactsPage() {
           else auto[i] = "skip";
         });
         setMapping(auto);
+        setServerPreview(null);
+        setStep("map");
       },
       error: () => toast.error("Failed to parse CSV"),
     });
+  }
+
+  async function runDryRun(contacts: Array<{ email: string; firstName?: string; lastName?: string; tagNames?: string[] }>) {
+    const res = await fetch("/api/contacts/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contacts, dryRun: true, confirmPurchasedListsPolicy: true }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "Preview failed");
+      return;
+    }
+    setServerPreview({
+      existing: data.existing,
+      suppressed: data.suppressed,
+      wouldCreate: data.wouldCreate,
+    });
+    setStep("review");
   }
 
   const preview = useMemo(() => {
@@ -157,8 +184,19 @@ export default function ImportContactsPage() {
     <div>
       <PageHeader
         title="Import contacts"
-        description="Upload a CSV, map columns, review, then commit."
+        description="Upload → map columns → review → import. Only opted-in contacts."
       />
+
+      <ol className="mb-6 flex flex-wrap gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {(["upload", "map", "review"] as const).map((s, i) => (
+          <li
+            key={s}
+            className={`rounded-full px-3 py-1 ${step === s ? "bg-ink text-page" : "bg-parchment"}`}
+          >
+            {i + 1}. {s}
+          </li>
+        ))}
+      </ol>
 
       <div className="mb-6 rounded-xl border bg-white p-6">
         <Label>CSV file</Label>
@@ -198,9 +236,22 @@ export default function ImportContactsPage() {
           </div>
 
           <div className="mb-4 flex flex-wrap gap-4 text-sm">
-            <span className="font-medium">{preview.valid.length} valid</span>
+            <span className="font-medium">{preview.valid.length} valid in file</span>
             <span className="text-muted-foreground">{preview.invalid} invalid</span>
             <span className="text-muted-foreground">{preview.dupes} duplicates in file</span>
+            {serverPreview && (
+              <>
+                <span className="text-muted-foreground">
+                  {serverPreview.wouldCreate ?? 0} would be created
+                </span>
+                <span className="text-muted-foreground">
+                  {serverPreview.existing ?? 0} already in audience
+                </span>
+                <span className="text-muted-foreground">
+                  {serverPreview.suppressed ?? 0} suppressed
+                </span>
+              </>
+            )}
           </div>
 
           <div className="mb-6 max-h-80 overflow-auto rounded-xl border bg-white">
@@ -226,9 +277,20 @@ export default function ImportContactsPage() {
             </Table>
           </div>
 
-          <Button disabled={loading || !preview.valid.length} onClick={() => void commit(false)}>
-            {loading ? "Importing…" : `Import ${preview.valid.length} contacts`}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              disabled={!preview.valid.length || loading}
+              onClick={() => void runDryRun(preview.valid)}
+            >
+              Review against audience
+            </Button>
+            <Button disabled={loading || !preview.valid.length} onClick={() => void commit(false)}>
+              {loading
+                ? "Importing…"
+                : `Import ${serverPreview?.wouldCreate ?? preview.valid.length} contacts`}
+            </Button>
+          </div>
         </>
       )}
 
