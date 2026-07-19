@@ -7,6 +7,7 @@ import { sendEmailVerification } from "@/lib/transactional";
 import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { normalizeEmail, randomToken } from "@/lib/utils";
 import { findReferrerByCode } from "@/lib/referrals";
+import { publicSignupAllowed } from "@/lib/early-launch";
 
 const signupSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -17,6 +18,16 @@ const signupSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!publicSignupAllowed()) {
+    return NextResponse.json(
+      {
+        error:
+          "Public signup is closed during early launch. Join the early-access list from the homepage or log in if you already have an account.",
+      },
+      { status: 403 }
+    );
+  }
+
   const rl = await rateLimit("auth", clientIp(req), RATE_LIMITS.auth.limit, RATE_LIMITS.auth.windowSec);
   if (!rl.ok) {
     return NextResponse.json({ error: "Too many attempts. Try again shortly." }, { status: 429 });

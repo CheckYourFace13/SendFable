@@ -9,6 +9,7 @@ import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { PLANS } from "@/lib/plans";
 import { sanitizeEmailHtml } from "@/lib/html-sanitize";
 import { maybeAwardReferralSignupCredit } from "@/lib/referrals";
+import { externalEmailActive, isEarlyLaunch } from "@/lib/early-launch";
 
 const schema = z.object({
   when: z.enum(["now", "schedule"]),
@@ -18,6 +19,16 @@ const schema = z.object({
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (isEarlyLaunch() && !externalEmailActive()) {
+    return NextResponse.json(
+      {
+        error:
+          "External email delivery is not activated yet. Use Test send (local .eml outbox) while SES stays unconfigured. Campaigns are not delivered to real inboxes.",
+      },
+      { status: 403 }
+    );
+  }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

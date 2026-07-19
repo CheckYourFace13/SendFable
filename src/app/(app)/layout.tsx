@@ -5,6 +5,7 @@ import { SidebarNav } from "@/components/app/sidebar-nav";
 import { UserMenu } from "@/components/app/user-menu";
 import { VerifyEmailBanner } from "@/components/app/verify-email-banner";
 import { RedisDevBanner } from "@/components/app/redis-dev-banner";
+import { EarlyLaunchBanner } from "@/components/app/early-launch-banner";
 import { requireWorkspaceContext } from "@/lib/session";
 import { PLANS } from "@/lib/plans";
 
@@ -27,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <EarlyLaunchBanner />
         <RedisDevBanner />
         {!user.emailVerified && <VerifyEmailBanner />}
         {user.paymentFailedAt && (

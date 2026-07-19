@@ -1,0 +1,120 @@
+# Production Compose for Hostinger KVM VPS (Nginx edge already owns 80/443).
+# Usage: docker compose -p sendfable -f docker-compose.prod.yml up -d --build
+name: sendfable
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sendfable-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sendfable}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-sendfable}
+    volumes:
+      - sendfable_postgres_data:/var/lib/postgresql/data
+    networks:
+      - sendfable_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Intentionally no host ports
+
+  redis:
+    image: redis:7-alpine
+    container_name: sendfable-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - sendfable_redis_data:/data
+    networks:
+      - sendfable_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Intentionally no host ports
+
+  app:
+    build:
+      context: .
+      target: runner
+    image: sendfable-app:latest
+    container_name: sendfable-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sendfable}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sendfable}?schema=public
+      REDIS_URL: redis://redis:6379
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      OUTBOX_DIR: /tmp/outbox
+    volumes:
+      - sendfable_uploads:/app/uploads
+      - sendfable_outbox:/tmp/outbox
+    ports:
+      # Localhost only — Nginx proxies here. Do not use host :3000 (Gravyblock).
+      - "127.0.0.1:3010:3000"
+    networks:
+      - sendfable_net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  worker:
+    build:
+      context: .
+      target: worker
+    image: sendfable-worker:latest
+    container_name: sendfable-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_started
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sendfable}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sendfable}?schema=public
+      REDIS_URL: redis://redis:6379
+      OUTBOX_DIR: /tmp/outbox
+    volumes:
+      - sendfable_outbox:/tmp/outbox
+    networks:
+      - sendfable_net
+
+networks:
+  sendfable_net:
+    name: sendfable_net
+    driver: bridge
+
+volumes:
+  sendfable_postgres_data:
+    name: sendfable_postgres_data
+  sendfable_redis_data:
+    name: sendfable_redis_data
+  sendfable_uploads:
+    name: sendfable_uploads
+  sendfable_outbox:
+    name: sendfable_outbox

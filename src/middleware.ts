@@ -28,7 +28,7 @@ const PUBLIC_EXACT = new Set([
   "/sitemap.xml",
   "/feed.xml",
   "/llms.txt",
-  "/brand",
+  "/early-access",
 ]);
 
 /** Public path prefixes (trailing segment routes). */
@@ -56,6 +56,31 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   // NextAuth may attach a truthy empty auth object — require a user id.
   const isLoggedIn = Boolean(req.auth?.user?.id || req.auth?.user?.email);
+
+  const earlyLaunch =
+    process.env.EARLY_LAUNCH !== "false" &&
+    process.env.EARLY_LAUNCH !== "0" &&
+    (process.env.NODE_ENV === "production" ||
+      process.env.EARLY_LAUNCH === "true" ||
+      process.env.EARLY_LAUNCH === "1");
+
+  // Brand gallery is internal — require login in production.
+  if (pathname === "/brand" || pathname.startsWith("/brand/")) {
+    if (!isLoggedIn) {
+      const url = new URL("/login", req.nextUrl.origin);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Early launch: public signup closed → early-access page.
+  if (
+    earlyLaunch &&
+    process.env.ALLOW_PUBLIC_SIGNUP !== "true" &&
+    (pathname === "/signup" || pathname.startsWith("/signup/"))
+  ) {
+    return NextResponse.redirect(new URL("/early-access", req.nextUrl.origin));
+  }
 
   if (!isLoggedIn && !isPublicPath(pathname)) {
     const url = new URL("/login", req.nextUrl.origin);
