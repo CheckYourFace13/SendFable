@@ -31,8 +31,8 @@ export default function EarlyAccessPage() {
       </div>
       <p className="mt-8 text-sm text-ink/60">
         Want early access? Email{" "}
-        <a className="font-medium text-coral underline" href="mailto:chris@sendfable.com">
-          chris@sendfable.com
+        <a className="font-medium text-coral underline" href="mailto:chris@iscreamstudio.com">
+          chris@iscreamstudio.com
         </a>
         .
       </p>

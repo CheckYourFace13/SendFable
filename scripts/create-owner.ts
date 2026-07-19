@@ -3,7 +3,7 @@
  *   npx tsx scripts/create-owner.ts
  *
  * Env:
- *   OWNER_EMAIL (default chris@sendfable.com)
+ *   OWNER_EMAIL (default chris@iscreamstudio.com)
  *   OWNER_PASSWORD (required — strong temporary password)
  *   OWNER_NAME (optional)
  *   OWNER_WORKSPACE (optional)
@@ -18,7 +18,7 @@ const prisma = new PrismaClient();
 const asJson = (v: unknown) => v as Prisma.InputJsonValue;
 
 async function main() {
-  const email = (process.env.OWNER_EMAIL || "chris@sendfable.com").trim().toLowerCase();
+  const email = (process.env.OWNER_EMAIL || "chris@iscreamstudio.com").trim().toLowerCase();
   const password = process.env.OWNER_PASSWORD;
   if (!password || password.length < 16) {
     throw new Error("OWNER_PASSWORD must be set and at least 16 characters");

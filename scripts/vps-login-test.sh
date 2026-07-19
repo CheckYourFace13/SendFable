@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-EMAIL="chris@sendfable.com"
+EMAIL="chris@iscreamstudio.com"
 PASSWORD="$(cat /root/sendfable-secrets/owner-password.txt)"
 COOKIE_JAR="$(mktemp)"
 trap 'rm -f "$COOKIE_JAR"' EXIT
