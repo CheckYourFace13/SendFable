@@ -1,6 +1,10 @@
 import { PLANS } from "@/lib/plans";
 
-export const metadata = { title: "Sendfable vs Mailchimp" };
+export const metadata = {
+  title: "Sendfable vs Mailchimp",
+  description:
+    "Side-by-side Sendfable vs Mailchimp capabilities: pricing estimates, From-rewrite, free plan limits, and honest trade-offs.",
+};
 
 const ROWS = [
   ["Any email signup (no Google/Microsoft OAuth)", "Yes", "Yes (with OAuth options pushed)"],
@@ -30,7 +34,7 @@ export default function VsMailchimpPage() {
           <thead className="border-b bg-slate-50">
             <tr>
               <th className="px-4 py-3 font-semibold">Capability</th>
-              <th className="px-4 py-3 font-semibold text-indigo-700">Sendfable</th>
+              <th className="px-4 py-3 font-semibold text-ink">Sendfable</th>
               <th className="px-4 py-3 font-semibold">Mailchimp</th>
             </tr>
           </thead>

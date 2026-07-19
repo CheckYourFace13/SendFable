@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 56" fill="none">
+  <g transform="translate(0 4) scale(0.75)">
+    <path fill="#17213B" d="M6 12c0-2.2 1.8-4 4-4h15c1.2 0 2.3.5 3.1 1.4L32 14l3.9-4.6C36.7 8.5 37.8 8 39 8h15c2.2 0 4 1.8 4 4v36c0 2.2-1.8 4-4 4H39c-1.2 0-2.3-.5-3.1-1.4L32 46l-3.9 4.6c-.8.9-1.9 1.4-3.1 1.4H10c-2.2 0-4-1.8-4-4V12z"/>
+    <path fill="#FFFDF8" d="M12 14h14.5c.6 0 1.1.2 1.5.7L32 20l4-5.3c.4-.5.9-.7 1.5-.7H52v32H37.5c-.6 0-1.1-.2-1.5-.7L32 40l-4 5.3c-.4.5-.9.7-1.5.7H12V14z"/>
+    <path fill="#1E8179" d="M18 26h28L32 37 18 26z"/>
+    <path fill="#FFFDF8" d="M21 27.5h22L32 35.5 21 27.5z"/>
+    <path fill="#F26A4F" d="M42 8h14a2 2 0 0 1 2 2v18c0 .8-.5 1.5-1.2 1.8L50 33l-6.8-3.2A2 2 0 0 1 42 28V10a2 2 0 0 1 2-2z"/>
+    <path fill="#FFFDF8" d="M45 12h9v11h-9z"/>
+  </g>
+  <text x="58" y="38" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="600" letter-spacing="-0.6" fill="#17213B">sendfable</text>
+</svg>

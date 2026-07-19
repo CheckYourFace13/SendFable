@@ -1,4 +1,8 @@
-export const metadata = { title: "Terms of Service" };
+export const metadata = {
+  title: "Terms of Service",
+  description:
+    "Sendfable terms of service covering acceptable use, purchased-list prohibition, and account responsibilities.",
+};
 
 export default function TermsPage() {
   return (

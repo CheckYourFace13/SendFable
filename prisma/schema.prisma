@@ -86,6 +86,13 @@ model User {
   accountRampLevel Int      @default(1)
   flaggedAt        DateTime?
   flagReason       String?
+  /// Manual admin hold — blocks all campaign launches when set
+  sendingHeldAt    DateTime?
+  sendingHoldReason String?
+
+  /// Growth referral
+  referralCode     String?   @unique
+  referredByCode   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -93,6 +100,8 @@ model User {
   accounts    Account[]
   sessions    Session[]
   memberships Membership[]
+  creditLedger CreditLedgerEntry[]
+  auditLogs   AuditLog[]
 }
 
 model Account {
@@ -139,6 +148,25 @@ model Workspace {
   timezone                String  @default("UTC")
   defaultSenderIdentityId String?
 
+  /// Brand profile
+  websiteUrl       String?
+  logoUrl          String?
+  primaryColor     String  @default("#4F46E5")
+  secondaryColor   String  @default("#0F172A")
+  fontStack        String  @default("Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif")
+  socialLinks      Json    @default("[]") // [{network,url}]
+  businessDescription String? @db.Text
+
+  /// Onboarding: 0–10 step index; completedAt when finished or skipped
+  onboardingStep      Int       @default(0)
+  onboardingCompletedAt DateTime?
+  onboardingData      Json      @default("{}") // save-and-return wizard state
+
+  /// Self-marketing
+  referralCode        String?  @unique
+  publicArchiveEnabled Boolean @default(false)
+  publicArchiveIndexable Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -152,6 +180,8 @@ model Workspace {
   templates        Template[]
   campaigns        Campaign[]
   suppressions     SuppressionEntry[]
+  auditLogs        AuditLog[]
+  landingPages     LandingPage[]
 }
 
 model Membership {
@@ -289,14 +319,27 @@ model SignupForm {
 
 model Template {
   id           String   @id @default(cuid())
-  workspaceId  String
+  workspaceId  String?
+  /// null workspaceId = platform library template
   name         String
   designJson   Json
   compiledHtml String   @db.Text
+  category     String? // restaurant | brewery | retail | ...
+  goal         String? // announce | sale | winback | news | welcome | scratch
+  industry     String?
+  thumbnailUrl String?
+  suggestedSubjects Json @default("[]")
+  suggestedPreviewText String?
+  recommendedCta   String?
+  isPlatform       Boolean @default(false)
+  shareSlug        String? @unique
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([isPlatform, category])
+  @@index([goal])
 }
 
 // ─── Campaigns ──────────────────────────────────────────────────────────────
@@ -312,10 +355,18 @@ model Campaign {
   designJson       Json?
   compiledHtml     String?        @db.Text
   rawHtmlMode      Boolean        @default(false)
+  simpleMode       Boolean        @default(true)
+  goal             String? // announce | sale | winback | news | welcome | scratch
+  testSentAt       DateTime?
 
   audienceType      String  @default("all") // "all" | "tags" | "segment"
   audienceTagIds    Json    @default("[]")
   audienceSegmentId String?
+
+  /// Public archive (opt-in)
+  publicArchive   Boolean @default(false)
+  publicSlug      String? @unique
+  publicIndexable Boolean @default(false)
 
   scheduledAt DateTime?
   sentAt      DateTime?
@@ -437,4 +488,62 @@ model WebhookEvent {
   processedAt DateTime @default(now())
 
   @@unique([source, externalId])
+}
+
+/// Non-monetary placeholder credits for future Stripe credit application
+model CreditLedgerEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int // positive = credit earned, negative = spent
+  reason      String // referral_signup | referral_paid | manual | redemption
+  meta        Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  userId      String?
+  action      String // sender.verify | campaign.launch | billing.change | import | admin.hold ...
+  targetType  String?
+  targetId    String?
+  meta        Json     @default("{}")
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model LandingPage {
+  id          String   @id @default(cuid())
+  workspaceId String
+  title       String
+  slug        String
+  blocksJson  Json     @default("[]")
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, slug])
+}
+
+model ReferralAttribution {
+  id              String   @id @default(cuid())
+  referralCode    String
+  referredUserId  String?  @unique
+  referredEmail   String?
+  status          String   @default("clicked") // clicked | signed_up | qualified
+  createdAt       DateTime @default(now())
+
+  @@index([referralCode])
 }

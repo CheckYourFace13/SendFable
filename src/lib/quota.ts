@@ -19,6 +19,7 @@ export async function ensureSendCountReset(user: User): Promise<User> {
 }
 
 export function isReadOnlyForSending(user: User, contactCount: number): boolean {
+  if (user.sendingHeldAt) return true;
   const cap = PLANS[user.plan].contactCap;
   if (contactCount > cap) return true;
   if (user.paymentFailedAt) {

@@ -1,4 +1,8 @@
-export const metadata = { title: "Privacy Policy" };
+export const metadata = {
+  title: "Privacy Policy",
+  description:
+    "Sendfable privacy policy: what we collect, how we use workspace and send data, and subprocessors we rely on.",
+};
 
 export default function PrivacyPage() {
   return (

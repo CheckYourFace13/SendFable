@@ -7,6 +7,8 @@ import { countAudience } from "@/lib/audience";
 import { launchCampaign } from "@/lib/campaign-send";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { PLANS } from "@/lib/plans";
+import { sanitizeEmailHtml } from "@/lib/html-sanitize";
+import { maybeAwardReferralSignupCredit } from "@/lib/referrals";
 
 const schema = z.object({
   when: z.enum(["now", "schedule"]),
@@ -52,8 +54,16 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const owner = await getWorkspaceOwner(ctx.workspace.id);
 
-  // Ensure compiled HTML is fresh
-  if (campaign.designJson && !campaign.rawHtmlMode) {
+  // Ensure compiled HTML is fresh; sanitize raw HTML mode before send
+  if (campaign.rawHtmlMode && campaign.compiledHtml) {
+    const html = sanitizeEmailHtml(campaign.compiledHtml);
+    if (html !== campaign.compiledHtml) {
+      await prisma.campaign.update({
+        where: { id: campaign.id },
+        data: { compiledHtml: html },
+      });
+    }
+  } else if (campaign.designJson && !campaign.rawHtmlMode) {
     const html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
       mailingAddress: ctx.workspace.mailingAddress,
       showSendfableBadge: PLANS[owner.plan].badge,
@@ -101,6 +111,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   try {
     const result = await launchCampaign(campaign.id);
     const updated = await prisma.campaign.findUnique({ where: { id: campaign.id } });
+    // Placeholder referral credit on first successful launch
+    void maybeAwardReferralSignupCredit(ctx.user.id, "first_campaign");
     return NextResponse.json({ campaign: updated, ...result });
   } catch (err) {
     return NextResponse.json(

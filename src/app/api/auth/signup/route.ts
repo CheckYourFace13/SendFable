@@ -5,13 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/tokens";
 import { sendEmailVerification } from "@/lib/transactional";
 import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { normalizeEmail } from "@/lib/utils";
+import { normalizeEmail, randomToken } from "@/lib/utils";
+import { findReferrerByCode } from "@/lib/referrals";
 
 const signupSchema = z.object({
   name: z.string().trim().min(1).max(80),
   email: z.string().email().max(254),
   password: z.string().min(8).max(128),
   workspaceName: z.string().trim().min(1).max(80).optional(),
+  referralCode: z.string().trim().min(3).max(32).optional(),
 });
 
 export async function POST(req: Request) {
@@ -40,20 +42,47 @@ export async function POST(req: Request) {
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   const workspaceName = parsed.data.workspaceName || `${parsed.data.name}'s workspace`;
+  const ownCode = randomToken(6).slice(0, 8);
+
+  let referredByCode: string | null = null;
+  if (parsed.data.referralCode) {
+    const referrer = await findReferrerByCode(parsed.data.referralCode);
+    if (referrer) {
+      referredByCode = parsed.data.referralCode.trim();
+    }
+  }
 
   const user = await prisma.user.create({
     data: {
       email,
       name: parsed.data.name,
       passwordHash,
+      referralCode: ownCode,
+      referredByCode,
       memberships: {
         create: {
           role: "OWNER",
-          workspace: { create: { name: workspaceName } },
+          workspace: {
+            create: {
+              name: workspaceName,
+              referralCode: ownCode,
+            },
+          },
         },
       },
     },
   });
+
+  if (referredByCode) {
+    await prisma.referralAttribution.create({
+      data: {
+        referralCode: referredByCode,
+        referredUserId: user.id,
+        referredEmail: email,
+        status: "signed_up",
+      },
+    });
+  }
 
   const token = await signToken("email-verify", { userId: user.id, email }, "24h");
   await sendEmailVerification(email, token);

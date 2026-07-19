@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">sendfable mark on dark</title>
+  <path fill="#FFFDF8" d="M8 14c0-2.2 1.8-4 4-4h14.5c1.1 0 2.2.4 3 1.2L32 14l2.5-2.8c.8-.8 1.9-1.2 3-1.2H52c2.2 0 4 1.8 4 4v34c0 2.2-1.8 4-4 4H37.5c-1.1 0-2.2-.4-3-1.2L32 45.2l-2.5 2.8c-.8.8-1.9 1.2-3 1.2H12c-2.2 0-4-1.8-4-4V14z"/>
+  <path fill="#17213B" d="M14 16h14.2c.5 0 1 .2 1.4.6L32 19.2l2.4-2.6c.4-.4.9-.6 1.4-.6H50v30H35.8c-.5 0-1-.2-1.4-.6L32 42.8l-2.4 2.6c-.4.4-.9.6-1.4.6H14V16z"/>
+  <path fill="#F26A4F" d="M20 24h24l-12 9-12-9z"/>
+  <path fill="#17213B" d="M22.5 25.5h19L32 32.2l-9.5-6.7z"/>
+  <path fill="#DCD8F9" d="M40 10h14c1.1 0 2 .9 2 2v16c0 .7-.4 1.4-1.1 1.7L48 33l-6.9-3.3c-.7-.3-1.1-1-1.1-1.7V12c0-1.1.9-2 2-2z"/>
+  <path fill="#17213B" opacity=".85" d="M42 13h10v12H42z"/>
+  <path stroke="#FFFDF8" stroke-width="1.2" stroke-linecap="round" d="M44 16h6M44 20h5"/>
+</svg>

@@ -35,13 +35,16 @@ export default function CampaignDetailPage() {
   const [audienceCount, setAudienceCount] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [scheduleAt, setScheduleAt] = useState("");
+  const [confidence, setConfidence] = useState<any>(null);
+  const [mailingAddress, setMailingAddress] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [cRes, iRes, tRes, sRes] = await Promise.all([
+    const [cRes, iRes, tRes, sRes, wRes] = await Promise.all([
       fetch(`/api/campaigns/${params.id}`),
       fetch("/api/identities"),
       fetch("/api/tags"),
       fetch("/api/segments"),
+      fetch("/api/settings/workspace"),
     ]);
     const cData = await cRes.json();
     if (!cRes.ok) {
@@ -52,6 +55,10 @@ export default function CampaignDetailPage() {
     setIdentities((await iRes.json()).identities || []);
     setTags((await tRes.json()).tags || []);
     setSegments((await sRes.json()).segments || []);
+    if (wRes.ok) {
+      const w = await wRes.json();
+      setMailingAddress(w.workspace?.mailingAddress || null);
+    }
   }, [params.id]);
 
   useEffect(() => {
@@ -264,9 +271,17 @@ export default function CampaignDetailPage() {
           {editable ? (
             <EmailBuilder
               initialDesign={campaign.designJson as EmailDesign}
-              mailingAddress={null}
+              mailingAddress={mailingAddress}
               showBadge
               previewText={campaign.previewText}
+              simpleMode={campaign.simpleMode !== false}
+              onSimpleModeChange={(simple) => {
+                setCampaign({ ...campaign, simpleMode: simple });
+                void patch({ simpleMode: simple });
+              }}
+              onRawHtmlModeChange={(raw) => {
+                setCampaign({ ...campaign, rawHtmlMode: raw });
+              }}
               onChange={(design, compiledHtml) => {
                 setCampaign({ ...campaign, designJson: design, compiledHtml });
               }}
@@ -285,6 +300,8 @@ export default function CampaignDetailPage() {
                   void patch({
                     designJson: campaign.designJson,
                     compiledHtml: campaign.compiledHtml,
+                    rawHtmlMode: !!campaign.rawHtmlMode,
+                    simpleMode: campaign.simpleMode !== false,
                   })
                 }
               >
@@ -297,19 +314,62 @@ export default function CampaignDetailPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="review" className="mt-6 max-w-xl space-y-4">
-          <ul className="space-y-2 text-sm">
-            <li>✓ Subject: {campaign.subject || <span className="text-red-600">missing</span>}</li>
-            <li>✓ Sender: {campaign.senderIdentity?.value || <span className="text-red-600">missing</span>}</li>
-            <li>✓ Audience: ~{audienceCount ?? "…"} recipients</li>
-            <li>✓ Content: {campaign.compiledHtml ? "ready" : <span className="text-red-600">missing</span>}</li>
-            <li className="text-muted-foreground">
-              Spam basics: avoid ALL CAPS subjects, too many exclamation marks, and purchased lists.
-            </li>
-          </ul>
+        <TabsContent value="review" className="mt-6 max-w-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Send Confidence</h3>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                await patch({
+                  designJson: campaign.designJson,
+                  compiledHtml: campaign.compiledHtml,
+                  rawHtmlMode: !!campaign.rawHtmlMode,
+                });
+                const res = await fetch(`/api/campaigns/${params.id}/confidence`);
+                const data = await res.json();
+                if (res.ok) setConfidence(data);
+                else toast.error(data.error || "Could not score");
+              }}
+            >
+              Refresh score
+            </Button>
+          </div>
+          {confidence ? (
+            <div className="rounded-xl border bg-white p-5">
+              <div className="text-3xl font-bold tracking-tight">{confidence.score}/100</div>
+              <p className="mt-1 text-xs text-muted-foreground">{confidence.disclaimer}</p>
+              <ul className="mt-4 space-y-2 text-sm">
+                {confidence.checks.map((c: any) => (
+                  <li
+                    key={c.id}
+                    className={
+                      c.level === "error"
+                        ? "text-red-700"
+                        : c.level === "warning"
+                          ? "text-amber-800"
+                          : "text-emerald-800"
+                    }
+                  >
+                    <span className="font-medium">{c.label}</span> — {c.detail}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Refresh the score before sending. It checks sender, address, subject, audience, and
+              list health — not inbox placement.
+            </p>
+          )}
           {editable && campaign.status !== "SCHEDULED" && (
             <div className="flex flex-wrap gap-3">
-              <Button onClick={() => void launch("now")}>Send now</Button>
+              <Button
+                onClick={() => void launch("now")}
+                disabled={confidence ? !confidence.canSend : false}
+              >
+                Send now
+              </Button>
               <div className="flex items-end gap-2">
                 <div>
                   <Label className="text-xs">Schedule</Label>
@@ -319,7 +379,11 @@ export default function CampaignDetailPage() {
                     onChange={(e) => setScheduleAt(e.target.value)}
                   />
                 </div>
-                <Button variant="outline" disabled={!scheduleAt} onClick={() => void launch("schedule")}>
+                <Button
+                  variant="outline"
+                  disabled={!scheduleAt || (confidence ? !confidence.canSend : false)}
+                  onClick={() => void launch("schedule")}
+                >
                   Schedule
                 </Button>
               </div>

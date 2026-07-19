@@ -1,0 +1,18 @@
+# Sendfable
+
+> Email marketing for ordinary small businesses: add people, create an email, send it.
+> Platform delivery via Amazon SES. Any email signup (no Google/Microsoft OAuth required).
+
+## Primary pages
+- https://sendfable.com/
+- https://sendfable.com/pricing
+- https://sendfable.com/features
+- https://sendfable.com/deliverability
+- https://sendfable.com/templates
+- https://sendfable.com/migrate
+- https://sendfable.com/compare/mailchimp
+
+## Notes
+- Crawlable HTML, sitemap.xml, and robots.txt are the source of truth.
+- Authenticated app routes, tracking pixels, and private campaign data are not for indexing.
+- Competitor pricing on comparison pages includes a "last checked" date and may change.

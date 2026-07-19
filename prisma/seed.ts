@@ -1,6 +1,7 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { createEmptyDesign, compileEmailHtml } from "../src/lib/email-compiler";
+import { PLATFORM_TEMPLATES } from "../src/lib/platform-templates";
 
 const asJson = (v: unknown) => v as Prisma.InputJsonValue;
 
@@ -20,7 +21,7 @@ async function main() {
   await prisma.campaignLink.deleteMany();
   await prisma.campaignRecipient.deleteMany();
   await prisma.campaign.deleteMany();
-  await prisma.template.deleteMany();
+  await prisma.template.deleteMany({ where: { isPlatform: false } });
   await prisma.contactTag.deleteMany();
   await prisma.contact.deleteMany();
   await prisma.tag.deleteMany();
@@ -283,6 +284,44 @@ async function main() {
     },
   });
 
+  // Platform library templates (workspaceId null, isPlatform true)
+  for (const t of PLATFORM_TEMPLATES) {
+    const compiledHtml = compileEmailHtml(t.designJson, {
+      mailingAddress: "123 Main St, City, ST 12345",
+    });
+    await prisma.template.upsert({
+      where: { shareSlug: t.shareSlug },
+      create: {
+        workspaceId: null,
+        name: t.name,
+        designJson: asJson(t.designJson),
+        compiledHtml,
+        category: t.category,
+        industry: t.industry,
+        goal: t.goal,
+        suggestedSubjects: asJson(t.suggestedSubjects),
+        suggestedPreviewText: t.suggestedPreviewText,
+        recommendedCta: t.recommendedCta,
+        isPlatform: true,
+        shareSlug: t.shareSlug,
+      },
+      update: {
+        name: t.name,
+        designJson: asJson(t.designJson),
+        compiledHtml,
+        category: t.category,
+        industry: t.industry,
+        goal: t.goal,
+        suggestedSubjects: asJson(t.suggestedSubjects),
+        suggestedPreviewText: t.suggestedPreviewText,
+        recommendedCta: t.recommendedCta,
+        isPlatform: true,
+        workspaceId: null,
+      },
+    });
+  }
+
+  console.log(`✓ Platform templates: ${PLATFORM_TEMPLATES.length}`);
   console.log("✓ Demo ready");
   console.log("  Email:    demo@sendfable.com");
   console.log("  Password: password123");

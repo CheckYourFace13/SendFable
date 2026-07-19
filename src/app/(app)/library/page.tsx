@@ -34,7 +34,7 @@ export default function TemplatesPage() {
     setTemplates((t) => [data.template, ...t]);
   }
 
-  async function useInCampaign(templateId: string) {
+  async function applyTemplateToCampaign(templateId: string) {
     const tRes = await fetch(`/api/templates/${templateId}`);
     const tData = await tRes.json();
     if (!tRes.ok) return toast.error("Failed to load template");
@@ -80,7 +80,7 @@ export default function TemplatesPage() {
                 <div className="font-medium">{t.name}</div>
                 <div className="text-sm text-muted-foreground">{formatDate(t.updatedAt)}</div>
               </div>
-              <Button size="sm" variant="outline" onClick={() => void useInCampaign(t.id)}>
+              <Button size="sm" variant="outline" onClick={() => void applyTemplateToCampaign(t.id)}>
                 Use in campaign
               </Button>
             </li>

@@ -2,17 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleHardBounceOrComplaint } from "@/lib/suppression";
 import { checkAutoPause } from "@/lib/campaign-send";
+import { verifySnsSignature, type SnsSignedMessage } from "@/lib/sns-verify";
 
 export const dynamic = "force-dynamic";
 
-interface SnsEnvelope {
-  Type: string;
-  MessageId: string;
-  TopicArn?: string;
-  Subject?: string;
-  Message: string;
+interface SnsEnvelope extends SnsSignedMessage {
   SubscribeURL?: string;
-  Timestamp?: string;
   Token?: string;
 }
 
@@ -55,6 +50,15 @@ export async function POST(req: Request) {
     envelope = JSON.parse(raw) as SnsEnvelope;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const verified = await verifySnsSignature(envelope);
+  if (!verified.ok) {
+    console.warn("[ses-webhook] SNS signature rejected", verified.error);
+    return NextResponse.json({ error: "Invalid SNS signature" }, { status: 403 });
+  }
+  if (verified.skipped) {
+    console.warn("[ses-webhook] SNS verify soft-fail", verified.error);
   }
 
   if (envelope.Type === "SubscriptionConfirmation" && envelope.SubscribeURL) {

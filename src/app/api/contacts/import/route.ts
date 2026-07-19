@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
+import type { ContactStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
 import { importSchema } from "@/lib/validators/audience";
 import { normalizeEmail, isValidEmail } from "@/lib/utils";
 import { PLANS } from "@/lib/plans";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
+import {
+  isRestrictedStatus,
+  mergeContactStatus,
+  type ImportContactStatus,
+} from "@/lib/migration-presets";
 
 export async function POST(req: Request) {
   const ctx = await getApiContext();
@@ -26,9 +32,13 @@ export async function POST(req: Request) {
     );
   }
 
+  const dryRun = !!parsed.data.dryRun;
+  const provider = parsed.data.provider;
+  const sourceLabel = parsed.data.source || (provider ? `migrate:${provider}` : "import");
+
   const owner = await getWorkspaceOwner(ctx.workspace.id);
   if (owner.accountRampLevel === 1 && parsed.data.contacts.length > 1000) {
-    if (!parsed.data.confirmPurchasedListsPolicy) {
+    if (!parsed.data.confirmPurchasedListsPolicy && !dryRun) {
       return NextResponse.json(
         {
           error: "Large import requires confirming the no-purchased-lists policy",
@@ -62,16 +72,80 @@ export async function POST(req: Request) {
     valid.push({ ...row, email });
   }
 
-  const existing = await prisma.contact.findMany({
-    where: { workspaceId: ctx.workspace.id, email: { in: [...seen] } },
-    select: { email: true },
-  });
-  const existingSet = new Set(existing.map((e) => e.email));
-  const toInsert = valid.filter((v) => !existingSet.has(normalizeEmail(v.email)));
-  duplicates += valid.length - toInsert.length;
+  const emails = [...seen];
+  const [existingRows, localSuppressions, globalSuppressions] = await Promise.all([
+    prisma.contact.findMany({
+      where: { workspaceId: ctx.workspace.id, email: { in: emails } },
+      select: { id: true, email: true, status: true },
+    }),
+    prisma.suppressionEntry.findMany({
+      where: { workspaceId: ctx.workspace.id, email: { in: emails } },
+      select: { email: true },
+    }),
+    prisma.globalSuppression.findMany({
+      where: { email: { in: emails } },
+      select: { email: true },
+    }),
+  ]);
+
+  const existingByEmail = new Map(
+    existingRows.map((e) => [normalizeEmail(e.email), e] as const)
+  );
+  const suppressedSet = new Set([
+    ...localSuppressions.map((s) => normalizeEmail(s.email)),
+    ...globalSuppressions.map((s) => normalizeEmail(s.email)),
+  ]);
+
+  let existingCountInBatch = 0;
+  let suppressed = 0;
+  const toInsert: typeof valid = [];
+  const toUpdateStatus: Array<{ id: string; status: ContactStatus }> = [];
+
+  for (const v of valid) {
+    const email = normalizeEmail(v.email);
+    const existing = existingByEmail.get(email);
+    const incomingStatus = (v.status || "SUBSCRIBED") as ImportContactStatus;
+
+    if (suppressedSet.has(email) || isRestrictedStatus(incomingStatus)) {
+      // Count as suppressed when on list or importing a restricted status
+      if (suppressedSet.has(email)) suppressed++;
+    }
+
+    if (existing) {
+      existingCountInBatch++;
+      duplicates++;
+      const next = mergeContactStatus(existing.status as ImportContactStatus, incomingStatus);
+      // Never upgrade restricted → subscribed; only write when status changes downward/sideways
+      if (next !== existing.status) {
+        toUpdateStatus.push({ id: existing.id, status: next as ContactStatus });
+      }
+      continue;
+    }
+
+    toInsert.push({
+      ...v,
+      email,
+      status: mergeContactStatus(null, incomingStatus),
+    });
+  }
 
   const limited = toInsert.slice(0, room);
   const skippedCap = toInsert.length - limited.length;
+
+  if (dryRun) {
+    return NextResponse.json({
+      dryRun: true,
+      created: 0,
+      wouldCreate: limited.length,
+      invalid,
+      duplicates,
+      existing: existingCountInBatch,
+      suppressed,
+      statusUpdates: toUpdateStatus.length,
+      skippedCap,
+      contactCap: cap,
+    });
+  }
 
   // Resolve / create tags
   const allTagNames = new Set<string>();
@@ -94,15 +168,18 @@ export async function POST(req: Request) {
   for (let i = 0; i < limited.length; i += batchSize) {
     const batch = limited.slice(i, i + batchSize);
     await prisma.$transaction(
-      batch.map((c) =>
-        prisma.contact.create({
+      batch.map((c) => {
+        const status = (c.status || "SUBSCRIBED") as ContactStatus;
+        return prisma.contact.create({
           data: {
             workspaceId: ctx.workspace.id,
             email: normalizeEmail(c.email),
             firstName: c.firstName || null,
             lastName: c.lastName || null,
             customFields: c.customFields ?? {},
-            source: parsed.data.source || "import",
+            status,
+            unsubscribedAt: status === "UNSUBSCRIBED" ? new Date() : null,
+            source: sourceLabel,
             tags: {
               create: (c.tagNames ?? [])
                 .map((n) => tagMap.get(n.trim()))
@@ -110,17 +187,40 @@ export async function POST(req: Request) {
                 .map((tagId) => ({ tagId: tagId! })),
             },
           },
-        })
-      )
+        });
+      })
     );
     created += batch.length;
+  }
+
+  // Apply status merges for existing contacts (never upgrades restricted → subscribed)
+  if (toUpdateStatus.length) {
+    const updateBatch = 100;
+    for (let i = 0; i < toUpdateStatus.length; i += updateBatch) {
+      const batch = toUpdateStatus.slice(i, i + updateBatch);
+      await prisma.$transaction(
+        batch.map((u) =>
+          prisma.contact.update({
+            where: { id: u.id },
+            data: {
+              status: u.status,
+              unsubscribedAt: u.status === "UNSUBSCRIBED" ? new Date() : undefined,
+            },
+          })
+        )
+      );
+    }
   }
 
   return NextResponse.json({
     created,
     invalid,
     duplicates,
+    existing: existingCountInBatch,
+    suppressed,
+    statusUpdates: toUpdateStatus.length,
     skippedCap,
     contactCap: cap,
+    provider: provider || null,
   });
 }

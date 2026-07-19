@@ -37,20 +37,28 @@ export default function SettingsPage() {
   const [defaultSender, setDefaultSender] = useState("");
   const [members, setMembers] = useState<any[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [shareLink, setShareLink] = useState("");
+  const [ledger, setLedger] = useState<any[]>([]);
 
   useEffect(() => {
     void (async () => {
       // Workspace fields come from a lightweight bootstrap via identities + team
-      const [iRes, tRes, dash] = await Promise.all([
+      const [iRes, tRes, rRes] = await Promise.all([
         fetch("/api/identities"),
         fetch("/api/settings/team"),
-        fetch("/api/settings/me").catch(() => null),
+        fetch("/api/settings/referrals"),
       ]);
-      void dash;
       const iData = await iRes.json();
       setIdentities((iData.identities || []).filter((i: any) => i.value.includes("@")));
       const tData = await tRes.json();
       setMembers(tData.members || []);
+      if (rRes.ok) {
+        const r = await rRes.json();
+        setReferralCode(r.referralCode || "");
+        setShareLink(r.shareLink || "");
+        setLedger(r.ledger || []);
+      }
 
       // Load workspace via dedicated endpoint — add GET if missing, use patch bootstrap
       const wRes = await fetch("/api/settings/workspace", { method: "GET" }).catch(() => null);
@@ -63,6 +71,19 @@ export default function SettingsPage() {
       }
     })();
   }, []);
+
+  async function saveReferral() {
+    const res = await fetch("/api/settings/referrals", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ referralCode }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast.error(data.error || "Could not update code");
+    setReferralCode(data.referralCode);
+    setShareLink(data.shareLink);
+    toast.success("Referral code updated");
+  }
 
   async function save() {
     const res = await fetch("/api/settings/workspace", {
@@ -106,9 +127,12 @@ export default function SettingsPage() {
     <div>
       <PageHeader title="Settings" description="Workspace, team, and danger zone." />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap gap-2">
         <Button asChild variant="outline" size="sm">
           <Link href="/settings/senders">Manage sender identities →</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/settings/ses">SES readiness →</Link>
         </Button>
       </div>
 
@@ -145,6 +169,61 @@ export default function SettingsPage() {
           </Select>
         </div>
         <Button onClick={() => void save()}>Save settings</Button>
+      </div>
+
+      <div className="mb-8 max-w-xl space-y-4 rounded-xl border bg-white p-6">
+        <h3 className="font-semibold">Referrals</h3>
+        <p className="text-sm text-muted-foreground">
+          Share your link. Credits are placeholder (non-monetary) for now.
+        </p>
+        <div>
+          <Label>Your code</Label>
+          <div className="mt-1 flex gap-2">
+            <Input value={referralCode} onChange={(e) => setReferralCode(e.target.value)} />
+            <Button variant="outline" onClick={() => void saveReferral()}>
+              Save
+            </Button>
+          </div>
+        </div>
+        <div>
+          <Label>Share link</Label>
+          <Input readOnly value={shareLink} className="mt-1" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              void navigator.clipboard.writeText(shareLink).then(
+                () => toast.success("Link copied"),
+                () => toast.error("Copy failed")
+              );
+            }}
+          >
+            Copy link
+          </Button>
+        </div>
+        <div>
+          <h4 className="text-sm font-medium">Credit ledger</h4>
+          {ledger.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">No credits yet.</p>
+          ) : (
+            <ul className="mt-2 divide-y text-sm">
+              {ledger.map((entry) => (
+                <li key={entry.id} className="flex justify-between py-2">
+                  <span>
+                    {entry.reason}
+                    <span className="ml-2 text-muted-foreground">
+                      {new Date(entry.createdAt).toLocaleDateString()}
+                    </span>
+                  </span>
+                  <span className="font-medium">
+                    {entry.amount > 0 ? `+${entry.amount}` : entry.amount}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       <div className="mb-8 max-w-xl space-y-4 rounded-xl border bg-white p-6">

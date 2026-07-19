@@ -5,6 +5,8 @@ import type { NextAuthConfig } from "next-auth";
  * middleware can decode the JWT session without a database connection.
  */
 export const authConfig = {
+  // Allow localhost / reverse-proxy hosts; required for Auth.js v5 session in middleware.
+  trustHost: true,
   pages: {
     signIn: "/login",
     verifyRequest: "/login/check-email",

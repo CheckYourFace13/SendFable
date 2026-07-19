@@ -1,31 +1,47 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    /* Brand palette (HSL channels for shadcn compatibility) */
+    --story-ink: 222 44% 16%; /* #17213B */
+    --ember-coral: 10 86% 63%; /* #F26A4F */
+    --ember-coral-hover: 10 78% 55%;
+    --bookcloth: 175 62% 31%; /* #1E8179 */
+    --parchment: 36 47% 94%; /* #F7F1E7 */
+    --lavender-note: 246 68% 91%; /* #DCD8F9 */
+    --fresh-page: 45 100% 99%; /* #FFFDF8 */
+    --charcoal: 228 6% 16%; /* #25262B */
+
+    --background: var(--fresh-page);
+    --foreground: var(--charcoal);
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: var(--charcoal);
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 243 75% 59%; /* #4F46E5 */
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 243 75% 59%;
-    --radius: 0.5rem;
+    --popover-foreground: var(--charcoal);
+    --primary: var(--ember-coral);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--parchment);
+    --secondary-foreground: var(--story-ink);
+    --muted: 36 30% 92%;
+    --muted-foreground: 222 18% 38%;
+    --accent: var(--lavender-note);
+    --accent-foreground: var(--story-ink);
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 36 20% 84%;
+    --input: 36 20% 84%;
+    --ring: var(--ember-coral);
+    --radius: 0.625rem;
+
+    --brand-ink: #17213b;
+    --brand-coral: #f26a4f;
+    --brand-teal: #1e8179;
+    --brand-parchment: #f7f1e7;
+    --brand-lavender: #dcd8f9;
+    --brand-page: #fffdf8;
+    --brand-charcoal: #25262b;
   }
 }
 
@@ -37,10 +53,72 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
 }
 
-.hero-gradient {
-  background:
-    radial-gradient(ellipse 60% 50% at 50% -10%, rgba(79, 70, 229, 0.12), transparent),
-    radial-gradient(ellipse 40% 40% at 80% 10%, rgba(129, 140, 248, 0.08), transparent);
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display), ui-serif, Georgia, serif;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .editorial-bg {
+    background-color: var(--brand-page);
+    background-image:
+      linear-gradient(90deg, rgba(23, 33, 59, 0.035) 1px, transparent 1px),
+      linear-gradient(rgba(23, 33, 59, 0.02) 1px, transparent 1px);
+    background-size: 48px 48px, 100% 32px;
+    background-position: 0 0, 0 0;
+  }
+  .paper-panel {
+    background: linear-gradient(180deg, #fffdf8 0%, #f7f1e7 100%);
+    box-shadow:
+      0 1px 0 rgba(23, 33, 59, 0.06),
+      0 18px 40px -24px rgba(23, 33, 59, 0.35);
+  }
+  .page-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .page-lift:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 1px 0 rgba(23, 33, 59, 0.06),
+        0 22px 44px -20px rgba(23, 33, 59, 0.4);
+    }
+    .motion-page-travel {
+      animation: page-travel 4.5s ease-in-out infinite;
+    }
+    .motion-underline {
+      background-image: linear-gradient(currentColor, currentColor);
+      background-position: 0 100%;
+      background-repeat: no-repeat;
+      background-size: 0% 2px;
+      transition: background-size 0.3s ease;
+    }
+    .motion-underline:hover,
+    .group:hover .motion-underline {
+      background-size: 100% 2px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .motion-page-travel,
+    .page-lift {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+@keyframes page-travel {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate(6px, -8px) rotate(1deg);
+  }
 }

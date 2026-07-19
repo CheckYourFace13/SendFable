@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title">
+  <title id="title">Sendfable  Simple email marketing for small businesses</title>
+  <rect width="1200" height="630" fill="#FFFDF8"/>
+  <rect x="0" y="0" width="48" height="630" fill="#17213B"/>
+  <rect x="48" y="0" width="12" height="630" fill="#F26A4F"/>
+  <!-- decorative margin lines -->
+  <g stroke="#17213B" stroke-opacity="0.08" stroke-width="1">
+    <line x1="120" y1="80" x2="1100" y2="80"/>
+    <line x1="120" y1="550" x2="1100" y2="550"/>
+  </g>
+  <!-- mark -->
+  <g transform="translate(120,150) scale(2.2)">
+    <path fill="#17213B" d="M8 14c0-2.2 1.8-4 4-4h14.5c1.1 0 2.2.4 3 1.2L32 14l2.5-2.8c.8-.8 1.9-1.2 3-1.2H52c2.2 0 4 1.8 4 4v34c0 2.2-1.8 4-4 4H37.5c-1.1 0-2.2-.4-3-1.2L32 45.2l-2.5 2.8c-.8.8-1.9 1.2-3 1.2H12c-2.2 0-4-1.8-4-4V14z"/>
+    <path fill="#FFFDF8" d="M14 16h14.2c.5 0 1 .2 1.4.6L32 19.2l2.4-2.6c.4-.4.9-.6 1.4-.6H50v30H35.8c-.5 0-1-.2-1.4-.6L32 42.8l-2.4 2.6c-.4.4-.9.6-1.4.6H14V16z"/>
+    <path fill="#1E8179" d="M20 24h24l-12 9-12-9z"/>
+    <path fill="#F26A4F" d="M40 10h14c1.1 0 2 .9 2 2v16c0 .7-.4 1.4-1.1 1.7L48 33l-6.9-3.3c-.7-.3-1.1-1-1.1-1.7V12c0-1.1.9-2 2-2z"/>
+  </g>
+  <text x="300" y="230" font-family="Georgia, serif" font-size="72" font-weight="600" fill="#17213B">sendfable</text>
+  <text x="300" y="300" font-family="Georgia, serif" font-size="40" fill="#25262B">Send emails people want to open.</text>
+  <text x="300" y="360" font-family="Inter, Arial, sans-serif" font-size="26" fill="#2A3554">Every email tells your story.</text>
+  <rect x="300" y="420" width="220" height="52" rx="10" fill="#F26A4F"/>
+  <text x="330" y="454" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="600" fill="#FFFFFF">Start writing free</text>
+</svg>

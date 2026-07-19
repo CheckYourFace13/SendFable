@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/session";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { PLANS } from "@/lib/plans";
 import { getWorkspaceOwner } from "@/lib/session";
+import { sanitizeEmailHtml } from "@/lib/html-sanitize";
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
@@ -13,6 +14,8 @@ const patchSchema = z.object({
   designJson: z.any().optional(),
   compiledHtml: z.string().optional(),
   rawHtmlMode: z.boolean().optional(),
+  simpleMode: z.boolean().optional(),
+  goal: z.string().max(40).nullable().optional(),
   audienceType: z.enum(["all", "tags", "segment"]).optional(),
   audienceTagIds: z.array(z.string()).optional(),
   audienceSegmentId: z.string().nullable().optional(),
@@ -70,19 +73,20 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const owner = await getWorkspaceOwner(ctx.workspace.id);
+  const rawHtmlMode = parsed.data.rawHtmlMode ?? existing.rawHtmlMode;
   let compiledHtml = parsed.data.compiledHtml;
   let designJson = parsed.data.designJson;
 
-  if (designJson && !parsed.data.rawHtmlMode && !existing.rawHtmlMode) {
+  if (rawHtmlMode) {
+    if (parsed.data.compiledHtml !== undefined) {
+      compiledHtml = sanitizeEmailHtml(parsed.data.compiledHtml);
+    }
+  } else if (designJson) {
     compiledHtml = compileEmailHtml(designJson as EmailDesign, {
       mailingAddress: ctx.workspace.mailingAddress,
       showSendfableBadge: PLANS[owner.plan].badge,
       previewText: parsed.data.previewText ?? existing.previewText,
     });
-  }
-
-  if (parsed.data.rawHtmlMode && parsed.data.compiledHtml) {
-    compiledHtml = parsed.data.compiledHtml;
   }
 
   const campaign = await prisma.campaign.update({
@@ -94,6 +98,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       designJson: designJson === undefined ? undefined : designJson,
       compiledHtml: compiledHtml === undefined ? undefined : compiledHtml,
       rawHtmlMode: parsed.data.rawHtmlMode,
+      simpleMode: parsed.data.simpleMode,
+      goal: parsed.data.goal === undefined ? undefined : parsed.data.goal,
       audienceType: parsed.data.audienceType,
       audienceTagIds: parsed.data.audienceTagIds,
       audienceSegmentId:

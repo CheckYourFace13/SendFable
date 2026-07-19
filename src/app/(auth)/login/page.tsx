@@ -11,6 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+
+const cardClass =
+  "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
+const ctaClass = "bg-coral text-white hover:bg-coral-hover";
+
 
 function LoginForm() {
   const router = useRouter();
@@ -57,19 +63,19 @@ function LoginForm() {
 
   if (magicSent) {
     return (
-      <Card>
+      <Card className={cardClass}>
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Mail className="h-6 w-6 text-primary" />
+          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-coral/15">
+            <Mail className="h-6 w-6 text-coral" />
           </div>
-          <CardTitle>Check your inbox</CardTitle>
+          <CardTitle className="text-ink">Check your inbox</CardTitle>
           <CardDescription>
             We sent a magic sign-in link to <strong>{email}</strong>. It expires in 24 hours.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-center text-sm text-muted-foreground">
+        <CardContent className="text-center text-sm text-ink/60">
           Wrong address?{" "}
-          <button className="text-primary underline" onClick={() => setMagicSent(false)}>
+          <button className="text-coral underline underline-offset-2" onClick={() => setMagicSent(false)}>
             Try again
           </button>
         </CardContent>
@@ -78,14 +84,14 @@ function LoginForm() {
   }
 
   return (
-    <Card>
+    <Card className={cardClass}>
       <CardHeader>
-        <CardTitle>Welcome back</CardTitle>
+        <CardTitle className="text-ink">Welcome back</CardTitle>
         <CardDescription>Sign in to your Sendfable account.</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="password">
-          <TabsList className="mb-4 grid w-full grid-cols-2">
+          <TabsList className="mb-4 grid w-full grid-cols-2 bg-parchment">
             <TabsTrigger value="password">Password</TabsTrigger>
             <TabsTrigger value="magic">Magic link</TabsTrigger>
           </TabsList>
@@ -101,7 +107,9 @@ function LoginForm() {
                 <Input id="password" type="password" required autoComplete="current-password"
                   value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
               </div>
-              <Button type="submit" className="w-full" loading={loading}>Sign in</Button>
+              <Button type="submit" className={cn("w-full", ctaClass)} loading={loading}>
+                Sign in
+              </Button>
             </form>
           </TabsContent>
           <TabsContent value="magic">
@@ -111,18 +119,18 @@ function LoginForm() {
                 <Input id="magic-email" type="email" required autoComplete="email"
                   value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
               </div>
-              <Button type="submit" className="w-full" loading={loading}>
+              <Button type="submit" className={cn("w-full", ctaClass)} loading={loading}>
                 Email me a sign-in link
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
+              <p className="text-center text-xs text-ink/55">
                 No password needed — works with any email address.
               </p>
             </form>
           </TabsContent>
         </Tabs>
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-6 text-center text-sm text-ink/60">
           New to Sendfable?{" "}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
+          <Link href="/signup" className="font-medium text-coral hover:underline">
             Create an account
           </Link>
         </p>

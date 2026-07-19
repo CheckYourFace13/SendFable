@@ -4,8 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 
 function csvEscape(v: string): string {
-  if (/[",\n\r]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
-  return v;
+  // Mitigate spreadsheet formula injection
+  let out = v;
+  if (/^[=+\-@]/.test(out)) out = `'${out}`;
+  if (/[",\n\r]/.test(out)) return `"${out.replace(/"/g, '""')}"`;
+  return out;
 }
 
 export async function GET(req: Request) {

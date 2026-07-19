@@ -75,5 +75,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     noConfigurationSet: true,
   });
 
+  await prisma.campaign.update({
+    where: { id: campaign.id },
+    data: { testSentAt: new Date() },
+  });
+
   return NextResponse.json({ ok: true });
 }

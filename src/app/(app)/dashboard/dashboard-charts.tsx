@@ -59,7 +59,7 @@ export function DashboardCharts({
       <div className="rounded-xl border bg-white p-6">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Recent campaigns</h3>
-          <Link href="/campaigns" className="text-sm text-indigo-600 hover:underline">
+          <Link href="/campaigns" className="text-sm text-teal hover:underline">
             View all
           </Link>
         </div>

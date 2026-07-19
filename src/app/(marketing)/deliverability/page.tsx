@@ -1,4 +1,8 @@
-export const metadata = { title: "Deliverability" };
+export const metadata = {
+  title: "Deliverability",
+  description:
+    "How Sendfable approaches SPF, DKIM, DMARC, Gmail From-rewrite, custom domains, and list-quality protections.",
+};
 
 export default function DeliverabilityPage() {
   return (

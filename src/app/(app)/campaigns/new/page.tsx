@@ -1,28 +1,10 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { Suspense } from "react";
+import { NewCampaignClient } from "./new-campaign-client";
 
 export default function NewCampaignPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    void (async () => {
-      const res = await fetch("/api/campaigns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Untitled campaign" }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || "Failed to create campaign");
-        router.replace("/campaigns");
-        return;
-      }
-      router.replace(`/campaigns/${data.campaign.id}`);
-    })();
-  }, [router]);
-
-  return <div className="text-sm text-muted-foreground">Creating campaign…</div>;
+  return (
+    <Suspense fallback={<div className="text-sm text-muted-foreground">Loading…</div>}>
+      <NewCampaignClient />
+    </Suspense>
+  );
 }

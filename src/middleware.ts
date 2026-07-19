@@ -4,39 +4,72 @@ import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
-const PUBLIC_PREFIXES = [
+/** Exact public paths (marketing + auth entry). */
+const PUBLIC_EXACT = new Set([
+  "/",
   "/login",
   "/signup",
   "/pricing",
   "/features",
-  "/vs",
   "/deliverability",
+  "/templates",
+  "/migrate",
+  "/security",
+  "/status",
+  "/integrations",
+  "/email-marketing-guide",
+  "/resources",
+  "/changelog",
+  "/cheap-email-marketing",
+  "/email-marketing-without-gmail",
   "/terms",
   "/privacy",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/feed.xml",
+  "/llms.txt",
+  "/brand",
+]);
+
+/** Public path prefixes (trailing segment routes). */
+const PUBLIC_PREFIXES = [
+  "/login/",
+  "/signup/",
+  "/vs/",
+  "/compare/",
+  "/solutions/",
+  "/alternatives/",
   "/f/",
-  "/unsubscribe",
-  "/invite",
-  "/api",
-  "/uploads",
+  "/a/",
+  "/unsubscribe/",
+  "/invite/",
+  "/api/",
+  "/uploads/",
 ];
+
+function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_EXACT.has(pathname)) return true;
+  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+}
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
-  const isPublic =
-    pathname === "/" ||
-    PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
+  // NextAuth may attach a truthy empty auth object — require a user id.
+  const isLoggedIn = Boolean(req.auth?.user?.id || req.auth?.user?.email);
 
-  if (!req.auth && !isPublic) {
+  if (!isLoggedIn && !isPublicPath(pathname)) {
     const url = new URL("/login", req.nextUrl.origin);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
   }
-  if (req.auth && (pathname === "/login" || pathname === "/signup")) {
+  if (isLoggedIn && (pathname === "/login" || pathname === "/signup")) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
   }
   return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js)$).*)",
+  ],
 };

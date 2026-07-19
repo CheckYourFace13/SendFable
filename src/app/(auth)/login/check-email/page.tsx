@@ -3,17 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function CheckEmailPage() {
   return (
-    <Card>
+    <Card className="border-ink/10 bg-page/95 shadow-sm shadow-ink/5">
       <CardHeader className="items-center text-center">
-        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-          <Mail className="h-6 w-6 text-primary" />
+        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-coral/15">
+          <Mail className="h-6 w-6 text-coral" />
         </div>
-        <CardTitle>Check your inbox</CardTitle>
+        <CardTitle className="text-ink">Check your inbox</CardTitle>
         <CardDescription>
           A sign-in link is on its way. Click it to finish signing in.
         </CardDescription>
       </CardHeader>
-      <CardContent className="text-center text-sm text-muted-foreground">
+      <CardContent className="text-center text-sm text-ink/60">
         Didn&apos;t get it? Check spam, or head back and try again.
       </CardContent>
     </Card>

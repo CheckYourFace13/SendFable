@@ -9,18 +9,33 @@ export const contactCreateSchema = z.object({
   source: z.string().max(80).optional(),
 });
 
+export const importContactStatusSchema = z.enum([
+  "SUBSCRIBED",
+  "UNSUBSCRIBED",
+  "BOUNCED",
+  "COMPLAINED",
+  "PENDING_CONFIRM",
+]);
+
 export const importContactSchema = z.object({
   email: z.string().email().max(254),
   firstName: z.string().trim().max(100).optional().nullable(),
   lastName: z.string().trim().max(100).optional().nullable(),
   customFields: z.record(z.string()).optional(),
   tagNames: z.array(z.string().max(60)).optional(),
+  status: importContactStatusSchema.optional(),
 });
 
 export const importSchema = z.object({
   contacts: z.array(importContactSchema).min(1).max(50_000),
   source: z.string().max(80).optional(),
   confirmPurchasedListsPolicy: z.boolean().optional(),
+  /** Competitor migration source — stored on contact.source when set. */
+  provider: z
+    .enum(["mailchimp", "constant-contact", "brevo", "mailerlite", "kit", "generic"])
+    .optional(),
+  /** Preview-only: return counts without writing. */
+  dryRun: z.boolean().optional(),
 });
 
 export const bulkActionSchema = z.object({

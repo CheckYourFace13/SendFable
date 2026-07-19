@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -11,8 +11,10 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -26,9 +28,11 @@ import { formatNumber, formatPercent, formatDateTime } from "@/lib/utils";
 
 export default function CampaignReportPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [campaign, setCampaign] = useState<any>(null);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [q, setQ] = useState("");
+  const [followUpLoading, setFollowUpLoading] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -64,14 +68,45 @@ export default function CampaignReportPage() {
     { label: "Sent", value: formatNumber(campaign.sentCount) },
     { label: "Delivered", value: formatNumber(delivered) },
     { label: "Delivery rate", value: formatPercent(delivered / sent) },
-    { label: "Opens", value: formatNumber(campaign.openCount) },
-    { label: "Open rate", value: formatPercent(campaign.openCount / sent) },
+    {
+      label: "Opens (estimate)",
+      value: formatNumber(campaign.openCount),
+      hint: "Open rates are estimates — many clients block tracking pixels.",
+    },
+    {
+      label: "Open rate (estimate)",
+      value: formatPercent(campaign.openCount / sent),
+      hint: "Approximate only.",
+    },
     { label: "Clicks", value: formatNumber(campaign.clickCount) },
     { label: "CTR", value: formatPercent(campaign.clickCount / sent) },
     { label: "Unsubs", value: formatNumber(campaign.unsubscribeCount) },
     { label: "Bounces", value: formatNumber(campaign.bounceCount) },
     { label: "Complaints", value: formatNumber(campaign.complaintCount) },
   ];
+
+  async function createFollowUp(
+    kind: "delivered_no_engagement" | "clicked_any" | "newly_subscribed"
+  ) {
+    setFollowUpLoading(kind);
+    try {
+      const res = await fetch(`/api/campaigns/${params.id}/follow-up`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Follow-up failed");
+      toast.success(
+        `Draft created for ~${data.recipientEstimate} contacts — it will not send until you launch.`
+      );
+      if (data.campaign?.id) router.push(`/campaigns/${data.campaign.id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Follow-up failed");
+    } finally {
+      setFollowUpLoading(null);
+    }
+  }
 
   return (
     <div>
@@ -84,8 +119,46 @@ export default function CampaignReportPage() {
           <div key={s.label} className="rounded-xl border bg-white p-4">
             <div className="text-xs text-muted-foreground">{s.label}</div>
             <div className="mt-1 text-xl font-semibold">{s.value}</div>
+            {"hint" in s && s.hint ? (
+              <div className="mt-1 text-[11px] leading-snug text-muted-foreground">{s.hint}</div>
+            ) : null}
           </div>
         ))}
+      </div>
+
+      <div className="mb-8 rounded-xl border bg-white p-6">
+        <h3 className="font-semibold">Follow-up drafts</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Creates a new draft campaign only — never sends automatically.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!!followUpLoading}
+            onClick={() => void createFollowUp("delivered_no_engagement")}
+          >
+            {followUpLoading === "delivered_no_engagement"
+              ? "Creating…"
+              : "No engagement"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!!followUpLoading}
+            onClick={() => void createFollowUp("clicked_any")}
+          >
+            {followUpLoading === "clicked_any" ? "Creating…" : "Clicked any"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!!followUpLoading}
+            onClick={() => void createFollowUp("newly_subscribed")}
+          >
+            {followUpLoading === "newly_subscribed" ? "Creating…" : "Newly subscribed"}
+          </Button>
+        </div>
       </div>
 
       <div className="mb-8 rounded-xl border bg-white p-6">

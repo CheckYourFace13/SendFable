@@ -34,11 +34,11 @@ export function PriceCalculator() {
         onValueChange={([v]) => setContacts(v)}
       />
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl bg-indigo-50 p-5">
+        <div className="rounded-xl bg-parchment p-5">
           <div className="text-sm font-medium text-indigo-900">Sendfable</div>
           <div className="mt-1 text-3xl font-bold text-indigo-950">
             ${comparison.sf.price}
-            <span className="text-base font-normal text-indigo-700">/mo</span>
+            <span className="text-base font-normal text-ink">/mo</span>
           </div>
           <div className="mt-1 text-sm text-indigo-800">{comparison.sf.plan} plan</div>
         </div>

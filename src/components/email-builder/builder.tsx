@@ -48,6 +48,7 @@ import {
   createEmptyDesign,
 } from "@/lib/email-compiler";
 import { MERGE_TAG_OPTIONS } from "@/lib/merge";
+import { SIMPLE_BLOCK_TYPES } from "@/lib/simple-design";
 import { cn, randomToken } from "@/lib/utils";
 import { TiptapEditor } from "./tiptap-editor";
 
@@ -183,18 +184,27 @@ export function EmailBuilder({
   showBadge,
   previewText,
   onChange,
+  simpleMode = true,
+  onSimpleModeChange,
+  onRawHtmlModeChange,
 }: {
   initialDesign?: EmailDesign | null;
   mailingAddress?: string | null;
   showBadge?: boolean;
   previewText?: string | null;
   onChange: (design: EmailDesign, compiledHtml: string) => void;
+  simpleMode?: boolean;
+  onSimpleModeChange?: (simple: boolean) => void;
+  onRawHtmlModeChange?: (raw: boolean) => void;
 }) {
   const [design, setDesign] = useState<EmailDesign>(initialDesign ?? createEmptyDesign());
   const [selectedId, setSelectedId] = useState<string | null>(design.blocks[0]?.id ?? null);
   const [preview, setPreview] = useState<"desktop" | "mobile">("desktop");
   const [rawMode, setRawMode] = useState(false);
   const [rawHtml, setRawHtml] = useState("");
+  const palette = simpleMode
+    ? PALETTE.filter((p) => SIMPLE_BLOCK_TYPES.has(p.type) || p.type === "image")
+    : PALETTE;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const selected = design.blocks.find((b) => b.id === selectedId) ?? null;
@@ -272,9 +282,18 @@ export function EmailBuilder({
     <div className="flex h-[calc(100vh-12rem)] min-h-[560px] overflow-hidden rounded-xl border bg-white">
       {/* Palette */}
       <aside className="w-44 shrink-0 overflow-y-auto border-r p-3">
-        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Blocks</div>
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-xs font-semibold uppercase text-muted-foreground">Blocks</div>
+        </div>
+        <button
+          type="button"
+          className="mb-3 w-full rounded-md border px-2 py-1.5 text-left text-xs"
+          onClick={() => onSimpleModeChange?.(!simpleMode)}
+        >
+          {simpleMode ? "More options…" : "Simple mode"}
+        </button>
         <div className="space-y-1">
-          {PALETTE.map((item) => (
+          {palette.map((item) => (
             <button
               key={item.type}
               type="button"
@@ -322,17 +341,21 @@ export function EmailBuilder({
               <Smartphone className="mr-1 h-4 w-4" /> Mobile
             </Button>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant={rawMode ? "default" : "outline"}
-            onClick={() => {
-              if (!rawMode) setRawHtml(compiled);
-              setRawMode(!rawMode);
-            }}
-          >
-            <Code2 className="mr-1 h-4 w-4" /> Raw HTML
-          </Button>
+          {!simpleMode && (
+            <Button
+              type="button"
+              size="sm"
+              variant={rawMode ? "default" : "outline"}
+              onClick={() => {
+                if (!rawMode) setRawHtml(compiled);
+                const next = !rawMode;
+                setRawMode(next);
+                onRawHtmlModeChange?.(next);
+              }}
+            >
+              <Code2 className="mr-1 h-4 w-4" /> Raw HTML
+            </Button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto bg-slate-100 p-6">

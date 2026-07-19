@@ -7,11 +7,12 @@ const config: Config = {
     container: {
       center: true,
       padding: "1.5rem",
-      screens: { "2xl": "1200px" },
+      screens: { "2xl": "1280px" },
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Fraunces", "ui-serif", "Georgia", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -47,14 +48,32 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        indigo: {
-          600: "#4F46E5",
+        ink: {
+          DEFAULT: "#17213B",
+          soft: "#2A3554",
         },
+        coral: {
+          DEFAULT: "#F26A4F",
+          hover: "#E8553A",
+        },
+        teal: {
+          DEFAULT: "#1E8179",
+          soft: "#2A9A91",
+        },
+        parchment: "#F7F1E7",
+        lavender: "#DCD8F9",
+        page: "#FFFDF8",
+        charcoal: "#25262B",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontSize: {
+        "display-xl": ["clamp(2.5rem, 5vw, 4.25rem)", { lineHeight: "1.05", letterSpacing: "-0.03em" }],
+        "display-lg": ["clamp(2rem, 3.5vw, 3.25rem)", { lineHeight: "1.1", letterSpacing: "-0.025em" }],
+        "display-md": ["clamp(1.5rem, 2.5vw, 2.25rem)", { lineHeight: "1.15", letterSpacing: "-0.02em" }],
       },
       keyframes: {
         "accordion-down": {
@@ -74,6 +93,10 @@ const config: Config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-up": "fade-up 0.5s ease-out both",
+      },
+      maxWidth: {
+        prose: "40rem",
+        content: "72rem",
       },
     },
   },

@@ -38,7 +38,7 @@ export function BuilderMock() {
               Your story, personalized at scale — without looking like a blast.
             </p>
             <div
-              className="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
+              className="mt-4 inline-block rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white"
               style={{ animation: "fade-up 0.6s ease-out 0.5s both" }}
             >
               Read the update

@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
-export default function SignupPage() {
+const cardClass =
+  "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
+const ctaClass = "bg-coral text-white hover:bg-coral-hover";
+
+function SignupForm() {
+  const searchParams = useSearchParams();
+  const referralCode = useMemo(
+    () => searchParams.get("ref")?.trim() || undefined,
+    [searchParams]
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +35,13 @@ export default function SignupPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, workspaceName: workspaceName || undefined }),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          workspaceName: workspaceName || undefined,
+          referralCode,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -39,19 +56,19 @@ export default function SignupPage() {
 
   if (done) {
     return (
-      <Card>
+      <Card className={cardClass}>
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
-            <MailCheck className="h-6 w-6 text-emerald-600" />
+          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-teal/15">
+            <MailCheck className="h-6 w-6 text-teal" />
           </div>
-          <CardTitle>Verify your email</CardTitle>
+          <CardTitle className="text-ink">Verify your email</CardTitle>
           <CardDescription>
             We sent a verification link to <strong>{email}</strong>. You can sign in right away —
             verifying unlocks sending.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
-          <Button asChild className="w-full">
+          <Button asChild className={cn("w-full", ctaClass)}>
             <Link href="/login">Continue to sign in</Link>
           </Button>
         </CardContent>
@@ -60,9 +77,9 @@ export default function SignupPage() {
   }
 
   return (
-    <Card>
+    <Card className={cardClass}>
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
+        <CardTitle className="text-ink">Create your account</CardTitle>
         <CardDescription>
           Free for up to 500 contacts and 2,000 emails/month. Any email address works.
         </CardDescription>
@@ -86,18 +103,28 @@ export default function SignupPage() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="workspace">
-              Business or project name <span className="text-muted-foreground">(optional)</span>
+              Business or project name <span className="text-ink/45">(optional)</span>
             </Label>
             <Input id="workspace" maxLength={80} value={workspaceName}
               onChange={(e) => setWorkspaceName(e.target.value)} placeholder="Acme Bakery" />
           </div>
-          <Button type="submit" className="w-full" loading={loading}>Create account</Button>
+          <Button type="submit" className={cn("w-full", ctaClass)} loading={loading}>
+            Create account
+          </Button>
         </form>
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-6 text-center text-sm text-ink/60">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">Sign in</Link>
+          <Link href="/login" className="font-medium text-coral hover:underline">Sign in</Link>
         </p>
       </CardContent>
     </Card>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }
