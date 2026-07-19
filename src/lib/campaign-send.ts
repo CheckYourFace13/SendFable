@@ -11,7 +11,7 @@ import { contactMergeData, renderMergeTags } from "@/lib/merge";
 import { appUrl } from "@/lib/utils";
 import { signToken } from "@/lib/tokens";
 import { PLANS, BOUNCE_PAUSE_THRESHOLD, COMPLAINT_PAUSE_THRESHOLD, maxRampLevel } from "@/lib/plans";
-import { getWorkspaceOwner } from "@/lib/session";
+import { getWorkspaceOwner } from "@/lib/workspace-owner";
 import { incrementMonthlySendCount } from "@/lib/quota";
 import { sendCampaignAutoPausedAlert } from "@/lib/transactional";
 import { enqueueRecipients, drainCampaignJobs } from "@/lib/queue";
