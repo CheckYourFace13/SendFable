@@ -1,172 +1,164 @@
-# Production host audit — Sendfable
+# Production VPS audit — Sendfable
 
 **Date:** 2026-07-19  
-**Method:** SSH read-only inspection from the Cursor session (no installs, no DNS changes, no service restarts).  
-**Secrets:** None recorded in this document.
+**Host:** `root@177.7.38.145` (`srv1624156`)  
+**OS:** Ubuntu 24.04.4 LTS (Noble)  
+**Method:** Read-only SSH via deploy key `sendfable_vps` + `/tmp/vps-full-audit.sh` / `/tmp/vps-audit-nginx.sh`  
+**Secrets:** None recorded.
 
 ---
 
-## Executive verdict
+## Verdict
 
-**Safe Docker deployment to `/opt/sendfable` is not possible on the host currently reachable via SSH.**
+**Safe to proceed with an isolated `/opt/sendfable` Docker Compose deploy**, integrated into the **existing Nginx + Certbot** stack.
 
-The only working SSH target is Hostinger **shared / CloudLinux** hosting (`us-bos-web1914.main-hosting.eu`), not a root-capable VPS with Docker. Deployment of Postgres, Redis, a dedicated worker, and an isolated Compose project as specified would require a different machine (or an explicitly approved alternative architecture).
+Constraints that must be respected:
 
-**Deployment is stopped at Phase 1 / Phase 5 (DNS hold).** No containers were created. No reverse proxy was changed. No other websites were interrupted.
+- Do **not** publish host port **3000** (already used by Gravyblock Next.js).
+- Do **not** start Caddy or a second public proxy on 80/443.
+- Do **not** publish Postgres/Redis publicly.
+- Add a new Nginx site only after DNS points here; obtain cert with Certbot (same pattern as other sites).
+- Do not modify existing Nginx sites for gravyblock / rentalnoodle / plausible / ticketgravy except a validated `nginx -t` + reload when adding Sendfable.
+
+**No deployment was performed during this audit.**
 
 ---
 
-## SSH target inspected
+## Resources
 
-| Field | Value |
+| Resource | Value |
+|----------|--------|
+| CPU | 2 vCPU |
+| RAM | 7.8 GiB total; ~2.4 GiB used; ~5.3 GiB available |
+| Swap | none |
+| Disk `/` | 96G total; 17G used; **80G avail** (17%) |
+| Public IPv4 | `177.7.38.145` |
+| Tailscale | Present (`100.114.110.36`, `tailscale0` firewall chains) |
+
+---
+
+## Docker
+
+| Item | Value |
+|------|--------|
+| Docker Engine | `29.1.3` |
+| Docker Compose | `v2.40.3` (plugin) |
+| Compose ready | **Yes** |
+
+### Running / existing containers
+
+| Name | Image | Status | Published ports |
+|------|-------|--------|-----------------|
+| `plausible-plausible-1` | plausible CE v3.2.1 | Up | `127.0.0.1:8000->8000` |
+| `plausible-plausible_db-1` | postgres:16-alpine | Up (healthy) | internal 5432 only |
+| `plausible-plausible_events_db-1` | clickhouse | Up (healthy) | internal |
+| `jesus-orchestrator` | python:3.11-slim | **Exited** | — |
+
+### Compose projects
+
+| Project | Status | Path |
+|---------|--------|------|
+| `plausible` | running (3) | `/home/deploy/plausible/compose.yml` (+ override) |
+
+### Networks
+
+- `bridge`, `host`, `none`
+- `plausible_default`
+- `jesus-agent_jesus-network`
+
+### Volumes
+
+- `plausible_db-data`, `plausible_event-data`, `plausible_event-logs`, `plausible_plausible-data`
+
+### Sendfable name conflicts
+
+- **No** containers, networks, or volumes named `sendfable*`
+- **`/opt/sendfable` does not exist** (available)
+
+---
+
+## Reverse proxy
+
+| Proxy | Status |
 |-------|--------|
-| Host | `145.223.122.174` |
-| SSH port | `65002` |
-| Hostname | `us-bos-web1914.main-hosting.eu` |
-| User | `u703718100` (non-root) |
-| Auth used | Existing deploy key (`outbreakthreat_deploy`) already authorized for this account |
-| Public IPv4 observed | `145.223.122.174` |
+| **Nginx** | **Active** — owns `0.0.0.0:80` and `0.0.0.0:443` |
+| Caddy | Not active / not the edge proxy |
+| Traefik | Not present |
 
-Alternate IP in local `known_hosts` (`145.223.77.38:65002`) rejected this key (`Permission denied`).
+SSL: **Certbot** (Let’s Encrypt) for existing sites. `nginx -t` succeeds.
 
----
+### Enabled sites (`/etc/nginx/sites-enabled`)
 
-## System profile
+| Site | Domains | Upstream |
+|------|---------|----------|
+| `default` | `_` | static `/var/www/html` (HTTP default) |
+| `gravyblock` | gravyblock.com, www | `http://localhost:3000` + LE cert |
+| `rentalnoodle` | rentalnoodle.com, www | `http://localhost:3001` + LE cert |
+| `plausible` | plausible.rentalnoodle.com | `http://127.0.0.1:8000` + LE cert |
+| `ticketgravy` | ticketgravy.com, www | `http://127.0.0.1:3005` (HTTP vhost present) |
 
-| Check | Result |
-|-------|--------|
-| Kernel | Linux 5.14.0-…el9_7.x86_64 (RHEL/CloudLinux 9 family) |
-| `/etc/os-release` | Not readable in cageFS environment |
-| Privilege | Unprivileged user; **no sudo** |
-| `/opt` | **Read-only** — cannot create `/opt/sendfable` |
-| Docker | **Not installed** / not available to this user |
-| Docker Compose | **Not available** |
-| Node (login shell PATH) | Not on PATH for non-interactive shell (Hostinger Node apps use selector / app-specific runtimes) |
-| Existing Node processes | Multiple `next-server` instances for other domains (do not touch) |
-
-Host memory/disk numbers reported by `free`/`df` reflect the **shared physical host**, not a dedicated VPS allocation. Treat this as multi-tenant Hostinger hosting.
+**`sendfable.com` is not configured in Nginx.**
 
 ---
 
-## Existing websites / projects (do not interrupt)
+## Ports
 
-Under `~/domains/` (observed):
-
-- `outbreakthreat.com`
-- `micstage.com`
-- `leaguepour.com`
-- `boatingchicago.com`
-- `iscreamstudio.com`
-- `plg.iscreamstudio.com`
-- `seestew.com`
-- Hostinger staging hostnames (`*.hostingersite.com`)
-
-**No `sendfable.com` domain folder exists yet** on this account.
+| Port | Listener | Conflict for Sendfable plan? |
+|------|----------|------------------------------|
+| 80 / 443 | Nginx (public) | Reuse via **new server block** — do not bind another proxy |
+| 3000 | `next-server` cwd `/home/deploy/gravyblock` (public `*:3000`) | **Conflict if Sendfable publishes 3000** — use another host bind, e.g. `127.0.0.1:3010` |
+| 3001 | (used by rentalnoodle per nginx) | Avoid |
+| 3005 | (used by ticketgravy per nginx) | Avoid |
+| 5432 | Host Postgres on **127.0.0.1 only** | OK if Compose Postgres has **no** host publish |
+| 6379 | Not listening | OK for private Compose Redis |
+| 8000 | Plausible on 127.0.0.1 | Avoid |
 
 ---
 
-## Reverse proxy / ports
+## Project directories (do not disturb)
 
-| Check | Result |
-|-------|--------|
-| User-controlled Caddy / Nginx / Traefik | Not present as a user-managed reverse proxy |
-| Ports 80 / 443 | Owned by Hostinger’s shared web stack (not controlled by this Unix user) |
-| Ports 3000 / 5432 / 6379 | Not exposed as user-owned listeners in a way compatible with Docker Compose |
-| Firewall management | Not available to this user (`iptables` not present) |
-
-Hostinger terminates HTTPS for domains attached in hPanel. A competing Caddy container binding `:80`/`:443` is **not** an option on this account.
+- `/opt/ticketgravy`, `/opt/jesus`, `/opt/jesus-agent`, `/opt/containerd`
+- `/home/deploy/gravyblock`, `/home/deploy/rentalnoodle`, `/home/deploy/plausible`
+- `/home/ubuntu`
 
 ---
 
-## Current public DNS for `sendfable.com` (external lookup)
+## Firewall
 
-Queried from the operator workstation (no DNS changes made):
-
-| Name | Type | Value | Notes |
-|------|------|-------|-------|
-| `sendfable.com` | A | `15.197.148.33` | GoDaddy parking / forwarding anycast-style target |
-| `sendfable.com` | A | `3.33.130.190` | Same |
-| `www.sendfable.com` | CNAME | `sendfable.com` | Already present |
-| SOA | — | GoDaddy (`dns.jomax.net`) | Nameservers appear to remain at GoDaddy |
-
-These A records do **not** point at `145.223.122.174`. Pointing them there prematurely would not produce a working Docker deployment on shared hosting.
+- `ufw`: **inactive**
+- `iptables`: Docker + Tailscale chains; default INPUT ACCEPT / FORWARD DROP (Docker-managed)
 
 ---
 
-## Conflict with requested deployment model
+## Public DNS (external; unchanged by this audit)
 
-Requested model:
+| Name | Type | Value |
+|------|------|-------|
+| sendfable.com | A | `15.197.148.33` (parking) |
+| sendfable.com | A | `3.33.130.190` (parking) |
+| www.sendfable.com | CNAME | sendfable.com |
 
-- Isolated directory `/opt/sendfable`
-- Docker Compose project `sendfable` with app, worker, Postgres, Redis
-- Dedicated network/volumes; Redis required for worker
-- Respect existing reverse proxy on 80/443 or add Caddy
-
-Actual host:
-
-- Cannot write `/opt`
-- No Docker
-- Shared reverse proxy / Node hosting model (same class as OutbreakThreat deploy)
-- Existing customer sites must remain untouched
-
-**Therefore:** continuing Phase 2–7 as written would either fail or risk unsafe workarounds. Per instructions, stop and escalate.
+Not yet pointing at this VPS.
 
 ---
 
-## Safe paths forward (choose one)
+## Recommended Sendfable edge pattern (for later deploy)
 
-### Option A — Dedicated VPS with Docker (matches the written plan)
-
-Provide SSH access to a root (or docker-capable) VPS where:
-
-- Docker Engine + Compose are installed (or installable)
-- `/opt/sendfable` is writable
-- Ports 80/443 are free **or** an existing proxy can add a vhost without breaking other sites
-
-Then:
-
-1. Re-run this audit on that VPS
-2. Add GoDaddy **A** `@` → that VPS IPv4 (keep MX/SPF/DKIM/DMARC untouched)
-3. Keep/adjust **CNAME** `www` → `sendfable.com`
-4. Proceed with Compose + Caddy/proxy, Redis worker, SES/Stripe still blank
-
-### Option B — Hostinger shared Node (different architecture; needs approval)
-
-Only if you explicitly accept a non-Docker design:
-
-1. Add `sendfable.com` in Hostinger hPanel to this account
-2. Use Hostinger Node.js app + **managed** Postgres + **managed** Redis (or external providers)
-3. Run worker as a second long-running process if Hostinger allows it
-4. Point DNS only after the Node app is attached
-
-This is **not** the Compose layout in the request and needs a revised ops doc before implementation.
+1. Compose project `sendfable` in `/opt/sendfable`
+2. Publish app only as `127.0.0.1:3010:3000` (or similar unused localhost port)
+3. Postgres/Redis: no host ports
+4. Worker + Redis on private Docker network
+5. New Nginx site `sendfable` → `proxy_pass http://127.0.0.1:3010`
+6. After DNS: `certbot --nginx -d sendfable.com -d www.sendfable.com`
+7. Backup `/etc/nginx` before edit; `nginx -t` then `systemctl reload nginx`
 
 ---
 
-## DNS hold — do not change yet for Docker
+## Actions taken
 
-Until Option A’s VPS IP is confirmed (or Option B is approved and the Hostinger domain is attached):
-
-- **Do not** change GoDaddy nameservers
-- **Do not** delete MX / SPF / DKIM / DMARC / email records
-- **Do not** point `@` at `145.223.122.174` expecting Docker Compose to work
-
-See the final response for the **provisional** GoDaddy records to use once the correct target IP is known.
-
----
-
-## Actions taken during this audit
-
-- SSH connect (read-only commands)
-- External DNS lookup for `sendfable.com` / `www`
+- Key-based SSH audit only
 - Wrote this document
 
-## Actions **not** taken
+## Actions not taken
 
-- No package installs
-- No Docker pull/build
-- No DNS edits
-- No reverse-proxy edits
-- No stops/restarts of existing Node apps
-- No secrets created on the server
-- No real email / SES / Stripe activity
+- No Compose up, no Nginx edits, no Certbot for sendfable, no DNS changes, no other site restarts
