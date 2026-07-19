@@ -1,7 +1,14 @@
-# Sendfable — Nginx site (integrates with existing Hostinger VPS Nginx).
-# Install: copy to /etc/nginx/sites-available/sendfable && ln -s to sites-enabled
+#!/usr/bin/env bash
+set -euo pipefail
+
+TS=$(date +%Y%m%d-%H%M%S)
+mkdir -p /root/nginx-backups
+cp -a /etc/nginx/sites-available/sendfable "/root/nginx-backups/sendfable-pre-apex-$TS"
+tar -czf "/root/nginx-backups/nginx-pre-apex-$TS.tar.gz" -C /etc nginx
+
+cat > /etc/nginx/sites-available/sendfable <<'EOF'
+# Sendfable — Nginx site (Certbot + www→apex)
 # Upstream: Docker app bound to 127.0.0.1:3010 only.
-# After first Certbot run, cert paths below must match /etc/letsencrypt/live/sendfable.com/
 
 # www → apex (HTTPS)
 server {
@@ -45,7 +52,7 @@ server {
     }
 }
 
-# HTTP → HTTPS apex
+# HTTP → HTTPS (www and apex both land on apex HTTPS)
 server {
     listen 80;
     listen [::]:80;
@@ -59,3 +66,14 @@ server {
         return 301 https://sendfable.com$request_uri;
     }
 }
+EOF
+
+nginx -t
+systemctl reload nginx
+echo "WWW_APEX_REDIRECT_OK"
+
+echo "=== Redirect checks ==="
+curl -sI --max-time 15 http://sendfable.com/ | head -8
+curl -sI --max-time 15 http://www.sendfable.com/ | head -8
+curl -sI --max-time 15 https://www.sendfable.com/ | head -8
+curl -sI --max-time 15 https://sendfable.com/ | head -8
