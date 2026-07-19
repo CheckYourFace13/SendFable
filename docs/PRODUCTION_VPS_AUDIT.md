@@ -20,7 +20,7 @@ Constraints that must be respected:
 - Add a new Nginx site only after DNS points here; obtain cert with Certbot (same pattern as other sites).
 - Do not modify existing Nginx sites for gravyblock / rentalnoodle / plausible / ticketgravy except a validated `nginx -t` + reload when adding Sendfable.
 
-**No deployment was performed during this audit.**
+**Deployed 2026-07-19** to `/opt/sendfable` (Compose project `sendfable`, Nginx site added after backup). See `PRODUCTION_DEPLOYMENT.md` and `PRODUCTION_VERIFICATION.md`. HTTPS pending clean DNS (parking A records).
 
 ---
 

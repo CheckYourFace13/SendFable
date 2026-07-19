@@ -1,64 +1,34 @@
-# DNS hold — sendfable.com (GoDaddy)
+# DNS — sendfable.com (GoDaddy)
 
-**Status:** Hold. Do not change DNS for a Docker deploy until a Docker-capable VPS IP is confirmed.
+**Status (2026-07-19):** Partial. VPS A record is live, but **GoDaddy parking A records remain** and block Let’s Encrypt.
 
-See `PRODUCTION_VPS_AUDIT.md`.
+## Observed resolution
 
-## Current public DNS (observed 2026-07-19)
-
-| Name | Type | Value |
-|------|------|-------|
-| `@` / `sendfable.com` | A | `15.197.148.33` |
-| `@` / `sendfable.com` | A | `3.33.130.190` |
+| Name | Type | Values |
+|------|------|--------|
+| `@` / `sendfable.com` | A | `177.7.38.145` **and** `15.197.148.33`, `3.33.130.190` |
 | `www` | CNAME | `sendfable.com` |
 
-These look like GoDaddy parking/forwarding targets, **not** the Hostinger shared host (`145.223.122.174`).
+Certbot failed secondary validation against `3.33.130.190` (403 on ACME challenge).
+
+## Required fix (you)
+
+In GoDaddy → DNS:
+
+1. **Delete** the parking A records (`15.197…` and `3.33…`).
+2. Leave **only** `@` → `177.7.38.145`.
+3. Keep `www` CNAME → `sendfable.com`.
 
 ## Do not change
 
 - GoDaddy nameservers
-- MX records
-- SPF / DKIM / DMARC / other email-related TXT/CNAME records
-- Any existing Hostinger or third-party email authentication records
+- MX / SPF / DKIM / DMARC / other email authentication records
 
-## When you have a Docker VPS IPv4 (`VPS_IPV4`)
+## After parking records are gone
 
-In GoDaddy → sendfable.com → DNS:
-
-### 1. Root A record
-
-- **Type:** A  
-- **Name:** `@`  
-- **Value:** `VPS_IPV4` (exact address from the VPS provider)  
-- **TTL:** default / 1 hour  
-
-If two parking A records exist (`15.197…` and `3.33…`), **edit/replace them** so only the VPS A record remains for `@`. Do not leave parking A records alongside the VPS IP.
-
-### 2. WWW
-
-- **Type:** CNAME  
-- **Name:** `www`  
-- **Value:** `sendfable.com`  
-- **TTL:** default  
-
-(Already present — keep it.)
-
-### 3. Optional later (not now)
-
-- `send.sendfable.com` SES / DKIM records — only when Amazon SES is approved  
-- Stripe / other vendor CNAMEs — only when billing is enabled  
-
-## Verification after you change DNS
-
-From your PC:
-
-```powershell
-Resolve-DnsName sendfable.com -Type A
-Resolve-DnsName www.sendfable.com
+```bash
+dig +short sendfable.com A   # expect only 177.7.38.145
+certbot --nginx -d sendfable.com -d www.sendfable.com --non-interactive --agree-tos --email chris@sendfable.com --redirect
 ```
 
-Expect `@` → your VPS IPv4 only. Then tell the agent to continue Phase 6+.
-
-## If staying on Hostinger shared hosting instead
-
-Do **not** use the Docker A-record plan above until the domain is added in Hostinger hPanel and Hostinger shows the correct target (often the same shared IP or their panel instructions). Architecture must be approved first (`PRODUCTION_VPS_AUDIT.md` Option B).
+Then `https://sendfable.com` and Secure auth cookies will work in the browser.
