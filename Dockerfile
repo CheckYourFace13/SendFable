@@ -13,6 +13,11 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Required at build time: Next statically embeds APP_URL into sitemap/robots/metadata.
+ARG APP_URL=https://sendfable.com
+ARG NEXTAUTH_URL=https://sendfable.com
+ENV APP_URL=$APP_URL
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN npm run build

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-import { appUrl } from "@/lib/utils";
+import { appUrl, publicOrigin } from "@/lib/utils";
 
 const sans = Inter({
   subsets: ["latin"],
@@ -17,7 +17,7 @@ const display = Fraunces({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(publicOrigin()),
   title: {
     default: "Sendfable — Simple Email Marketing for Small Businesses",
     template: "%s · Sendfable",

@@ -5,9 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Public site origin. Prefer APP_URL; never bake localhost into production builds. */
+export function publicOrigin(): string {
+  const fromEnv = (process.env.APP_URL || process.env.NEXTAUTH_URL || "").replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  return process.env.NODE_ENV === "production" ? "https://sendfable.com" : "http://localhost:3000";
+}
+
 export function appUrl(path = ""): string {
-  const base = (process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
-  return `${base}${path}`;
+  return `${publicOrigin()}${path}`;
 }
 
 export function formatNumber(n: number): string {
