@@ -16,6 +16,14 @@ const MARKETING_PAGES: Array<{ route: string; file: string }> = [
   { route: "/deliverability", file: path.join(MARKETING_ROOT, "deliverability", "page.tsx") },
   { route: "/templates", file: path.join(MARKETING_ROOT, "templates", "page.tsx") },
   { route: "/migrate", file: path.join(MARKETING_ROOT, "migrate", "page.tsx") },
+  {
+    route: "/migrate/mailchimp",
+    file: path.join(MARKETING_ROOT, "migrate", "mailchimp", "page.tsx"),
+  },
+  {
+    route: "/email-marketing-for-small-business",
+    file: path.join(MARKETING_ROOT, "email-marketing-for-small-business", "page.tsx"),
+  },
   { route: "/security", file: path.join(MARKETING_ROOT, "security", "page.tsx") },
   { route: "/status", file: path.join(MARKETING_ROOT, "status", "page.tsx") },
   { route: "/integrations", file: path.join(MARKETING_ROOT, "integrations", "page.tsx") },
@@ -90,11 +98,14 @@ const MARKETING_PAGES: Array<{ route: string; file: string }> = [
 type Meta = { title?: string; description?: string };
 
 function extractMetadata(source: string): Meta {
+  const helperMatch = source.match(
+    /export\s+const\s+metadata\s*=\s*marketingPageMeta\(\s*\{([\s\S]*?)\}\s*\)/,
+  );
   const blockMatch = source.match(
     /export\s+const\s+metadata(?:\s*:\s*[^=]+)?\s*=\s*(\{[\s\S]*?\n\})/,
   );
-  if (!blockMatch) return {};
-  const block = blockMatch[1];
+  const block = helperMatch?.[1] ?? blockMatch?.[1];
+  if (!block) return {};
   const title =
     block.match(/title\s*:\s*["'`]([^"'`]+)["'`]/)?.[1] ??
     block.match(/title\s*:\s*\{\s*absolute\s*:\s*["'`]([^"'`]+)["'`]/)?.[1];

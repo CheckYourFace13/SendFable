@@ -47,8 +47,10 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
     title: "Resources",
     links: [
       { href: "/resources", label: "Resources hub" },
+      { href: "/email-marketing-for-small-business", label: "Email for small business" },
       { href: "/email-marketing-guide", label: "Email marketing guide" },
       { href: "/deliverability", label: "Deliverability" },
+      { href: "/migrate/mailchimp", label: "Leave Mailchimp" },
       { href: "/migrate", label: "Migrate" },
       { href: "/changelog", label: "Changelog" },
     ],
@@ -60,7 +62,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/status", label: "Status" },
       { href: "/integrations", label: "Integrations" },
       { href: "/login", label: "Log in" },
-      { href: "/signup", label: "Start writing free" },
+      { href: "/early-access", label: "Early access" },
     ],
   },
   {

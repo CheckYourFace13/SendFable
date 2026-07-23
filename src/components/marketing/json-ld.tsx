@@ -1,4 +1,5 @@
 import { appUrl } from "@/lib/utils";
+import type { Metadata } from "next";
 
 type JsonLdValue = Record<string, unknown> | Record<string, unknown>[];
 
@@ -11,15 +12,41 @@ export function JsonLd({ data }: { data: JsonLdValue }) {
   );
 }
 
+/** Per-page metadata with canonical + OG — use on inner SEO pages (not homepage hero). */
+export function marketingPageMeta(opts: {
+  title: string;
+  description: string;
+  path: string;
+}): Metadata {
+  const url = appUrl(opts.path);
+  return {
+    title: opts.title,
+    description: opts.description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: opts.title,
+      description: opts.description,
+      url,
+      type: "website",
+      siteName: "Sendfable",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: opts.title,
+      description: opts.description,
+    },
+  };
+}
+
 export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Sendfable",
     url: appUrl("/"),
-    logo: appUrl("/logo.png"),
+    logo: appUrl("/brand/sendfable-mark.svg"),
     description:
-      "Email marketing platform with Amazon SES delivery, any-email signup, and straightforward pricing.",
+      "Simple email marketing for small businesses. Add people, create an email, send it — with Amazon SES delivery managed for you.",
     sameAs: [] as string[],
   };
 }
@@ -31,7 +58,7 @@ export function websiteJsonLd() {
     name: "Sendfable",
     url: appUrl("/"),
     description:
-      "Every email tells your story — Sendfable sends thousands that read like you wrote each one.",
+      "Email marketing for small businesses: contacts, campaigns, templates, and deliverability — without Mailchimp complexity.",
     publisher: {
       "@type": "Organization",
       name: "Sendfable",
@@ -49,7 +76,7 @@ export function softwareApplicationJsonLd() {
     operatingSystem: "Web",
     url: appUrl("/"),
     description:
-      "Email marketing with drag-and-drop campaigns, audience tools, and Amazon SES delivery.",
+      "Email marketing with Simple Mode campaigns, audience tools, and Amazon SES delivery.",
     offers: {
       "@type": "Offer",
       price: "0",
@@ -87,7 +114,7 @@ export function articleJsonLd(opts: {
     url: appUrl(opts.path),
     mainEntityOfPage: appUrl(opts.path),
     datePublished: opts.datePublished ?? "2026-07-18",
-    dateModified: opts.dateModified ?? opts.datePublished ?? "2026-07-18",
+    dateModified: opts.dateModified ?? opts.datePublished ?? "2026-07-23",
     author: {
       "@type": "Organization",
       name: "Sendfable",
@@ -96,6 +123,61 @@ export function articleJsonLd(opts: {
       "@type": "Organization",
       name: "Sendfable",
       url: appUrl("/"),
+      logo: {
+        "@type": "ImageObject",
+        url: appUrl("/brand/sendfable-mark.svg"),
+      },
     },
+  };
+}
+
+export function faqJsonLd(items: { q: string; a: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.a,
+      },
+    })),
+  };
+}
+
+export function howToJsonLd(opts: {
+  name: string;
+  description: string;
+  path: string;
+  steps: { name: string; text: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: opts.name,
+    description: opts.description,
+    url: appUrl(opts.path),
+    step: opts.steps.map((step, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: step.name,
+      text: step.text,
+    })),
+  };
+}
+
+export function definedTermSetJsonLd(
+  terms: { name: string; description: string }[]
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    name: "Email deliverability terms",
+    hasDefinedTerm: terms.map((t) => ({
+      "@type": "DefinedTerm",
+      name: t.name,
+      description: t.description,
+    })),
   };
 }

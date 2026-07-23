@@ -92,7 +92,10 @@ export default function MigratePage() {
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild>
-          <Link href="/signup">Create account & import CSV</Link>
+          <Link href="/early-access">Request early access</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/migrate/mailchimp">Leave Mailchimp guide</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/deliverability">Read deliverability notes</Link>
@@ -108,6 +111,13 @@ export default function MigratePage() {
                 <li key={step}>{step}</li>
               ))}
             </ol>
+            {s.name === "Mailchimp" && (
+              <p className="mt-4 text-sm">
+                <Link href="/migrate/mailchimp" className="font-medium text-coral underline-offset-4 hover:underline">
+                  Full Mailchimp → Sendfable walkthrough
+                </Link>
+              </p>
+            )}
           </div>
         ))}
       </section>
@@ -121,7 +131,7 @@ export default function MigratePage() {
 
       <MarketingCta
         title="Import when you are ready"
-        body="Sign up free, map your CSV, verify a sender, and send a small test campaign before you cut over."
+        body="Join early access, map your CSV when invited, verify a sender, and send a small test campaign before you cut over."
         secondaryHref="/pricing"
         secondaryLabel="See pricing"
       />

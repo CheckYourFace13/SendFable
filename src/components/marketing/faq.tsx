@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { JsonLd, faqJsonLd } from "@/components/marketing/json-ld";
 
 const FAQS = [
   {
@@ -40,15 +41,25 @@ const FAQS = [
   },
 ];
 
-export function Faq({ items = FAQS }: { items?: { q: string; a: string }[] }) {
+export function Faq({
+  items = FAQS,
+  withSchema = true,
+}: {
+  items?: { q: string; a: string }[];
+  /** Emit FAQPage JSON-LD for AEO/search (default true). */
+  withSchema?: boolean;
+}) {
   return (
-    <Accordion type="single" collapsible className="w-full">
-      {items.map((f, i) => (
-        <AccordionItem key={i} value={`item-${i}`}>
-          <AccordionTrigger>{f.q}</AccordionTrigger>
-          <AccordionContent>{f.a}</AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <>
+      {withSchema && items.length > 0 ? <JsonLd data={faqJsonLd(items)} /> : null}
+      <Accordion type="single" collapsible className="w-full">
+        {items.map((f, i) => (
+          <AccordionItem key={i} value={`item-${i}`}>
+            <AccordionTrigger>{f.q}</AccordionTrigger>
+            <AccordionContent>{f.a}</AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </>
   );
 }

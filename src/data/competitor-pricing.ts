@@ -3,7 +3,7 @@
  * Prices change — always surface lastChecked and verify sources before quoting.
  */
 
-export const PRICING_LAST_CHECKED = "2026-07-01";
+export const PRICING_LAST_CHECKED = "2026-07-23";
 
 export const PRICING_DISCLAIMER =
   "Competitor pricing changes frequently and varies by plan, billing interval, and add-ons. Figures below are approximate public list prices as of the lastChecked date — verify on each vendor’s site before making a decision.";

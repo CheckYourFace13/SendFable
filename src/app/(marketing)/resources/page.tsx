@@ -1,23 +1,36 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
+import { AnswerLead } from "@/components/marketing/answer-lead";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Resources",
   description:
-    "Sendfable resource hub: email marketing guide, deliverability explainer, migration help, and product updates.",
-};
+    "Sendfable resource hub: email marketing for small business, deliverability, Mailchimp migration, templates, comparisons, and product updates.",
+  path: "/resources",
+});
 
 const LINKS = [
   {
+    title: "Email marketing for small business",
+    href: "/email-marketing-for-small-business",
+    body: "A five-step playbook: permission, one clear email, test, send, review.",
+  },
+  {
     title: "Email marketing guide",
     href: "/email-marketing-guide",
-    body: "A practical guide to lists, authentication, campaigns, and measuring what matters.",
+    body: "Lists, authentication, campaigns, and measuring what matters.",
   },
   {
     title: "Deliverability",
     href: "/deliverability",
-    body: "SPF, DKIM, DMARC, From-rewrite for strict mailboxes, and list-quality protections.",
+    body: "SPF, DKIM, DMARC, From-rewrite, and a before-you-send checklist.",
+  },
+  {
+    title: "Migrate from Mailchimp",
+    href: "/migrate/mailchimp",
+    body: "Export, clean, import, verify sender, and send your first test.",
   },
   {
     title: "Migrate to Sendfable",
@@ -27,7 +40,17 @@ const LINKS = [
   {
     title: "Templates",
     href: "/templates",
-    body: "Industry template gallery and what each layout is designed to help you send.",
+    body: "Industry template gallery for announcements, offers, and welcome notes.",
+  },
+  {
+    title: "Sendfable vs Mailchimp",
+    href: "/compare/mailchimp",
+    body: "Capability comparison for teams that want a simpler workflow.",
+  },
+  {
+    title: "Cheap email marketing",
+    href: "/cheap-email-marketing",
+    body: "Cost clarity without fake “unlimited” claims.",
   },
   {
     title: "Changelog",
@@ -50,15 +73,16 @@ export default function ResourcesPage() {
           { label: "Resources", href: "/resources", current: true },
         ]}
       />
-      <h1 className="text-4xl font-bold tracking-tight">Resources</h1>
-      <p className="mt-3 text-lg text-muted-foreground">
-        Guides and references for running email without hype. Start with the topics below — or
-        subscribe to the{" "}
-        <Link href="/feed.xml" className="font-medium text-teal hover:underline">
-          RSS feed
-        </Link>{" "}
-        for changelog and resource updates.
+      <h1 className="font-display text-4xl font-bold tracking-tight text-ink">Resources</h1>
+      <p className="mt-3 text-lg text-ink/65">
+        Guides for running email without hype. Start here, then explore comparisons and industry
+        pages when you need them.
       </p>
+
+      <AnswerLead
+        question="Where should I start?"
+        answer="If you are new: read email marketing for small business. Switching tools: migrate from Mailchimp. Worried about the inbox: deliverability checklist."
+      />
 
       <div className="mt-12 grid gap-6 sm:grid-cols-2">
         {LINKS.map((item) => (
