@@ -10,6 +10,11 @@ import { PLANS } from "@/lib/plans";
 import { sanitizeEmailHtml } from "@/lib/html-sanitize";
 import { maybeAwardReferralSignupCredit } from "@/lib/referrals";
 import { externalEmailActive, isEarlyLaunch } from "@/lib/early-launch";
+import {
+  CAMPAIGN_SEND_DISABLED_MESSAGE,
+  CampaignSendDisabledError,
+  isCampaignSendEnabled,
+} from "@/lib/campaign-send-gate";
 
 const schema = z.object({
   when: z.enum(["now", "schedule"]),
@@ -19,6 +24,10 @@ const schema = z.object({
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!isCampaignSendEnabled()) {
+    return NextResponse.json({ error: CAMPAIGN_SEND_DISABLED_MESSAGE }, { status: 403 });
+  }
 
   if (isEarlyLaunch() && !externalEmailActive()) {
     return NextResponse.json(
@@ -126,6 +135,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     void maybeAwardReferralSignupCredit(ctx.user.id, "first_campaign");
     return NextResponse.json({ campaign: updated, ...result });
   } catch (err) {
+    if (err instanceof CampaignSendDisabledError) {
+      return NextResponse.json({ error: err.message }, { status: 403 });
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Launch failed" },
       { status: 400 }

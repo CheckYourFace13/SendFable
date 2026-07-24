@@ -9,6 +9,10 @@ import { renderMergeTags } from "@/lib/merge";
 import { PLANS } from "@/lib/plans";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { appUrl } from "@/lib/utils";
+import {
+  CAMPAIGN_SEND_DISABLED_MESSAGE,
+  isCampaignSendEnabled,
+} from "@/lib/campaign-send-gate";
 
 const schema = z.object({
   email: z.string().email().optional(),
@@ -17,6 +21,10 @@ const schema = z.object({
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!isCampaignSendEnabled()) {
+    return NextResponse.json({ error: CAMPAIGN_SEND_DISABLED_MESSAGE }, { status: 403 });
+  }
 
   const rl = await rateLimit(
     "testSend",

@@ -16,11 +16,16 @@ import { incrementMonthlySendCount } from "@/lib/quota";
 import { sendCampaignAutoPausedAlert } from "@/lib/transactional";
 import { enqueueRecipients, drainCampaignJobs } from "@/lib/queue";
 import { resolveAudienceContacts } from "@/lib/audience";
+import {
+  assertCampaignSendEnabled,
+  CampaignSendDisabledError,
+} from "@/lib/campaign-send-gate";
 
 /**
  * Snapshot recipients and enqueue (or inline-process) a campaign send.
  */
 export async function launchCampaign(campaignId: string): Promise<{ recipientCount: number }> {
+  assertCampaignSendEnabled();
   const campaign = await prisma.campaign.findUnique({
     where: { id: campaignId },
     include: { workspace: true, senderIdentity: true },
@@ -112,6 +117,9 @@ async function processInline(
 }
 
 export async function sendOneRecipient(recipientId: string): Promise<void> {
+  // Hard stop for queued retries / in-flight jobs while delivery is gated off.
+  assertCampaignSendEnabled();
+
   const recipient = await prisma.campaignRecipient.findUnique({
     where: { id: recipientId },
     include: {
@@ -304,6 +312,7 @@ export async function pauseCampaign(
 }
 
 export async function resumeCampaign(campaignId: string): Promise<void> {
+  assertCampaignSendEnabled();
   const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
   if (!campaign || campaign.status !== "PAUSED") throw new Error("Campaign is not paused");
 

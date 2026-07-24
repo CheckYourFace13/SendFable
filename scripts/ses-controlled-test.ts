@@ -7,11 +7,13 @@
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma";
 import { platformFrom, sendEmail, isDevMailMode } from "../src/lib/mailer";
+import { assertSesControlledTestEnabled } from "../src/lib/campaign-send-gate";
 
 const ALLOWED_TO = "chris@iscreamstudio.com";
 const SUBJECT = "Sendfable SES controlled test";
 
 async function main() {
+  assertSesControlledTestEnabled();
   if (isDevMailMode()) {
     throw new Error("AWS credentials not loaded — aborting (would write outbox only)");
   }

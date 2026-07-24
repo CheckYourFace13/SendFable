@@ -11,6 +11,7 @@ import {
   type CampaignSendJob,
 } from "@/lib/queue";
 import { sendOneRecipient } from "@/lib/campaign-send";
+import { CampaignSendDisabledError } from "@/lib/campaign-send-gate";
 import { prisma } from "@/lib/prisma";
 
 const connection = getRedisConnectionOptions();
@@ -25,7 +26,18 @@ const concurrency = Number(process.env.WORKER_CONCURRENCY || 5);
 const worker = new Worker<CampaignSendJob>(
   CAMPAIGN_QUEUE,
   async (job) => {
-    await sendOneRecipient(job.data.recipientId);
+    try {
+      await sendOneRecipient(job.data.recipientId);
+    } catch (err) {
+      // Delivery gate: complete job without retry/send so queued work cannot leak email.
+      if (err instanceof CampaignSendDisabledError) {
+        console.warn(
+          `[worker] campaign send disabled — not sending recipient ${job.data.recipientId}`
+        );
+        return;
+      }
+      throw err;
+    }
   },
   {
     connection,
@@ -66,8 +78,19 @@ setInterval(async () => {
     });
     for (const c of due) {
       const { launchCampaign } = await import("@/lib/campaign-send");
+      const { CampaignSendDisabledError } = await import("@/lib/campaign-send-gate");
       console.log(`[worker] launching scheduled campaign ${c.id}`);
-      await launchCampaign(c.id);
+      try {
+        await launchCampaign(c.id);
+      } catch (err) {
+        if (err instanceof CampaignSendDisabledError) {
+          console.warn(
+            `[worker] scheduled campaign ${c.id} not launched — ${err.message}`
+          );
+          continue;
+        }
+        throw err;
+      }
     }
   } catch (err) {
     console.error("[worker] schedule poll error", err);
