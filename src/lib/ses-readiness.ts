@@ -1,3 +1,10 @@
+import {
+  SESv2Client,
+  GetAccountCommand,
+  GetEmailIdentityCommand,
+  GetConfigurationSetCommand,
+  GetConfigurationSetEventDestinationsCommand,
+} from "@aws-sdk/client-sesv2";
 import { isDevMailMode } from "@/lib/mailer";
 import { getCampaignQueue } from "@/lib/queue";
 import { getRedis } from "@/lib/redis";
@@ -10,6 +17,14 @@ export interface SesReadinessReport {
   awsCredentialsConfigured: boolean;
   /** True when blank keys force local .eml outbox mode. */
   devMailMode: boolean;
+  /** Null when credentials absent or GetAccount failed. */
+  sandbox: boolean | null;
+  domainVerified: boolean | null;
+  dkimStatus: string | null;
+  mailFromDomain: string | null;
+  mailFromStatus: string | null;
+  configurationSetPresent: boolean | null;
+  snsEventDestinationPresent: boolean | null;
   redisConfigured: boolean;
   redisReachable: boolean | null;
   queueConfigured: boolean;
@@ -56,32 +71,134 @@ export async function getSesReadinessReport(): Promise<SesReadinessReport> {
     }
   }
 
+  let sandbox: boolean | null = null;
+  let domainVerified: boolean | null = null;
+  let dkimStatus: string | null = null;
+  let mailFromDomain: string | null = null;
+  let mailFromStatus: string | null = null;
+  let configurationSetPresent: boolean | null = null;
+  let snsEventDestinationPresent: boolean | null = null;
+  let liveProbeError: string | null = null;
+
+  if (awsCredentialsConfigured && !devMailMode) {
+    try {
+      const client = new SESv2Client({ region });
+      const account = await client.send(new GetAccountCommand({}));
+      sandbox = account.ProductionAccessEnabled === false;
+
+      if (platformSendDomain) {
+        const identity = await client.send(
+          new GetEmailIdentityCommand({ EmailIdentity: platformSendDomain })
+        );
+        domainVerified = identity.VerifiedForSendingStatus === true;
+        dkimStatus = identity.DkimAttributes?.Status ?? null;
+        mailFromDomain = identity.MailFromAttributes?.MailFromDomain ?? null;
+        mailFromStatus = identity.MailFromAttributes?.MailFromDomainStatus ?? null;
+      }
+
+      if (configurationSet) {
+        await client.send(
+          new GetConfigurationSetCommand({ ConfigurationSetName: configurationSet })
+        );
+        configurationSetPresent = true;
+        const eds = await client.send(
+          new GetConfigurationSetEventDestinationsCommand({
+            ConfigurationSetName: configurationSet,
+          })
+        );
+        snsEventDestinationPresent = (eds.EventDestinations ?? []).some(
+          (d) =>
+            d.Enabled &&
+            d.SnsDestination?.TopicArn &&
+            (d.MatchingEventTypes ?? []).includes("BOUNCE") &&
+            (d.MatchingEventTypes ?? []).includes("COMPLAINT") &&
+            (d.MatchingEventTypes ?? []).includes("DELIVERY")
+        );
+      }
+    } catch (err) {
+      liveProbeError = err instanceof Error ? err.message : "SES probe failed";
+      // Do not include secret-looking substrings in UI detail.
+      liveProbeError = liveProbeError.replace(/AKIA[A-Z0-9]{16}/g, "[redacted]");
+    }
+  }
+
   const checklist: SesReadinessReport["checklist"] = [
     {
-      id: "region",
-      label: "AWS region set",
-      ok: !!process.env.AWS_REGION?.trim(),
-      detail: region,
-    },
-    {
       id: "credentials",
-      label: "AWS credentials configured",
-      ok: awsCredentialsConfigured,
+      label: "Credentials detected",
+      ok: awsCredentialsConfigured && !devMailMode,
       detail: awsCredentialsConfigured
-        ? "Access key present (secret not shown)"
+        ? devMailMode
+          ? "Keys present but still in outbox mode"
+          : "Access key present (secret not shown)"
         : "Blank keys → local .eml outbox mode",
     },
     {
-      id: "platform-domain",
-      label: "Platform send domain configured",
-      ok: !!platformSendDomain,
-      detail: platformSendDomain || "Set PLATFORM_SEND_DOMAIN",
+      id: "region",
+      label: "Region us-east-1",
+      ok: region === "us-east-1",
+      detail: region,
+    },
+    {
+      id: "sandbox",
+      label: "Sandbox true",
+      ok: sandbox === true,
+      detail:
+        sandbox === null
+          ? liveProbeError || "Not probed"
+          : sandbox
+            ? "ProductionAccessEnabled=false"
+            : "Production access already enabled",
+    },
+    {
+      id: "domain-verified",
+      label: "Domain verified",
+      ok: domainVerified === true,
+      detail:
+        platformSendDomain == null
+          ? "PLATFORM_SEND_DOMAIN unset"
+          : domainVerified == null
+            ? liveProbeError || "Not probed"
+            : `${platformSendDomain}: ${domainVerified ? "verified" : "not verified"}`,
+    },
+    {
+      id: "dkim",
+      label: "DKIM success",
+      ok: dkimStatus === "SUCCESS",
+      detail: dkimStatus || liveProbeError || "Not probed",
+    },
+    {
+      id: "mail-from",
+      label: "MAIL FROM success",
+      ok: mailFromStatus === "SUCCESS",
+      detail:
+        mailFromStatus == null
+          ? liveProbeError || "Not probed"
+          : `${mailFromDomain || "—"}: ${mailFromStatus}`,
     },
     {
       id: "configuration-set",
-      label: "SES configuration set named",
-      ok: !!configurationSet,
-      detail: configurationSet || "Set SES_CONFIGURATION_SET",
+      label: "Configuration set present",
+      ok: configurationSetPresent === true,
+      detail:
+        configurationSetPresent === true
+          ? configurationSet || "present"
+          : configurationSetPresent === false
+            ? "Missing in SES"
+            : configurationSet
+              ? liveProbeError || `Named ${configurationSet} — not probed`
+              : "SES_CONFIGURATION_SET unset",
+    },
+    {
+      id: "sns-destination",
+      label: "SNS event destination present",
+      ok: snsEventDestinationPresent === true,
+      detail:
+        snsEventDestinationPresent === true
+          ? "DELIVERY + BOUNCE + COMPLAINT enabled"
+          : snsEventDestinationPresent === false
+            ? "Missing or incomplete"
+            : liveProbeError || "Not probed",
     },
     {
       id: "redis",
@@ -109,6 +226,13 @@ export async function getSesReadinessReport(): Promise<SesReadinessReport> {
     configurationSet,
     awsCredentialsConfigured,
     devMailMode,
+    sandbox,
+    domainVerified,
+    dkimStatus,
+    mailFromDomain,
+    mailFromStatus,
+    configurationSetPresent,
+    snsEventDestinationPresent,
     redisConfigured,
     redisReachable,
     queueConfigured,

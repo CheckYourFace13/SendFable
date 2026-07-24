@@ -20,6 +20,13 @@ interface Report {
   configurationSet: string | null;
   awsCredentialsConfigured: boolean;
   devMailMode: boolean;
+  sandbox: boolean | null;
+  domainVerified: boolean | null;
+  dkimStatus: string | null;
+  mailFromDomain: string | null;
+  mailFromStatus: string | null;
+  configurationSetPresent: boolean | null;
+  snsEventDestinationPresent: boolean | null;
   redisConfigured: boolean;
   redisReachable: boolean | null;
   queueConfigured: boolean;
@@ -99,6 +106,41 @@ export default function SesReadinessPage() {
         <Meta
           label="Mail mode"
           value={report.devMailMode ? "Local .eml outbox" : "Amazon SES"}
+        />
+        <Meta
+          label="Sandbox"
+          value={
+            report.sandbox === null ? "—" : report.sandbox ? "true" : "false"
+          }
+        />
+        <Meta
+          label="Domain verified"
+          value={
+            report.domainVerified === null
+              ? "—"
+              : report.domainVerified
+                ? "yes"
+                : "no"
+          }
+        />
+        <Meta label="DKIM" value={report.dkimStatus || "—"} />
+        <Meta
+          label="MAIL FROM"
+          value={
+            report.mailFromStatus
+              ? `${report.mailFromDomain || "—"} (${report.mailFromStatus})`
+              : "—"
+          }
+        />
+        <Meta
+          label="SNS destination"
+          value={
+            report.snsEventDestinationPresent === null
+              ? "—"
+              : report.snsEventDestinationPresent
+                ? "present"
+                : "missing"
+          }
         />
         <Meta
           label="Redis"
