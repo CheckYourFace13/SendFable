@@ -45,7 +45,7 @@ export function Simplicity() {
               key={item.title}
               className="relative rounded-xl border-2 border-ink/10 bg-parchment p-5"
             >
-              <span className="font-display text-sm text-coral">
+              <span className="font-display text-sm text-coral-solid">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <h3 className="mt-2 font-display text-xl text-ink">{item.title}</h3>

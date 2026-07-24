@@ -23,7 +23,7 @@ function ReadersVisual() {
   return (
     <div className="paper-panel rounded-xl border-2 border-ink/10 p-5" aria-hidden="true">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-ink/50">Audience</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-ink/70">Audience</span>
         <span className="rounded-full bg-teal/15 px-2 py-0.5 text-[10px] font-medium text-teal">
           + CSV import
         </span>
@@ -47,7 +47,7 @@ function ReadersVisual() {
               </span>
               <span className="text-sm text-ink">{r.name}</span>
             </div>
-            <span className="rounded bg-parchment px-1.5 py-0.5 text-[10px] text-ink/60">
+            <span className="rounded bg-parchment px-1.5 py-0.5 text-[10px] text-ink/70">
               {r.tag}
             </span>
           </li>
@@ -60,11 +60,11 @@ function ReadersVisual() {
 function WriteVisual() {
   return (
     <div className="overflow-hidden rounded-xl border-2 border-ink/10 bg-page shadow-lg" aria-hidden="true">
-      <div className="border-b border-ink/10 bg-parchment px-3 py-2 text-xs text-ink/50">
+      <div className="border-b border-ink/10 bg-parchment px-3 py-2 text-xs text-ink/70">
         Subject: This weekend at the shop
       </div>
       <div className="grid grid-cols-[72px_1fr]">
-        <aside className="space-y-1 border-r border-ink/10 p-2 text-[10px] text-ink/60">
+        <aside className="space-y-1 border-r border-ink/10 p-2 text-[10px] text-ink/70">
           {["Logo", "Headline", "Photo", "Button"].map((b) => (
             <div key={b} className="rounded border border-ink/10 bg-parchment/80 px-1 py-1">
               {b}
@@ -91,7 +91,7 @@ function SendVisual() {
     <div className="paper-panel rounded-xl border-2 border-ink/10 p-5" aria-hidden="true">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink/70">
             Send Confidence
           </p>
           <p className="mt-1 font-display text-3xl text-teal">92</p>
@@ -138,7 +138,7 @@ export function ThreeSteps() {
     <section id="how-it-works" className="scroll-mt-20 border-b border-ink/10 bg-page py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-coral">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">
             How it works
           </p>
           <h2 className="mt-3 font-display text-display-md text-ink text-balance">
@@ -160,7 +160,7 @@ export function ThreeSteps() {
                 }`}
               >
                 <div className={reverse ? "lg:order-2" : ""}>
-                  <span className="font-display text-sm text-coral">{step.n}</span>
+                  <span className="font-display text-sm text-coral-solid">{step.n}</span>
                   <h3 className="mt-2 font-display text-2xl text-ink sm:text-3xl">{step.title}</h3>
                   <p className="mt-3 max-w-md text-base leading-relaxed text-charcoal/75">
                     {step.body}

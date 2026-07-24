@@ -23,11 +23,11 @@ export function ResultsDemo() {
           <Stat label="Delivered" value="1,842" note="of 1,900 attempted" />
           <Stat label="Clicked" value="312" note="unique clickers" />
           <div className="rounded-xl border-2 border-ink/10 bg-parchment p-5 sm:col-span-2 lg:col-span-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink/70">
               Most popular link
             </p>
             <p className="mt-2 font-display text-lg text-ink">/weekend-menu</p>
-            <p className="mt-1 text-sm text-ink/60">148 clicks · demo</p>
+            <p className="mt-1 text-sm text-ink/70">148 clicks · demo</p>
           </div>
           <Stat label="New unsubscribes" value="6" note="auto-suppressed" />
           <div className="rounded-xl border-2 border-ink/10 bg-ink p-5 text-page">
@@ -57,9 +57,9 @@ export function ResultsDemo() {
 function Stat({ label, value, note }: { label: string; value: string; note: string }) {
   return (
     <div className="rounded-xl border-2 border-ink/10 bg-page p-5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-ink/70">{label}</p>
       <p className="mt-2 font-display text-3xl text-ink">{value}</p>
-      <p className="mt-1 text-sm text-ink/60">{note}</p>
+      <p className="mt-1 text-sm text-ink/70">{note}</p>
     </div>
   );
 }

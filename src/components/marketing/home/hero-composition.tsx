@@ -51,7 +51,7 @@ export function HeroProductComposition() {
           <span className="h-2.5 w-2.5 rounded-full bg-coral/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-teal/70" />
           <span className="h-2.5 w-2.5 rounded-full bg-ink/30" />
-          <span className="ml-2 text-xs text-ink/50">Campaign editor</span>
+          <span className="ml-2 text-xs text-ink/70">Campaign editor</span>
         </div>
         <div className="grid grid-cols-[88px_1fr] sm:grid-cols-[100px_1fr]">
           <aside className="space-y-1.5 border-r border-ink/10 bg-parchment/60 p-2 text-[10px] text-ink/70">

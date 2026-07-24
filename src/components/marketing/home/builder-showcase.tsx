@@ -14,7 +14,7 @@ export function BuilderShowcase() {
     <section id="builder-showcase" className="scroll-mt-20 border-b border-ink/10 bg-ink py-20 text-page sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-coral">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">
             Email builder
           </p>
           <h2 className="mt-3 font-display text-display-md text-page text-balance">
@@ -31,7 +31,7 @@ export function BuilderShowcase() {
               <span className="h-2.5 w-2.5 rounded-full bg-coral" />
               <span className="h-2.5 w-2.5 rounded-full bg-teal" />
               <span className="h-2.5 w-2.5 rounded-full bg-ink/25" />
-              <span className="ml-2 text-sm text-ink/60">Weekend specials</span>
+              <span className="ml-2 text-sm text-ink/70">Weekend specials</span>
             </div>
             <div className="flex items-center gap-2" role="group" aria-label="Preview size">
               <button

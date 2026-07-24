@@ -124,7 +124,7 @@ export function GoalPicker() {
         >
           <div className="overflow-hidden rounded-xl border-2 border-ink/10 bg-page shadow-lg">
             <div className="border-b border-ink/10 bg-page px-4 py-3">
-              <p className="text-xs text-ink/50">Subject</p>
+              <p className="text-xs text-ink/70">Subject</p>
               <p className="font-medium text-ink">{goal.subject}</p>
             </div>
             <div className="space-y-3 bg-parchment/40 p-6">
@@ -144,13 +144,13 @@ export function GoalPicker() {
 
           <div className="space-y-4">
             <div className="rounded-xl border-2 border-ink/10 bg-page p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">
+              <p className="text-xs font-semibold uppercase tracking-wider text-ink/70">
                 Suggested audience
               </p>
               <p className="mt-1 text-lg text-ink">{goal.audience}</p>
             </div>
             <div className="rounded-xl border-2 border-ink/10 bg-page p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">
+              <p className="text-xs font-semibold uppercase tracking-wider text-ink/70">
                 Recommended CTA
               </p>
               <p className="mt-1 text-lg text-ink">{goal.cta}</p>

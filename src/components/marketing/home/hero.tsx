@@ -30,7 +30,7 @@ export function Hero() {
               <Link href="#how-it-works">See how it works</Link>
             </Button>
           </div>
-          <p className="mt-4 text-sm text-ink/60">
+          <p className="mt-4 text-sm text-ink/70">
             500 contacts. No credit card. No complicated setup.
           </p>
         </div>

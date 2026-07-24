@@ -166,7 +166,7 @@ export function PricingPreview({
         </ul>
 
         {showFullLink && (
-          <p className="mt-8 text-center text-sm text-ink/60">
+          <p className="mt-8 text-center text-sm text-ink/70">
             <Link href="/pricing" className="font-medium text-coral motion-underline">
               See full pricing details
             </Link>

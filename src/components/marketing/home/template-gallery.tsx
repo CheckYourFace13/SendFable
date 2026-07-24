@@ -81,7 +81,7 @@ export function TemplateGallery() {
             <li key={t.id} className="w-[220px] shrink-0 sm:w-[240px]">
               <article className="overflow-hidden rounded-xl border-2 border-ink/10 bg-page shadow-md page-lift">
                 <div className="border-b border-ink/8 px-3 py-2">
-                  <p className="truncate text-[11px] text-ink/50">{t.subject}</p>
+                  <p className="truncate text-[11px] text-ink/70">{t.subject}</p>
                 </div>
                 <div className="space-y-2.5 p-3" aria-hidden="true">
                   <div className={`h-20 rounded-md ${t.hero}`} />
