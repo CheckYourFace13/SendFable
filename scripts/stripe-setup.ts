@@ -352,6 +352,7 @@ async function findOrCreatePortal(
       products: products.map((p) => ({
         product: p.productId,
         prices: p.prices,
+        adjustable_quantity: { enabled: false },
       })),
     },
   };
