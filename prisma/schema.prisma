@@ -549,6 +549,20 @@ model ReferralAttribution {
 }
 
 /// Public early-access waitlist (not a full app account).
+model SupportMessage {
+  id        String    @id @default(cuid())
+  email     String
+  name      String?
+  topic     String    @default("general") // general | billing | abuse | privacy | security | legal
+  message   String    @db.Text
+  status    String    @default("NEW") // NEW | IN_PROGRESS | RESOLVED
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+}
+
 model EarlyAccessLead {
   id                 String   @id @default(cuid())
   email              String   @unique

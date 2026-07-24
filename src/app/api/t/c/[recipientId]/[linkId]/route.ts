@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { appUrl } from "@/lib/utils";
+import { safeClickRedirectUrl } from "@/lib/click-redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,14 @@ export async function GET(
   });
   const fallback = appUrl("/");
   if (!link) return NextResponse.redirect(fallback, 302);
+
+  // Click-time validation: stored URLs are untrusted. Unsafe/malformed targets
+  // are never redirected to; the visitor lands on a neutral branded page.
+  const target = safeClickRedirectUrl(link.url);
+  if (!target) {
+    console.warn("[click] blocked unsafe stored link target");
+    return NextResponse.redirect(appUrl("/link-unavailable"), 302);
+  }
 
   if (rl.ok) {
     try {
@@ -63,5 +72,5 @@ export async function GET(
     }
   }
 
-  return NextResponse.redirect(link.url, 302);
+  return NextResponse.redirect(target, 302);
 }

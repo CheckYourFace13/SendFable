@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { safeCallbackPath } from "@/lib/safe-redirect";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
@@ -21,7 +22,7 @@ const ctaClass = "bg-coral text-white hover:bg-coral-hover";
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") || "/dashboard";
+  const callbackUrl = safeCallbackPath(params.get("callbackUrl"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -110,6 +111,10 @@ function LoginForm() {
               <Button type="submit" className={cn("w-full", ctaClass)} loading={loading}>
                 Sign in
               </Button>
+              <p className="text-center text-xs text-ink/55">
+                Forgot your password? Use the <strong>Magic link</strong> tab — we&apos;ll email you
+                a secure sign-in link instead.
+              </p>
             </form>
           </TabsContent>
           <TabsContent value="magic">

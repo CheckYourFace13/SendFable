@@ -111,6 +111,21 @@ function SignupForm() {
           <Button type="submit" className={cn("w-full", ctaClass)} loading={loading}>
             Create account
           </Button>
+          <p className="text-center text-xs text-ink/55">
+            By creating an account you agree to the{" "}
+            <Link href="/terms" className="underline underline-offset-2 hover:text-ink">
+              Terms of Service
+            </Link>
+            , including the{" "}
+            <Link href="/acceptable-use" className="underline underline-offset-2 hover:text-ink">
+              Acceptable Use Policy
+            </Link>
+            , and the{" "}
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </form>
         <p className="mt-6 text-center text-sm text-ink/60">
           Already have an account?{" "}

@@ -38,6 +38,9 @@ export const SITEMAP_PATHS = [
   "/migrate/mailchimp",
   "/terms",
   "/privacy",
+  "/acceptable-use",
+  "/refund-policy",
+  "/contact",
   "/feed.xml",
 ] as const;
 

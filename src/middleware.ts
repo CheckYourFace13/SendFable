@@ -25,6 +25,10 @@ const PUBLIC_EXACT = new Set([
   "/email-marketing-without-gmail",
   "/terms",
   "/privacy",
+  "/acceptable-use",
+  "/refund-policy",
+  "/contact",
+  "/link-unavailable",
   "/robots.txt",
   "/sitemap.xml",
   "/feed.xml",
@@ -53,6 +57,30 @@ const PUBLIC_PREFIXES = [
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_EXACT.has(pathname)) return true;
   return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+/**
+ * Known authenticated app sections. Anything outside these and the public
+ * lists is an unknown URL and must render a real 404 (via Next not-found),
+ * not a misleading login redirect.
+ */
+const APP_PREFIXES = [
+  "/dashboard",
+  "/campaigns",
+  "/contacts",
+  "/segments",
+  "/tags",
+  "/forms",
+  "/billing",
+  "/settings",
+  "/onboarding",
+  "/admin",
+  "/library",
+  "/brand",
+];
+
+function isAppPath(pathname: string): boolean {
+  return APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 
 export default auth((req) => {
@@ -86,6 +114,10 @@ export default auth((req) => {
   }
 
   if (!isLoggedIn && !isPublicPath(pathname)) {
+    // Unknown URL (not public, not a known app section) → real 404 from Next.
+    if (!isAppPath(pathname)) {
+      return NextResponse.next();
+    }
     const url = new URL("/login", req.nextUrl.origin);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);

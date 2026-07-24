@@ -61,6 +61,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/security", label: "Security" },
       { href: "/status", label: "Status" },
       { href: "/integrations", label: "Integrations" },
+      { href: "/contact", label: "Contact & support" },
       { href: "/login", label: "Log in" },
       { href: "/early-access", label: "Early access" },
     ],
@@ -70,6 +71,8 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
     links: [
       { href: "/terms", label: "Terms" },
       { href: "/privacy", label: "Privacy" },
+      { href: "/acceptable-use", label: "Acceptable use" },
+      { href: "/refund-policy", label: "Billing & refunds" },
     ],
   },
 ];

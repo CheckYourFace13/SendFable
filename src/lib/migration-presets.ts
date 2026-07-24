@@ -215,6 +215,44 @@ export function isRestrictedStatus(status: string): boolean {
   return RESTRICTED_STATUSES.has(status);
 }
 
+export type SuppressionReasonLike = "UNSUBSCRIBED" | "HARD_BOUNCE" | "COMPLAINT" | "MANUAL";
+
+/** Contact status a suppression reason forces on import. */
+export function statusForSuppressionReason(reason: SuppressionReasonLike | null | undefined): ImportContactStatus {
+  switch (reason) {
+    case "HARD_BOUNCE":
+      return "BOUNCED";
+    case "COMPLAINT":
+      return "COMPLAINED";
+    case "UNSUBSCRIBED":
+    case "MANUAL":
+    default:
+      return "UNSUBSCRIBED";
+  }
+}
+
+/**
+ * Authoritative import status for one row:
+ * suppression (global or workspace) overrides everything; existing restricted
+ * status can never be upgraded; otherwise the incoming status applies.
+ */
+export function resolveImportStatus(opts: {
+  existing: ImportContactStatus | null | undefined;
+  incoming: ImportContactStatus;
+  suppressionReason: SuppressionReasonLike | null | undefined;
+  isSuppressed: boolean;
+}): ImportContactStatus {
+  const merged = mergeContactStatus(opts.existing ?? null, opts.incoming);
+  if (!opts.isSuppressed) return merged;
+  const forced = statusForSuppressionReason(opts.suppressionReason);
+  // Keep the more severe of forced vs merged when both are restricted.
+  if (RESTRICTED_STATUSES.has(merged)) {
+    const rank: Record<string, number> = { UNSUBSCRIBED: 1, BOUNCED: 2, COMPLAINED: 3 };
+    return (rank[merged] ?? 0) >= (rank[forced] ?? 0) ? merged : forced;
+  }
+  return forced;
+}
+
 /** Auto-map CSV headers using a provider preset. */
 export function detectColumnMapping(
   headers: string[],

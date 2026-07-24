@@ -1,6 +1,34 @@
 # Known limitations
 
-Honest inventory as of 2026-07-19 (post product-polish pass).
+## Status update — 2026-07-24 (production-readiness pass)
+
+Supersedes the 2026-07-19 items below where they conflict. Historical entries
+kept unchanged for audit purposes.
+
+Legend: **live-proven** = exercised against real production services;
+**integration-tested** = tested against the deployed stack without external
+side effects; **unit-tested** = automated tests only; **blocked** = external
+dependency; **disabled** = intentionally off for launch safety.
+
+| Area | Status |
+|---|---|
+| Stripe live billing (products, prices, webhook, portal, checkout, refund) | **Live-proven** 2026-07-24: controlled $9 Starter checkout, webhook fulfillment, cancellation, and full refund all verified. Public billing remains **disabled** (`STRIPE_BILLING_ENABLED=false`, owner-test only). |
+| SES identity/pipeline | Configured and verified (domain, DKIM, MAIL FROM, config set, SNS destination). **Blocked**: production access **DENIED** by AWS (case 178491867800933) — account is in sandbox (200/day, 1 msg/s). Owner must appeal/re-request. |
+| Campaign sending | Code-complete + unit-tested; **disabled** for public (`CAMPAIGN_SEND_ENABLED=false`) and blocked by SES sandbox for real-world sends. |
+| Public signup | **Disabled** (`ALLOW_PUBLIC_SIGNUP=false`, early-access waitlist live). |
+| Login callback redirects | Fixed 2026-07-24: centralized `safeCallbackPath` validation (client + Auth.js `redirect` callback), unit-tested against encoded/double-encoded/backslash/scheme bypasses. |
+| Tracked-link click redirects | Fixed 2026-07-24: click-time re-validation (`safeClickRedirectUrl`), unsafe targets land on branded `/link-unavailable`, unit-tested. |
+| Unknown routes | Fixed 2026-07-24: unknown public URLs return a real branded 404 (noindex); login redirect only for known app sections. |
+| Import suppression gap | Fixed 2026-07-24: globally/workspace-suppressed emails can no longer be imported as SUBSCRIBED (`resolveImportStatus`), unit-tested. |
+| Password reset | Intentionally absent: recovery is via magic link (see `docs/AUTH_POLICY.md`). Password change UI is **deferred post-launch**. |
+| Backups | Automated daily `pg_dump` with integrity checks, 14/60/365-day tiers, and SES owner alerting (see `docs/BACKUPS.md`). Off-host copies **deferred** — single-host failure domain until owner picks offsite storage. |
+| Monitoring | 5-minute cron monitor (app, containers, nginx, disk, TLS, backups, queue, stuck campaigns) with de-duplicated SES owner alerts (see `docs/INCIDENT_RUNBOOK.md`). |
+| Support channel | `/contact` form stores messages in DB (admin-reviewed). **Blocked/owner decision**: `sendfable.com` has no MX records, so no support/legal/privacy mailbox exists; Stripe support-email field needs a real mailbox. |
+| Analytics | No approved provider. First-party typed event interface exists and is **disabled** (`src/lib/analytics.ts`, `docs/ANALYTICS_DECISION.md`). Do not reuse the RentalNoodle Plausible instance. |
+| Legal pages | Terms, Privacy, Acceptable Use, Billing/Refund policy complete technically; **needs qualified legal review** before promotion (see `docs/LEGAL_STATUS.md`). |
+| Cross-tenant / role E2E | Static authorization contract test covers all API routes (auth marker or explicit public allowlist). Full multi-user live HTTP E2E remains **deferred** (single OWNER account exists in production). |
+
+## Historical inventory — 2026-07-19 (post product-polish pass)
 
 ## Product
 

@@ -7,9 +7,9 @@ import { normalizeEmail, isValidEmail } from "@/lib/utils";
 import { PLANS } from "@/lib/plans";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import {
-  isRestrictedStatus,
-  mergeContactStatus,
+  resolveImportStatus,
   type ImportContactStatus,
+  type SuppressionReasonLike,
 } from "@/lib/migration-presets";
 
 export async function POST(req: Request) {
@@ -80,21 +80,27 @@ export async function POST(req: Request) {
     }),
     prisma.suppressionEntry.findMany({
       where: { workspaceId: ctx.workspace.id, email: { in: emails } },
-      select: { email: true },
+      select: { email: true, reason: true },
     }),
     prisma.globalSuppression.findMany({
       where: { email: { in: emails } },
-      select: { email: true },
+      select: { email: true, reason: true },
     }),
   ]);
 
   const existingByEmail = new Map(
     existingRows.map((e) => [normalizeEmail(e.email), e] as const)
   );
-  const suppressedSet = new Set([
-    ...localSuppressions.map((s) => normalizeEmail(s.email)),
-    ...globalSuppressions.map((s) => normalizeEmail(s.email)),
-  ]);
+  // Global suppression (complaints/hard bounces platform-wide) takes precedence
+  // over workspace suppression when both exist.
+  const suppressionReasonByEmail = new Map<string, SuppressionReasonLike>();
+  for (const s of localSuppressions) {
+    suppressionReasonByEmail.set(normalizeEmail(s.email), s.reason as SuppressionReasonLike);
+  }
+  for (const s of globalSuppressions) {
+    suppressionReasonByEmail.set(normalizeEmail(s.email), s.reason as SuppressionReasonLike);
+  }
+  const suppressedSet = new Set(suppressionReasonByEmail.keys());
 
   let existingCountInBatch = 0;
   let suppressed = 0;
@@ -105,27 +111,32 @@ export async function POST(req: Request) {
     const email = normalizeEmail(v.email);
     const existing = existingByEmail.get(email);
     const incomingStatus = (v.status || "SUBSCRIBED") as ImportContactStatus;
+    const isSuppressed = suppressedSet.has(email);
+    if (isSuppressed) suppressed++;
 
-    if (suppressedSet.has(email) || isRestrictedStatus(incomingStatus)) {
-      // Count as suppressed when on list or importing a restricted status
-      if (suppressedSet.has(email)) suppressed++;
-    }
+    const resolved = resolveImportStatus({
+      existing: (existing?.status as ImportContactStatus) ?? null,
+      incoming: incomingStatus,
+      suppressionReason: suppressionReasonByEmail.get(email) ?? null,
+      isSuppressed,
+    });
 
     if (existing) {
       existingCountInBatch++;
       duplicates++;
-      const next = mergeContactStatus(existing.status as ImportContactStatus, incomingStatus);
       // Never upgrade restricted → subscribed; only write when status changes downward/sideways
-      if (next !== existing.status) {
-        toUpdateStatus.push({ id: existing.id, status: next as ContactStatus });
+      if (resolved !== existing.status) {
+        toUpdateStatus.push({ id: existing.id, status: resolved as ContactStatus });
       }
       continue;
     }
 
+    // New contacts on a suppression list are inserted with the suppressed
+    // status (never SUBSCRIBED) so list hygiene matches send-time filtering.
     toInsert.push({
       ...v,
       email,
-      status: mergeContactStatus(null, incomingStatus),
+      status: resolved,
     });
   }
 
