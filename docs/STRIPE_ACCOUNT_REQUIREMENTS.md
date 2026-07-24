@@ -2,7 +2,27 @@
 
 Inspect via Stripe Account API with the Sendfable **live** secret key only (never Rental Noodle).
 
-## Status fields to record
+## Snapshot (2026-07-24)
+
+| Field | Value |
+|-------|-------|
+| Account ID | `acct_1Two8SGnw9fPSfu4` |
+| Display name | SendFable |
+| Country / currency | US / usd |
+| `charges_enabled` | true |
+| `payouts_enabled` | true |
+| `requirements.currently_due` | _(empty)_ |
+| `requirements.eventually_due` | _(empty)_ |
+| `requirements.past_due` | _(empty)_ |
+| `requirements.disabled_reason` | null |
+| Statement descriptor | `SENDFABLE` |
+| Business URL | SendFable.com |
+| Support email (Stripe profile) | _(not set in Stripe business profile yet)_ |
+| Support URL (Stripe profile) | _(not set)_ |
+
+Bank / payout destination: present enough for `payouts_enabled=true`; re-check in Dashboard if payouts ever fail.
+
+## Status fields to record on each re-check
 
 | Field | Meaning |
 |-------|---------|
@@ -21,8 +41,8 @@ Inspect via Stripe Account API with the Sendfable **live** secret key only (neve
 - Site: `https://sendfable.com`
 - Terms: `https://sendfable.com/terms`
 - Privacy: `https://sendfable.com/privacy`
-- Support: use the address configured in Stripe business profile / Sendfable support channel
 - Refund policy: document on Terms (or linked policy page) before broad public Checkout
+- Recommended: set Stripe business-profile support email (e.g. owner support address)
 
 ## Ops note
 
