@@ -14,7 +14,7 @@ export function ResultsDemo() {
               Illustrative product data — not real customer statistics.
             </p>
           </div>
-          <span className="rounded-full border border-coral/40 bg-coral/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-coral">
+          <span className="rounded-full border border-coral/40 bg-coral/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-coral-solid">
             Demo data
           </span>
         </div>

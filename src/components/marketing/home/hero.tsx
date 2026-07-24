@@ -18,7 +18,7 @@ export function Hero() {
             worked—without fighting a complicated marketing platform.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button asChild size="lg" className="bg-coral text-page hover:bg-coral-hover">
+            <Button asChild size="lg" className="bg-coral-solid text-white hover:bg-coral-hover">
               <Link href="/signup">Start writing free</Link>
             </Button>
             <Button

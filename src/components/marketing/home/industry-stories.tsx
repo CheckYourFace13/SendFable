@@ -6,7 +6,7 @@ const INDUSTRIES = [
     href: "/solutions/restaurants",
     campaign: "Weekly specials & hours",
     subject: "What’s on the board this week",
-    panel: "bg-coral text-page",
+    panel: "bg-coral-solid text-white",
     preview: "bg-page text-ink",
     accent: "bg-ink",
   },

@@ -16,7 +16,7 @@ import { safeCallbackPath } from "@/lib/safe-redirect";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
-const ctaClass = "bg-coral text-white hover:bg-coral-hover";
+const ctaClass = "bg-coral-solid text-white hover:bg-coral-hover";
 
 
 function LoginForm() {
@@ -111,7 +111,7 @@ function LoginForm() {
               <Button type="submit" className={cn("w-full", ctaClass)} loading={loading}>
                 Sign in
               </Button>
-              <p className="text-center text-xs text-ink/55">
+              <p className="text-center text-xs text-ink/70">
                 Forgot your password? Use the <strong>Magic link</strong> tab — we&apos;ll email you
                 a secure sign-in link instead.
               </p>
@@ -127,7 +127,7 @@ function LoginForm() {
               <Button type="submit" className={cn("w-full", ctaClass)} loading={loading}>
                 Email me a sign-in link
               </Button>
-              <p className="text-center text-xs text-ink/55">
+              <p className="text-center text-xs text-ink/70">
                 No password needed — works with any email address.
               </p>
             </form>
@@ -146,7 +146,14 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense
+      fallback={
+        <div className="rounded-xl border border-ink/10 bg-page/95 p-6 shadow-sm">
+          <h1 className="text-lg font-semibold text-ink">Welcome back</h1>
+          <p className="mt-1 text-sm text-ink/70">Loading sign-in…</p>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

@@ -26,11 +26,11 @@ export function FinalCta() {
           <Button
             asChild
             size="lg"
-            className="mt-8 bg-coral text-page hover:bg-coral-hover"
+            className="mt-8 bg-coral-solid text-white hover:bg-coral-hover"
           >
             <Link href="/signup">Start writing free</Link>
           </Button>
-          <p className="mt-4 text-sm text-page/50">500 contacts. No credit card.</p>
+          <p className="mt-4 text-sm text-page/70">500 contacts. No credit card.</p>
         </div>
 
         <div className="relative mx-auto w-full max-w-sm" aria-hidden="true">

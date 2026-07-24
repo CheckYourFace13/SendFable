@@ -1,5 +1,18 @@
 # Known limitations
 
+## Status update — 2026-07-24 evening (owner-controlled follow-up)
+
+**Verdict:** NO-GO for broad public launch. CONDITIONAL readiness for controlled private testing.
+
+AWS is **not** the only incomplete item. Remaining non-AWS blockers: SendFable mailboxes, Stripe support fields, off-host backups, second-workspace live QA, authenticated mobile/a11y owner pass, and legal-review acceptance. See `docs/READINESS_VERDICT_2026-07-24.md`.
+
+- SES appeal draft ready (not submitted): `docs/SES_APPEAL_CASE_178491867800933.md`
+- Email routing proposal (Hostinger MX already live; no DNS publish yet): `docs/EMAIL_ROUTING_PROPOSAL.md`
+- Off-host backup options (SES IAM has no S3): `docs/OFFHOST_BACKUP_OPTIONS.md`
+- Second-account QA plan: `docs/SECOND_ACCOUNT_QA_PLAN.md`
+- CSP report-only plan (not enforcing): `docs/CSP_REPORT_ONLY_PLAN.md`
+- A11y/mobile audit + contrast fixes: `docs/A11Y_MOBILE_AUDIT_2026-07-24.md`
+
 ## Status update — 2026-07-24 (production-readiness pass)
 
 Supersedes the 2026-07-19 items below where they conflict. Historical entries

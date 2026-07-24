@@ -8,7 +8,7 @@ export function AnnouncementBar() {
           Sendfable is being written now —{" "}
           <Link
             href="/early-access"
-            className="font-medium text-coral underline decoration-coral/40 underline-offset-2 transition-colors hover:text-page hover:decoration-page"
+            className="font-medium text-[#FFB4A4] underline decoration-[#FFB4A4]/40 underline-offset-2 transition-colors hover:text-page hover:decoration-page"
           >
             join the early-access list
           </Link>

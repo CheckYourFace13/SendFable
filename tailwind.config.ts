@@ -53,8 +53,9 @@ const config: Config = {
           soft: "#2A3554",
         },
         coral: {
-          DEFAULT: "#F26A4F",
-          hover: "#E8553A",
+          DEFAULT: "#F26A4F", // brand accent / large text
+          solid: "#C44732", // interactive fills — AA contrast with white
+          hover: "#A83B2A",
         },
         teal: {
           DEFAULT: "#1E8179",

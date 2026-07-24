@@ -21,7 +21,7 @@ export function MarketingCta({
       <h2 className="font-display text-2xl text-page sm:text-3xl">{title}</h2>
       <p className="mx-auto mt-3 max-w-xl text-page/70">{body}</p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Button asChild size="lg" className="bg-coral text-page hover:bg-coral-hover">
+        <Button asChild size="lg" className="bg-coral-solid text-white hover:bg-coral-hover">
           <Link href={primaryHref}>{primaryLabel}</Link>
         </Button>
         {secondaryHref && secondaryLabel && (

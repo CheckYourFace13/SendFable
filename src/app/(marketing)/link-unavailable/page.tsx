@@ -19,7 +19,7 @@ export default function LinkUnavailablePage() {
       </p>
       <Link
         href="/"
-        className="mt-6 rounded-md bg-coral px-4 py-2 text-sm font-medium text-white hover:bg-coral-hover"
+        className="mt-6 rounded-md bg-coral-solid px-4 py-2 text-sm font-medium text-white hover:bg-coral-hover"
       >
         Go to Sendfable
       </Link>

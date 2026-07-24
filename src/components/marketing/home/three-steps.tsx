@@ -77,7 +77,7 @@ function WriteVisual() {
           <div className="h-16 rounded-md bg-teal/20" />
           <div className="h-2 w-full rounded bg-ink/10" />
           <div className="h-2 w-4/5 rounded bg-ink/10" />
-          <div className="inline-block rounded bg-coral px-3 py-1 text-[10px] font-medium text-page">
+          <div className="inline-block rounded bg-coral-solid px-3 py-1 text-[10px] font-semibold text-white">
             See the menu
           </div>
         </div>

@@ -17,7 +17,7 @@ export function HeroProductComposition() {
 
       {/* Audience mini panel */}
       <div className="absolute -left-2 bottom-24 z-20 w-36 rounded-lg border-2 border-ink/10 bg-page p-3 shadow-lg sm:-left-6 sm:w-40">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-ink/50">Audience</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-ink/70">Audience</p>
         <p className="mt-1 font-display text-lg text-ink">248 readers</p>
         <div className="mt-2 flex -space-x-1.5">
           {["#F26A4F", "#1E8179", "#17213B", "#DCD8F9"].map((c) => (
@@ -67,7 +67,7 @@ export function HeroProductComposition() {
               <p className="mt-1.5 text-xs leading-relaxed text-charcoal/70 sm:text-sm">
                 Something new is ready — a short story worth opening.
               </p>
-              <div className="mt-3 inline-block rounded-md bg-coral px-3 py-1.5 text-xs font-medium text-page">
+              <div className="mt-3 inline-block rounded-md bg-coral-solid px-3 py-1.5 text-xs font-semibold text-white">
                 Read the update
               </div>
             </div>

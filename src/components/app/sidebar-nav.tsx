@@ -44,7 +44,7 @@ export function SidebarNav() {
             className={cn(
               "flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               active
-                ? "bg-coral text-page"
+                ? "bg-coral-solid text-white"
                 : "text-page/75 hover:bg-white/10 hover:text-page"
             )}
           >

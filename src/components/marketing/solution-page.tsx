@@ -34,7 +34,7 @@ export function SolutionPage({
       <p className="mt-3 text-lg text-ink/65">{intro}</p>
 
       <div className="mt-8 flex flex-wrap gap-3">
-        <Button asChild className="bg-coral text-white hover:bg-coral-hover">
+        <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
           <Link href="/early-access">Request early access</Link>
         </Button>
         <Button asChild variant="outline" className="border-ink/15 text-ink hover:bg-parchment">

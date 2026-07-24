@@ -91,7 +91,7 @@ export function TemplateGallery() {
                     <div className="h-1.5 w-4/5 rounded bg-ink/10" />
                     <div className="h-1.5 w-3/5 rounded bg-ink/10" />
                   </div>
-                  <div className="inline-block rounded bg-coral px-2.5 py-1 text-[10px] font-medium text-page">
+                  <div className="inline-block rounded bg-coral-solid px-2.5 py-1 text-[10px] font-semibold text-white">
                     {t.cta}
                   </div>
                 </div>

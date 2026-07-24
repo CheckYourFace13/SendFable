@@ -340,7 +340,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/signup"
-            className="hidden min-h-11 items-center justify-center rounded-md bg-coral px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-coral-hover lg:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+            className="hidden min-h-11 items-center justify-center rounded-md bg-coral-solid px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-coral-hover lg:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
           >
             Start writing free
           </Link>
@@ -453,7 +453,7 @@ export function SiteHeader() {
               </Link>
               <Link
                 href="/signup"
-                className="flex min-h-11 items-center justify-center rounded-md bg-coral text-sm font-semibold text-white hover:bg-coral-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+                className="flex min-h-11 items-center justify-center rounded-md bg-coral-solid text-sm font-semibold text-white hover:bg-coral-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
                 onClick={closeMobile}
               >
                 Start writing free

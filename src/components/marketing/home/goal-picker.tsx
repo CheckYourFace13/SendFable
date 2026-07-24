@@ -136,7 +136,7 @@ export function GoalPicker() {
                 <div className="h-2 w-5/6 rounded bg-ink/10" />
                 <div className="h-2 w-2/3 rounded bg-ink/10" />
               </div>
-              <div className="inline-block rounded-md bg-coral px-4 py-2 text-sm font-medium text-page">
+              <div className="inline-block rounded-md bg-coral-solid px-4 py-2 text-sm font-semibold text-white">
                 {goal.cta}
               </div>
             </div>

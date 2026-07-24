@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
-const ctaClass = "bg-coral text-white hover:bg-coral-hover";
+const ctaClass = "bg-coral-solid text-white hover:bg-coral-hover";
 
 function SignupForm() {
   const searchParams = useSearchParams();

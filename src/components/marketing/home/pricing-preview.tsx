@@ -129,7 +129,7 @@ export function PricingPreview({
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="font-display text-xl text-ink">{p.name}</h3>
                   {recommended && (
-                    <span className="rounded-full bg-coral/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-coral">
+                    <span className="rounded-full bg-coral/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-coral-solid">
                       Recommended
                     </span>
                   )}
@@ -153,7 +153,7 @@ export function PricingPreview({
                   className={cn(
                     "mt-6 w-full",
                     recommended
-                      ? "bg-coral text-page hover:bg-coral-hover"
+                      ? "bg-coral-solid text-white hover:bg-coral-hover"
                       : "border-ink/20 bg-page text-ink hover:bg-parchment"
                   )}
                   variant={recommended ? "default" : "outline"}
