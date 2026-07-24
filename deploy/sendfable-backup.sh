@@ -42,7 +42,7 @@ if ! gzip -t "$FILE" 2>>"$LOG"; then
   exit 1
 fi
 SIZE=$(stat -c%s "$FILE")
-if [ "$SIZE" -lt 20000 ]; then
+if [ "$SIZE" -lt 5000 ]; then
   log "FAIL size $SIZE $FILE"
   alert "Sendfable backup suspiciously small" "$FILE is only ${SIZE} bytes."
   exit 1

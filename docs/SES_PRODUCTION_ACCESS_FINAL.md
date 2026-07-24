@@ -1,7 +1,29 @@
 # SES production access request — final draft (DO NOT SUBMIT YET)
 
+## ⚠️ Status update — 2026-07-24
+
+A production-access request **was submitted and DENIED** by AWS
+(`GetAccount` → `Details.ReviewDetails.Status = DENIED`, case
+**178491867800933**). Account remains in sandbox: 200 sends/24 h,
+1 msg/sec; `SendingEnabled=true`, `EnforcementStatus=HEALTHY`;
+`MailType=MARKETING`, `WebsiteURL=https://sendfable.com`, language EN.
+
+**Owner next steps (external blocker):**
+1. Open the AWS Support case 178491867800933 (SES → Account dashboard, or
+   Support Center) and reply/appeal rather than opening a new request.
+2. Use the strengthened use-case description below. Since the denial, the
+   following are now live and can be cited concretely: public Acceptable Use /
+   Anti-Spam policy (`/acceptable-use`), working abuse-report channel
+   (`/contact`), one-click unsubscribe, automated bounce/complaint suppression
+   with SNS event coverage for BOUNCE/COMPLAINT/DELIVERY/REJECT/
+   RENDERING_FAILURE/DELIVERY_DELAY, campaign auto-pause thresholds, gated
+   public signup, and a modest 200–500/day initial volume ask.
+3. AWS commonly denies first requests that look high-risk (marketing mail
+   type + new domain). Emphasize permission-based lists, the closed early
+   -access signup, and gradual warm-up.
+
 Prepared after controlled sandbox verification of `send.sendfable.com` in `us-east-1`.  
-**Status:** Draft only — do not submit until an owner explicitly asks.
+**Status of the draft below:** submitted once (denied) — adapt for the appeal.
 
 ## Proposed request (AWS SES console → Account → Request production access)
 
