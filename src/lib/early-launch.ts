@@ -25,5 +25,7 @@ export function externalEmailActive(): boolean {
 }
 
 export function stripeBillingActive(): boolean {
-  return !!process.env.STRIPE_SECRET_KEY?.trim();
+  // Keys may be present while public Checkout remains gated off.
+  const raw = process.env.STRIPE_BILLING_ENABLED?.trim().toLowerCase();
+  return raw === "true" || raw === "1" || raw === "yes";
 }

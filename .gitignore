@@ -18,3 +18,4 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+stripe-live-setup-result.json

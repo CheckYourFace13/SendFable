@@ -6,6 +6,9 @@ import { appUrl } from "@/lib/utils";
 export async function POST() {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (ctx.membership.role === "MEMBER") {
+    return NextResponse.json({ error: "Only owners/admins can manage billing" }, { status: 403 });
+  }
 
   if (!isStripeEnabled()) {
     return NextResponse.json({ error: "Billing is not configured" }, { status: 503 });
