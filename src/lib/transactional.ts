@@ -17,7 +17,9 @@ function shell(title: string, bodyHtml: string): string {
   ${bodyHtml}
 </td></tr>
 <tr><td style="padding-top:24px;text-align:center;font-size:12px;color:#9ca3af;">
-  Sendfable · Email marketing that costs half and lands better
+  SendFable · <a href="${appUrl("/terms")}" style="color:#9ca3af;">Terms</a>
+  · <a href="${appUrl("/privacy")}" style="color:#9ca3af;">Privacy</a>
+  · <a href="${appUrl("/acceptable-use")}" style="color:#9ca3af;">Acceptable use</a>
 </td></tr>
 </table>
 </td></tr>

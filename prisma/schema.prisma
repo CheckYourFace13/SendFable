@@ -102,6 +102,7 @@ model User {
   memberships Membership[]
   creditLedger CreditLedgerEntry[]
   auditLogs   AuditLog[]
+  policyAcceptances PolicyAcceptance[]
 }
 
 model Account {
@@ -182,6 +183,7 @@ model Workspace {
   suppressions     SuppressionEntry[]
   auditLogs        AuditLog[]
   landingPages     LandingPage[]
+  policyAcceptances PolicyAcceptance[]
 }
 
 model Membership {
@@ -581,4 +583,27 @@ model EarlyAccessLead {
 
   @@index([createdAt])
   @@index([inviteStatus])
+}
+
+/// Timestamped acceptance of public policy bundle (Terms, Privacy, AUP, Refund).
+/// Soft reacceptance is prompted when policyBundleVersion lags CURRENT_POLICY_BUNDLE.
+model PolicyAcceptance {
+  id                    String   @id @default(cuid())
+  userId                String
+  workspaceId           String?
+  policyBundleVersion   String
+  termsVersion          String
+  privacyVersion        String
+  acceptableUseVersion  String
+  refundPolicyVersion   String?
+  source                String // signup | reaccept | checkout | invite
+  ip                    String?
+  userAgent             String?
+  acceptedAt            DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@index([userId, acceptedAt])
+  @@index([policyBundleVersion])
 }

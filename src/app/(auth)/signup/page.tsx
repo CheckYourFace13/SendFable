@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 const cardClass =
@@ -25,11 +26,16 @@ function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!acceptedPolicies) {
+      toast.error("Please agree to the Terms, Acceptable Use, and Privacy Policy.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/signup", {
@@ -41,6 +47,7 @@ function SignupForm() {
           password,
           workspaceName: workspaceName || undefined,
           referralCode,
+          acceptedPolicies: true,
         }),
       });
       const data = await res.json();
@@ -81,7 +88,8 @@ function SignupForm() {
       <CardHeader>
         <CardTitle className="text-ink">Create your account</CardTitle>
         <CardDescription>
-          Free for up to 500 contacts and 2,000 emails/month. Any email address works.
+          Free for up to 500 contacts and 2,000 emails/month. Any email address works. Public
+          signup may be closed during early launch.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -108,24 +116,36 @@ function SignupForm() {
             <Input id="workspace" maxLength={80} value={workspaceName}
               onChange={(e) => setWorkspaceName(e.target.value)} placeholder="Acme Bakery" />
           </div>
-          <Button type="submit" className={cn("w-full", ctaClass)} loading={loading}>
+          <div className="flex items-start gap-3 rounded-lg border border-ink/10 bg-parchment/50 p-3">
+            <Checkbox
+              id="accept-policies"
+              checked={acceptedPolicies}
+              onCheckedChange={(v) => setAcceptedPolicies(v === true)}
+              className="mt-0.5"
+            />
+            <Label htmlFor="accept-policies" className="text-xs font-normal leading-relaxed text-ink/80">
+              I agree to the{" "}
+              <Link href="/terms" className="underline underline-offset-2 hover:text-ink">
+                Terms of Service
+              </Link>
+              , including the{" "}
+              <Link href="/acceptable-use" className="underline underline-offset-2 hover:text-ink">
+                Acceptable Use Policy
+              </Link>
+              , the{" "}
+              <Link href="/refund-policy" className="underline underline-offset-2 hover:text-ink">
+                Billing &amp; Refund Policy
+              </Link>
+              , and the{" "}
+              <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
+                Privacy Policy
+              </Link>
+              . The Free plan does not create a paid subscription or automatic renewal.
+            </Label>
+          </div>
+          <Button type="submit" className={cn("w-full", ctaClass)} loading={loading} disabled={!acceptedPolicies}>
             Create account
           </Button>
-          <p className="text-center text-xs text-ink/55">
-            By creating an account you agree to the{" "}
-            <Link href="/terms" className="underline underline-offset-2 hover:text-ink">
-              Terms of Service
-            </Link>
-            , including the{" "}
-            <Link href="/acceptable-use" className="underline underline-offset-2 hover:text-ink">
-              Acceptable Use Policy
-            </Link>
-            , and the{" "}
-            <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
-              Privacy Policy
-            </Link>
-            .
-          </p>
         </form>
         <p className="mt-6 text-center text-sm text-ink/60">
           Already have an account?{" "}

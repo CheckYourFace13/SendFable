@@ -8,6 +8,7 @@ import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { normalizeEmail, randomToken } from "@/lib/utils";
 import { findReferrerByCode } from "@/lib/referrals";
 import { publicSignupAllowed } from "@/lib/early-launch";
+import { recordPolicyAcceptance } from "@/lib/policy-acceptance";
 
 const signupSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -15,6 +16,9 @@ const signupSchema = z.object({
   password: z.string().min(8).max(128),
   workspaceName: z.string().trim().min(1).max(80).optional(),
   referralCode: z.string().trim().min(3).max(32).optional(),
+  acceptedPolicies: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the Terms, Acceptable Use, and Privacy Policy." }),
+  }),
 });
 
 export async function POST(req: Request) {
@@ -82,6 +86,16 @@ export async function POST(req: Request) {
         },
       },
     },
+    include: { memberships: true },
+  });
+
+  const workspaceId = user.memberships[0]?.workspaceId;
+  await recordPolicyAcceptance({
+    userId: user.id,
+    workspaceId,
+    source: "signup",
+    ip: clientIp(req),
+    userAgent: req.headers.get("user-agent"),
   });
 
   if (referredByCode) {

@@ -1,114 +1,189 @@
+import { PLANS } from "@/lib/plans";
+import {
+  LEGAL_OPERATOR_STATEMENT,
+  POLICY_EFFECTIVE_DATE,
+  POLICY_LAST_UPDATED,
+  POLICY_PATHS,
+  POLICY_VERSIONS,
+  PUBLIC_MAILBOXES,
+} from "@/lib/legal-policies";
+import { LegalA, LegalDoc, LegalH2, LegalUl } from "@/components/legal/legal-doc";
+
 export const metadata = {
   title: "Billing, Renewal, Cancellation & Refund Policy",
   description:
-    "How Sendfable subscriptions bill and renew, how to cancel, what happens on downgrade or failed payment, and when refunds apply.",
+    "SendFable subscription billing, automatic renewal, cancellation via Stripe Customer Portal, plan limits, and refund rules.",
 };
 
+function money(n: number) {
+  return n === 0 ? "$0" : `$${n}`;
+}
+
 export default function RefundPolicyPage() {
+  const free = PLANS.FREE;
+  const starter = PLANS.STARTER;
+  const growth = PLANS.GROWTH;
+  const pro = PLANS.PRO;
+
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-4 py-16 text-slate-700 sm:px-6">
-      <h1 className="text-4xl font-bold tracking-tight text-slate-900">
-        Billing, Renewal, Cancellation &amp; Refund Policy
-      </h1>
-      <p>Last updated: July 24, 2026</p>
+    <LegalDoc title="Billing, Renewal, Cancellation & Refund Policy">
       <p>
-        This policy is part of the Sendfable{" "}
-        <a className="underline" href="/terms">
-          Terms of Service
-        </a>
-        . Payments are processed by Stripe; Sendfable never stores your card number.
+        <strong>Effective date:</strong> {POLICY_EFFECTIVE_DATE}
+        <br />
+        <strong>Last updated:</strong> {POLICY_LAST_UPDATED}
+        <br />
+        <strong>Document version:</strong> {POLICY_VERSIONS.refund}
+      </p>
+      <p>
+        This policy is part of the SendFable <LegalA href={POLICY_PATHS.terms}>Terms of Service</LegalA>.{" "}
+        {LEGAL_OPERATOR_STATEMENT}. Payments are processed by Stripe; SendFable never stores your
+        full card number.
+      </p>
+      <p>
+        <strong>Early launch note:</strong> public Stripe Checkout may be disabled by configuration
+        while early launch continues. Plan prices and limits below still describe the product
+        catalog. When Checkout is unavailable, paid upgrades may be limited to owner testing or
+        invitation flows.
       </p>
 
-      <h2 className="pt-4 text-2xl font-semibold text-slate-900">Plans and billing</h2>
-      <ul>
-        <li>Paid plans are billed in advance, monthly or annually, in USD.</li>
+      <LegalH2>1. Plans and limits (verified from product configuration)</LegalH2>
+      <LegalUl>
         <li>
-          Subscriptions <strong>renew automatically</strong> at the end of each billing period
-          until canceled.
-        </li>
-        <li>The Free plan has no charge and no renewal; its limits are shown on the pricing page.</li>
-      </ul>
-
-      <h2 className="pt-4 text-2xl font-semibold text-slate-900">Upgrades and downgrades</h2>
-      <ul>
-        <li>
-          Upgrades take effect immediately. Stripe prorates the difference for the remainder of the
-          current period.
+          <strong>Free:</strong> {money(free.monthlyPrice)}; {free.contactCap.toLocaleString()}{" "}
+          contacts; {free.emailsPerMonth.toLocaleString()} emails/month; {free.seats} seat.
         </li>
         <li>
-          Downgrades take effect according to the option you choose in the billing portal; plan
-          limits of the lower tier then apply. Downgrading does not delete your data, but features
-          may become read-only if you exceed the lower tier&apos;s caps until you prune contacts or
-          re-upgrade.
+          <strong>Starter:</strong> {money(starter.monthlyPrice)}/month or{" "}
+          {money(starter.yearlyPrice)}/year; {starter.contactCap.toLocaleString()} contacts;{" "}
+          {starter.emailsPerMonth.toLocaleString()} emails/month; {starter.seats} seat.
         </li>
-      </ul>
-
-      <h2 className="pt-4 text-2xl font-semibold text-slate-900">Cancellation</h2>
-      <ul>
         <li>
-          You can cancel anytime from Settings → Billing (Stripe customer portal). Cancellation
-          stops the <em>next</em> renewal; your paid features remain active until the end of the
-          period you already paid for.
+          <strong>Growth:</strong> {money(growth.monthlyPrice)}/month or{" "}
+          {money(growth.yearlyPrice)}/year; {growth.contactCap.toLocaleString()} contacts;{" "}
+          {growth.emailsPerMonth.toLocaleString()} emails/month; {growth.seats} seat; custom domain
+          authentication available.
         </li>
-        <li>Cancellation by itself is not a refund — see below for when refunds apply.</li>
-      </ul>
-
-      <h2 className="pt-4 text-2xl font-semibold text-slate-900">Failed payments</h2>
+        <li>
+          <strong>Pro:</strong> {money(pro.monthlyPrice)}/month or {money(pro.yearlyPrice)}/year;{" "}
+          {pro.contactCap.toLocaleString()} contacts; {pro.emailsPerMonth.toLocaleString()}{" "}
+          emails/month; up to {pro.seats} seats; custom domain authentication available.
+        </li>
+      </LegalUl>
       <p>
-        If a renewal payment fails, Stripe retries it automatically and emails you. If payment
-        continues to fail, the subscription is marked past due and may be canceled, moving the
-        workspace to Free-plan limits. Sending can be paused while an account is past due.
+        Limits are enforced in product (including contact caps, monthly email quotas, and daily
+        sending ramps). Exceeding contact caps can make sending read-only until you prune or
+        upgrade. Free has no charge and no paid renewal.
       </p>
 
-      <h2 className="pt-4 text-2xl font-semibold text-slate-900">Refunds</h2>
-      <ul>
+      <LegalH2>2. Subscriptions, automatic renewal, and taxes</LegalH2>
+      <LegalUl>
+        <li>Paid plans are billed in advance in USD, monthly or annually, through Stripe.</li>
         <li>
-          <strong>First paid charge:</strong> if Sendfable isn&apos;t right for you, contact us
-          within 14 days of your first paid charge and we&apos;ll refund it in full.
+          Subscriptions <strong>renew automatically</strong> at the end of each billing period until
+          you cancel.
         </li>
-        <li>
-          <strong>Renewals:</strong> renewal charges are generally non-refundable, but if you
-          contact us within 7 days of an unwanted renewal and haven&apos;t sent campaigns in the new
-          period, we&apos;ll issue a refund as a courtesy.
-        </li>
-        <li>
-          <strong>Duplicate or erroneous charges</strong> are always refunded in full.
-        </li>
-        <li>
-          <strong>Not refundable:</strong> partial periods after cancellation, accounts terminated
-          for violating the{" "}
-          <a className="underline" href="/acceptable-use">
-            Acceptable Use Policy
-          </a>{" "}
-          (including purchased-list use), and periods already consumed with normal sending
-          activity.
-        </li>
-        <li>
-          Approved refunds are returned to the original payment method. Stripe typically posts
-          refunds to cards within 5–10 business days depending on the card issuer.
-        </li>
-      </ul>
+        <li>Applicable taxes may be collected by Stripe where configured.</li>
+      </LegalUl>
 
-      <h2 className="pt-4 text-2xl font-semibold text-slate-900">Data after cancellation</h2>
+      <LegalH2>3. Upgrades, proration, and downgrades</LegalH2>
+      <LegalUl>
+        <li>
+          New paid subscriptions start via Stripe Checkout (when enabled). Existing subscribers
+          manage changes in the Stripe Customer Portal.
+        </li>
+        <li>
+          Portal subscription updates are configured with{" "}
+          <strong>proration_behavior: create_prorations</strong> — upgrades/plan changes generally
+          create prorations for the remainder of the period as Stripe calculates them.
+        </li>
+        <li>
+          Downgrades and plan switches take effect according to the options shown in the Customer
+          Portal. Lower-tier limits then apply. Downgrading does not delete your data, but features
+          may become read-only if you exceed the lower tier&apos;s caps.
+        </li>
+      </LegalUl>
+
+      <LegalH2>4. Cancellation (not the same as a refund)</LegalH2>
+      <LegalUl>
+        <li>
+          Cancel from Billing → Manage subscription (Stripe Customer Portal). Cancellation is
+          configured as <strong>cancel at period end</strong> (
+          <code>subscription_cancel.mode = at_period_end</code>, proration on cancel: none).
+        </li>
+        <li>
+          You keep paid features until the end of the period already paid for. Cancellation stops
+          the next renewal; it is not itself a refund.
+        </li>
+        <li>
+          We may suspend sending immediately for abuse, AUP violations, or payment risk where
+          permitted.
+        </li>
+      </LegalUl>
+
+      <LegalH2>5. Failed payments</LegalH2>
       <p>
-        Canceling a paid plan does not delete your workspace. You can export contacts at any time
-        and delete your workspace from settings. Global suppression records (hard bounces and
-        complaints) may be retained to protect recipients across the platform.
+        If a renewal fails, Stripe retries and typically emails you. Continued failure can mark the
+        subscription past due and may cancel it, moving the Workspace toward Free-plan limits.
+        Sending can pause while payment is failed beyond the product grace window.
       </p>
 
-      <h2 className="pt-4 text-2xl font-semibold text-slate-900">Questions</h2>
+      <LegalH2>6. Refunds</LegalH2>
       <p>
-        Contact us about any charge at{" "}
-        <a className="underline" href="mailto:support@sendfable.com">
-          support@sendfable.com
-        </a>{" "}
-        or via the{" "}
-        <a className="underline" href="/contact">
-          contact form
-        </a>{" "}
-        (topic: &quot;Billing or refunds&quot;). Include the workspace name and approximate charge
-        date — never send full card numbers.
+        Cancellation and refund are different. We do not promise that every refund request will be
+        granted. Where we issue a refund, it goes to the original payment method; card issuers often
+        post refunds within about 5–10 business days. We do not substitute cash or account credit
+        unless we expressly agree in writing.
       </p>
-    </div>
+      <LegalUl>
+        <li>
+          <strong>First paid charge:</strong> if SendFable is not right for you, contact us within
+          14 days of your first paid charge and we will refund that first charge in full (owner
+          business practice — confirm with counsel for enforceability in your market).
+        </li>
+        <li>
+          <strong>Renewals (including annual):</strong> renewal charges are generally
+          non-refundable. As a courtesy, if you contact us within 7 days of an unwanted renewal and
+          have not sent campaigns in the new period, we may refund that renewal. Annual plans follow
+          the same courtesy window for the renewal charge — we do not pro-rate unused months as a
+          default entitlement.
+        </li>
+        <li>
+          <strong>Duplicate or erroneous charges</strong> are refunded in full when verified.
+        </li>
+        <li>
+          <strong>Legally required refunds</strong> will be honored where a statute or chargeback
+          rule requires them.
+        </li>
+        <li>
+          <strong>Not refundable:</strong> ordinary partial periods after cancel-at-period-end;
+          accounts terminated for serious{" "}
+          <LegalA href={POLICY_PATHS.acceptableUse}>Acceptable Use</LegalA> violations (including
+          purchased-list abuse) where legally permitted; and periods already consumed with normal
+          sending activity outside the courtesy windows above.
+        </li>
+      </LegalUl>
+      <p>
+        Request refunds at{" "}
+        <LegalA href={`mailto:${PUBLIC_MAILBOXES.support}`}>{PUBLIC_MAILBOXES.support}</LegalA> or
+        via the <LegalA href={POLICY_PATHS.contact}>contact form</LegalA> (topic: Billing or
+        refunds). Include workspace name and approximate charge date — never send full card numbers.
+      </p>
+
+      <LegalH2>7. Data after cancellation</LegalH2>
+      <p>
+        Canceling a paid plan does not delete your Workspace. Export contacts before deletion if you
+        need a copy. Workspace deletion is available to OWNER in settings. Suppression, billing,
+        security, and legal records may be retained as described in the{" "}
+        <LegalA href={POLICY_PATHS.privacy}>Privacy Policy</LegalA>.
+      </p>
+
+      <LegalH2>8. Questions</LegalH2>
+      <p>
+        Billing questions:{" "}
+        <LegalA href={`mailto:${PUBLIC_MAILBOXES.support}`}>{PUBLIC_MAILBOXES.support}</LegalA>.
+        Also see <LegalA href="/pricing">pricing</LegalA> and{" "}
+        <LegalA href={POLICY_PATHS.terms}>Terms</LegalA>.
+      </p>
+    </LegalDoc>
   );
 }

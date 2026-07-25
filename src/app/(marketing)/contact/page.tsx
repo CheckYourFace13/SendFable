@@ -58,6 +58,18 @@ export default function ContactPage() {
           </li>
         </ul>
         <p>
+          <strong className="text-ink">Legal notices:</strong> email{" "}
+          <a className="underline" href="mailto:legal@sendfable.com">
+            legal@sendfable.com
+          </a>
+          . SendFable is a service operated by iScream Studio INC — that legal-entity name is used
+          in contracts and legal documents, not as ordinary marketing branding. See{" "}
+          <a className="underline" href="/terms">
+            Terms
+          </a>
+          .
+        </p>
+        <p>
           <strong className="text-ink">Reporting spam or abuse:</strong> email{" "}
           <a className="underline" href="mailto:abuse@sendfable.com">
             abuse@sendfable.com

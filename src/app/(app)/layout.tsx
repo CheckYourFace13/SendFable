@@ -7,11 +7,14 @@ import { UserMenu } from "@/components/app/user-menu";
 import { VerifyEmailBanner } from "@/components/app/verify-email-banner";
 import { RedisDevBanner } from "@/components/app/redis-dev-banner";
 import { EarlyLaunchBanner } from "@/components/app/early-launch-banner";
+import { PolicyReacceptBanner } from "@/components/app/policy-reaccept-banner";
 import { requireWorkspaceContext } from "@/lib/session";
+import { needsPolicyReacceptance } from "@/lib/policy-acceptance";
 import { PLANS } from "@/lib/plans";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, workspace } = await requireWorkspaceContext();
+  const showPolicyReaccept = await needsPolicyReacceptance(user.id);
 
   return (
     <div className="flex min-h-screen bg-page">
@@ -31,6 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="flex min-w-0 flex-1 flex-col">
         <EarlyLaunchBanner />
         <RedisDevBanner />
+        {showPolicyReaccept && <PolicyReacceptBanner />}
         {!user.emailVerified && <VerifyEmailBanner />}
         {user.paymentFailedAt && (
           <div className="flex flex-wrap items-center justify-center gap-2 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-900">

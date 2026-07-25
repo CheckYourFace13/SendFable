@@ -99,6 +99,15 @@ export async function POST(req: Request) {
     cancel_url: appUrl("/billing?canceled=1"),
     allow_promotion_codes: false,
     client_reference_id: ctx.user.id,
+    consent_collection: {
+      terms_of_service: "required",
+    },
+    custom_text: {
+      terms_of_service_acceptance: {
+        message:
+          "I agree to the SendFable Terms of Service, Privacy Policy, and Billing, Renewal, Cancellation & Refund Policy at sendfable.com. Paid subscriptions renew automatically until canceled in the Customer Portal.",
+      },
+    },
     subscription_data: {
       metadata: {
         application: "sendfable",

@@ -104,6 +104,27 @@ export default function BillingPage() {
         <Label>Annual <span className="text-muted-foreground">(2 months free)</span></Label>
       </div>
 
+      <p className="mb-6 max-w-3xl text-sm text-muted-foreground">
+        Paid plans renew automatically until canceled. Manage or cancel anytime in the Stripe
+        Customer Portal. See{" "}
+        <a className="underline" href="/terms">
+          Terms
+        </a>
+        ,{" "}
+        <a className="underline" href="/privacy">
+          Privacy
+        </a>
+        ,{" "}
+        <a className="underline" href="/refund-policy">
+          Billing &amp; Refund Policy
+        </a>
+        , and{" "}
+        <a className="underline" href="mailto:support@sendfable.com">
+          support@sendfable.com
+        </a>
+        . Public checkout may be unavailable during early launch.
+      </p>
+
       <div className="grid gap-6 md:grid-cols-3">
         {tiers.map((key) => {
           const p = PLANS[key];
