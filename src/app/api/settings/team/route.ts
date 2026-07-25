@@ -6,6 +6,7 @@ import { PLANS } from "@/lib/plans";
 import { signToken } from "@/lib/tokens";
 import { sendWorkspaceInvite } from "@/lib/transactional";
 import { normalizeEmail, isValidEmail } from "@/lib/utils";
+import { redactInternalTeamUser } from "@/lib/internal-identity";
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -28,7 +29,13 @@ export async function GET() {
     }),
   ]);
 
-  return NextResponse.json({ members, invitations });
+  return NextResponse.json({
+    members: members.map((m) => ({
+      ...m,
+      user: redactInternalTeamUser(m.user, ctx.user.email),
+    })),
+    invitations,
+  });
 }
 
 export async function POST(req: Request) {

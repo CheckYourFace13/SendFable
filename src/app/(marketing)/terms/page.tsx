@@ -14,9 +14,8 @@ export default function TermsPage() {
       <h1 className="text-4xl font-bold tracking-tight text-slate-900">Terms of Service</h1>
       <p>Last updated: July 24, 2026</p>
       <p>
-        These terms govern your use of Sendfable, an email marketing platform operated by iScream
-        Studio (&quot;Sendfable&quot;, &quot;we&quot;, &quot;us&quot;). By creating an account or
-        using the service you agree to these terms, the{" "}
+        These terms govern your use of Sendfable (&quot;Sendfable&quot;, &quot;we&quot;,
+        &quot;us&quot;). By creating an account or using the service you agree to these terms, the{" "}
         <a className="underline" href="/acceptable-use">
           Acceptable Use &amp; Anti-Spam Policy
         </a>

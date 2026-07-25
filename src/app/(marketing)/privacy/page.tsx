@@ -14,8 +14,7 @@ export default function PrivacyPage() {
       <h1 className="text-4xl font-bold tracking-tight text-slate-900">Privacy Policy</h1>
       <p>Last updated: July 24, 2026</p>
       <p>
-        Sendfable is operated by iScream Studio. This policy explains what we collect, how we use
-        it, and the choices you have.
+        This policy explains what Sendfable collects, how we use it, and the choices you have.
       </p>
 
       <h2 className="pt-4 text-2xl font-semibold text-slate-900">What we collect</h2>

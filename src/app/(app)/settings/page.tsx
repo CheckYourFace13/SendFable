@@ -237,11 +237,18 @@ export default function SettingsPage() {
           ))}
         </ul>
         <div className="flex gap-2">
-          <Input
-            placeholder="colleague@company.com"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-          />
+          <div className="flex-1">
+            <Label htmlFor="invite-email" className="sr-only">
+              Teammate email
+            </Label>
+            <Input
+              id="invite-email"
+              type="email"
+              placeholder="colleague@company.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+          </div>
           <Button variant="outline" onClick={() => void invite()}>
             Invite
           </Button>

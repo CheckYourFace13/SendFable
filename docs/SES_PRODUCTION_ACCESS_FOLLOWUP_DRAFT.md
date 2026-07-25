@@ -71,7 +71,7 @@ We are not requesting high daily volume at launch. Public signup remains gated w
 Please let us know if any additional detail is required.
 
 Thank you,  
-Sendfable / iScream Studio  
+Sendfable  
 https://sendfable.com/contact  
 support@sendfable.com
 

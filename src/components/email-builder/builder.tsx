@@ -29,6 +29,9 @@ import {
   Monitor,
   Smartphone,
   Code2,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,18 +124,47 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      onClick={onSelect}
       className={cn(
-        "cursor-grab rounded-lg border bg-white p-3 text-sm active:cursor-grabbing",
-        selected ? "border-indigo-600 ring-2 ring-indigo-100" : "border-slate-200"
+        "rounded-lg border bg-white p-3 text-sm",
+        selected ? "border-indigo-600 ring-2 ring-indigo-100" : "border-slate-200",
       )}
     >
-      <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {block.type}
+      <div className="mb-1 flex items-center gap-2">
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral active:cursor-grabbing"
+          aria-label={`Drag to reorder ${block.type} block`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onSelect}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelect();
+            }
+          }}
+          className="min-h-11 flex-1 rounded-md px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+          aria-pressed={selected}
+          aria-label={`Select ${block.type} block`}
+        >
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {block.type}
+          </div>
+        </button>
       </div>
-      <BlockPreview block={block} />
+      <button
+        type="button"
+        className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+        onClick={onSelect}
+        aria-label={`Edit ${block.type} block`}
+      >
+        <BlockPreview block={block} />
+      </button>
     </div>
   );
 }
@@ -250,9 +282,24 @@ export function EmailBuilder({
 
   function removeSelected() {
     if (!selected) return;
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm("Remove this block from the email? You can add it again from the palette.")
+    ) {
+      return;
+    }
     const next = { ...design, blocks: design.blocks.filter((b) => b.id !== selected.id) };
     setSelectedId(next.blocks[0]?.id ?? null);
     emit(next);
+  }
+
+  function moveSelected(delta: -1 | 1) {
+    if (!selected) return;
+    const index = design.blocks.findIndex((b) => b.id === selected.id);
+    if (index < 0) return;
+    const nextIndex = index + delta;
+    if (nextIndex < 0 || nextIndex >= design.blocks.length) return;
+    emit({ ...design, blocks: arrayMove(design.blocks, index, nextIndex) });
   }
 
   function onDragEnd(event: DragEndEvent) {
@@ -298,7 +345,7 @@ export function EmailBuilder({
               key={item.type}
               type="button"
               onClick={() => addBlock(item.type)}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-50"
+              className="flex min-h-11 w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
             >
               {item.icon}
               {item.label}
@@ -503,7 +550,40 @@ export function EmailBuilder({
                 />
               </div>
             )}
-            <Button type="button" variant="destructive" size="sm" onClick={removeSelected}>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-h-11 flex-1"
+                onClick={() => moveSelected(-1)}
+                disabled={design.blocks.findIndex((b) => b.id === selected.id) <= 0}
+                aria-label="Move block up"
+              >
+                <ChevronUp className="mr-1 h-4 w-4" /> Up
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-h-11 flex-1"
+                onClick={() => moveSelected(1)}
+                disabled={
+                  design.blocks.findIndex((b) => b.id === selected.id) >=
+                  design.blocks.length - 1
+                }
+                aria-label="Move block down"
+              >
+                <ChevronDown className="mr-1 h-4 w-4" /> Down
+              </Button>
+            </div>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="min-h-11 w-full"
+              onClick={removeSelected}
+            >
               Remove block
             </Button>
           </div>

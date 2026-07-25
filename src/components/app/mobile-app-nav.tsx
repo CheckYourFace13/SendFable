@@ -7,6 +7,7 @@ import { SidebarNav } from "@/components/app/sidebar-nav";
 export function MobileAppNav({ workspaceName }: { workspaceName: string }) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const baseId = useId();
 
   useEffect(() => {
@@ -17,7 +18,6 @@ export function MobileAppNav({ workspaceName }: { workspaceName: string }) {
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    // Focus first link in panel
     const t = window.setTimeout(() => {
       const first = panelRef.current?.querySelector<HTMLElement>("a,button");
       first?.focus();
@@ -26,12 +26,15 @@ export function MobileAppNav({ workspaceName }: { workspaceName: string }) {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
       window.clearTimeout(t);
+      // Return focus to the menu trigger when the drawer closes.
+      window.setTimeout(() => triggerRef.current?.focus(), 0);
     };
   }, [open]);
 
   return (
     <div className="lg:hidden">
       <button
+        ref={triggerRef}
         type="button"
         className="inline-flex h-11 w-11 items-center justify-center rounded-md text-ink hover:bg-parchment focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
         aria-expanded={open}
