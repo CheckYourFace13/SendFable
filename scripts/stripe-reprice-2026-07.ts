@@ -12,7 +12,6 @@
  *   set -a; . /opt/sendfable/.env; set +a
  *   npx tsx scripts/stripe-reprice-2026-07.ts
  */
-import "dotenv/config";
 import Stripe from "stripe";
 import fs from "node:fs";
 import path from "node:path";
