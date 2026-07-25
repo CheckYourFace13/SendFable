@@ -1,7 +1,8 @@
 # Second-account production QA plan
 
 Prepared: 2026-07-24  
-**Status:** Plan only. No second account has been created. Public signup remains closed.
+**Status:** **Executed 2026-07-25** — see `docs/PRODUCTION_QA_RESULTS.md` (58/58 PASS).
+Public signup remains closed.
 
 ## Goal
 

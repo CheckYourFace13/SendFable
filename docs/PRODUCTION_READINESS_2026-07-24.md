@@ -6,10 +6,12 @@ production stack. Launch flags stayed locked throughout.
 
 ## Verdict
 
-**CONDITIONAL GO** — all verified non-AWS launch gates passed; public launch
-remains blocked only by Amazon SES production approval (current request
-**DENIED**, case 178491867800933 — see `SES_PRODUCTION_ACCESS_FINAL.md`) and
-the final controlled production-send test, plus the owner items listed below.
+**CONDITIONAL GO** — public launch remains blocked by multiple items including
+Amazon SES production approval (case 178491867800933: **Submitted/open —
+awaiting AWS review** — see `SES_CASE_STATUS_CORRECTION_2026-07-25.md`), the
+final controlled production-send test, and the owner items listed below.
+**Correction 2026-07-25:** do not treat the SES API `ReviewDetails.Status=DENIED`
+field or sandbox status as an explicit Support denial letter.
 
 ## Launch flags (unchanged before/after)
 
@@ -28,7 +30,7 @@ SES_CONTROLLED_TEST_ENABLED=false
 |---|---|
 | Account / region | 911167908678 / us-east-1 |
 | ProductionAccessEnabled | **false** |
-| ReviewDetails.Status | **DENIED** (case 178491867800933) |
+| ReviewDetails.Status | API returns `DENIED` with case 178491867800933 — **not** treated as Support correspondence denial; operational status: Submitted/open — awaiting AWS review |
 | SendingEnabled / Enforcement | true / HEALTHY |
 | Quota | 200/24 h, 1 msg/s, 2 sent last 24 h |
 | Suppression | BOUNCE + COMPLAINT |
@@ -56,16 +58,16 @@ Phase 12 (controlled production send) was **not run** — requires production ac
 | Legal | `/acceptable-use`, `/refund-policy` new; Terms + Privacy expanded (cookies, data requests, liability, IP, eligibility, changes); signup now shows Terms/AUP/Privacy agreement; all marked as needing legal review (`docs/LEGAL_STATUS.md`) |
 | SEO | New pages in sitemap; robots.txt correct; 404 + `/link-unavailable` noindex |
 | Analytics | Decision documented: none at launch; disabled first-party interface (`docs/ANALYTICS_DECISION.md`) |
-| Docs | `KNOWN_LIMITATIONS.md` dated update; SES denial documented with appeal guidance |
+| Docs | `KNOWN_LIMITATIONS.md` dated update; SES case correction + unsubmitted follow-up draft |
 
 Tests: **141 passing** (`npm test`), typecheck clean, production build clean.
 
 ## Still open (owner input required)
 
-1. **AWS SES production access** — appeal the denial (case 178491867800933).
-2. **Support mailbox** — `sendfable.com` has no MX; no `support@`/`legal@`
-   mailbox can receive mail. Add email routing/hosting, then set Stripe
-   Dashboard → Business details → support email + support URL
+1. **AWS SES production access** — wait on case 178491867800933; do not appeal
+   unless AWS explicitly rejects or asks for more information
+   (`docs/SES_PRODUCTION_ACCESS_FOLLOWUP_DRAFT.md`).
+2. **Stripe support fields** — set Dashboard support email + URL
    (`https://sendfable.com/contact`). The API cannot set these on own account.
 3. **Qualified legal review** of Terms/Privacy/AUP/Refund policy.
 4. **Off-host backup copies** — backups currently live on the VPS only.

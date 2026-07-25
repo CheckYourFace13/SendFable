@@ -1,20 +1,21 @@
-# AWS SES production-access appeal — OWNER-APPROVED PASTE COPY
+# SES production-access follow-up draft (DO NOT SUBMIT)
 
 **Case:** 178491867800933  
-**Status:** Ready to paste into the existing AWS Support case. **Do not auto-submit.**  
-**Approved copy prepared:** 2026-07-24 (owner-requested paste version)
+**Operational status:** Submitted/open — awaiting AWS review.  
+**This document:** Optional follow-up text only. **Do not paste into the case** unless AWS explicitly rejects the request or asks for more information.  
+**Do not** open a second production-access request.
 
 ---
 
-## Subject (if editable)
+## Subject (if ever needed)
 
-Appeal / additional information — Sendfable SES production access (case 178491867800933)
+Additional information — Sendfable SES production access (case 178491867800933)
 
-## Message body (paste below the line)
+## Message body (paste only if AWS asks, or after an explicit rejection)
 
 Hello,
 
-We are appealing the denial of production access for case 178491867800933 and providing additional information about how Sendfable sends email.
+Thank you for reviewing case 178491867800933. Here is additional information about how Sendfable sends email, in case it helps with the production-access request.
 
 Sendfable (https://sendfable.com) is a permission-based email-marketing platform for small businesses. Customers send newsletters, announcements, and promotional messages only to people who opted in. We also send transactional account messages (for example sign-in links). We do not sell email lists, and we do not send on behalf of customers who use purchased, rented, scraped, harvested, or third-party lists — that use is prohibited.
 
@@ -67,7 +68,7 @@ We are not requesting high daily volume at launch. Public signup remains gated w
 - Mail type: MARKETING (permission-based), plus transactional account mail
 - Contact language: English
 
-Please let us know if any additional detail is required to reconsider production access for this account.
+Please let us know if any additional detail is required.
 
 Thank you,  
 Sendfable / iScream Studio  
@@ -76,9 +77,9 @@ support@sendfable.com
 
 ---
 
-## Owner checklist before submitting
+## Owner rules
 
-- [ ] Confirm the case ID is still 178491867800933 in AWS Support Center
-- [ ] Paste into the **existing** case (do not open a duplicate request)
-- [ ] Do not claim legal review, public customer volume, inbox placement, or uptime history
-- [ ] After AWS replies, keep `CAMPAIGN_SEND_ENABLED=false` until the controlled production-send test passes
+- [ ] Do **not** submit this while the case is merely open / awaiting review
+- [ ] Do **not** open a duplicate production-access request
+- [ ] Only paste if AWS asks for more information, or after an explicit rejection in case correspondence
+- [ ] Keep `CAMPAIGN_SEND_ENABLED=false` until a controlled production-send test passes after approval

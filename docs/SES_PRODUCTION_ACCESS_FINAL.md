@@ -1,29 +1,36 @@
-# SES production access request — final draft (DO NOT SUBMIT YET)
+# SES production access request — final draft (HISTORICAL / DO NOT RE-SUBMIT)
 
-## ⚠️ Status update — 2026-07-24
+## Status update — 2026-07-25 (correction)
 
-A production-access request **was submitted and DENIED** by AWS
-(`GetAccount` → `Details.ReviewDetails.Status = DENIED`, case
-**178491867800933**). Account remains in sandbox: 200 sends/24 h,
-1 msg/sec; `SendingEnabled=true`, `EnforcementStatus=HEALTHY`;
-`MailType=MARKETING`, `WebsiteURL=https://sendfable.com`, language EN.
+Case **178491867800933** is classified operationally as:
 
-**Owner next steps (external blocker):**
-1. Open the AWS Support case 178491867800933 (SES → Account dashboard, or
-   Support Center) and reply/appeal rather than opening a new request.
-2. Use the strengthened use-case description below. Since the denial, the
-   following are now live and can be cited concretely: public Acceptable Use /
-   Anti-Spam policy (`/acceptable-use`), working abuse-report channel
-   (`/contact`), one-click unsubscribe, automated bounce/complaint suppression
-   with SNS event coverage for BOUNCE/COMPLAINT/DELIVERY/REJECT/
-   RENDERING_FAILURE/DELIVERY_DELAY, campaign auto-pause thresholds, gated
-   public signup, and a modest 200–500/day initial volume ask.
-3. AWS commonly denies first requests that look high-risk (marketing mail
-   type + new domain). Emphasize permission-based lists, the closed early
-   -access signup, and gradual warm-up.
+**Submitted/open — awaiting AWS review.**
+
+Do **not** open another production-access request. Do **not** paste follow-up
+text into the case unless AWS explicitly rejects the request or asks for more
+information.
+
+- Correction note: `docs/SES_CASE_STATUS_CORRECTION_2026-07-25.md`
+- Unsubmitted follow-up draft: `docs/SES_PRODUCTION_ACCESS_FOLLOWUP_DRAFT.md`
+
+`GetAccount` may still return `Details.ReviewDetails.Status = DENIED` with this
+CaseId. That API enum is **not** treated as a Support denial letter. Sandbox
+(`ProductionAccessEnabled=false`) only means production access is not enabled yet.
+
+Account remains in sandbox: 200 sends/24 h, 1 msg/sec; `SendingEnabled=true`,
+`EnforcementStatus=HEALTHY`; `MailType=MARKETING`,
+`WebsiteURL=https://sendfable.com`, language EN.
+
+## ⚠️ Prior status note — 2026-07-24 (superseded)
+
+Earlier drafts incorrectly stated the request was “submitted and DENIED” based
+solely on the SES API `ReviewDetails.Status` field. That wording is superseded
+by the 2026-07-25 correction above.
 
 Prepared after controlled sandbox verification of `send.sendfable.com` in `us-east-1`.  
-**Status of the draft below:** submitted once (denied) — adapt for the appeal.
+**Status of the draft below:** original request text (already submitted once via
+the SES production-access flow). Do not re-submit. Prefer the follow-up draft
+only if AWS asks.
 
 ## Proposed request (AWS SES console → Account → Request production access)
 
@@ -39,41 +46,18 @@ Sending domain: `send.sendfable.com` (Easy DKIM verified). Custom MAIL FROM: `bo
 
 Bounce and complaint handling: SES configuration set `sendfable-events` publishes DELIVERY, BOUNCE, and COMPLAINT to SNS → authenticated HTTPS webhook on Sendfable. Hard bounces and complaints are suppressed at workspace and global (platform) level. Campaigns auto-pause above a 5% bounce rate or 0.1% complaint rate.
 
-Unsubscribe: required campaign footer plus List-Unsubscribe / one-click (RFC 8058). A physical mailing address is required in the workspace before sending. Lists must be opt-in only; purchased, rented, and scraped lists are prohibited in our terms.
+Unsubscribe: every campaign includes an unsubscribe link; List-Unsubscribe / one-click (RFC 8058) supported. Physical mailing address required in footers. Purchased/rented/scraped lists prohibited (Acceptable Use + Terms).
 
-New accounts are ramped with sending limits. Public signup remains restricted during early launch while we warm carefully.
+Launch posture: public signup currently disabled (`ALLOW_PUBLIC_SIGNUP=false`); unrestricted campaign send disabled until after a controlled production-send test. Requested initial volume ~200–500/day at ~1 msg/s with gradual warm-up.
 
-**How recipients opt in:** Hosted signup forms (optional double opt-in), CSV import of consented lists the customer owns, and manual adds by the account owner.
+Contact: https://sendfable.com/contact — support@ / abuse@sendfable.com.
 
-**Bounce/complaint process:** Automated via SNS → webhook; suppressions applied immediately; operators can review in-product.
+**Requested limits (honest / low):** ~200–500 messages/day initially; ~1 msg/s.
 
-**Expected volume (honest, initial):**
+---
 
-| Period | Daily sends | Send rate |
-|---|---|---|
-| First 1–2 weeks after production | **200–500 / day** | **1 message/sec** |
-| After clean metrics | Grow gradually toward plan ceilings | Stay under complaint/bounce thresholds |
+## Owner rules
 
-Do **not** claim tens of thousands/day at launch. Start low; warm with engaged recipients only.
-
-**Compliance summary:** Opt-in only, mailing address required, unsubscribe + one-click, automated bounce/complaint suppression, auto-pause on bad rates, early-launch public signup still gated.
-
-## Recommended initial quota ask
-
-- **Max send rate:** 1–14 messages/second (match current sandbox comfort; request modest uplift only if needed)
-- **Max 24-hour send:** **1,000** for the first production week (or keep near 500 if AWS asks for conservatism)
-- Revisit after 7–14 days of healthy bounce (<2%) and complaint (<0.08%) metrics
-
-## Checklist before submitting
-
-- [ ] Controlled sandbox test to a verified recipient succeeded
-- [ ] SNS DELIVERY observed on webhook
-- [ ] DKIM + MAIL FROM still SUCCESS
-- [ ] Early launch / public signup still intentionally restricted
-- [ ] Owner reviews this draft and edits volume language if business reality differs
-
-## Explicitly out of scope for this draft
-
-- Do not submit this request automatically
+- Do not re-submit this as a new production-access request
 - Do not enable unrestricted public signup as part of production access
-- Do not promise inbox placement or “guaranteed deliverability”
+- Keep `CAMPAIGN_SEND_ENABLED=false` until controlled production-send test passes
