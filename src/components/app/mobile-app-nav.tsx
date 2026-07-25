@@ -22,12 +22,13 @@ export function MobileAppNav({ workspaceName }: { workspaceName: string }) {
       const first = panelRef.current?.querySelector<HTMLElement>("a,button");
       first?.focus();
     }, 0);
+    const trigger = triggerRef.current;
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
       window.clearTimeout(t);
       // Return focus to the menu trigger when the drawer closes.
-      window.setTimeout(() => triggerRef.current?.focus(), 0);
+      window.setTimeout(() => trigger?.focus(), 0);
     };
   }, [open]);
 
