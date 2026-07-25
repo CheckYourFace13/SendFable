@@ -116,8 +116,7 @@ Flags locked as required.
 
 ## 18. Commit hash
 
-Primary: `f726e60567b18145042470ae59ab3449128ff51b`  
-(Follow-up nav lint commit if present on main after push.)
+`b79eed6a71f9255729b89d7c9c7630dd1565b2ae` (includes `f726e60` identity/builder fixes)
 
 ## 19. Rollback
 
