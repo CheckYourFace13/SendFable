@@ -101,7 +101,7 @@ SES_CONTROLLED_TEST_ENABLED=false
 
 ## 10. Commit hash
 
-See git log after commit of this doc pack.
+`7bcddb8104a40d1f4bdaf54ce423794fba238fbf` (`7bcddb8`)
 
 ## 11. Rollback instructions
 
