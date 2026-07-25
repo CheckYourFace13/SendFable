@@ -5,7 +5,7 @@ import { PricingPreview } from "@/components/marketing/home/pricing-preview";
 export const metadata = {
   title: "Pricing",
   description:
-    "Sendfable pricing: free plan with clear contact and send limits, then Starter, Growth, and Pro. No credit card to start.",
+    "SendFable pricing: Free, Starter, Growth, Pro, and Pro Plus with clear contact and email limits. Two months free with annual billing.",
 };
 
 export default function PricingPage() {

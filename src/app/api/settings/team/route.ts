@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   const owner = await getWorkspaceOwner(ctx.workspace.id);
   if (PLANS[owner.plan].seats <= 1) {
     return NextResponse.json(
-      { error: "Team seats are available on the Pro plan", upgradeRequired: true },
+      { error: "Team seats are available on Pro and Pro Plus plans", upgradeRequired: true },
       { status: 402 }
     );
   }

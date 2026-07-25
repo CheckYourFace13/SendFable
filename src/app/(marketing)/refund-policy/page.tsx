@@ -24,6 +24,7 @@ export default function RefundPolicyPage() {
   const starter = PLANS.STARTER;
   const growth = PLANS.GROWTH;
   const pro = PLANS.PRO;
+  const proPlus = PLANS.PRO_PLUS;
 
   return (
     <LegalDoc title="Billing, Renewal, Cancellation & Refund Policy">
@@ -49,30 +50,38 @@ export default function RefundPolicyPage() {
       <LegalH2>1. Plans and limits (verified from product configuration)</LegalH2>
       <LegalUl>
         <li>
-          <strong>Free:</strong> {money(free.monthlyPrice)}; {free.contactCap.toLocaleString()}{" "}
-          contacts; {free.emailsPerMonth.toLocaleString()} emails/month; {free.seats} seat.
+          <strong>Free:</strong> {money(free.monthlyPrice)}; up to {free.contactCap.toLocaleString()}{" "}
+          contacts; up to {free.emailsPerMonth.toLocaleString()} emails/month.
         </li>
         <li>
           <strong>Starter:</strong> {money(starter.monthlyPrice)}/month or{" "}
-          {money(starter.yearlyPrice)}/year; {starter.contactCap.toLocaleString()} contacts;{" "}
-          {starter.emailsPerMonth.toLocaleString()} emails/month; {starter.seats} seat.
+          {money(starter.yearlyPrice)}/year; up to {starter.contactCap.toLocaleString()} contacts;
+          up to {starter.emailsPerMonth.toLocaleString()} emails/month.
         </li>
         <li>
           <strong>Growth:</strong> {money(growth.monthlyPrice)}/month or{" "}
-          {money(growth.yearlyPrice)}/year; {growth.contactCap.toLocaleString()} contacts;{" "}
-          {growth.emailsPerMonth.toLocaleString()} emails/month; {growth.seats} seat; custom domain
-          authentication available.
+          {money(growth.yearlyPrice)}/year; up to {growth.contactCap.toLocaleString()} contacts; up
+          to {growth.emailsPerMonth.toLocaleString()} emails/month; custom domain authentication
+          available.
         </li>
         <li>
-          <strong>Pro:</strong> {money(pro.monthlyPrice)}/month or {money(pro.yearlyPrice)}/year;{" "}
-          {pro.contactCap.toLocaleString()} contacts; {pro.emailsPerMonth.toLocaleString()}{" "}
-          emails/month; up to {pro.seats} seats; custom domain authentication available.
+          <strong>Pro:</strong> {money(pro.monthlyPrice)}/month or {money(pro.yearlyPrice)}/year; up
+          to {pro.contactCap.toLocaleString()} contacts; up to {pro.emailsPerMonth.toLocaleString()}{" "}
+          emails/month; custom domain authentication available.
+        </li>
+        <li>
+          <strong>Pro Plus:</strong> {money(proPlus.monthlyPrice)}/month or{" "}
+          {money(proPlus.yearlyPrice)}/year; up to {proPlus.contactCap.toLocaleString()} contacts;
+          up to {proPlus.emailsPerMonth.toLocaleString()} emails/month; custom domain authentication
+          available. Need more volume? Contact support for a custom plan.
         </li>
       </LegalUl>
       <p>
-        Limits are enforced in product (including contact caps, monthly email quotas, and daily
-        sending ramps). Exceeding contact caps can make sending read-only until you prune or
-        upgrade. Free has no charge and no paid renewal.
+        Contact and monthly email allowances are maximum plan limits. One email sent to one contact
+        counts as one email. Allowances reset each calendar month, and unused sends do not roll
+        over. Limits are enforced in product (including contact caps, monthly email quotas, and
+        daily sending ramps). Exceeding contact caps can make sending read-only until you prune or
+        upgrade. Free has no charge and no paid renewal. Annual billing equals two months free.
       </p>
 
       <LegalH2>2. Subscriptions, automatic renewal, and taxes</LegalH2>

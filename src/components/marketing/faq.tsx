@@ -33,7 +33,7 @@ const FAQS = [
   },
   {
     q: "Is there a free plan?",
-    a: "Yes. Free includes 500 contacts and 2,000 emails per month, with a “Sent with Sendfable” badge. No credit card required to start.",
+    a: "Yes. Free includes up to 500 contacts and up to 1,000 emails per month, with a “Sent with Sendfable” badge. No credit card required to start.",
   },
   {
     q: "Can Sendfable help me design the email?",

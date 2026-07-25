@@ -58,21 +58,20 @@ Policy bundle constant: `CURRENT_POLICY_BUNDLE = 2026-07-25` in
 
 ## Pricing / billing consistency
 
-Verified from `src/lib/plans.ts` and Stripe setup script:
+Verified from `src/lib/plans.ts` (catalog revision 2026-07-25):
 
-| Plan | Monthly | Annual | Contacts | Emails/mo | Seats |
+| Plan | Monthly | Annual | Contacts | Emails/mo | Seats (code) |
 |---|---|---|---|---|---|
-| Free | $0 | — | 500 | 2,000 | 1 |
-| Starter | $9 | $90 | 2,500 | 15,000 | 1 |
-| Growth | $19 | $190 | 10,000 | 60,000 | 1 |
-| Pro | $49 | $490 | 30,000 | 200,000 | 10 |
+| Free | $0 | — | Up to 500 | Up to 1,000 | 1 |
+| Starter | $12 | $120 | Up to 2,500 | Up to 10,000 | 1 |
+| Growth | $29 | $290 | Up to 10,000 | Up to 40,000 | 1 |
+| Pro | $69 | $690 | Up to 20,000 | Up to 80,000 | 5 |
+| Pro Plus | $99 | $990 | Up to 40,000 | Up to 200,000 | 10 |
 
-Portal: cancel at period end; subscription updates create prorations
-(`scripts/stripe-setup.ts`).
-
-**Owner confirmation recommended:** 14-day first-charge refund and 7-day unwanted
-renewal courtesy refund language (business practice; counsel should review
-enforceability). Annual plans: no default unused-month proration on refund.
+Seats are **not** advertised on public pricing while team invites remain early-launch constrained.
+Portal: cancel at period end; subscription updates create prorations.
+Policy bundle bumped to `2026-07-25b` for this material pricing update.
+Allowances reset each **calendar month** (UTC), unused sends do not roll over.
 
 ## Email-compliance alignment
 

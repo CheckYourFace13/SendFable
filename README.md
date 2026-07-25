@@ -122,7 +122,7 @@ Create a webhook endpoint in Stripe Dashboard:
 - Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.payment_succeeded`
 - Copy signing secret → `STRIPE_WEBHOOK_SECRET`
 
-Plans: **Starter** $9/$90, **Growth** $19/$190, **Pro** $49/$490 (monthly/yearly).
+Plans: **Free** $0 (up to 500 contacts / 1,000 emails), **Starter** $12/$120, **Growth** $29/$290, **Pro** $69/$690, **Pro Plus** $99/$990 (monthly/yearly; annual = two months free).
 
 ---
 

@@ -18,7 +18,7 @@ describe("legal policy constants", () => {
   });
 
   it("keeps policy bundle versions aligned", () => {
-    assert.equal(CURRENT_POLICY_BUNDLE, "2026-07-25");
+    assert.equal(CURRENT_POLICY_BUNDLE, "2026-07-25b");
     for (const v of Object.values(POLICY_VERSIONS)) {
       assert.equal(v, CURRENT_POLICY_BUNDLE);
     }
@@ -38,14 +38,14 @@ describe("legal policy constants", () => {
 });
 
 describe("plan catalog for billing policy", () => {
-  it("matches published Free/Starter/Growth/Pro limits", () => {
+  it("matches published Free/Starter/Growth/Pro/Pro Plus limits", () => {
     assert.deepEqual(
       {
         contacts: PLANS.FREE.contactCap,
         emails: PLANS.FREE.emailsPerMonth,
         monthly: PLANS.FREE.monthlyPrice,
       },
-      { contacts: 500, emails: 2_000, monthly: 0 }
+      { contacts: 500, emails: 1_000, monthly: 0 }
     );
     assert.deepEqual(
       {
@@ -54,7 +54,7 @@ describe("plan catalog for billing policy", () => {
         monthly: PLANS.STARTER.monthlyPrice,
         yearly: PLANS.STARTER.yearlyPrice,
       },
-      { contacts: 2_500, emails: 15_000, monthly: 9, yearly: 90 }
+      { contacts: 2_500, emails: 10_000, monthly: 12, yearly: 120 }
     );
     assert.deepEqual(
       {
@@ -63,7 +63,7 @@ describe("plan catalog for billing policy", () => {
         monthly: PLANS.GROWTH.monthlyPrice,
         yearly: PLANS.GROWTH.yearlyPrice,
       },
-      { contacts: 10_000, emails: 60_000, monthly: 19, yearly: 190 }
+      { contacts: 10_000, emails: 40_000, monthly: 29, yearly: 290 }
     );
     assert.deepEqual(
       {
@@ -71,9 +71,17 @@ describe("plan catalog for billing policy", () => {
         emails: PLANS.PRO.emailsPerMonth,
         monthly: PLANS.PRO.monthlyPrice,
         yearly: PLANS.PRO.yearlyPrice,
-        seats: PLANS.PRO.seats,
       },
-      { contacts: 30_000, emails: 200_000, monthly: 49, yearly: 490, seats: 10 }
+      { contacts: 20_000, emails: 80_000, monthly: 69, yearly: 690 }
+    );
+    assert.deepEqual(
+      {
+        contacts: PLANS.PRO_PLUS.contactCap,
+        emails: PLANS.PRO_PLUS.emailsPerMonth,
+        monthly: PLANS.PRO_PLUS.monthlyPrice,
+        yearly: PLANS.PRO_PLUS.yearlyPrice,
+      },
+      { contacts: 40_000, emails: 200_000, monthly: 99, yearly: 990 }
     );
   });
 });

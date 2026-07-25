@@ -19,7 +19,7 @@ const FAQS = [
   },
   {
     q: "How does Sendfable stay affordable?",
-    a: "We focus on core sending, audience tools, and SES delivery — not a sprawling suite of unused add-ons. Free includes 2,000 emails/month; paid plans scale by contacts and volume.",
+    a: "We focus on core sending, audience tools, and SES delivery — not a sprawling suite of unused add-ons. Free includes up to 1,000 emails/month; paid plans scale by contacts and volume.",
   },
   {
     q: "Do you undercut every competitor on every tier?",

@@ -10,7 +10,7 @@ import {
 } from "@/lib/stripe-billing-gate";
 
 const schema = z.object({
-  plan: z.enum(["STARTER", "GROWTH", "PRO"]),
+  plan: z.enum(["STARTER", "GROWTH", "PRO", "PRO_PLUS"]),
   interval: z.enum(["month", "year"]),
 });
 

@@ -115,8 +115,9 @@ export default function TermsPage() {
       </LegalUl>
       <p>
         The Customer is responsible for Authorized Users&apos; compliance with these Terms. Team
-        seats are plan-limited (Free/Starter/Growth: 1 seat; Pro: up to 10 seats, as configured in
-        the product).
+        seat limits are configured in product (Free/Starter/Growth: 1 seat; Pro: up to 5; Pro Plus:
+        up to 10). Multi-user invites may be limited during early launch and are not advertised on
+        public pricing until production-ready.
       </p>
 
       <LegalH2>5. Customer Content and license</LegalH2>

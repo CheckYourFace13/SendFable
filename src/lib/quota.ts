@@ -43,7 +43,7 @@ export async function checkLaunchQuota(
       ok: false,
       error:
         contactCount > plan.contactCap
-          ? `Your list (${contactCount.toLocaleString()}) exceeds the ${plan.name} contact cap (${plan.contactCap.toLocaleString()}). Prune contacts or upgrade to send.`
+          ? `Your list (${contactCount.toLocaleString()}) exceeds the ${plan.name} plan limit (up to ${plan.contactCap.toLocaleString()} contacts). Prune contacts or upgrade to send.`
           : "Sending is paused due to a failed payment. Update your billing method to continue.",
       upgradeRequired: contactCount > plan.contactCap,
     };
@@ -52,7 +52,7 @@ export async function checkLaunchQuota(
   if (user.monthlySendCount + recipientCount > plan.emailsPerMonth) {
     return {
       ok: false,
-      error: `This send would exceed your monthly quota (${user.monthlySendCount.toLocaleString()} / ${plan.emailsPerMonth.toLocaleString()} used).`,
+      error: `This send would exceed your monthly allowance (up to ${plan.emailsPerMonth.toLocaleString()} emails/month; ${user.monthlySendCount.toLocaleString()} used this calendar month). Unused sends do not roll over.`,
       upgradeRequired: true,
     };
   }

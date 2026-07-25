@@ -20,15 +20,15 @@ export const POLICY_EFFECTIVE_DATE = "July 25, 2026";
 export const POLICY_LAST_UPDATED = "July 25, 2026";
 
 /** ISO date string used in acceptance records and UI checks. */
-export const CURRENT_POLICY_BUNDLE = "2026-07-25";
+export const CURRENT_POLICY_BUNDLE = "2026-07-25b";
 
 export const POLICY_VERSIONS = {
-  terms: "2026-07-25",
-  privacy: "2026-07-25",
-  acceptableUse: "2026-07-25",
-  refund: "2026-07-25",
-  security: "2026-07-25",
-  cookies: "2026-07-25",
+  terms: "2026-07-25b",
+  privacy: "2026-07-25b",
+  acceptableUse: "2026-07-25b",
+  refund: "2026-07-25b",
+  security: "2026-07-25b",
+  cookies: "2026-07-25b",
 } as const;
 
 export type PolicyKind = keyof typeof POLICY_VERSIONS;

@@ -33,26 +33,34 @@ const PLANS = [
   {
     key: "STARTER" as const,
     name: "Sendfable Starter",
-    monthly: 900,
-    annual: 9000,
-    monthlyLookup: "sendfable_starter_monthly",
-    annualLookup: "sendfable_starter_annual",
+    monthly: 1200,
+    annual: 12000,
+    monthlyLookup: "sendfable_starter_monthly_20260725",
+    annualLookup: "sendfable_starter_annual_20260725",
   },
   {
     key: "GROWTH" as const,
     name: "Sendfable Growth",
-    monthly: 1900,
-    annual: 19000,
-    monthlyLookup: "sendfable_growth_monthly",
-    annualLookup: "sendfable_growth_annual",
+    monthly: 2900,
+    annual: 29000,
+    monthlyLookup: "sendfable_growth_monthly_20260725",
+    annualLookup: "sendfable_growth_annual_20260725",
   },
   {
     key: "PRO" as const,
     name: "Sendfable Pro",
-    monthly: 4900,
-    annual: 49000,
-    monthlyLookup: "sendfable_pro_monthly",
-    annualLookup: "sendfable_pro_annual",
+    monthly: 6900,
+    annual: 69000,
+    monthlyLookup: "sendfable_pro_monthly_20260725",
+    annualLookup: "sendfable_pro_annual_20260725",
+  },
+  {
+    key: "PRO_PLUS" as const,
+    name: "Sendfable Pro Plus",
+    monthly: 9900,
+    annual: 99000,
+    monthlyLookup: "sendfable_pro_plus_monthly_20260725",
+    annualLookup: "sendfable_pro_plus_annual_20260725",
   },
 ];
 
@@ -150,6 +158,11 @@ async function main() {
     {
       productId: (await stripe.prices.retrieve(priceEnv.STRIPE_PRICE_PRO_MONTHLY)).product as string,
       prices: [priceEnv.STRIPE_PRICE_PRO_MONTHLY, priceEnv.STRIPE_PRICE_PRO_ANNUAL],
+    },
+    {
+      productId: (await stripe.prices.retrieve(priceEnv.STRIPE_PRICE_PRO_PLUS_MONTHLY))
+        .product as string,
+      prices: [priceEnv.STRIPE_PRICE_PRO_PLUS_MONTHLY, priceEnv.STRIPE_PRICE_PRO_PLUS_ANNUAL],
     },
   ]);
   console.log(`✓ Portal config ${redact(portal.id)} (${portal.reused ? "reused" : "created"})`);
