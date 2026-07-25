@@ -78,7 +78,11 @@ export default function PrivacyPage() {
           <strong>Export:</strong> you can export your contacts as CSV from the app at any time.
         </li>
         <li>
-          <strong>Deletion:</strong> delete your workspace from settings, or send a request via the{" "}
+          <strong>Deletion:</strong> delete your workspace from settings, or email{" "}
+          <a className="underline" href="mailto:privacy@sendfable.com">
+            privacy@sendfable.com
+          </a>{" "}
+          / use the{" "}
           <a className="underline" href="/contact">
             contact form
           </a>{" "}
@@ -110,7 +114,11 @@ export default function PrivacyPage() {
 
       <h2 className="pt-4 text-2xl font-semibold text-slate-900">Contact</h2>
       <p>
-        Privacy questions and requests: use the{" "}
+        Privacy questions and requests:{" "}
+        <a className="underline" href="mailto:privacy@sendfable.com">
+          privacy@sendfable.com
+        </a>
+        , or use the{" "}
         <a className="underline" href="/contact">
           contact form
         </a>{" "}

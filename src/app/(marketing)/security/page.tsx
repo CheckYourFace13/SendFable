@@ -58,11 +58,19 @@ export default function SecurityPage() {
 
       <h2 className="pt-4 text-2xl font-semibold text-slate-900">Report a concern</h2>
       <p>
-        Report suspected vulnerabilities or abuse through our{" "}
+        Report suspected vulnerabilities to{" "}
+        <a className="text-teal hover:underline" href="mailto:security@sendfable.com">
+          security@sendfable.com
+        </a>{" "}
+        or through our{" "}
         <Link href="/contact" className="text-teal hover:underline">
           contact form
         </Link>{" "}
-        (topic: &quot;Security issue&quot;). For privacy requests, see our{" "}
+        (topic: &quot;Security issue&quot;). For privacy requests, email{" "}
+        <a className="text-teal hover:underline" href="mailto:privacy@sendfable.com">
+          privacy@sendfable.com
+        </a>{" "}
+        or see our{" "}
         <Link href="/privacy" className="text-teal hover:underline">
           Privacy Policy
         </Link>

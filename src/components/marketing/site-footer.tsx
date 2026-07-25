@@ -73,6 +73,8 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/privacy", label: "Privacy" },
       { href: "/acceptable-use", label: "Acceptable use" },
       { href: "/refund-policy", label: "Billing & refunds" },
+      { href: "/contact", label: "Contact" },
+      { href: "mailto:support@sendfable.com", label: "support@sendfable.com" },
     ],
   },
 ];

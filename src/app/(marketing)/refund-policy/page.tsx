@@ -98,7 +98,11 @@ export default function RefundPolicyPage() {
 
       <h2 className="pt-4 text-2xl font-semibold text-slate-900">Questions</h2>
       <p>
-        Contact us about any charge via the{" "}
+        Contact us about any charge at{" "}
+        <a className="underline" href="mailto:support@sendfable.com">
+          support@sendfable.com
+        </a>{" "}
+        or via the{" "}
         <a className="underline" href="/contact">
           contact form
         </a>{" "}

@@ -135,7 +135,11 @@ export default function TermsPage() {
 
       <h2 className="pt-4 text-2xl font-semibold text-slate-900">Contact</h2>
       <p>
-        Legal questions: use the{" "}
+        Legal notices:{" "}
+        <a className="underline" href="mailto:legal@sendfable.com">
+          legal@sendfable.com
+        </a>
+        . You can also use the{" "}
         <a className="underline" href="/contact">
           contact form
         </a>{" "}

@@ -23,13 +23,54 @@ export default function ContactPage() {
 
       <div className="mt-10 space-y-3 text-sm text-ink/70">
         <p>
-          <strong className="text-ink">Reporting spam or abuse:</strong> choose the &quot;Report
-          abuse or spam&quot; topic above and include the sender address and, if possible, the full
-          email headers. Abuse reports are reviewed with priority.
+          <strong className="text-ink">Email us directly:</strong>
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            General support &amp; billing:{" "}
+            <a className="underline" href="mailto:support@sendfable.com">
+              support@sendfable.com
+            </a>
+          </li>
+          <li>
+            Privacy &amp; data requests:{" "}
+            <a className="underline" href="mailto:privacy@sendfable.com">
+              privacy@sendfable.com
+            </a>
+          </li>
+          <li>
+            Abuse / spam reports:{" "}
+            <a className="underline" href="mailto:abuse@sendfable.com">
+              abuse@sendfable.com
+            </a>
+          </li>
+          <li>
+            Security:{" "}
+            <a className="underline" href="mailto:security@sendfable.com">
+              security@sendfable.com
+            </a>
+          </li>
+          <li>
+            Legal:{" "}
+            <a className="underline" href="mailto:legal@sendfable.com">
+              legal@sendfable.com
+            </a>
+          </li>
+        </ul>
+        <p>
+          <strong className="text-ink">Reporting spam or abuse:</strong> email{" "}
+          <a className="underline" href="mailto:abuse@sendfable.com">
+            abuse@sendfable.com
+          </a>{" "}
+          or use the form topic &quot;Report abuse or spam&quot; and include the sender address and,
+          if possible, the full email headers.
         </p>
         <p>
-          <strong className="text-ink">Privacy and data requests:</strong> to request export or
-          deletion of your data, choose the &quot;Privacy or data request&quot; topic. See our{" "}
+          <strong className="text-ink">Privacy and data requests:</strong> email{" "}
+          <a className="underline" href="mailto:privacy@sendfable.com">
+            privacy@sendfable.com
+          </a>{" "}
+          or use the form. See our{" "}
           <a className="underline" href="/privacy">
             Privacy Policy
           </a>{" "}

@@ -29,10 +29,14 @@ the limitation-of-liability clause.
 
 ## Open owner items
 
-- `sendfable.com` has **no MX records** — no support/legal/privacy mailbox
-  exists. The contact form works (DB-backed), but Stripe's support-email field
-  and email-based legal notices need a real mailbox (e.g. add email routing
-  for `sendfable.com`).
+- Stripe Dashboard: set support email `support@sendfable.com` and support URL
+  `https://sendfable.com/contact` (API cannot update own account — see
+  `docs/STRIPE_SUPPORT_DASHBOARD_STEPS.md`).
 - Acceptance recording: signup requires agreeing to Terms; Stripe Checkout
   displays terms via the business profile. Explicit timestamped
   acceptance records are a post-launch improvement.
+- Off-host S3 backups: Option A approved and scripted; needs one-time AWS admin
+  bootstrap (SES IAM cannot create buckets). See `docs/OFFHOST_BACKUP_SETUP.md`.
+- Second-workspace QA: owner must supply emails in
+  `docs/SECOND_ACCOUNT_EMAILS_NEEDED.md`.
+- Legal review remains a business-risk acceptance decision.

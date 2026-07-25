@@ -16,7 +16,7 @@ export function UserMenu({ name, email }: { name: string | null; email: string }
   const initial = (name?.[0] ?? email[0] ?? "?").toUpperCase();
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground outline-none">
+      <DropdownMenuTrigger className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2">
         {initial}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

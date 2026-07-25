@@ -71,7 +71,11 @@ export default function AcceptableUsePage() {
 
       <h2 className="pt-4 text-2xl font-semibold text-slate-900">Reporting abuse</h2>
       <p>
-        If you received unwanted email sent through Sendfable, report it via our{" "}
+        If you received unwanted email sent through Sendfable, report it to{" "}
+        <a className="underline" href="mailto:abuse@sendfable.com">
+          abuse@sendfable.com
+        </a>{" "}
+        or via our{" "}
         <a className="underline" href="/contact">
           contact form
         </a>{" "}

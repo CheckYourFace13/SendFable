@@ -78,6 +78,20 @@ else
   alert backup "Sendfable backup is stale or missing" "No successful backup in the last 26 hours."
 fi
 
+# 6b. Off-host backup freshness when configured.
+if [ -f /root/sendfable-backups/backup-iam.env ]; then
+  # shellcheck disable=SC1091
+  set -a; . /root/sendfable-backups/backup-iam.env; set +a
+fi
+if [ -n "${BACKUP_S3_BUCKET:-}" ]; then
+  OFF=/root/sendfable-backups/last-offhost-success
+  if [ -f "$OFF" ] && [ $(( $(date +%s) - $(stat -c %Y "$OFF") )) -lt 93600 ]; then
+    clear_alert offhost
+  else
+    alert offhost "Sendfable off-host backup is stale or missing" "No successful S3 upload in the last 26 hours."
+  fi
+fi
+
 # 7. Queue health (BullMQ campaign-send).
 FAILED=$(docker exec sendfable-redis redis-cli ZCARD bull:campaign-send:failed 2>/dev/null | tr -dc '0-9')
 WAITING=$(docker exec sendfable-redis redis-cli LLEN bull:campaign-send:wait 2>/dev/null | tr -dc '0-9')
