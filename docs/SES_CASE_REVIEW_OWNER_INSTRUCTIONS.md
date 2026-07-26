@@ -1,18 +1,25 @@
 # SES case review — owner instructions (do not appeal automatically)
 
-**Case ID:** `178491867800933`  
-**API status (treat as denial unless Support Console shows otherwise):**
+**Case ID:** `178491867800933`
+
+## Owner-visible classification (2026-07-26)
+
+**AWS requested additional information and is waiting for the owner response.**
+
+Do **not** treat the SES API `ReviewDetails.Status=DENIED` enum alone as a final Support denial letter.  
+Do **not** describe the case as finally denied unless AWS later sends an explicit denial message.  
+Do **not** submit another production-access request.  
+Do **not** send an automated appeal from this environment.
+
+## Latest read-only API snapshot
 
 | Field | Value |
 |---|---|
 | ProductionAccessEnabled | `false` |
 | SendingEnabled | `true` |
 | EnforcementStatus | `HEALTHY` |
-| ReviewDetails.Status | `DENIED` |
+| ReviewDetails.Status | `DENIED` (API enum) |
 | CaseId | `178491867800933` |
-
-**Do not** submit another production-access request.  
-**Do not** send an appeal or paste the follow-up draft until you have read AWS’s stated reason.
 
 ## Where to open AWS Support Center
 
@@ -21,18 +28,20 @@
    https://support.console.aws.amazon.com/support/home  
    (or AWS Console → search “Support” → **Support Center**).
 3. Open **Your support cases** / case history.
-4. Find case **`178491867800933`** (SES / production access / account review related).
-5. Read **all correspondence**, attachments, and the denial reason end-to-end.
-6. Optionally also check **Amazon SES** → Account dashboard / sending statistics for any in-console notices that mirror the denial.
+4. Find case **`178491867800933`**.
+5. Read **all correspondence** — especially AWS’s request for additional information.
+6. Reply in-thread with the requested details. Adapt  
+   `docs/SES_PRODUCTION_ACCESS_FOLLOWUP_DRAFT.md`  
+   to answer what AWS actually asked.
+7. Optionally confirm SES console identity/DKIM status remains healthy.
 
-## After you read AWS’s reason
+## After you respond
 
-- Decide whether a reply is warranted.
-- If yes, use the preserved draft only: `docs/SES_PRODUCTION_ACCESS_FOLLOWUP_DRAFT.md`  
-  **Edit it to address AWS’s stated reason** before sending.
-- If AWS asks for different information, answer that — do not open a second production-access case.
+- Wait for AWS. Do not open a second production-access case.
+- When `ProductionAccessEnabled=true`, run the controlled send test only after the authorization phrase in  
+  `docs/SES_CONTROLLED_PRODUCTION_TEST_PLAN.md`.
 
 ## Related
 
-- Follow-up draft status header should reflect **DENIED / awaiting owner review of correspondence**, not “submitted/open awaiting review.”
-- Campaign send and SES controlled-test flags remain **off** until production access is resolved and owner re-authorizes testing.
+- Consolidation: `docs/PRE_APPROVAL_READINESS_2026-07-26.md`
+- API-vs-correspondence note: `docs/SES_CASE_STATUS_CORRECTION_2026-07-25.md`

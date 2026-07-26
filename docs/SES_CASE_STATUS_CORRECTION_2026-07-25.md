@@ -32,17 +32,23 @@ Separately:
   for IAM user `sendfable-ses-production`. Case messages cannot be listed from this
   environment. Owner must read the case in the AWS Console / Support Center.
 
-## Correct operational classification (until AWS replies substantively)
+## Correct operational classification (updated 2026-07-26)
 
-**Submitted/open — awaiting AWS review.**
+**AWS requested additional information and is waiting for the owner response.**
+
+The SES API may still return `ReviewDetails.Status=DENIED`. That enum alone is **not**
+treated as a final Support denial letter. Do not describe the case as finally denied
+unless AWS later sends an explicit denial message.
 
 Do **not**:
 
-- Submit an appeal
+- Submit an automated appeal
 - Open another production-access request
-- Paste the follow-up draft unless AWS rejects or asks for more information
+- Paste the follow-up draft without reading AWS’s exact questions
 
-Follow-up draft (unsubmitted): `docs/SES_PRODUCTION_ACCESS_FOLLOWUP_DRAFT.md`
+Owner instructions: `docs/SES_CASE_REVIEW_OWNER_INSTRUCTIONS.md`  
+Follow-up draft (unsubmitted): `docs/SES_PRODUCTION_ACCESS_FOLLOWUP_DRAFT.md`  
+Consolidation: `docs/PRE_APPROVAL_READINESS_2026-07-26.md`
 
 ## Field snapshot (re-checked 2026-07-25 via `aws sesv2 get-account --region us-east-1`)
 

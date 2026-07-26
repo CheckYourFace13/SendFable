@@ -41,8 +41,9 @@ dependency; **disabled** = intentionally off for launch safety.
 
 | Area | Status |
 |---|---|
-| Stripe live billing (products, prices, webhook, portal, checkout, refund) | **Live-proven** 2026-07-24: controlled $9 Starter checkout, webhook fulfillment, cancellation, and full refund all verified. Public billing remains **disabled** (`STRIPE_BILLING_ENABLED=false`, owner-test only). |
-| SES identity/pipeline | Configured and verified (domain, DKIM, MAIL FROM, config set, SNS destination). **Blocked**: still sandbox (`ProductionAccessEnabled=false`, 200/day, 1 msg/s). Case 178491867800933: **Submitted/open — awaiting AWS review** (do not appeal unless AWS rejects or asks). See `docs/SES_CASE_STATUS_CORRECTION_2026-07-25.md`. |
+| Stripe live billing (products, prices, webhook, portal, checkout, refund) | **Live-proven** 2026-07-26 at Starter **$12** (paid → webhook STARTER → immediate cancel → full refund → FREE). Earlier $9 proof superseded for catalog price. Public billing remains **disabled**. See `docs/STRIPE_STARTER12_LIFECYCLE_2026-07-26.md`. |
+| SES identity/pipeline | Configured and verified (domain, DKIM, MAIL FROM, config set, SNS destination confirmed). **Blocked on public send**: `ProductionAccessEnabled=false` (sandbox quotas). Case `178491867800933`: **AWS requested additional information — awaiting owner response** (API `ReviewDetails.Status` may still show `DENIED`; do not auto-appeal). See `docs/SES_CASE_REVIEW_OWNER_INSTRUCTIONS.md` and `docs/PRE_APPROVAL_READINESS_2026-07-26.md`. |
+| Off-host encrypted backups | **Live** (age + S3). Local + off-host success markers rechecked 2026-07-26. |
 | Campaign sending | Code-complete + unit-tested; **disabled** for public (`CAMPAIGN_SEND_ENABLED=false`) and blocked by SES sandbox for real-world sends. |
 | Public signup | **Disabled** (`ALLOW_PUBLIC_SIGNUP=false`, early-access waitlist live). |
 | Login callback redirects | Fixed 2026-07-24: centralized `safeCallbackPath` validation (client + Auth.js `redirect` callback), unit-tested against encoded/double-encoded/backslash/scheme bypasses. |
@@ -50,7 +51,7 @@ dependency; **disabled** = intentionally off for launch safety.
 | Unknown routes | Fixed 2026-07-24: unknown public URLs return a real branded 404 (noindex); login redirect only for known app sections. |
 | Import suppression gap | Fixed 2026-07-24: globally/workspace-suppressed emails can no longer be imported as SUBSCRIBED (`resolveImportStatus`), unit-tested. |
 | Password reset | Intentionally absent: recovery is via magic link (see `docs/AUTH_POLICY.md`). Password change UI is **deferred post-launch**. |
-| Backups | Automated daily `pg_dump` with integrity checks, 14/60/365-day tiers, and SES owner alerting (see `docs/BACKUPS.md`). Off-host copies **deferred** — single-host failure domain until owner picks offsite storage. |
+| Backups | Automated daily `pg_dump` + integrity checks + SES owner alerting; **encrypted off-host S3 live** (see `docs/BACKUPS.md`). Refresh isolated restore drill before public launch. |
 | Monitoring | 5-minute cron monitor (app, containers, nginx, disk, TLS, backups, queue, stuck campaigns) with de-duplicated SES owner alerts (see `docs/INCIDENT_RUNBOOK.md`). |
 | Support channel | `/contact` form stores messages in DB (admin-reviewed). **Blocked/owner decision**: `sendfable.com` has no MX records, so no support/legal/privacy mailbox exists; Stripe support-email field needs a real mailbox. |
 | Analytics | No approved provider. First-party typed event interface exists and is **disabled** (`src/lib/analytics.ts`, `docs/ANALYTICS_DECISION.md`). Do not reuse the RentalNoodle Plausible instance. |

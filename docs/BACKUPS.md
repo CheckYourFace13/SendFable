@@ -12,19 +12,14 @@ touches RentalNoodle, GravyBlock, or any other application's data or backups.
 - **Retention:** 14 days daily, 60 days weekly (Sunday copies), 365 days monthly (1st-of-month copies).
 - **Integrity:** `gzip -t` self-test, minimum-size sanity check, `sha256sum` sidecar per file.
 - **Logs:** `/root/sendfable-backups/backup.log` (timestamped); `last-success` marker file.
+- **Off-host:** age-encrypted upload to private S3 (dedicated backup IAM — not the SES user).
+  Marker: `/root/sendfable-backups/last-offhost-success`. Setup: `docs/OFFHOST_BACKUP_SETUP.md`.
 - **Failure alerting:** backup failures email the owner via SES
   (`scripts/ops-alert.js`, `OWNER_ALERT_EMAIL`); the 5-minute monitor also
   alerts if `last-success` is older than 26 h.
 - **Secrets:** dumps contain application data only; no `.env` files or keys are
-  included in backups or logs.
+  included in backups or logs. Age private key stays on the VPS only.
 - **Disk safety:** backup aborts (with alert) at ≥ 92% disk; monitor warns at 85%.
-
-## Known limitation
-
-Backups live on the same host as the database (single failure domain).
-Off-host/encrypted-offsite copies require an owner decision (e.g. an S3 bucket
-with a dedicated IAM user) — deliberately not improvised with the SES-scoped
-AWS credentials.
 
 ## Restore
 
@@ -41,9 +36,13 @@ gunzip -c /root/sendfable-backups/daily/<latest>.sql.gz \
 docker exec sendfable-postgres dropdb -U sendfable sendfable_restore_drill
 ```
 
+For off-host: download `.age` object → `age -d` with the VPS age key → gunzip → same isolated restore.
+
 Real recovery: stop app + worker, restore into a fresh database the same way,
 point `DATABASE_URL` at it, start containers, verify `/api/health`.
 
-- **Last successful backup:** see `/root/sendfable-backups/last-success`.
-- **Last successful restore drill:** 2026-07-24 (results recorded in
-  `docs/PRODUCTION_LAUNCH_AUDIT_2026-07-24.md` follow-up section).
+## Rechecked 2026-07-26
+
+- **Last successful local backup:** `/root/sendfable-backups/last-success` → 2026-07-26T03:15:01Z
+- **Last successful off-host upload:** `/root/sendfable-backups/last-offhost-success` → same window (daily + weekly `.age`)
+- **Last successful restore drill:** 2026-07-24 (documented). Refresh before public launch activation.

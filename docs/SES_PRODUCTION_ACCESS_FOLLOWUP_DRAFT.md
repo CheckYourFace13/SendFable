@@ -1,9 +1,9 @@
-# SES production-access follow-up draft (DO NOT SUBMIT)
+# SES production-access follow-up draft (DO NOT SUBMIT AUTOMATICALLY)
 
 **Case:** 178491867800933  
-**Operational status (API):** `ReviewDetails.Status=DENIED` · `ProductionAccessEnabled=false` · treat as a **denial** unless the AWS Support Console shows otherwise.  
-**Owner action first:** Read all Support Center correspondence for this case — see `docs/SES_CASE_REVIEW_OWNER_INSTRUCTIONS.md`.  
-**This document:** Optional follow-up text only. **Do not paste into the case** until the owner has read AWS’s stated reason and decides a reply is appropriate.  
+**Owner-visible status:** AWS requested additional information — **awaiting owner response** in Support Center.  
+**API note:** `ReviewDetails.Status` may still show `DENIED` as an enum while correspondence asks for more information; do not treat the API enum alone as a final denial letter.  
+**This document:** Draft reply text. **Owner edits and pastes only after reading AWS’s exact questions.**  
 **Do not** open a second production-access request. **Do not** send an appeal automatically.
 
 ---

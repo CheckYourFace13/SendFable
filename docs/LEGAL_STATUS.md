@@ -70,7 +70,8 @@ Seats are **not** advertised on public pricing. “Up to 10” is seats only —
 
 1. Supply Illinois (or other) formation proof before governing-law wording is deployed.
 2. Qualified attorney review before removing early-access posture / broad launch.
-3. SES production access: API `DENIED` — owner must read Support Center case `178491867800933` (`docs/SES_CASE_REVIEW_OWNER_INSTRUCTIONS.md`); no automatic appeal.
-4. Owner-only Starter **$12** billing lifecycle test prepared but **not run** — see `docs/STRIPE_LIVE_VERIFICATION.md`.
-5. Launch flags remain locked (see readiness docs).
-6. Optional: confirm Stripe invoice/KYC legal-name visibility of “iScream Studio INC”.
+3. SES case `178491867800933`: **AWS requested additional information — awaiting owner response** (see `docs/SES_CASE_REVIEW_OWNER_INSTRUCTIONS.md`). No automated appeal.
+4. Controlled SES production-send test — prepared, not run (`docs/SES_CONTROLLED_PRODUCTION_TEST_PLAN.md`).
+5. Final launch activation — prepared, not run (`docs/FINAL_LAUNCH_ACTIVATION_CHECKLIST.md`).
+6. Launch flags remain locked (see `docs/PRE_APPROVAL_READINESS_2026-07-26.md`).
+7. Optional: confirm Stripe invoice/KYC legal-name visibility of “iScream Studio INC”.
