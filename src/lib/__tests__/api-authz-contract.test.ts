@@ -32,6 +32,7 @@ const PUBLIC_BY_DESIGN = new Set([
   "unsubscribe/one-click", // RFC 8058 one-click
   "webhooks/ses", // SNS signature verified
   "webhooks/stripe", // Stripe signature verified
+  "webhooks/telnyx", // Telnyx signature verified; 404 while inbound flag off
 ]);
 
 const AUTH_MARKERS = [/getApiContext\s*\(/, /requirePlatformAdmin\s*\(/, /\bauth\s*\(\)/];

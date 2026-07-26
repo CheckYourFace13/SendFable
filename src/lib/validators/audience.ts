@@ -1,13 +1,23 @@
 import { z } from "zod";
 
-export const contactCreateSchema = z.object({
-  email: z.string().email().max(254),
-  firstName: z.string().trim().max(100).optional().nullable(),
-  lastName: z.string().trim().max(100).optional().nullable(),
-  customFields: z.record(z.string()).optional(),
-  tagIds: z.array(z.string()).optional(),
-  source: z.string().max(80).optional(),
-});
+export const contactCreateSchema = z
+  .object({
+    email: z.string().email().max(254).optional().nullable(),
+    /** Raw phone input; normalized to US E.164 server-side */
+    phone: z.string().trim().max(30).optional().nullable(),
+    firstName: z.string().trim().max(100).optional().nullable(),
+    lastName: z.string().trim().max(100).optional().nullable(),
+    company: z.string().trim().max(160).optional().nullable(),
+    customFields: z.record(z.string()).optional(),
+    tagIds: z.array(z.string()).optional(),
+    source: z.string().max(80).optional(),
+    /** Explicit SMS marketing consent (never implied by phone presence) */
+    smsConsent: z.boolean().optional(),
+    smsConsentSource: z.string().max(120).optional(),
+  })
+  .refine((v) => !!(v.email?.trim() || v.phone?.trim()), {
+    message: "An email or mobile number is required",
+  });
 
 export const importContactStatusSchema = z.enum([
   "SUBSCRIBED",
@@ -17,14 +27,23 @@ export const importContactStatusSchema = z.enum([
   "PENDING_CONFIRM",
 ]);
 
-export const importContactSchema = z.object({
-  email: z.string().email().max(254),
-  firstName: z.string().trim().max(100).optional().nullable(),
-  lastName: z.string().trim().max(100).optional().nullable(),
-  customFields: z.record(z.string()).optional(),
-  tagNames: z.array(z.string().max(60)).optional(),
-  status: importContactStatusSchema.optional(),
-});
+export const importContactSchema = z
+  .object({
+    email: z.string().email().max(254).optional().nullable(),
+    /** Raw phone input; normalized to US E.164 server-side */
+    phone: z.string().trim().max(30).optional().nullable(),
+    firstName: z.string().trim().max(100).optional().nullable(),
+    lastName: z.string().trim().max(100).optional().nullable(),
+    customFields: z.record(z.string()).optional(),
+    tagNames: z.array(z.string().max(60)).optional(),
+    status: importContactStatusSchema.optional(),
+    /** Row-level explicit SMS consent evidence from the CSV */
+    smsConsent: z.boolean().optional(),
+    smsConsentDate: z.string().max(40).optional(),
+  })
+  .refine((v) => !!(v.email?.trim() || v.phone?.trim()), {
+    message: "Each row needs an email or a phone",
+  });
 
 export const importSchema = z.object({
   contacts: z.array(importContactSchema).min(1).max(50_000),
@@ -36,6 +55,18 @@ export const importSchema = z.object({
     .optional(),
   /** Preview-only: return counts without writing. */
   dryRun: z.boolean().optional(),
+  /**
+   * SMS consent for the whole batch. Imported phones are NEVER auto-subscribed:
+   * "none" (default) stores phones without SMS permission;
+   * "explicit-fields" honors row-level smsConsent columns;
+   * "documented-source" / "owner-attestation" require source/date/attestation.
+   */
+  smsConsentMode: z
+    .enum(["none", "explicit-fields", "documented-source", "owner-attestation"])
+    .optional(),
+  smsConsentSource: z.string().max(200).optional(),
+  smsConsentDate: z.string().max(40).optional(),
+  ownerAttestation: z.string().max(2000).optional(),
 });
 
 export const bulkActionSchema = z.object({

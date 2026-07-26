@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { slugify, randomToken } from "@/lib/utils";
+import { isSmsAccountSignupEnabled } from "@/lib/sms/flags";
+import { FORM_PRESETS } from "@/lib/form-presets";
 
 const fieldSchema = z.object({
   key: z.string().min(1).max(40),
   label: z.string().min(1).max(80),
-  type: z.enum(["email", "text", "checkbox"]),
+  type: z.enum(["email", "text", "checkbox", "phone"]),
   required: z.boolean(),
 });
 
@@ -16,7 +19,14 @@ const createSchema = z.object({
   fields: z.array(fieldSchema).min(1).max(20).optional(),
   doubleOptIn: z.boolean().optional(),
   tagIds: z.array(z.string()).optional(),
+  /** Preset: "email" (default) | "text" | "email-and-text" */
+  preset: z.enum(["email", "text", "email-and-text"]).optional(),
+  requirementMode: z
+    .enum(["email-required", "phone-required", "either-required", "both-required"])
+    .optional(),
+  collectPhone: z.boolean().optional(),
 });
+
 
 export async function GET() {
   const ctx = await getApiContext();
@@ -41,10 +51,20 @@ export async function POST(req: Request) {
     );
   }
 
-  const fields = parsed.data.fields ?? [
-    { key: "email", label: "Email", type: "email" as const, required: true },
-    { key: "firstName", label: "First name", type: "text" as const, required: false },
-  ];
+  const preset = FORM_PRESETS[parsed.data.preset ?? "email"];
+  const fields = parsed.data.fields ?? preset.fields;
+  const requirementMode = parsed.data.requirementMode ?? preset.requirementMode;
+  const collectPhone =
+    parsed.data.collectPhone ?? (preset.collectPhone || fields.some((f) => f.type === "phone"));
+
+  // Server-side gate: phone-collecting forms (Text Signup / Email and Text
+  // Signup) cannot be created while the SMS signup flag is disabled.
+  if ((collectPhone || requirementMode !== "email-required") && !isSmsAccountSignupEnabled()) {
+    return NextResponse.json(
+      { error: "Text signup forms are not available yet" },
+      { status: 403 }
+    );
+  }
 
   let hostedSlug = slugify(parsed.data.name) || "form";
   const clash = await prisma.signupForm.findUnique({ where: { hostedSlug } });
@@ -54,9 +74,11 @@ export async function POST(req: Request) {
     data: {
       workspaceId: ctx.workspace.id,
       name: parsed.data.name,
-      fields,
+      fields: fields as unknown as Prisma.InputJsonValue,
       doubleOptIn: parsed.data.doubleOptIn ?? false,
       tagIds: parsed.data.tagIds ?? [],
+      requirementMode,
+      collectPhone,
       hostedSlug,
     },
   });

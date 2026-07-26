@@ -16,6 +16,7 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "stripe:setup": "tsx scripts/stripe-setup.ts",
+    "stripe:sms-setup": "tsx scripts/stripe-sms-setup.ts",
     "test": "node scripts/run-tests.mjs",
     "seo:check": "tsx scripts/seo-check.ts"
   },
@@ -54,6 +55,7 @@
     "date-fns": "^3.6.0",
     "ioredis": "^5.4.1",
     "jose": "^5.9.4",
+    "libphonenumber-js": "^1.13.9",
     "lucide-react": "^0.446.0",
     "next": "^14.2.15",
     "next-auth": "5.0.0-beta.29",

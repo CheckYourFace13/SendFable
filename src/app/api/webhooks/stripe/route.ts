@@ -7,6 +7,11 @@ import {
   getStripe,
   planFromPriceId,
 } from "@/lib/stripe";
+import {
+  handleSmsActivationPayment,
+  handleSmsSubscriptionEvent,
+  recalcSmsBundleForCustomer,
+} from "@/lib/sms/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -57,9 +62,20 @@ export async function POST(req: Request) {
       case "checkout.session.completed":
       case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
+        // SMS activation fee (one-time payment) — flag-gated product; inert
+        // unless an SmsActivation row is awaiting payment.
+        if (session.mode === "payment" && session.metadata?.smsActivationWorkspaceId) {
+          await handleSmsActivationPayment(
+            session.metadata.smsActivationWorkspaceId,
+            String(session.payment_intent || session.id)
+          );
+          break;
+        }
         if (session.mode !== "subscription" || !session.subscription) break;
         const sub = await stripe.subscriptions.retrieve(String(session.subscription));
-        await applySubscription(sub, session.metadata?.userId);
+        // SMS subscriptions are handled separately from the email Plan.
+        const sms = await handleSmsSubscriptionEvent(sub, event.type);
+        if (!sms.handled) await applySubscription(sub, session.metadata?.userId);
         break;
       }
       case "checkout.session.async_payment_failed": {
@@ -69,11 +85,18 @@ export async function POST(req: Request) {
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
-        await applySubscription(sub);
+        const sms = await handleSmsSubscriptionEvent(sub, event.type);
+        if (!sms.handled) {
+          await applySubscription(sub);
+          // Email plan may have changed — SMS bundle discount follows it.
+          await recalcSmsBundleForCustomer(String(sub.customer));
+        }
         break;
       }
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
+        const sms = await handleSmsSubscriptionEvent(sub, event.type);
+        if (sms.handled) break;
         const user = await findUserForSub(sub);
         if (user) {
           await prisma.user.update({
@@ -85,6 +108,8 @@ export async function POST(req: Request) {
               paymentFailedAt: null,
             },
           });
+          // Losing the email plan removes bundle eligibility (never SMS service).
+          await recalcSmsBundleForCustomer(String(sub.customer));
         }
         break;
       }

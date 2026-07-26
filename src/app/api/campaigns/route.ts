@@ -5,11 +5,15 @@ import { getApiContext } from "@/lib/session";
 import type { Prisma } from "@prisma/client";
 import { compileEmailHtml } from "@/lib/email-compiler";
 import { createSimpleDesign } from "@/lib/simple-design";
+import { isSmsAccountSignupEnabled, isSmsCodeEnabled } from "@/lib/sms/flags";
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(120),
   goal: z.string().max(40).optional(),
   simpleMode: z.boolean().optional(),
+  /** EMAIL (default) | SMS | BOTH. SMS/BOTH require the SMS signup flag. */
+  channel: z.enum(["EMAIL", "SMS", "BOTH"]).optional(),
+  smsBody: z.string().max(1600).optional().nullable(),
 });
 
 export async function GET() {
@@ -51,6 +55,14 @@ export async function POST(req: Request) {
     );
   }
 
+  const channel = parsed.data.channel ?? "EMAIL";
+  if (channel !== "EMAIL" && (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled())) {
+    return NextResponse.json(
+      { error: "Text campaigns are not available yet" },
+      { status: 403 }
+    );
+  }
+
   const design = createSimpleDesign({
     logoUrl: ctx.workspace.logoUrl,
     primaryColor: ctx.workspace.primaryColor,
@@ -66,6 +78,8 @@ export async function POST(req: Request) {
       name: parsed.data.name,
       goal: parsed.data.goal,
       simpleMode: parsed.data.simpleMode ?? true,
+      channel,
+      smsBody: channel === "EMAIL" ? null : parsed.data.smsBody ?? null,
       designJson: design as unknown as Prisma.InputJsonValue,
       compiledHtml,
     },

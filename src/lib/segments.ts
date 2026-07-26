@@ -23,7 +23,7 @@ export interface SegmentRules {
 }
 
 function getFieldValue(contact: Contact & { tags?: { tagId: string; tag?: { name: string } }[] }, field: string): string {
-  if (field === "email") return contact.email;
+  if (field === "email") return contact.email ?? "";
   if (field === "firstName") return contact.firstName ?? "";
   if (field === "lastName") return contact.lastName ?? "";
   if (field === "status") return contact.status;

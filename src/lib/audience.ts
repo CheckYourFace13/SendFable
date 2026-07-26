@@ -49,10 +49,13 @@ export async function resolveAudienceContacts(
   const where: Prisma.ContactWhereInput = {
     workspaceId,
     status: "SUBSCRIBED",
+    // Email campaigns can only reach contacts that have an email address
+    // (phone-only contacts are addressed by the SMS pipeline instead).
+    email: { not: null },
     ...(contactIds ? { id: { in: contactIds } } : {}),
   };
 
-  const contacts = await prisma.contact.findMany({
+  const rows = await prisma.contact.findMany({
     where,
     select: {
       id: true,
@@ -63,6 +66,7 @@ export async function resolveAudienceContacts(
     },
   });
 
+  const contacts = rows.filter((c): c is typeof c & { email: string } => !!c.email);
   if (!contacts.length) return [];
 
   const emails = contacts.map((c) => normalizeEmail(c.email));

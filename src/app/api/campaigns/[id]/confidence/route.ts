@@ -24,11 +24,11 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
   // Approximate suppressed among subscribed
   const subscribed = await prisma.contact.findMany({
-    where: { workspaceId: ctx.workspace.id, status: "SUBSCRIBED" },
+    where: { workspaceId: ctx.workspace.id, status: "SUBSCRIBED", email: { not: null } },
     select: { email: true },
     take: 50_000,
   });
-  const emails = subscribed.map((c) => normalizeEmail(c.email));
+  const emails = subscribed.map((c) => normalizeEmail(c.email!));
   const [local, global] = await Promise.all([
     prisma.suppressionEntry.count({
       where: { workspaceId: ctx.workspace.id, email: { in: emails } },

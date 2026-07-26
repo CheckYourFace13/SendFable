@@ -28,10 +28,12 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
   if (!contact) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const suppression = await prisma.suppressionEntry.findFirst({
-    where: { workspaceId: ctx.workspace.id, email: contact.email },
-    select: { reason: true, createdAt: true },
-  });
+  const suppression = contact.email
+    ? await prisma.suppressionEntry.findFirst({
+        where: { workspaceId: ctx.workspace.id, email: contact.email },
+        select: { reason: true, createdAt: true },
+      })
+    : null;
 
   const activity = contact.recipients.map((r) => ({
     campaignId: r.campaign.id,
@@ -78,7 +80,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     );
   }
 
-  if (parsed.data.status === "UNSUBSCRIBED" && existing.status !== "UNSUBSCRIBED") {
+  if (
+    parsed.data.status === "UNSUBSCRIBED" &&
+    existing.status !== "UNSUBSCRIBED" &&
+    existing.email
+  ) {
     await unsubscribeContact(ctx.workspace.id, existing.email, "manual");
   }
 

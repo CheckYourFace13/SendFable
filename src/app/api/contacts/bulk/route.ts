@@ -46,6 +46,7 @@ export async function POST(req: Request) {
 
   if (action === "unsubscribe") {
     for (const c of owned) {
+      if (!c.email) continue; // phone-only contacts have no email channel to unsubscribe
       await unsubscribeContact(ctx.workspace.id, c.email, "bulk unsubscribe");
     }
     return NextResponse.json({ updated: owned.length });
