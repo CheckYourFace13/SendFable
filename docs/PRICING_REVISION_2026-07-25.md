@@ -14,6 +14,18 @@ Internal record. Not attorney approval. Launch flags unchanged.
 
 Annual = two months free. Allowances reset each **calendar month** (UTC).
 
+## Campaign-footer badge (boolean — not a seat count)
+
+| Plan | `badge` | Public / footer meaning |
+|---|---|---|
+| Free | `true` | “Sent with SendFable” required |
+| Starter | `false` | No platform badge |
+| Growth | `false` | No platform badge |
+| Pro | `false` | No platform badge |
+| Pro Plus | `false` | No platform badge |
+
+**Post-pricing note (2026-07-25):** an earlier readiness report row “Pro Plus — Badge: Up to 10” was a **report-column typo** (seat allowance mislabeled as badge). Authoritative catalog `PLANS.PRO_PLUS.badge === false`; seats remain internal (`seats: 10`). “Up to 10” must never appear as a badge, footer label, pricing badge, or campaign-email string.
+
 ## Seats (code only; not advertised publicly)
 
 | Plan | Seats |

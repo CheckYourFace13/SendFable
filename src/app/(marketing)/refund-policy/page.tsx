@@ -138,37 +138,39 @@ export default function RefundPolicyPage() {
 
       <LegalH2>6. Refunds</LegalH2>
       <p>
-        Cancellation and refund are different. We do not promise that every refund request will be
-        granted. Where we issue a refund, it goes to the original payment method; card issuers often
-        post refunds within about 5–10 business days. We do not substitute cash or account credit
-        unless we expressly agree in writing.
+        Cancellation and refund are different. Cancellation normally stops renewal at the end of the
+        paid term; it is not a refund. Refunds are not automatic or guaranteed except for duplicate
+        charges, erroneous charges, or where legally required. Where we issue a refund, it goes to
+        the original payment method; card issuers often post refunds within about 5–10 business days.
+        We do not substitute cash or account credit unless we expressly agree in writing.
       </p>
       <LegalUl>
         <li>
-          <strong>First paid charge:</strong> if SendFable is not right for you, contact us within
-          14 days of your first paid charge and we will refund that first charge in full (owner
-          business practice — confirm with counsel for enforceability in your market).
+          <strong>First paid subscription charge:</strong> a customer may request a refund of their
+          first paid subscription charge within 14 days. Refunds are generally approved when the
+          account has not sent a live campaign or materially used the paid service.
         </li>
         <li>
-          <strong>Renewals (including annual):</strong> renewal charges are generally
-          non-refundable. As a courtesy, if you contact us within 7 days of an unwanted renewal and
-          have not sent campaigns in the new period, we may refund that renewal. Annual plans follow
+          <strong>Renewals (including annual):</strong> renewal refund requests submitted within
+          seven days may be considered when no campaigns were sent after renewal. Annual plans follow
           the same courtesy window for the renewal charge — we do not pro-rate unused months as a
           default entitlement.
         </li>
         <li>
-          <strong>Duplicate or erroneous charges</strong> are refunded in full when verified.
+          <strong>Duplicate or erroneous charges</strong> will be corrected (refunded in full when
+          verified).
         </li>
         <li>
           <strong>Legally required refunds</strong> will be honored where a statute or chargeback
           rule requires them.
         </li>
         <li>
-          <strong>Not refundable:</strong> ordinary partial periods after cancel-at-period-end;
-          accounts terminated for serious{" "}
-          <LegalA href={POLICY_PATHS.acceptableUse}>Acceptable Use</LegalA> violations (including
-          purchased-list abuse) where legally permitted; and periods already consumed with normal
-          sending activity outside the courtesy windows above.
+          <strong>Not eligible for discretionary refunds:</strong> accounts suspended or terminated
+          for abuse (including serious{" "}
+          <LegalA href={POLICY_PATHS.acceptableUse}>Acceptable Use</LegalA> violations such as
+          purchased-list abuse) where permitted by law; ordinary partial periods after
+          cancel-at-period-end; and periods already consumed with normal sending activity outside the
+          windows above.
         </li>
       </LegalUl>
       <p>

@@ -1,9 +1,10 @@
 # SES production-access follow-up draft (DO NOT SUBMIT)
 
 **Case:** 178491867800933  
-**Operational status:** Submitted/open — awaiting AWS review.  
-**This document:** Optional follow-up text only. **Do not paste into the case** unless AWS explicitly rejects the request or asks for more information.  
-**Do not** open a second production-access request.
+**Operational status (API):** `ReviewDetails.Status=DENIED` · `ProductionAccessEnabled=false` · treat as a **denial** unless the AWS Support Console shows otherwise.  
+**Owner action first:** Read all Support Center correspondence for this case — see `docs/SES_CASE_REVIEW_OWNER_INSTRUCTIONS.md`.  
+**This document:** Optional follow-up text only. **Do not paste into the case** until the owner has read AWS’s stated reason and decides a reply is appropriate.  
+**Do not** open a second production-access request. **Do not** send an appeal automatically.
 
 ---
 

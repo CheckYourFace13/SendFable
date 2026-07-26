@@ -3,11 +3,14 @@ import { describe, it } from "node:test";
 import { PLANS } from "@/lib/plans";
 import {
   CURRENT_POLICY_BUNDLE,
+  GOVERNING_LAW_PROOF_NEEDED,
+  GOVERNING_LAW_STATUS,
   LEGAL_OPERATOR_NAME,
   LEGAL_OPERATOR_STATEMENT,
   POLICY_PATHS,
   POLICY_VERSIONS,
   PUBLIC_MAILBOXES,
+  REFUND_POSTURE_SUMMARY,
 } from "@/lib/legal-policies";
 
 describe("legal policy constants", () => {
@@ -18,10 +21,28 @@ describe("legal policy constants", () => {
   });
 
   it("keeps policy bundle versions aligned", () => {
-    assert.equal(CURRENT_POLICY_BUNDLE, "2026-07-25b");
+    assert.equal(CURRENT_POLICY_BUNDLE, "2026-07-26");
     for (const v of Object.values(POLICY_VERSIONS)) {
       assert.equal(v, CURRENT_POLICY_BUNDLE);
     }
+  });
+
+  it("does not invent a governing-law state without verified formation proof", () => {
+    assert.equal(GOVERNING_LAW_STATUS, "OWNER_CONFIRMATION_REQUIRED");
+    assert.match(GOVERNING_LAW_PROOF_NEEDED, /Illinois Secretary of State/i);
+    assert.doesNotMatch(GOVERNING_LAW_PROOF_NEEDED, /assumes Illinois/i);
+  });
+
+  it("keeps owner-approved refund posture without unconditional first-charge refund", () => {
+    assert.match(REFUND_POSTURE_SUMMARY, /may request a refund of their first paid/i);
+    assert.match(
+      REFUND_POSTURE_SUMMARY,
+      /generally approved when the account has not sent a live campaign/i
+    );
+    assert.match(REFUND_POSTURE_SUMMARY, /within seven days may be considered/i);
+    assert.match(REFUND_POSTURE_SUMMARY, /Duplicate or erroneous charges will be corrected/i);
+    assert.match(REFUND_POSTURE_SUMMARY, /not eligible for discretionary refunds/i);
+    assert.doesNotMatch(REFUND_POSTURE_SUMMARY, /we will refund that first charge in full/i);
   });
 
   it("exposes public SendFable mailboxes only", () => {

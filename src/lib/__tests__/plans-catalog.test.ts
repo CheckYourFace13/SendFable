@@ -70,6 +70,21 @@ describe("five-plan catalog 2026-07", () => {
     );
   });
 
+  it("campaign-footer badge is boolean; only Free requires branding", () => {
+    for (const plan of PLAN_ORDER) {
+      assert.equal(typeof PLANS[plan].badge, "boolean");
+    }
+    assert.equal(PLANS.FREE.badge, true);
+    assert.equal(PLANS.STARTER.badge, false);
+    assert.equal(PLANS.GROWTH.badge, false);
+    assert.equal(PLANS.PRO.badge, false);
+    assert.equal(PLANS.PRO_PLUS.badge, false);
+    // Regression: Pro Plus seats (10) must never be reported as a badge value
+    assert.equal(PLANS.PRO_PLUS.seats, 10);
+    assert.notEqual(String(PLANS.PRO_PLUS.badge), "Up to 10");
+    assert.notEqual(PLANS.PRO_PLUS.badge as unknown, 10);
+  });
+
   it("annual billing equals two months free", () => {
     for (const plan of PAID_PLAN_ORDER) {
       assert.equal(annualIsTwoMonthsFree(plan), true);

@@ -55,8 +55,8 @@ their sessions/JWT secret rotation if severe), review campaigns sent, restore
 after owner verification via support recovery (`docs/AUTH_POLICY.md`).
 
 **Spam customer** — account hold + campaign pause; keep suppression records;
-terminate per Acceptable Use Policy; refund per Refund Policy (violations are
-non-refundable).
+terminate per Acceptable Use Policy; discretionary refunds are not available for
+abuse terminations where permitted by law (see Refund Policy).
 
 **Stripe outage** — billing is fail-closed (checkout errors surface to user);
 no action needed beyond status-page note; webhooks retry automatically for 3

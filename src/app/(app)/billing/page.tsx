@@ -115,17 +115,19 @@ export default function BillingPage() {
 
       <p className="mb-6 max-w-3xl text-sm text-muted-foreground">
         Paid plans renew automatically until canceled. Manage or cancel anytime in the Stripe
-        Customer Portal. See{" "}
+        Customer Portal — cancellation normally stops the next renewal at the end of the paid term
+        and is not itself a refund. Refunds are not automatic or guaranteed except for duplicate or
+        erroneous charges or where legally required; see the{" "}
+        <a className="underline" href="/refund-policy">
+          Billing &amp; Refund Policy
+        </a>
+        . Also see{" "}
         <a className="underline" href="/terms">
           Terms
         </a>
         ,{" "}
         <a className="underline" href="/privacy">
           Privacy
-        </a>
-        ,{" "}
-        <a className="underline" href="/refund-policy">
-          Billing &amp; Refund Policy
         </a>
         , and{" "}
         <a className="underline" href="mailto:support@sendfable.com">

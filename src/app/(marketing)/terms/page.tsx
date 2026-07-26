@@ -254,12 +254,12 @@ export default function TermsPage() {
 
       <LegalH2>18. Governing law and disputes</LegalH2>
       <p>
-        <strong>Owner confirmation required:</strong> we have not verified the state of
-        organization or principal place of business for {LEGAL_OPERATOR_NAME} for use as governing
-        law in these Terms. Until that confirmation is recorded and these Terms are updated,
-        disputes will be handled in a court of competent jurisdiction in the United States, and
-        U.S. federal law (and applicable state law as determined by that court) will apply to the
-        extent necessary.{" "}
+        <strong>Governing-law state not yet verified:</strong> we have not verified from reliable
+        formation or registration records that {LEGAL_OPERATOR_NAME} is organized, incorporated, or
+        registered in a specific U.S. state for use as governing law in these Terms (including
+        Illinois). Until that confirmation is recorded and these Terms are updated, disputes will be
+        handled in a court of competent jurisdiction in the United States, and U.S. federal law (and
+        applicable state law as determined by that court) will apply to the extent necessary.{" "}
         <em>
           We intentionally do not include mandatory arbitration or a class-action waiver in these
           Terms.

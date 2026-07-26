@@ -6,7 +6,8 @@
 - [ ] Account ID `acct_1Two8SGnw9fPSfu4`
 - [ ] Live secret key (`sk_live_`)
 - [ ] Charges enabled / payouts enabled as reported by Stripe
-- [ ] Six live prices stored in `/opt/sendfable/.env` (`STRIPE_PRICE_*`)
+- [ ] Eight live prices stored in `/opt/sendfable/.env` (`STRIPE_PRICE_*` including `PRO_PLUS`)
+- [ ] `STRIPE_PRICE_STARTER_MONTHLY` maps to **$12** (1200 cents) live price
 - [ ] Webhook endpoint enabled for `https://sendfable.com/api/webhooks/stripe`
 - [ ] `STRIPE_WEBHOOK_SECRET` present (never logged in full)
 - [ ] Customer Portal configuration active
@@ -14,21 +15,32 @@
 - [ ] `STRIPE_BILLING_ENABLED=false`
 - [ ] `STRIPE_OWNER_TEST_ENABLED=true`
 - [ ] `CAMPAIGN_SEND_ENABLED=false`
-- [ ] **No payment or charge has occurred yet**
+- [ ] **No payment or charge has occurred for this new-price test yet**
 
-## Controlled live subscription test (only after explicit approval)
+## Controlled live subscription test — new Starter $12 (only after explicit approval)
 
-Exact approval phrase: `Run the controlled live Stripe subscription test.`
+**Do not run until the owner sends the exact authorization phrase below.**
 
-Then verify:
+Exact later authorization phrase:
 
-1. Owner `chris@iscreamstudio.com` opens one Starter monthly ($9) Checkout Session
-2. Payment completed manually in Stripe Checkout (live card — no test cards)
-3. Live Customer + one Subscription created (no duplicates)
-4. Webhook signature verified; workspace/user plan → `STARTER` only after webhook
-5. Billing page shows paid status; Customer Portal opens; invoice exists
-6. App / worker / Postgres / Redis healthy
-7. Do **not** auto-run upgrade, downgrade, failure, refund, or cancel with real money
+```text
+Authorize the controlled owner-only Starter $12 monthly billing test on SendFable Stripe acct_1Two8SGnw9fPSfu4. Create one Checkout Session only. After successful verification, immediately cancel the subscription and issue a full $12 refund. Do not flip launch flags.
+```
+
+Then verify (owner `chris@iscreamstudio.com`, flags still locked):
+
+1. Confirm live Starter monthly price ID in `.env` is the post-reprice **$12** price (not archived $9).
+2. Owner opens **one** Starter monthly Checkout Session; Checkout displays **$12**.
+3. Reuse the existing Stripe customer where safe to prevent duplicates.
+4. Pay with a real card (no test cards). Expect **exactly one** Checkout Session, Subscription, Invoice, Charge, and PaymentIntent.
+5. Webhook signature verified; workspace plan → `STARTER` **only after** webhook (success redirect grants nothing).
+6. Billing page and Customer Portal show Starter / $12.
+7. Idempotency: repeat webhook / refresh does not duplicate objects or re-grant.
+8. Immediate cancel of the subscription; issue a **full $12 refund**.
+9. `customer.subscription.deleted` (or equivalent) returns workspace to **Free**.
+10. No duplicate customers/subscriptions/invoices from the test.
+11. Other VPS applications remain untouched.
+12. Launch flags unchanged: `EARLY_LAUNCH=true`, `ALLOW_PUBLIC_SIGNUP=false`, `STRIPE_BILLING_ENABLED=false`, `STRIPE_OWNER_TEST_ENABLED=true`, `CAMPAIGN_SEND_ENABLED=false`, `SES_CONTROLLED_TEST_ENABLED=false`.
 
 ## Automated checks
 

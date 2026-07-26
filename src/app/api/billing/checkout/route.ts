@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     custom_text: {
       terms_of_service_acceptance: {
         message:
-          "I agree to the SendFable Terms of Service, Privacy Policy, and Billing, Renewal, Cancellation & Refund Policy at sendfable.com. Paid subscriptions renew automatically until canceled in the Customer Portal.",
+          "I agree to the SendFable Terms of Service, Privacy Policy, and Billing, Renewal, Cancellation & Refund Policy at sendfable.com. Paid subscriptions renew automatically until canceled in the Customer Portal (cancellation stops the next renewal at period end and is not itself a refund). Refunds are not automatic or guaranteed except for duplicate or erroneous charges or where legally required — see the Refund Policy.",
       },
     },
     subscription_data: {
