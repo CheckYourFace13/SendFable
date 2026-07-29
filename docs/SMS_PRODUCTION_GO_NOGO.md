@@ -19,7 +19,7 @@
 | Stripe SMS **test** catalog write | **BLOCKED** — no `sk_test_` key available in this environment (prod is live-only) |
 | Stripe SMS **live** catalog write | **NOT RUN** — requires owner authorization |
 | Telnyx credentials | Not present on production `.env` (names absent) |
-| Dark backend deploy | Pending commit merge + migration apply |
+| Dark backend deploy | **DONE** `2026-07-29T16:03:29Z` @ `2412ad2` — migration applied; all live/public SMS flags false; SMS pricing hidden; no Telnyx keys |
 
 ## Feature flags (defaults — keep for dark deploy)
 
@@ -52,7 +52,7 @@ All customer/live flags **false** except code/admin/mock defaults:
 | Gate | Verdict |
 |---|---|
 | 1. Email general availability | **GO** |
-| 2. SMS dark backend deployment | **CONDITIONAL GO** — after merge to main + backup + migration |
+| 2. SMS dark backend deployment | **GO** (deployed dark; not publicly activated) |
 | 3. Stripe SMS test-mode completion | **NO-GO** until owner provides / authorizes `sk_test_` run |
 | 4. Telnyx registration | **NO-GO** — needs account + paid auth |
 | 5. Number purchase | **NO-GO** — needs auth |
