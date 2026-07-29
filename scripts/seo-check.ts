@@ -46,21 +46,7 @@ const MARKETING_PAGES: Array<{ route: string; file: string }> = [
     file: path.join(MARKETING_ROOT, "alternatives", "mailchimp", "page.tsx"),
   },
   { route: "/vs/mailchimp", file: path.join(MARKETING_ROOT, "vs", "mailchimp", "page.tsx") },
-  {
-    route: "/compare/mailchimp",
-    file: path.join(MARKETING_ROOT, "compare", "mailchimp", "page.tsx"),
-  },
-  {
-    route: "/compare/constant-contact",
-    file: path.join(MARKETING_ROOT, "compare", "constant-contact", "page.tsx"),
-  },
-  { route: "/compare/brevo", file: path.join(MARKETING_ROOT, "compare", "brevo", "page.tsx") },
-  {
-    route: "/compare/mailerlite",
-    file: path.join(MARKETING_ROOT, "compare", "mailerlite", "page.tsx"),
-  },
-  { route: "/compare/kit", file: path.join(MARKETING_ROOT, "compare", "kit", "page.tsx") },
-  { route: "/compare/beehiiv", file: path.join(MARKETING_ROOT, "compare", "beehiiv", "page.tsx") },
+  { route: "/compare", file: path.join(MARKETING_ROOT, "compare", "page.tsx") },
   {
     route: "/solutions/restaurants",
     file: path.join(MARKETING_ROOT, "solutions", "restaurants", "page.tsx"),
@@ -137,6 +123,10 @@ function routeToPageFile(route: string): string | null {
   if (route === "/") {
     return path.join(MARKETING_ROOT, "page.tsx");
   }
+  // Dynamic comparison pages share compare/[slug]/page.tsx
+  if (route.startsWith("/compare/") && route !== "/compare") {
+    return path.join(MARKETING_ROOT, "compare", "[slug]", "page.tsx");
+  }
   return path.join(MARKETING_ROOT, ...route.slice(1).split("/"), "page.tsx");
 }
 
@@ -144,11 +134,30 @@ function extractSitemapPaths(source: string): string[] {
   const arrayMatch = source.match(
     /export\s+const\s+SITEMAP_PATHS\s*=\s*\[([\s\S]*?)\]\s*as\s+const/,
   );
-  if (!arrayMatch) {
-    // Fallback: quoted paths in file
-    return [...source.matchAll(/["'](\/[^"']*)["']/g)].map((m) => m[1]);
+  const base = arrayMatch
+    ? [...arrayMatch[1].matchAll(/["'](\/[^"']*)["']/g)].map((m) => m[1])
+    : [...source.matchAll(/["'](\/[^"']*)["']/g)].map((m) => m[1]);
+
+  // Mirror sitemap.ts: append public competitor compare routes from catalog.
+  const catalogPath = path.join(ROOT, "src", "data", "competitors", "catalog.ts");
+  if (fs.existsSync(catalogPath)) {
+    const catalog = fs.readFileSync(catalogPath, "utf8");
+    const slugs = [...catalog.matchAll(/slug:\s*"([^"]+)"/g)].map((m) => m[1]);
+    const enabled = new Set(
+      [...catalog.matchAll(/slug:\s*"([^"]+)"[\s\S]*?publicComparisonEnabled:\s*true/g)].map(
+        (m) => m[1],
+      ),
+    );
+    // Fallback: if regex is too brittle, include all slug: lines under COMPETITORS
+    const compareSlugs = enabled.size
+      ? [...enabled]
+      : slugs.filter((s) => !s.includes("/"));
+    for (const slug of compareSlugs) {
+      const p = `/compare/${slug}`;
+      if (!base.includes(p)) base.push(p);
+    }
   }
-  return [...arrayMatch[1].matchAll(/["'](\/[^"']*)["']/g)].map((m) => m[1]);
+  return base;
 }
 
 function main() {

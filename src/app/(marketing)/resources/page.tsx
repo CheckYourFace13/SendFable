@@ -13,6 +13,16 @@ export const metadata = marketingPageMeta({
 
 const LINKS = [
   {
+    title: "How SendFable works",
+    href: "/how-sendfable-works",
+    body: "From free signup to sender verification, import, campaign, and results.",
+  },
+  {
+    title: "About SendFable",
+    href: "/about",
+    body: "Positioning, limits, delivery approach, and SMS status — stated plainly.",
+  },
+  {
     title: "Email marketing for small business",
     href: "/email-marketing-for-small-business",
     body: "A five-step playbook: permission, one clear email, test, send, review.",
@@ -28,24 +38,34 @@ const LINKS = [
     body: "SPF, DKIM, DMARC, From-rewrite, and a before-you-send checklist.",
   },
   {
+    title: "Mailchimp alternative",
+    href: "/mailchimp-alternative",
+    body: "Honest trade-offs plus an approximate cost calculator.",
+  },
+  {
+    title: "Switch from Mailchimp",
+    href: "/switch-from-mailchimp",
+    body: "Export, import, verify sender, rebuild the campaigns that matter.",
+  },
+  {
+    title: "Compare email tools",
+    href: "/compare",
+    body: "Dated comparisons across major ESPs — with clear use-case winners.",
+  },
+  {
+    title: "Best by use case",
+    href: "/best-email-marketing-software",
+    body: "SendFable does not “win” categories it does not serve.",
+  },
+  {
     title: "Migrate from Mailchimp",
     href: "/migrate/mailchimp",
     body: "Export, clean, import, verify sender, and send your first test.",
   },
   {
-    title: "Migrate to Sendfable",
-    href: "/migrate",
-    body: "CSV-first paths from Mailchimp, Constant Contact, Brevo, MailerLite, Kit, and more.",
-  },
-  {
     title: "Templates",
     href: "/templates",
     body: "Industry template gallery for announcements, offers, and welcome notes.",
-  },
-  {
-    title: "Sendfable vs Mailchimp",
-    href: "/compare/mailchimp",
-    body: "Capability comparison for teams that want a simpler workflow.",
   },
   {
     title: "Cheap email marketing",

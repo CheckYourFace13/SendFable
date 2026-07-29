@@ -35,29 +35,31 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: "Compare",
     links: [
+      { href: "/compare", label: "All comparisons" },
       { href: "/compare/mailchimp", label: "vs Mailchimp" },
-      { href: "/compare/constant-contact", label: "vs Constant Contact" },
-      { href: "/compare/brevo", label: "vs Brevo" },
+      { href: "/mailchimp-alternative", label: "Mailchimp alternative" },
       { href: "/compare/mailerlite", label: "vs MailerLite" },
-      { href: "/compare/kit", label: "vs Kit" },
-      { href: "/compare/beehiiv", label: "vs beehiiv" },
+      { href: "/compare/brevo", label: "vs Brevo" },
+      { href: "/best-email-marketing-software", label: "Best by use case" },
     ],
   },
   {
     title: "Resources",
     links: [
       { href: "/resources", label: "Resources hub" },
+      { href: "/about", label: "About" },
+      { href: "/how-sendfable-works", label: "How it works" },
       { href: "/email-marketing-for-small-business", label: "Email for small business" },
       { href: "/email-marketing-guide", label: "Email marketing guide" },
       { href: "/deliverability", label: "Deliverability" },
-      { href: "/migrate/mailchimp", label: "Leave Mailchimp" },
-      { href: "/migrate", label: "Migrate" },
+      { href: "/switch-from-mailchimp", label: "Switch from Mailchimp" },
       { href: "/changelog", label: "Changelog" },
     ],
   },
   {
     title: "Company",
     links: [
+      { href: "/about", label: "About" },
       { href: "/security", label: "Security" },
       { href: "/status", label: "Status" },
       { href: "/integrations", label: "Integrations" },

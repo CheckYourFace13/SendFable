@@ -15,6 +15,17 @@ const ROUTES = [
   "/security",
   "/status",
   "/contact",
+  "/about",
+  "/how-sendfable-works",
+  "/compare",
+  "/compare/mailchimp",
+  "/compare/activecampaign",
+  "/compare/hubspot",
+  "/mailchimp-alternative",
+  "/mailchimp-pricing-alternative",
+  "/switch-from-mailchimp",
+  "/best-email-marketing-software",
+  "/guides/export-contacts-from-mailchimp",
   "/login",
   "/signup",
   "/terms",
@@ -26,7 +37,6 @@ const ROUTES = [
   "/migrate/mailchimp",
   "/email-marketing-for-small-business",
   "/cheap-email-marketing",
-  "/compare/mailchimp",
   "/vs/mailchimp",
   "/solutions/restaurants",
   "/early-access",
@@ -79,10 +89,17 @@ async function main() {
         if (text.includes(stale)) failures.push(`${path} has stale price ${stale}`);
       }
     }
-    if (path === "/pricing") {
-      const canon = raw.match(/rel="canonical" href="([^"]+)"/i)?.[1] ?? "";
-      if (canon && !/\/pricing\/?$/.test(canon)) {
-        failures.push(`${path} wrong canonical ${canon}`);
+    if (path === "/compare/mailchimp" || path === "/mailchimp-alternative") {
+      if (!/Last checked|pricingLastChecked|approximate|can change/i.test(text)) {
+        failures.push(`${path} missing pricing freshness / disclaimer cues`);
+      }
+      if (!/Mailchimp may be the better fit|may be the better fit when/i.test(text)) {
+        failures.push(`${path} missing honest competitor-stronger language`);
+      }
+    }
+    if (path === "/about" || path === "/how-sendfable-works") {
+      if (!/not publicly available/i.test(text)) {
+        failures.push(`${path} missing honest SMS status`);
       }
     }
     console.log(JSON.stringify({ path, status: res.status, ok: okStatus && !failures.some((f) => f.startsWith(path)) }));

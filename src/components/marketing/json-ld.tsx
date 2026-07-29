@@ -1,5 +1,7 @@
 import { appUrl } from "@/lib/utils";
 import type { Metadata } from "next";
+import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
+import { PLANS } from "@/lib/plans";
 
 type JsonLdValue = Record<string, unknown> | Record<string, unknown>[];
 
@@ -71,17 +73,16 @@ export function softwareApplicationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Sendfable",
+    name: SENDFABLE_FACTS.productName,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     url: appUrl("/"),
-    description:
-      "Email marketing with Simple Mode campaigns, audience tools, and Amazon SES delivery.",
+    description: SENDFABLE_FACTS.positioning,
     offers: {
       "@type": "Offer",
-      price: "0",
+      price: String(PLANS.FREE.monthlyPrice),
       priceCurrency: "USD",
-      description: "Free plan available; paid plans from Starter upward",
+      description: `Free plan available; paid plans from $${PLANS.STARTER.monthlyPrice}/mo`,
     },
   };
 }

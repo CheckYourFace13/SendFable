@@ -46,6 +46,9 @@ export default function AdminOverviewPage() {
         <Link className="text-coral underline" href="/admin/early-access">
           Early access leads
         </Link>
+        <Link className="text-coral underline" href="/admin/competitors">
+          Competitor freshness
+        </Link>
         <Link className="text-coral underline" href="/settings/ses">
           SES readiness
         </Link>
