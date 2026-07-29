@@ -34,7 +34,12 @@
 
 ### Controlled emails sent
 
-Filled after VPS run (masked). Target ≤12.
+| Metric | Value |
+|--------|-------|
+| Sent | **12** |
+| Masked recipient | `ch***@iscreamstudio.com` |
+| Sequences | all 5 (representative steps) |
+| After QA | `NURTURE_TEST_MODE=false` |
 
 ### Remaining approval
 
