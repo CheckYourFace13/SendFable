@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error:
-          "Public signup is closed during early launch. Join the early-access list from the homepage or log in if you already have an account.",
+          "Public signup is temporarily unavailable. Please try again shortly or log in if you already have an account.",
       },
       { status: 403 }
     );

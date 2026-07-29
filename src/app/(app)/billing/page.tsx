@@ -133,8 +133,8 @@ export default function BillingPage() {
         <a className="underline" href="mailto:support@sendfable.com">
           support@sendfable.com
         </a>
-        . Public checkout may be unavailable during early launch. Owner-only controlled Checkout
-        remains gated by launch flags.
+        . Public checkout may be temporarily unavailable during maintenance. Owner-controlled
+        Checkout remains available when configured.
       </p>
 
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">

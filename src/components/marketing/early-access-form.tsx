@@ -164,7 +164,7 @@ export function EarlyAccessForm() {
         </span>
       </label>
       <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-        {loading ? "Submitting…" : "Request early access"}
+        {loading ? "Submitting…" : "Notify me"}
       </Button>
     </form>
   );

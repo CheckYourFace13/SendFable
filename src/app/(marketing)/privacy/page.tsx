@@ -60,7 +60,7 @@ export default function PrivacyPage() {
         <li>Authentication information: magic-link / verification tokens, session data</li>
         <li>Workspace and team information: workspace name, roles, invitations, mailing address</li>
         <li>Billing identifiers and subscription status via Stripe (not full card numbers)</li>
-        <li>Support messages and early-access waitlist submissions</li>
+        <li>Support messages and optional product-interest form submissions</li>
         <li>Policy-acceptance records (policy versions, timestamp, source; IP and user-agent when collected)</li>
       </LegalUl>
       <LegalH3>Customer Content</LegalH3>

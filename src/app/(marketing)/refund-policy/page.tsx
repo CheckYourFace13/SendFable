@@ -41,10 +41,8 @@ export default function RefundPolicyPage() {
         full card number.
       </p>
       <p>
-        <strong>Early launch note:</strong> public Stripe Checkout may be disabled by configuration
-        while early launch continues. Plan prices and limits below still describe the product
-        catalog. When Checkout is unavailable, paid upgrades may be limited to owner testing or
-        invitation flows.
+        Plan prices and limits below describe the current product catalog. Public Checkout may be
+        temporarily unavailable during maintenance; live plan entitlements still apply once billed.
       </p>
 
       <LegalH2>1. Plans and limits (verified from product configuration)</LegalH2>

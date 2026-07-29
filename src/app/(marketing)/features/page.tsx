@@ -1,14 +1,14 @@
 export const metadata = {
   title: "Features",
   description:
-    "Sendfable features: any-email signup, sender identities, CSV audiences, drag-and-drop builder, SES campaigns, and analytics.",
+    "SendFable features: any-email signup, sender identities, CSV audiences, drag-and-drop builder, campaigns, and analytics.",
 };
 
 const SECTIONS = [
   {
     id: "campaigns",
     title: "Email campaigns",
-    body: "BullMQ + SES with ramp limits, pause/resume, merge tags, and RFC 8058 one-click unsubscribe.",
+    body: "Write, schedule, and send with pause and resume, merge tags, and one-click unsubscribe built in.",
   },
   {
     id: "audience",
@@ -33,7 +33,7 @@ const SECTIONS = [
   {
     id: "deliverability",
     title: "Deliverability",
-    body: "Amazon SES under the hood with smart From-rewrite for Gmail and Yahoo.",
+    body: "Reliable delivery with smart From-rewrite for Gmail and Yahoo-style sender domains.",
   },
   {
     id: "signup",
@@ -43,7 +43,7 @@ const SECTIONS = [
   {
     id: "senders",
     title: "Sender identities",
-    body: "Verify any From address. Strict-DMARC providers get a friendly From-rewrite so mail lands.",
+    body: "Verify any From address. Strict providers get a friendly From-rewrite so mail lands.",
   },
 ];
 

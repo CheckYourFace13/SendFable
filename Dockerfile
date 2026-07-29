@@ -16,8 +16,13 @@ COPY . .
 # Required at build time: Next statically embeds APP_URL into sitemap/robots/metadata.
 ARG APP_URL=https://sendfable.com
 ARG NEXTAUTH_URL=https://sendfable.com
+# Launch flags for any remaining statically evaluated marketing paths.
+ARG EARLY_LAUNCH=false
+ARG ALLOW_PUBLIC_SIGNUP=true
 ENV APP_URL=$APP_URL
 ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV EARLY_LAUNCH=$EARLY_LAUNCH
+ENV ALLOW_PUBLIC_SIGNUP=$ALLOW_PUBLIC_SIGNUP
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN npm run build

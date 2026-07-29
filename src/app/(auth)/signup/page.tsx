@@ -88,8 +88,8 @@ function SignupForm() {
       <CardHeader>
         <CardTitle className="text-ink">Create your account</CardTitle>
         <CardDescription>
-          Free for up to 500 contacts and 1,000 emails/month. Any email address works. Public
-          signup may be closed during early launch.
+          Free for up to 500 contacts and 1,000 emails/month. Any email address works. No credit
+          card required.
         </CardDescription>
       </CardHeader>
       <CardContent>

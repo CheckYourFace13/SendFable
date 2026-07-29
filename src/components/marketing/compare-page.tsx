@@ -42,7 +42,7 @@ export function ComparePage({
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
-          <Link href="/signup">Start free</Link>
+          <Link href="/signup">Start writing free</Link>
         </Button>
         <Button asChild variant="outline" className="border-ink/15 text-ink hover:bg-parchment">
           <Link href="/pricing">Sendfable pricing</Link>

@@ -10,8 +10,7 @@ export interface PlanConfig {
   yearlyPrice: number;
   /**
    * Max memberships for the workspace owner’s plan.
-   * Public pricing intentionally does not advertise seats while team invites
-   * remain SES / early-launch constrained.
+   * Public pricing focuses on contacts and monthly email allotments.
    */
   seats: number;
   customDomains: boolean;

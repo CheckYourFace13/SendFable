@@ -3,6 +3,9 @@ import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/components/marketing/json-ld";
 
+/** Avoid baking launch-flag copy into static HTML at Docker build time. */
+export const dynamic = "force-dynamic";
+
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-page">

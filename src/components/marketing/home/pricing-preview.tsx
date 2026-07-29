@@ -74,7 +74,7 @@ export function PricingPreview({
       {!embedded && (
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-display-md text-ink text-balance">
-            Clear pricing. Start free.
+            Clear pricing. Start writing free.
           </h2>
           <p className="mt-3 text-charcoal/75">
             Limits you can read. Upgrade when your list grows — no mystery add-ons on this page.
@@ -144,7 +144,7 @@ export function PricingPreview({
                 variant={recommended ? "default" : "outline"}
               >
                 <Link href={PRICING_CTA_HREF}>
-                  {key === "FREE" ? "Start free" : "Get started"}
+                  {key === "FREE" ? "Start writing free" : "Get started"}
                 </Link>
               </Button>
             </li>

@@ -1,38 +1,39 @@
-import type { Metadata } from "next";
-import { EarlyAccessForm } from "@/components/marketing/early-access-form";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { publicSignupAllowed } from "@/lib/early-launch";
 
-export const metadata: Metadata = {
-  title: "Early access",
-  description: "Sendfable is in early launch. Join the waitlist — public signup is temporarily closed.",
+export const metadata = {
+  title: "Start free",
+  description: "Create your free SendFable account — 500 contacts, no credit card required.",
 };
 
+export const dynamic = "force-dynamic";
+
+/** Legacy waitlist URL — public signup is open, so send people to /signup. */
 export default function EarlyAccessPage() {
+  if (publicSignupAllowed()) {
+    redirect("/signup");
+  }
+
   return (
-    <div className="editorial-bg mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-20">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Early launch</p>
-      <h1 className="mt-3 font-display text-display-md text-ink">
-        We&apos;re still writing the first chapter.
+    <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">SendFable</p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink">
+        Create your free account
       </h1>
-      <p className="mt-4 text-lg text-charcoal/75">
-        Public signup is closed while we finish delivery and billing. Join the early-access list and
-        we&apos;ll invite you when your spot is ready. Already have an account?{" "}
-        <a className="font-medium text-coral underline" href="/login">
-          Log in
-        </a>
-        .
+      <p className="mt-4 text-ink/70">
+        Public signup is open. Start with 500 contacts and send your first campaign — no credit card
+        required.
       </p>
-
-      <div className="mt-10">
-        <EarlyAccessForm />
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
+          <Link href="/signup">Start writing free</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/pricing">View pricing</Link>
+        </Button>
       </div>
-
-      <p className="mt-8 text-sm text-ink/60">
-        We only use this information to evaluate early access. See our{" "}
-        <a className="underline" href="/privacy">
-          Privacy Policy
-        </a>
-        . No marketing email is sent until you are invited and delivery is enabled.
-      </p>
     </div>
   );
 }

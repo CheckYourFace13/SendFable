@@ -89,11 +89,6 @@ export default function TermsPage() {
         Notify us promptly at <LegalA href={`mailto:${PUBLIC_MAILBOXES.support}`}>{PUBLIC_MAILBOXES.support}</LegalA>{" "}
         of suspected unauthorized access.
       </p>
-      <p>
-        During early launch, public signup may be closed and access may be invitation- or
-        waitlist-based. Early-access wording on the website remains in effect until we remove it.
-      </p>
-
       <LegalH2>4. Workspaces, roles, and ownership</LegalH2>
       <p>
         Workspaces organize Customer Content. Typical roles (where enabled by plan seat limits):
@@ -116,8 +111,7 @@ export default function TermsPage() {
       <p>
         The Customer is responsible for Authorized Users&apos; compliance with these Terms. Team
         seat limits are configured in product (Free/Starter/Growth: 1 seat; Pro: up to 5; Pro Plus:
-        up to 10). Multi-user invites may be limited during early launch and are not advertised on
-        public pricing until production-ready.
+        up to 10). Team invites follow plan seat limits and product policy.
       </p>
 
       <LegalH2>5. Customer Content and license</LegalH2>
@@ -181,8 +175,8 @@ export default function TermsPage() {
         cancellation (typically cancel-at-period-end via the Stripe Customer Portal), failed
         payments, and refunds are governed by the{" "}
         <LegalA href={POLICY_PATHS.refund}>Billing, Renewal, Cancellation &amp; Refund Policy</LegalA>
-        . Public Stripe Checkout may be temporarily disabled during early launch while owner testing
-        remains gated.
+        . Public Stripe Checkout may be temporarily disabled by configuration flags when needed for
+        maintenance or safety.
       </p>
 
       <LegalH2>10. Third-party services and provider dependency</LegalH2>
@@ -218,12 +212,11 @@ export default function TermsPage() {
         carefully and for the security of your own systems and Recipient data practices.
       </p>
 
-      <LegalH2>14. Service and feature changes; early launch</LegalH2>
+      <LegalH2>14. Service and feature changes</LegalH2>
       <p>
         We may change, add, or discontinue features with reasonable notice where practical.
-        Beta/early-launch restrictions, waitlists, and feature flags may limit availability. Early
-        access does not create a promise of uninterrupted public availability or of any specific
-        future roadmap item.
+        Configuration flags and maintenance windows may temporarily limit signup, billing, or
+        sending. Availability of any specific future roadmap item is not guaranteed.
       </p>
 
       <LegalH2>15. Disclaimers</LegalH2>

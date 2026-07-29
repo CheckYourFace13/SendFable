@@ -45,6 +45,8 @@ services:
       args:
         APP_URL: ${APP_URL:-https://sendfable.com}
         NEXTAUTH_URL: ${NEXTAUTH_URL:-https://sendfable.com}
+        EARLY_LAUNCH: ${EARLY_LAUNCH:-false}
+        ALLOW_PUBLIC_SIGNUP: ${ALLOW_PUBLIC_SIGNUP:-true}
     image: sendfable-app:latest
     container_name: sendfable-app
     restart: unless-stopped
@@ -89,6 +91,8 @@ services:
       args:
         APP_URL: ${APP_URL:-https://sendfable.com}
         NEXTAUTH_URL: ${NEXTAUTH_URL:-https://sendfable.com}
+        EARLY_LAUNCH: ${EARLY_LAUNCH:-false}
+        ALLOW_PUBLIC_SIGNUP: ${ALLOW_PUBLIC_SIGNUP:-true}
     image: sendfable-worker:latest
     container_name: sendfable-worker
     restart: unless-stopped

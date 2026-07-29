@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 
 export function MarketingCta({
   title = "Ready to send your story?",
-  body = "Start free, import opted-in contacts, and send your first campaign. Keep email simple: add people, write, send.",
+  body = "Start writing free, import opted-in contacts, and send your first campaign. No credit card required.",
   primaryHref = "/signup",
-  primaryLabel = "Start free",
-  secondaryHref = "/login",
-  secondaryLabel = "Log in",
+  primaryLabel = "Start writing free",
+  secondaryHref = "/pricing",
+  secondaryLabel = "View pricing",
 }: {
   title?: string;
   body?: string;
