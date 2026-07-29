@@ -6,8 +6,8 @@
 | Date | 2026-07-29 |
 | Branch | `sf/007-011-growth-system` |
 | Starting commit | `baaf576` |
-| Final commit | *(set after commit)* |
-| Production commit | *(set after deploy)* |
+| Final commit | `81dea78` |
+| Production commit | `81dea78` |
 | Rollback | `f8c3aa5` / prior app `07a7eb6` |
 | Migrations | `20260729193000_growth_analytics_partners` |
 
@@ -18,14 +18,25 @@
 | Full tests | PASS (282) |
 | Typecheck | PASS |
 | Prisma validate | PASS |
-| Production build | *(pending / in progress)* |
-| SEO / sitemap | Live sitemap 200 verified in SF-007 |
+| Production build | PASS |
+| SEO / sitemap | Live sitemap 200; **77** URLs |
+| Live crawl | PASS (37 routes) |
 | Analytics event tests | PASS |
 | Editorial / nurture gates | PASS |
 | Referral credit gate | PASS |
 | SMS dark / mock tests | PASS (existing suite) |
 | Stripe SMS test catalog | SKIPPED — no `sk_test_` |
 | Telnyx live | SKIPPED — no credentials / no paid auth |
+
+## Deploy
+
+| Field | Value |
+|-------|-------|
+| Backup | `/root/sendfable-backups/sendfable-20260729-194610.sql.gz` |
+| Deploy window | `2026-07-29T19:46:10Z` → `19:51:08Z` |
+| Health | `{"status":"ok"}` on `:3010` |
+| `/partners` | 200 |
+| IndexNow key URL | 404 expected (`INDEXNOW_KEY` unset) |
 
 ## Kept inactive
 

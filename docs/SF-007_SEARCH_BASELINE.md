@@ -6,10 +6,10 @@
 | Date | 2026-07-29 |
 | Starting commit | `baaf576` |
 | Branch | `sf/007-011-growth-system` |
-| Final commit | *(filled at merge)* |
-| Production commit | *(filled after deploy)* |
+| Final commit | `81dea78` |
+| Production commit | `81dea78` |
 | Migrations | `20260729193000_growth_analytics_partners` |
-| Tests | See SF-011 |
+| Tests | See SF-011 — 282 PASS |
 | Rollback point | `f8c3aa5` / prior prod `07a7eb6` |
 
 ## Audit summary (production + repository)

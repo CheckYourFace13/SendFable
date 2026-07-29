@@ -4,11 +4,10 @@ Permanent numbered work references for major SendFable production tasks.
 Git commit hashes remain the source of truth for code history; reference numbers
 are for human tracking across audits, deployments, and owner communication.
 
-**Current production app commit (pre SF-007–011 deploy):** `07a7eb6f70153c96817b60e95cec793a5bdd6823`  
-**Documentation tip (pre-merge):** `baaf576`  
-**Rollback point:** `f8c3aa5b5ac1651f4881ef6dfc91f6cb2101f391`
-
-After SF-007–011 deploy, update production commit and timestamp below.
+**Current production app commit (verified 2026-07-29):** `81dea78f0fed193095cf7ab6a5615f98458fd4e5`  
+**Deploy timestamp:** `2026-07-29T19:46:10Z` (backup) → `2026-07-29T19:51:08Z` (containers up)  
+**Backup:** `/root/sendfable-backups/sendfable-20260729-194610.sql.gz`  
+**Rollback point:** `f8c3aa5b5ac1651f4881ef6dfc91f6cb2101f391` (safe prior public-site baseline) / app prior `07a7eb6`
 
 ---
 
@@ -35,11 +34,11 @@ After SF-007–011 deploy, update production commit and timestamp below.
 | SF-004 | 2026-07-29 | AEO/GEO knowledge content | Done | same | `193d3b0` | `193d3b0` |
 | [SF-005](./SF-005_AUTOMATED_MARKETING_PLAN.md) | 2026-07-29 | Automated marketing system | Done (drafts only) | same | `193d3b0` | `193d3b0` |
 | [SF-006](./SF-006_DEPLOYMENT.md) | 2026-07-29 | Final production QA and deployment | Done | same | `07a7eb6` | `07a7eb6` |
-| [SF-007](./SF-007_SEARCH_BASELINE.md) | 2026-07-29 | Search Console, Bing, analytics baseline | Done (safe code) | `sf/007-011-growth-system` | TBD | TBD |
-| [SF-008](./SF-008_SOCIAL_CALENDAR.md) | 2026-07-29 | Content, social, email marketing activation | Done (drafts only) | same | TBD | TBD |
-| [SF-009](./SF-009_REFERRAL_ECONOMICS.md) | 2026-07-29 | Referral, partner, migration acquisition | Done (inactive rewards) | same | TBD | TBD |
-| [SF-010](./SF-010_SMS_AUTHORIZATION.md) | 2026-07-29 | SMS production setup (dark) | Done (prep only) | same | TBD | TBD |
-| [SF-011](./SF-011_GROWTH_QA.md) | 2026-07-29 | Final growth-system QA and deployment | In progress | same | TBD | TBD |
+| [SF-007](./SF-007_SEARCH_BASELINE.md) | 2026-07-29 | Search Console, Bing, analytics baseline | Done (safe code) | `sf/007-011-growth-system` | `81dea78` | `81dea78` |
+| [SF-008](./SF-008_SOCIAL_CALENDAR.md) | 2026-07-29 | Content, social, email marketing activation | Done (drafts only) | same | `81dea78` | `81dea78` |
+| [SF-009](./SF-009_REFERRAL_ECONOMICS.md) | 2026-07-29 | Referral, partner, migration acquisition | Done (inactive rewards) | same | `81dea78` | `81dea78` |
+| [SF-010](./SF-010_SMS_AUTHORIZATION.md) | 2026-07-29 | SMS production setup (dark) | Done (prep only) | same | `81dea78` | `81dea78` |
+| [SF-011](./SF-011_GROWTH_QA.md) | 2026-07-29 | Final growth-system QA and deployment | Done | same | `81dea78` | `81dea78` |
 
 ---
 
@@ -51,12 +50,12 @@ After SF-007–011 deploy, update production commit and timestamp below.
 | Date | 2026-07-29 |
 | Starting commit | `baaf576` |
 | Branch | `sf/007-011-growth-system` |
-| Final commit | TBD |
-| Production commit | TBD |
+| Final commit | `81dea78` |
+| Production commit | `81dea78` |
 | Files changed | analytics, IndexNow, verification meta, funnel admin, docs |
 | Migrations | `20260729193000_growth_analytics_partners` (analytics table) |
 | Tests | Included in 282 suite |
-| Deployment time | TBD |
+| Deployment time | `2026-07-29T19:46:10Z`–`19:51:08Z` |
 | External accounts changed | None (GSC/Bing owner verification pending) |
 | Messages sent | 0 |
 | Rollback point | `f8c3aa5` / `07a7eb6` |
@@ -71,12 +70,12 @@ After SF-007–011 deploy, update production commit and timestamp below.
 | Date | 2026-07-29 |
 | Starting commit | `baaf576` |
 | Branch | `sf/007-011-growth-system` |
-| Final commit | TBD |
-| Production commit | TBD |
+| Final commit | `81dea78` |
+| Production commit | `81dea78` |
 | Files changed | editorial drafts ×12, admin editorial, social calendar doc, nurture DRAFT specs |
 | Migrations | None beyond shared growth migration |
 | Tests | Editorial/nurture gate tests |
-| Deployment time | TBD |
+| Deployment time | `2026-07-29T19:46:10Z`–`19:51:08Z` |
 | External accounts changed | None |
 | Messages sent | 0 |
 | Rollback point | `f8c3aa5` / `07a7eb6` |
@@ -91,12 +90,12 @@ After SF-007–011 deploy, update production commit and timestamp below.
 | Date | 2026-07-29 |
 | Starting commit | `baaf576` |
 | Branch | `sf/007-011-growth-system` |
-| Final commit | TBD |
-| Production commit | TBD |
+| Final commit | `81dea78` |
+| Production commit | `81dea78` |
 | Files changed | referral economics + credit gate, `/partners`, partner API/admin, migration offer copy, outreach drafts |
 | Migrations | `PartnerApplication` table |
 | Tests | Referral credit gate |
-| Deployment time | TBD |
+| Deployment time | `2026-07-29T19:46:10Z`–`19:51:08Z` |
 | External accounts changed | None |
 | Messages sent | 0 |
 | Rollback point | `f8c3aa5` / `07a7eb6` |
@@ -111,12 +110,12 @@ After SF-007–011 deploy, update production commit and timestamp below.
 | Date | 2026-07-29 |
 | Starting commit | `baaf576` |
 | Branch | `sf/007-011-growth-system` |
-| Final commit | TBD |
-| Production commit | TBD |
+| Final commit | `81dea78` |
+| Production commit | `81dea78` |
 | Files changed | `docs/SF-010_SMS_AUTHORIZATION.md` (fees from Telnyx docs); no public SMS enable |
 | Migrations | None |
 | Tests | Existing SMS suite still PASS |
-| Deployment time | TBD |
+| Deployment time | `2026-07-29T19:46:10Z`–`19:51:08Z` |
 | External accounts changed | None |
 | Messages sent | 0 |
 | Rollback point | `f8c3aa5` / `07a7eb6` |
@@ -131,12 +130,12 @@ After SF-007–011 deploy, update production commit and timestamp below.
 | Date | 2026-07-29 |
 | Starting commit | `baaf576` |
 | Branch | `sf/007-011-growth-system` |
-| Final commit | TBD |
-| Production commit | TBD |
+| Final commit | `81dea78` |
+| Production commit | `81dea78` |
 | Files changed | growth jobs script, QA doc, deploy |
 | Migrations | deploy `20260729193000_growth_analytics_partners` |
-| Tests | 282 PASS; typecheck PASS; build PASS |
-| Deployment time | TBD |
+| Tests | 282 PASS; typecheck PASS; build PASS; live crawl PASS (37 routes) |
+| Deployment time | `2026-07-29T19:46:10Z`–`19:51:08Z` |
 | External accounts changed | None |
 | Messages sent | 0 |
 | Rollback point | `f8c3aa5` / `07a7eb6` |
