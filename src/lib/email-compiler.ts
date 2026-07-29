@@ -32,6 +32,9 @@ export interface EmailDesign {
 }
 
 export interface CompileOptions {
+  /** Workspace business / trade name — never a global platform address. */
+  businessName?: string | null;
+  /** Physical mailing address from the sending workspace only. */
   mailingAddress?: string | null;
   unsubscribeUrl?: string;
   showSendfableBadge?: boolean;
@@ -133,13 +136,20 @@ function blockColumns(block: DesignBlock, opts: CompileOptions): string {
 }
 
 function blockFooter(props: Record<string, unknown>, opts: CompileOptions): string {
-  const address = String(props.mailingAddress ?? opts.mailingAddress ?? "");
+  const businessName = String(props.businessName ?? opts.businessName ?? "").trim();
+  const address = String(props.mailingAddress ?? opts.mailingAddress ?? "").trim();
   const unsub = opts.unsubscribeUrl ?? "{{unsubscribe_url}}";
   const badge = opts.showSendfableBadge
     ? `<div style="margin-top:12px;"><a href="https://sendfable.com" style="font-size:11px;color:#9ca3af;text-decoration:none;">Sent with <strong style="color:#4F46E5;">Sendfable</strong></a></div>`
     : "";
+  const identityLines = [
+    businessName ? `<div style="margin-bottom:4px;font-weight:600;color:#6b7280;">${esc(businessName)}</div>` : "",
+    address
+      ? `<div style="margin-bottom:8px;white-space:pre-line;">${esc(address)}</div>`
+      : "",
+  ].join("");
   return `<tr><td style="padding:24px 32px;text-align:center;font-size:12px;line-height:1.5;color:#9ca3af;border-top:1px solid #e5e7eb;">
-    ${address ? `<div style="margin-bottom:8px;">${esc(address)}</div>` : ""}
+    ${identityLines}
     <div><a href="${attr(unsub)}" style="color:#6b7280;text-decoration:underline;">Unsubscribe</a></div>
     ${badge}
   </td></tr>`;
@@ -222,7 +232,10 @@ export function compileEmailHtml(design: EmailDesign, opts: CompileOptions = {})
     blocks.push({
       id: "auto-footer",
       type: "footer",
-      props: { mailingAddress: opts.mailingAddress ?? "" },
+      props: {
+        businessName: opts.businessName ?? "",
+        mailingAddress: opts.mailingAddress ?? "",
+      },
     });
   }
 

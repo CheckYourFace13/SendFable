@@ -37,6 +37,7 @@ export async function POST(req: Request) {
   const owner = await getWorkspaceOwner(ctx.workspace.id);
   const design = (parsed.data.designJson as EmailDesign) ?? createEmptyDesign();
   const compiledHtml = compileEmailHtml(design, {
+    businessName: ctx.workspace.name,
     mailingAddress: ctx.workspace.mailingAddress,
     showSendfableBadge: PLANS[owner.plan].badge,
   });

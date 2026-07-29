@@ -154,6 +154,7 @@ export async function sendOneRecipient(recipientId: string): Promise<void> {
   let html = campaign.compiledHtml ?? "";
   if (!html && campaign.designJson) {
     html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
+      businessName: campaign.workspace.name,
       mailingAddress: campaign.workspace.mailingAddress,
       showSendfableBadge: showBadge,
       previewText: campaign.previewText,

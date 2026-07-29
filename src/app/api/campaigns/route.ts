@@ -56,6 +56,7 @@ export async function POST(req: Request) {
     primaryColor: ctx.workspace.primaryColor,
   });
   const compiledHtml = compileEmailHtml(design, {
+    businessName: ctx.workspace.name,
     mailingAddress: ctx.workspace.mailingAddress,
     showSendfableBadge: true,
   });

@@ -212,6 +212,7 @@ function BlockPreview({ block }: { block: DesignBlock }) {
 
 export function EmailBuilder({
   initialDesign,
+  businessName,
   mailingAddress,
   showBadge,
   previewText,
@@ -221,6 +222,7 @@ export function EmailBuilder({
   onRawHtmlModeChange,
 }: {
   initialDesign?: EmailDesign | null;
+  businessName?: string | null;
   mailingAddress?: string | null;
   showBadge?: boolean;
   previewText?: string | null;
@@ -244,6 +246,7 @@ export function EmailBuilder({
   function emit(next: EmailDesign) {
     setDesign(next);
     const html = compileEmailHtml(next, {
+      businessName,
       mailingAddress,
       showSendfableBadge: showBadge,
       previewText,
@@ -320,6 +323,7 @@ export function EmailBuilder({
   const compiled = rawMode
     ? rawHtml
     : compileEmailHtml(design, {
+        businessName,
         mailingAddress,
         showSendfableBadge: showBadge,
         previewText,

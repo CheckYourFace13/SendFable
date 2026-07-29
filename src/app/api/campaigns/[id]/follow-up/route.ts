@@ -118,6 +118,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     primaryColor: ctx.workspace.primaryColor,
   });
   const compiledHtml = compileEmailHtml(design, {
+    businessName: ctx.workspace.name,
     mailingAddress: ctx.workspace.mailingAddress,
   });
 

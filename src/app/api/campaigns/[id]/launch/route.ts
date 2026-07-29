@@ -85,6 +85,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
   } else if (campaign.designJson && !campaign.rawHtmlMode) {
     const html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
+      businessName: ctx.workspace.name,
       mailingAddress: ctx.workspace.mailingAddress,
       showSendfableBadge: PLANS[owner.plan].badge,
       previewText: campaign.previewText,

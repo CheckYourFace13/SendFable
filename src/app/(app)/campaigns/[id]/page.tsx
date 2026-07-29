@@ -37,6 +37,7 @@ export default function CampaignDetailPage() {
   const [scheduleAt, setScheduleAt] = useState("");
   const [confidence, setConfidence] = useState<any>(null);
   const [mailingAddress, setMailingAddress] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [cRes, iRes, tRes, sRes, wRes] = await Promise.all([
@@ -58,6 +59,7 @@ export default function CampaignDetailPage() {
     if (wRes.ok) {
       const w = await wRes.json();
       setMailingAddress(w.workspace?.mailingAddress || null);
+      setBusinessName(w.workspace?.name || null);
     }
   }, [params.id]);
 
@@ -271,6 +273,7 @@ export default function CampaignDetailPage() {
           {editable ? (
             <EmailBuilder
               initialDesign={campaign.designJson as EmailDesign}
+              businessName={businessName}
               mailingAddress={mailingAddress}
               showBadge
               previewText={campaign.previewText}

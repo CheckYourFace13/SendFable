@@ -42,6 +42,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   let compiledHtml: string | undefined;
   if (parsed.data.designJson) {
     compiledHtml = compileEmailHtml(parsed.data.designJson as EmailDesign, {
+      businessName: ctx.workspace.name,
       mailingAddress: ctx.workspace.mailingAddress,
       showSendfableBadge: PLANS[owner.plan].badge,
     });

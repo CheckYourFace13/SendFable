@@ -56,6 +56,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   let html = campaign.compiledHtml ?? "";
   if (!html && campaign.designJson) {
     html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
+      businessName: ctx.workspace.name,
       mailingAddress: ctx.workspace.mailingAddress,
       showSendfableBadge: PLANS[owner.plan].badge,
       previewText: campaign.previewText,
