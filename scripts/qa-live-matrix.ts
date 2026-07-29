@@ -349,7 +349,7 @@ async function main() {
   {
     const r = await api("GET", "/api/contacts/export", { cookie: jar.B });
     expectStatus("iso.B_export_own", r.status, [200]);
-    const leaked = r.text.includes(contactA.email);
+    const leaked = !!contactA.email && r.text.includes(contactA.email);
     record(
       "iso.B_export_excludes_A",
       "no-leak",

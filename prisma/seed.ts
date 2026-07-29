@@ -195,10 +195,12 @@ async function main() {
     },
   });
 
-  const subscribed = await prisma.contact.findMany({
-    where: { workspaceId: workspace.id, status: "SUBSCRIBED" },
-    take: 180,
-  });
+  const subscribed = (
+    await prisma.contact.findMany({
+      where: { workspaceId: workspace.id, status: "SUBSCRIBED", email: { not: null } },
+      take: 180,
+    })
+  ).map((c) => ({ ...c, email: c.email! }));
 
   const link = await prisma.campaignLink.create({
     data: {

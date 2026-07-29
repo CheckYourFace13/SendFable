@@ -6,6 +6,8 @@ import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { PLANS } from "@/lib/plans";
 import { getWorkspaceOwner } from "@/lib/session";
 import { sanitizeEmailHtml } from "@/lib/html-sanitize";
+import { isSmsAccountSignupEnabled, isSmsCodeEnabled } from "@/lib/sms/flags";
+import { calculateSegments } from "@/lib/sms/segments";
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
@@ -21,6 +23,9 @@ const patchSchema = z.object({
   audienceSegmentId: z.string().nullable().optional(),
   senderIdentityId: z.string().nullable().optional(),
   scheduledAt: z.string().datetime().nullable().optional(),
+  /** SMS leg (flag-gated): EMAIL | SMS | BOTH + plain-text body */
+  channel: z.enum(["EMAIL", "SMS", "BOTH"]).optional(),
+  smsBody: z.string().max(1600).optional().nullable(),
 });
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -72,6 +77,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
   }
 
+  // SMS channel edits are server-side gated — a hidden button is not enough.
+  if (
+    (parsed.data.channel && parsed.data.channel !== "EMAIL") ||
+    (parsed.data.smsBody !== undefined && parsed.data.smsBody !== null)
+  ) {
+    if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled()) {
+      return NextResponse.json({ error: "Text campaigns are not available yet" }, { status: 403 });
+    }
+  }
+
   const owner = await getWorkspaceOwner(ctx.workspace.id);
   const rawHtmlMode = parsed.data.rawHtmlMode ?? existing.rawHtmlMode;
   let compiledHtml = parsed.data.compiledHtml;
@@ -89,6 +104,22 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       previewText: parsed.data.previewText ?? existing.previewText,
     });
   }
+
+  const smsBody =
+    parsed.data.smsBody === undefined ? undefined : parsed.data.smsBody;
+  const smsSeg =
+    smsBody === undefined
+      ? {}
+      : smsBody === null
+        ? { smsBody: null, smsEncoding: null, smsSegmentsPerMessage: null }
+        : (() => {
+            const info = calculateSegments(smsBody);
+            return {
+              smsBody,
+              smsEncoding: info.encoding,
+              smsSegmentsPerMessage: info.segments,
+            };
+          })();
 
   const campaign = await prisma.campaign.update({
     where: { id: params.id },
@@ -113,6 +144,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           : parsed.data.scheduledAt
             ? new Date(parsed.data.scheduledAt)
             : null,
+      channel: parsed.data.channel,
+      ...smsSeg,
     },
     include: { senderIdentity: true },
   });

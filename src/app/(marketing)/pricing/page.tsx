@@ -1,6 +1,7 @@
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { PricingPreview } from "@/components/marketing/home/pricing-preview";
+import { SmsPricingSection } from "@/components/marketing/sms-pricing";
 
 export const metadata = {
   title: "Pricing",
@@ -34,6 +35,10 @@ export default function PricingPage() {
         <div className="mt-12">
           <PricingPreview embedded showFullLink={false} />
         </div>
+
+        {/* Text messaging plans — server-flag gated; renders nothing while
+            SENDFABLE_SMS_PUBLIC_ENABLED=false */}
+        <SmsPricingSection />
 
         <MarketingCta
           title="Your audience is ready."

@@ -3,8 +3,14 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
 import { contactCreateSchema } from "@/lib/validators/audience";
-import { normalizeEmail, isValidEmail } from "@/lib/utils";
 import { PLANS } from "@/lib/plans";
+import {
+  isSmsSuppressed,
+  matchExistingContact,
+  recordIntakeConflict,
+  validateIntakeIdentifiers,
+} from "@/lib/sms/contact-intake";
+import { applyOptIn } from "@/lib/sms/consent";
 
 export async function GET(req: Request) {
   const ctx = await getApiContext();
@@ -54,10 +60,16 @@ export async function POST(req: Request) {
     );
   }
 
-  const email = normalizeEmail(parsed.data.email);
-  if (!isValidEmail(email)) {
-    return NextResponse.json({ error: "Invalid email" }, { status: 400 });
+  const ids = validateIntakeIdentifiers(parsed.data.email, parsed.data.phone);
+  if (!ids.ok) {
+    return NextResponse.json({ error: ids.error }, { status: 400 });
   }
+  if (parsed.data.phone?.trim() && !ids.phoneE164) {
+    // Phone was provided but is invalid/ambiguous — never guess.
+    return NextResponse.json({ error: "Invalid US mobile number" }, { status: 400 });
+  }
+  const email = ids.email;
+  const phoneE164 = ids.phoneE164;
 
   const owner = await getWorkspaceOwner(ctx.workspace.id);
   const count = await prisma.contact.count({ where: { workspaceId: ctx.workspace.id } });
@@ -68,13 +80,64 @@ export async function POST(req: Request) {
     );
   }
 
+  // Split-identity guard: email matching one contact and phone matching a
+  // different contact never merges automatically.
+  const match = await matchExistingContact(ctx.workspace.id, { email, phoneE164 });
+  if (match.kind === "conflict") {
+    await recordIntakeConflict(ctx.workspace.id, match, "manual");
+    return NextResponse.json(
+      {
+        error:
+          "This email and phone belong to two different contacts. Resolve the conflict from the contacts page.",
+        conflict: true,
+      },
+      { status: 409 }
+    );
+  }
+  if (match.kind === "existing") {
+    return NextResponse.json({ error: "Contact already exists" }, { status: 409 });
+  }
+
+  // SMS consent: explicit only — a stored phone alone grants nothing, and a
+  // previously opted-out (suppressed) number stays opted out.
+  let smsStatus: "NOT_PROVIDED" | "PENDING_CONSENT" | "SUBSCRIBED" | "OPTED_OUT" = "NOT_PROVIDED";
+  let smsConsentAt: Date | null = null;
+  let smsConsentSource: string | null = null;
+  if (phoneE164) {
+    const suppressed = await isSmsSuppressed(ctx.workspace.id, phoneE164);
+    if (suppressed) {
+      smsStatus = "OPTED_OUT";
+    } else if (parsed.data.smsConsent) {
+      const result = applyOptIn({
+        currentStatus: "NOT_PROVIDED",
+        source: parsed.data.smsConsentSource || "manual",
+        disclosureVersion: null,
+        suppressed: false,
+        documentedNewOptIn: true,
+      });
+      if (result.accepted) {
+        smsStatus = "SUBSCRIBED";
+        smsConsentAt = new Date();
+        smsConsentSource = parsed.data.smsConsentSource || "manual";
+      }
+    } else {
+      smsStatus = "PENDING_CONSENT";
+    }
+  }
+
   try {
     const contact = await prisma.contact.create({
       data: {
         workspaceId: ctx.workspace.id,
         email,
+        phoneE164,
+        smsStatus,
+        smsConsentAt,
+        smsConsentSource,
+        smsOptedOutAt: smsStatus === "OPTED_OUT" ? new Date() : null,
         firstName: parsed.data.firstName || null,
         lastName: parsed.data.lastName || null,
+        company: parsed.data.company || null,
         customFields: parsed.data.customFields ?? {},
         source: parsed.data.source || "manual",
         tags: parsed.data.tagIds?.length
@@ -83,6 +146,17 @@ export async function POST(req: Request) {
       },
       include: { tags: { include: { tag: true } } },
     });
+    if (phoneE164 && smsStatus === "SUBSCRIBED") {
+      await prisma.smsConsentEvent.create({
+        data: {
+          workspaceId: ctx.workspace.id,
+          contactId: contact.id,
+          phoneE164,
+          action: "OPT_IN",
+          source: smsConsentSource || "manual",
+        },
+      });
+    }
     return NextResponse.json({ contact }, { status: 201 });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

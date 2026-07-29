@@ -66,15 +66,115 @@ enum SuppressionReason {
   MANUAL
 }
 
+// ─── SMS enums (Text Messaging product — flag-gated, not publicly launched) ──
+
+enum CampaignChannel {
+  EMAIL
+  SMS
+  BOTH
+}
+
+/// Per-contact SMS marketing permission — fully independent from email status.
+enum SmsConsentStatus {
+  NOT_PROVIDED
+  PENDING_CONSENT
+  SUBSCRIBED
+  OPTED_OUT
+  INVALID
+  BLOCKED
+}
+
+enum SmsPlan {
+  TEXT_ENTRY
+  TEXT_ESSENTIALS
+  TEXT_ADVANTAGE
+}
+
+enum SmsSubscriptionStatus {
+  INCOMPLETE
+  ACTIVE
+  PAST_DUE
+  PAUSED
+  CANCELLED
+}
+
+enum SmsActivationStatus {
+  PENDING_PAYMENT
+  PAID
+  REGISTRATION_SUBMITTED
+  COMPLETED
+  CANCELLED
+}
+
+enum SmsDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum SmsUsageType {
+  OUTBOUND_SEGMENT
+  INBOUND_INCLUDED
+  INBOUND_OVERAGE
+}
+
+enum SmsUsageStatus {
+  PENDING
+  BILLABLE
+  BILLED
+  VOID
+}
+
+enum SmsMessageStatus {
+  QUEUED
+  ACCEPTED
+  SENT
+  DELIVERED
+  FAILED
+  RECEIVED
+}
+
+enum SmsExceptionalChargeStatus {
+  DRAFT
+  PENDING_CUSTOMER_APPROVAL
+  APPROVED
+  REJECTED
+  INVOICED
+  CANCELLED
+}
+
+enum SmsNumberStatus {
+  REQUESTED
+  ACTIVE
+  RELEASED
+}
+
+enum SmsRegistrationStatus {
+  NOT_STARTED
+  PREPARING
+  SUBMITTED
+  PENDING_CARRIER
+  APPROVED
+  REJECTED
+}
+
+enum SmsConsentAction {
+  OPT_IN
+  RE_OPT_IN
+  OPT_OUT
+  MARKED_INVALID
+  MARKED_BLOCKED
+  IMPORT_RECORDED
+}
+
 // ─── Auth (NextAuth v5) ─────────────────────────────────────────────────────
 
 model User {
-  id               String    @id @default(cuid())
-  email            String    @unique
-  name             String?
-  passwordHash     String?
-  emailVerified    DateTime?
-  image            String?
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  emailVerified DateTime?
+  image         String?
 
   plan                 Plan      @default(FREE)
   stripeCustomerId     String?   @unique
@@ -82,27 +182,27 @@ model User {
   billingInterval      String? // "month" | "year"
   paymentFailedAt      DateTime?
 
-  monthlySendCount Int      @default(0)
-  sendCountResetAt DateTime @default(now())
-  accountRampLevel Int      @default(1)
-  flaggedAt        DateTime?
-  flagReason       String?
+  monthlySendCount  Int       @default(0)
+  sendCountResetAt  DateTime  @default(now())
+  accountRampLevel  Int       @default(1)
+  flaggedAt         DateTime?
+  flagReason        String?
   /// Manual admin hold — blocks all campaign launches when set
-  sendingHeldAt    DateTime?
+  sendingHeldAt     DateTime?
   sendingHoldReason String?
 
   /// Growth referral
-  referralCode     String?   @unique
-  referredByCode   String?
+  referralCode   String? @unique
+  referredByCode String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts    Account[]
-  sessions    Session[]
-  memberships Membership[]
-  creditLedger CreditLedgerEntry[]
-  auditLogs   AuditLog[]
+  accounts          Account[]
+  sessions          Session[]
+  memberships       Membership[]
+  creditLedger      CreditLedgerEntry[]
+  auditLogs         AuditLog[]
   policyAcceptances PolicyAcceptance[]
 }
 
@@ -151,40 +251,53 @@ model Workspace {
   defaultSenderIdentityId String?
 
   /// Brand profile
-  websiteUrl       String?
-  logoUrl          String?
-  primaryColor     String  @default("#4F46E5")
-  secondaryColor   String  @default("#0F172A")
-  fontStack        String  @default("Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif")
-  socialLinks      Json    @default("[]") // [{network,url}]
+  websiteUrl          String?
+  logoUrl             String?
+  primaryColor        String  @default("#4F46E5")
+  secondaryColor      String  @default("#0F172A")
+  fontStack           String  @default("Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif")
+  socialLinks         Json    @default("[]") // [{network,url}]
   businessDescription String? @db.Text
 
   /// Onboarding: 0–10 step index; completedAt when finished or skipped
-  onboardingStep      Int       @default(0)
+  onboardingStep        Int       @default(0)
   onboardingCompletedAt DateTime?
-  onboardingData      Json      @default("{}") // save-and-return wizard state
+  onboardingData        Json      @default("{}") // save-and-return wizard state
 
   /// Self-marketing
-  referralCode        String?  @unique
-  publicArchiveEnabled Boolean @default(false)
+  referralCode           String? @unique
+  publicArchiveEnabled   Boolean @default(false)
   publicArchiveIndexable Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships      Membership[]
-  invitations      Invitation[]
-  senderIdentities SenderIdentity[]
-  contacts         Contact[]
-  tags             Tag[]
-  segments         Segment[]
-  signupForms      SignupForm[]
-  templates        Template[]
-  campaigns        Campaign[]
-  suppressions     SuppressionEntry[]
-  auditLogs        AuditLog[]
-  landingPages     LandingPage[]
+  memberships       Membership[]
+  invitations       Invitation[]
+  senderIdentities  SenderIdentity[]
+  contacts          Contact[]
+  tags              Tag[]
+  segments          Segment[]
+  signupForms       SignupForm[]
+  templates         Template[]
+  campaigns         Campaign[]
+  suppressions      SuppressionEntry[]
+  auditLogs         AuditLog[]
+  landingPages      LandingPage[]
   policyAcceptances PolicyAcceptance[]
+
+  /// SMS (Text Messaging product — flag-gated)
+  smsSubscription       SmsSubscription?
+  smsActivation         SmsActivation?
+  smsNumbers            SmsNumber[]
+  smsRegistrations      SmsRegistration[]
+  smsMessages           SmsMessage[]
+  smsUsageLedger        SmsUsageLedger[]
+  smsMonthlyUsage       SmsMonthlyUsage[]
+  smsExceptionalCharges SmsExceptionalCharge[]
+  smsSuppressions       SmsSuppression[]
+  smsConsentEvents      SmsConsentEvent[]
+  smsImportBatches      ContactImportBatch[]
 }
 
 model Membership {
@@ -240,27 +353,49 @@ model SenderIdentity {
 
 // ─── Audience ───────────────────────────────────────────────────────────────
 
+/// Unified contact: email-only, phone-only, or both. A DB check constraint
+/// (migration 20260726...) enforces email IS NOT NULL OR phoneE164 IS NOT NULL.
+/// Email permission (status) and SMS permission (smsStatus) are independent.
 model Contact {
   id           String        @id @default(cuid())
   workspaceId  String
-  email        String
+  email        String?
   firstName    String?
   lastName     String?
+  company      String?
+  birthday     DateTime?
+  address      String?
   customFields Json          @default("{}")
   status       ContactStatus @default(SUBSCRIBED)
   source       String? // "import" | "form:<slug>" | "manual" | "api"
   confirmToken String?       @unique
 
+  /// Normalized E.164 (US-only in phase 1), e.g. "+13125550123".
+  phoneE164 String?
+
+  /// SMS channel permission — never inferred from email consent or mere
+  /// presence of a phone number.
+  smsStatus                   SmsConsentStatus @default(NOT_PROVIDED)
+  smsConsentSource            String? // "form:<slug>" | "import:<batchId>" | "manual" | "provider"
+  smsConsentAt                DateTime?
+  smsConsentDisclosureVersion String?
+  smsOptedOutAt               DateTime?
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   unsubscribedAt DateTime?
 
-  workspace  Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  tags       ContactTag[]
-  recipients CampaignRecipient[]
+  workspace        Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tags             ContactTag[]
+  recipients       CampaignRecipient[]
+  smsConsentEvents SmsConsentEvent[]
+  smsRecipients    SmsRecipient[]
+  smsMessages      SmsMessage[]
 
   @@unique([workspaceId, email])
+  @@unique([workspaceId, phoneE164])
   @@index([workspaceId, status])
+  @@index([workspaceId, smsStatus])
   @@index([workspaceId, createdAt])
 }
 
@@ -312,6 +447,16 @@ model SignupForm {
   hostedSlug  String   @unique
   tagIds      Json     @default("[]") // tags applied to new signups
   submitCount Int      @default(0)
+
+  /// Identifier requirement: "email-required" (legacy default) |
+  /// "phone-required" | "either-required" | "both-required".
+  /// Phone-collecting modes are only configurable while
+  /// SENDFABLE_SMS_ACCOUNT_SIGNUP_ENABLED=true (server-side gate).
+  requirementMode String @default("email-required")
+  /// Collect a mobile phone field (with a separate, never-prechecked SMS
+  /// consent checkbox). The exact disclosure shown is versioned per submission.
+  collectPhone    Boolean @default(false)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -321,23 +466,23 @@ model SignupForm {
 // ─── Content ────────────────────────────────────────────────────────────────
 
 model Template {
-  id           String   @id @default(cuid())
-  workspaceId  String?
+  id                   String   @id @default(cuid())
+  workspaceId          String?
   /// null workspaceId = platform library template
-  name         String
-  designJson   Json
-  compiledHtml String   @db.Text
-  category     String? // restaurant | brewery | retail | ...
-  goal         String? // announce | sale | winback | news | welcome | scratch
-  industry     String?
-  thumbnailUrl String?
-  suggestedSubjects Json @default("[]")
+  name                 String
+  designJson           Json
+  compiledHtml         String   @db.Text
+  category             String? // restaurant | brewery | retail | ...
+  goal                 String? // announce | sale | winback | news | welcome | scratch
+  industry             String?
+  thumbnailUrl         String?
+  suggestedSubjects    Json     @default("[]")
   suggestedPreviewText String?
-  recommendedCta   String?
-  isPlatform       Boolean @default(false)
-  shareSlug        String? @unique
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  recommendedCta       String?
+  isPlatform           Boolean  @default(false)
+  shareSlug            String?  @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
@@ -348,17 +493,20 @@ model Template {
 // ─── Campaigns ──────────────────────────────────────────────────────────────
 
 model Campaign {
-  id               String         @id @default(cuid())
+  id               String          @id @default(cuid())
   workspaceId      String
   name             String
-  status           CampaignStatus @default(DRAFT)
+  status           CampaignStatus  @default(DRAFT)
+  /// EMAIL (default, existing behavior), SMS, or BOTH. SMS content lives in
+  /// the sms* fields; email content and sending pipeline are unchanged.
+  channel          CampaignChannel @default(EMAIL)
   senderIdentityId String?
   subject          String?
   previewText      String?
   designJson       Json?
-  compiledHtml     String?        @db.Text
-  rawHtmlMode      Boolean        @default(false)
-  simpleMode       Boolean        @default(true)
+  compiledHtml     String?         @db.Text
+  rawHtmlMode      Boolean         @default(false)
+  simpleMode       Boolean         @default(true)
   goal             String? // announce | sale | winback | news | welcome | scratch
   testSentAt       DateTime?
 
@@ -370,6 +518,17 @@ model Campaign {
   publicArchive   Boolean @default(false)
   publicSlug      String? @unique
   publicIndexable Boolean @default(false)
+
+  /// SMS-specific content (flag-gated Text Messaging product)
+  smsBody                  String? @db.Text
+  smsEncoding              String? // "GSM-7" | "UCS-2" (estimate at compose time)
+  smsSegmentsPerMessage    Int?
+  smsEstimatedSegments     Int? // recipient-rendered total
+  smsEstimatedChargeMicros BigInt?
+  smsEstimatedCostMicros   BigInt?
+  smsSentCount             Int     @default(0)
+  smsDeliveredCount        Int     @default(0)
+  smsFailedCount           Int     @default(0)
 
   scheduledAt DateTime?
   sentAt      DateTime?
@@ -395,6 +554,8 @@ model Campaign {
   segment        Segment?            @relation(fields: [audienceSegmentId], references: [id], onDelete: SetNull)
   recipients     CampaignRecipient[]
   links          CampaignLink[]
+  smsRecipients  SmsRecipient[]
+  smsMessages    SmsMessage[]
 
   @@index([workspaceId, status])
 }
@@ -418,8 +579,8 @@ model CampaignRecipient {
   complainedAt   DateTime?
   unsubscribedAt DateTime?
 
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  campaign Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact  Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
   clicks   ClickEvent[]
 
   @@unique([campaignId, contactId])
@@ -428,13 +589,13 @@ model CampaignRecipient {
 }
 
 model CampaignLink {
-  id         String   @id @default(cuid())
-  campaignId String
-  url        String   @db.Text
-  index      Int
-  clickCount Int      @default(0)
-  uniqueClickCount Int @default(0)
-  createdAt  DateTime @default(now())
+  id               String   @id @default(cuid())
+  campaignId       String
+  url              String   @db.Text
+  index            Int
+  clickCount       Int      @default(0)
+  uniqueClickCount Int      @default(0)
+  createdAt        DateTime @default(now())
 
   campaign Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   clicks   ClickEvent[]
@@ -495,12 +656,12 @@ model WebhookEvent {
 
 /// Non-monetary placeholder credits for future Stripe credit application
 model CreditLedgerEntry {
-  id          String   @id @default(cuid())
-  userId      String
-  amount      Int // positive = credit earned, negative = spent
-  reason      String // referral_signup | referral_paid | manual | redemption
-  meta        Json     @default("{}")
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int // positive = credit earned, negative = spent
+  reason    String // referral_signup | referral_paid | manual | redemption
+  meta      Json     @default("{}")
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -541,26 +702,26 @@ model LandingPage {
 }
 
 model ReferralAttribution {
-  id              String   @id @default(cuid())
-  referralCode    String
-  referredUserId  String?  @unique
-  referredEmail   String?
-  status          String   @default("clicked") // clicked | signed_up | qualified
-  createdAt       DateTime @default(now())
+  id             String   @id @default(cuid())
+  referralCode   String
+  referredUserId String?  @unique
+  referredEmail  String?
+  status         String   @default("clicked") // clicked | signed_up | qualified
+  createdAt      DateTime @default(now())
 
   @@index([referralCode])
 }
 
 /// Public early-access waitlist (not a full app account).
 model SupportMessage {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   email     String
   name      String?
-  topic     String    @default("general") // general | billing | abuse | privacy | security | legal
-  message   String    @db.Text
-  status    String    @default("NEW") // NEW | IN_PROGRESS | RESOLVED
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  topic     String   @default("general") // general | billing | abuse | privacy | security | legal
+  message   String   @db.Text
+  status    String   @default("NEW") // NEW | IN_PROGRESS | RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([createdAt])
   @@index([status])
@@ -589,22 +750,327 @@ model EarlyAccessLead {
 /// Timestamped acceptance of public policy bundle (Terms, Privacy, AUP, Refund).
 /// Soft reacceptance is prompted when policyBundleVersion lags CURRENT_POLICY_BUNDLE.
 model PolicyAcceptance {
-  id                    String   @id @default(cuid())
-  userId                String
-  workspaceId           String?
-  policyBundleVersion   String
-  termsVersion          String
-  privacyVersion        String
-  acceptableUseVersion  String
-  refundPolicyVersion   String?
-  source                String // signup | reaccept | checkout | invite
-  ip                    String?
-  userAgent             String?
-  acceptedAt            DateTime @default(now())
+  id                   String   @id @default(cuid())
+  userId               String
+  workspaceId          String?
+  policyBundleVersion  String
+  termsVersion         String
+  privacyVersion       String
+  acceptableUseVersion String
+  refundPolicyVersion  String?
+  source               String // signup | reaccept | checkout | invite
+  ip                   String?
+  userAgent            String?
+  acceptedAt           DateTime @default(now())
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   @@index([userId, acceptedAt])
   @@index([policyBundleVersion])
+}
+
+// ═══ SMS (Text Messaging product) ════════════════════════════════════════════
+// All models below are inert until SMS feature flags enable them. Money:
+// fixed fees in integer cents; per-segment amounts in integer micros
+// (1 USD = 1,000,000 micros) stored as BigInt. Never floating point.
+
+/// Independent SMS subscription — deliberately NOT part of the email Plan enum.
+model SmsSubscription {
+  id          String                @id @default(cuid())
+  workspaceId String                @unique
+  plan        SmsPlan
+  status      SmsSubscriptionStatus @default(INCOMPLETE)
+
+  baseMonthlyPriceCents    Int
+  appliedMonthlyPriceCents Int
+  bundleDiscountPercent    Int     @default(0)
+  /// e.g. "email-plan:GROWTH" when the 10% bundle discount is active
+  bundleEligibilitySource  String?
+  billingInterval          String  @default("month")
+
+  stripeSubscriptionId       String? @unique
+  stripeSubscriptionItemId   String?
+  /// Metered usage subscription items (outbound + inbound overage)
+  stripeOutboundItemId       String?
+  stripeInboundOverageItemId String?
+
+  activatedAt DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+/// $99 one-time Text Messaging Activation (standard onboarding + registration prep).
+model SmsActivation {
+  id          String              @id @default(cuid())
+  workspaceId String              @unique
+  status      SmsActivationStatus @default(PENDING_PAYMENT)
+
+  standardFeeCents        Int       @default(9900)
+  stripePaymentId         String?
+  paidAt                  DateTime?
+  registrationSubmittedAt DateTime?
+  nonrefundableAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+/// Dedicated workspace texting number (US local 10DLC only in phase 1).
+model SmsNumber {
+  id                String          @id @default(cuid())
+  workspaceId       String
+  phoneE164         String          @unique
+  provider          String          @default("telnyx")
+  providerNumberId  String?
+  status            SmsNumberStatus @default(REQUESTED)
+  monthlyCostMicros BigInt          @default(0)
+  purchasedAt       DateTime?
+  releasedAt        DateTime?
+  createdAt         DateTime        @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+}
+
+/// 10DLC brand/campaign registration references. Sensitive vetting data stays
+/// with the provider; store references and status only.
+model SmsRegistration {
+  id                String                @id @default(cuid())
+  workspaceId       String
+  provider          String                @default("telnyx")
+  kind              String // "brand" | "campaign"
+  providerReference String?
+  status            SmsRegistrationStatus @default(NOT_STARTED)
+  submittedAt       DateTime?
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
+  rejectionReason   String?
+  notes             String?               @db.Text
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, kind])
+}
+
+/// Every SMS in or out of the platform (inbox + outbox). Bodies are retained
+/// here; normal logs must reference the id, never the body or full number.
+model SmsMessage {
+  id                String           @id @default(cuid())
+  workspaceId       String
+  contactId         String?
+  campaignId        String?
+  direction         SmsDirection
+  fromE164          String
+  toE164            String
+  body              String           @db.Text
+  encoding          String // "GSM-7" | "UCS-2"
+  segments          Int
+  status            SmsMessageStatus
+  providerMessageId String?          @unique
+  provider          String           @default("mock")
+  errorCode         String?
+  /// Inbox state for inbound messages
+  readAt            DateTime?
+  isOptOutKeyword   Boolean          @default(false)
+  isHelpKeyword     Boolean          @default(false)
+
+  customerChargeMicros BigInt @default(0)
+  providerCostMicros   BigInt @default(0)
+
+  acceptedAt  DateTime?
+  deliveredAt DateTime?
+  failedAt    DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  campaign  Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, direction, createdAt])
+  @@index([workspaceId, readAt])
+  @@index([campaignId])
+}
+
+/// Per-campaign SMS recipient snapshot (separate from CampaignRecipient so the
+/// email pipeline is untouched).
+model SmsRecipient {
+  id                String          @id @default(cuid())
+  campaignId        String
+  contactId         String
+  phoneE164         String
+  mergeData         Json            @default("{}")
+  renderedBody      String?         @db.Text
+  encoding          String?
+  segments          Int?
+  status            RecipientStatus @default(PENDING)
+  providerMessageId String?         @unique
+  error             String?
+  attemptCount      Int             @default(0)
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  failedAt          DateTime?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, contactId])
+  @@index([campaignId, status])
+}
+
+/// Channel-specific SMS suppression. Survives contact deletion and reimport:
+/// keyed by workspace + number, not by contact id.
+model SmsSuppression {
+  id          String   @id @default(cuid())
+  workspaceId String
+  phoneE164   String
+  reason      String // "stop" | "manual" | "carrier-block" | "invalid"
+  note        String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, phoneE164])
+  @@index([phoneE164])
+}
+
+/// Immutable SMS consent audit trail (opt-in, re-opt-in, opt-out, import).
+model SmsConsentEvent {
+  id                String           @id @default(cuid())
+  workspaceId       String
+  contactId         String?
+  phoneE164         String
+  action            SmsConsentAction
+  source            String // "form:<slug>" | "import:<batchId>" | "manual" | "provider:stop" | "provider:webhook"
+  disclosureVersion String?
+  providerEventRef  String?
+  /// Privacy-preserving evidence (no card data, no message bodies)
+  evidence          Json             @default("{}")
+  createdAt         DateTime         @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, phoneE164, createdAt])
+  @@index([contactId])
+}
+
+/// One row per billable SMS unit event. idempotencyKey prevents double-charging
+/// on webhook/provider retries.
+model SmsUsageLedger {
+  id                   String         @id @default(cuid())
+  workspaceId          String
+  direction            SmsDirection
+  campaignId           String?
+  messageId            String?
+  providerMessageId    String?
+  /// "YYYY-MM" UTC calendar month
+  billingPeriod        String
+  segments             Int
+  unitPriceMicros      BigInt
+  customerChargeMicros BigInt
+  providerCostMicros   BigInt         @default(0)
+  usageType            SmsUsageType
+  status               SmsUsageStatus @default(PENDING)
+  idempotencyKey       String         @unique
+  createdAt            DateTime       @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, billingPeriod])
+  @@index([workspaceId, usageType, billingPeriod])
+}
+
+/// Monthly rollup per workspace (UTC calendar month "YYYY-MM").
+model SmsMonthlyUsage {
+  id          String @id @default(cuid())
+  workspaceId String
+  month       String
+
+  outboundSegments        Int @default(0)
+  inboundSegments         Int @default(0)
+  includedInboundSegments Int @default(0)
+  overageInboundSegments  Int @default(0)
+
+  customerOutboundChargeMicros BigInt @default(0)
+  customerInboundChargeMicros  BigInt @default(0)
+  providerCostMicros           BigInt @default(0)
+
+  reconciledAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, month])
+}
+
+/// Owner/admin-created exceptional charge (enhanced vetting, toll-free
+/// verification, resubmissions, expedited review, …). Requires explicit
+/// customer approval before it can be invoiced.
+model SmsExceptionalCharge {
+  id                   String                     @id @default(cuid())
+  workspaceId          String
+  type                 String // "enhanced-vetting" | "tollfree-verification" | "resubmission" | "expedited-review" | "penalty-passthrough" | "other"
+  description          String                     @db.Text
+  providerAmountMicros BigInt
+  customerAmountCents  Int
+  approvalStatus       SmsExceptionalChargeStatus @default(DRAFT)
+  approvedAt           DateTime?
+  rejectedAt           DateTime?
+  stripeInvoiceItemId  String?
+  createdByUserId      String?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, approvalStatus])
+}
+
+/// CSV import batch with SMS consent attestation. An import can never override
+/// SmsSuppression (STOP) entries.
+model ContactImportBatch {
+  id               String    @id @default(cuid())
+  workspaceId      String
+  fileName         String?
+  rowCount         Int       @default(0)
+  importedCount    Int       @default(0)
+  skippedCount     Int       @default(0)
+  conflictCount    Int       @default(0)
+  /// SMS consent for this batch: "none" | "explicit-fields" | "documented-source" | "owner-attestation"
+  smsConsentMode   String    @default("none")
+  smsConsentSource String?
+  smsConsentDate   DateTime?
+  ownerAttestation String?   @db.Text
+  createdByUserId  String?
+  createdAt        DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+}
+
+/// Singleton-ish admin configuration for SMS margin monitoring.
+model SmsAdminSetting {
+  id                             String   @id @default("default")
+  /// Warn when estimated gross margin (percent) falls below this value
+  marginWarnPercent              Int      @default(60)
+  /// Cost assumptions (micros) used until provider reconciliation data exists
+  assumedOutboundCostMicros      BigInt   @default(8000)
+  assumedInboundCostMicros       BigInt   @default(8000)
+  assumedNumberMonthlyCostMicros BigInt   @default(1500000)
+  /// Warn when a workspace's inbound segments exceed this in one UTC month
+  inboundAnomalyThreshold        Int      @default(2000)
+  updatedAt                      DateTime @updatedAt
 }
