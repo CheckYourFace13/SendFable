@@ -18,19 +18,17 @@ Do not ask the owner to do anything Cursor can safely complete.
 - Ten documentation files under `docs/SMS_*.md`
 - Comprehensive unit tests + typecheck / prisma validate / build
 
-## 2. Required while waiting for AWS email approval
+## 2. Email status (updated 2026-07-29)
 
-- Continue monitoring SES case `178491867800933` (owner already submitted additional info)
-- Do **not** flip any SMS live / public flags
-- Do **not** create live Stripe SMS products
-- Do **not** buy a Telnyx number or file 10DLC registration
-- Optional: review the SMS pricing and margin assumptions in `SMS_PRICING_AND_MARGIN.md`
+SES production access is **APPROVED** (case `178491867800933`). Email GA is live.
+SMS remains dark — do **not** flip SMS live/public flags without the staged checklist in `SMS_PRODUCTION_GO_NOGO.md`.
 
-## 3. Required after AWS email approval
+## 3. Required before SMS dark-backend is considered “production-ready product”
 
-- Complete the controlled SES production-send test (separate plan; email path)
-- Keep SMS flags locked until the SMS-specific steps below are done
-- Email launch and SMS launch are independent — SMS does not wait on SES beyond shared-ops caution
+- Stripe **test-mode** SMS catalog via `scripts/stripe-sms-setup.ts --confirm-test-sms-setup`
+- Telnyx account + keys
+- Controlled real-number tests
+- Owner approval for paid registration / number purchase / live Stripe / public flags
 
 ## 4. Required before Telnyx registration
 

@@ -3,12 +3,14 @@
  * and lookup key it WOULD create, plus the env var names to store.
  *
  * Usage:
- *   npx tsx scripts/stripe-sms-setup.ts                  # dry run (no writes, no API key needed)
- *   npx tsx scripts/stripe-sms-setup.ts --confirm-live-sms-setup   # real writes (requires flags + key)
+ *   npx tsx scripts/stripe-sms-setup.ts                       # dry run
+ *   npx tsx scripts/stripe-sms-setup.ts --confirm-test-sms-setup  # test mode writes (sk_test_ only)
+ *   npx tsx scripts/stripe-sms-setup.ts --confirm-live-sms-setup  # live writes (requires billing flag + sk_live_)
  *
  * Safety:
- *  - refuses live mode without the explicit --confirm-live-sms-setup argument
+ *  - refuses live mode without --confirm-live-sms-setup
  *  - refuses live mode while SENDFABLE_SMS_BILLING_ENABLED != true
+ *  - refuses test mode unless STRIPE_SECRET_KEY is sk_test_
  *  - verifies existing lookup keys first — rerunning never duplicates objects
  *  - never runs automatically during build or deploy
  *
@@ -24,7 +26,9 @@ import {
   type SmsPlanKey,
 } from "../src/lib/sms/pricing";
 
-const CONFIRM_ARG = "--confirm-live-sms-setup";
+const CONFIRM_LIVE_ARG = "--confirm-live-sms-setup";
+/** Creates products/prices against a Stripe *test* secret key only. */
+const CONFIRM_TEST_ARG = "--confirm-test-sms-setup";
 
 interface PlannedMeter {
   lookupNote: string;
@@ -137,27 +141,37 @@ function printPlan() {
   console.log("explicit customer approval — no pre-created price object.");
   console.log("\nEnvironment variables expected after live setup:");
   for (const p of prices) console.log(`  ${p.envVar}=price_...`);
-  console.log("\nDry run complete. To create these objects for real:");
-  console.log(`  1. set SENDFABLE_SMS_BILLING_ENABLED=true`);
-  console.log(`  2. rerun with ${CONFIRM_ARG}`);
+  console.log("\nDry run complete. To create these objects:");
+  console.log(`  Test mode: set STRIPE_SECRET_KEY=sk_test_... then rerun with ${CONFIRM_TEST_ARG}`);
+  console.log(`  Live mode: set SENDFABLE_SMS_BILLING_ENABLED=true + sk_live_... then ${CONFIRM_LIVE_ARG}`);
 }
 
-async function liveSetup() {
-  if (process.env.SENDFABLE_SMS_BILLING_ENABLED?.trim().toLowerCase() !== "true") {
-    console.error(
-      `REFUSED: live setup requires SENDFABLE_SMS_BILLING_ENABLED=true (currently disabled).`
-    );
-    process.exit(1);
-  }
+async function runSetup(mode: "test" | "live") {
   const key = process.env.STRIPE_SECRET_KEY?.trim();
   if (!key) {
     console.error("REFUSED: STRIPE_SECRET_KEY is not set.");
     process.exit(1);
   }
+  if (mode === "test" && !key.startsWith("sk_test_")) {
+    console.error("REFUSED: test setup requires STRIPE_SECRET_KEY starting with sk_test_.");
+    process.exit(1);
+  }
+  if (mode === "live") {
+    if (process.env.SENDFABLE_SMS_BILLING_ENABLED?.trim().toLowerCase() !== "true") {
+      console.error(
+        `REFUSED: live setup requires SENDFABLE_SMS_BILLING_ENABLED=true (currently disabled).`
+      );
+      process.exit(1);
+    }
+    if (!key.startsWith("sk_live_")) {
+      console.error("REFUSED: live setup requires STRIPE_SECRET_KEY starting with sk_live_.");
+      process.exit(1);
+    }
+  }
+
   const stripe = new Stripe(key, { apiVersion: "2024-06-20" });
   const { meters, prices } = plan();
 
-  // Meters — verify by event_name before creating
   const existingMeters = await stripe.billing.meters.list({ limit: 100 });
   const meterIds = new Map<string, string>();
   for (const m of meters) {
@@ -178,7 +192,6 @@ async function liveSetup() {
     meterIds.set(m.eventName, created.id);
   }
 
-  // Prices — verify lookup keys before creating anything (idempotent rerun)
   for (const p of prices) {
     const existing = await stripe.prices.list({ lookup_keys: [p.lookupKey], limit: 1 });
     if (existing.data.length) {
@@ -214,16 +227,21 @@ async function liveSetup() {
     }
     console.log(`price created: ${p.lookupKey} -> ${created.id}  (${p.envVar})`);
   }
-  console.log("\nLive SMS Stripe setup complete. Store the printed price IDs in env.");
+  console.log(`\n${mode.toUpperCase()} SMS Stripe setup complete. Store the printed price IDs in env.`);
 }
 
 async function main() {
-  const confirmLive = process.argv.includes(CONFIRM_ARG);
-  if (!confirmLive) {
+  const confirmLive = process.argv.includes(CONFIRM_LIVE_ARG);
+  const confirmTest = process.argv.includes(CONFIRM_TEST_ARG);
+  if (confirmLive && confirmTest) {
+    console.error("REFUSED: pass only one of test/live confirm flags.");
+    process.exit(1);
+  }
+  if (!confirmLive && !confirmTest) {
     printPlan();
     return;
   }
-  await liveSetup();
+  await runSetup(confirmTest ? "test" : "live");
 }
 
 main().catch((err) => {
