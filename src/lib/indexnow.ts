@@ -37,8 +37,10 @@ export function indexNowEnabled(): boolean {
 }
 
 export function indexNowKeyLocation(): string {
-  if (!process.env.INDEXNOW_KEY?.trim()) return "";
-  return appUrl("/indexnow/key.txt");
+  const key = process.env.INDEXNOW_KEY?.trim();
+  if (!key) return "";
+  // Spec prefers https://{host}/{key}.txt at site root.
+  return appUrl(`/${key}.txt`);
 }
 
 export function isPublicIndexableUrl(url: string): boolean {
