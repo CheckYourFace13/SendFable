@@ -15,6 +15,7 @@ export const metadata = {
   title: "Sendfable — Simple Email Marketing for Small Businesses",
   description:
     "Create beautiful emails, manage your audience and understand every campaign with a simpler email-marketing platform built for small businesses.",
+  alternates: { canonical: "/" },
 };
 
 export default function HomePage() {

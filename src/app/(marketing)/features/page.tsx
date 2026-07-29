@@ -1,8 +1,11 @@
-export const metadata = {
+import { marketingPageMeta } from "@/components/marketing/json-ld";
+
+export const metadata = marketingPageMeta({
   title: "Features",
   description:
     "SendFable features: any-email signup, sender identities, CSV audiences, drag-and-drop builder, campaigns, and analytics.",
-};
+  path: "/features",
+});
 
 const SECTIONS = [
   {

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-import { appUrl, publicOrigin } from "@/lib/utils";
+import { publicOrigin } from "@/lib/utils";
 
 const sans = Inter({
   subsets: ["latin"],
@@ -43,9 +43,6 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/apple-icon.png" }],
-  },
-  alternates: {
-    canonical: appUrl("/"),
   },
 };
 

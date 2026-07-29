@@ -7,6 +7,7 @@ export const metadata = {
   title: "Pricing",
   description:
     "SendFable pricing: Free, Starter, Growth, Pro, and Pro Plus with clear contact and email limits. Two months free with annual billing.",
+  alternates: { canonical: "/pricing" },
 };
 
 export default function PricingPage() {

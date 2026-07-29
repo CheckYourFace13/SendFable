@@ -120,13 +120,13 @@ export function PricingPreview({
                 )}
               </div>
               <div className="mt-3 flex flex-wrap items-baseline gap-1">
-                <span className="font-display text-4xl text-ink">${price}</span>
+                <span className="font-display text-4xl text-ink">{`$${price}`}</span>
                 <span className="text-sm text-ink/55">
                   {key === "FREE" ? "" : annual ? "/mo billed yearly" : "/mo"}
                 </span>
               </div>
               {annual && key !== "FREE" && (
-                <p className="mt-1 text-xs text-teal">${p.yearlyPrice}/year</p>
+                <p className="mt-1 text-xs text-teal">{`$${p.yearlyPrice}/year`}</p>
               )}
               <ul className="mt-5 flex-1 space-y-1.5 text-sm text-charcoal/75">
                 {planBlurb(key).map((line) => (

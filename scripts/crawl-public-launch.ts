@@ -43,12 +43,18 @@ const FORBIDDEN = [
   /BullMQ/i,
 ];
 
+function normalizeHtml(html: string): string {
+  // React may insert empty comments between `$` and digits (`$<!-- -->12`).
+  return html.replace(/<!-- -->/g, "").replace(/<!--.*?-->/gs, " ");
+}
+
 async function main() {
   const failures: string[] = [];
   for (const path of ROUTES) {
     const url = `${BASE.replace(/\/$/, "")}${path}`;
     const res = await fetch(url, { redirect: "follow" });
-    const text = await res.text();
+    const raw = await res.text();
+    const text = normalizeHtml(raw);
     const okStatus =
       path === "/early-access"
         ? res.url.includes("/signup") || res.status === 200
@@ -71,6 +77,12 @@ async function main() {
       }
       for (const stale of ["$9/mo", "$19/mo", "$49/mo"]) {
         if (text.includes(stale)) failures.push(`${path} has stale price ${stale}`);
+      }
+    }
+    if (path === "/pricing") {
+      const canon = raw.match(/rel="canonical" href="([^"]+)"/i)?.[1] ?? "";
+      if (canon && !/\/pricing\/?$/.test(canon)) {
+        failures.push(`${path} wrong canonical ${canon}`);
       }
     }
     console.log(JSON.stringify({ path, status: res.status, ok: okStatus && !failures.some((f) => f.startsWith(path)) }));
