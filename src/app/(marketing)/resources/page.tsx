@@ -38,6 +38,16 @@ const LINKS = [
     body: "SPF, DKIM, DMARC, From-rewrite, and a before-you-send checklist.",
   },
   {
+    title: "Best Mailchimp alternative for small businesses",
+    href: "/guides/best-mailchimp-alternative-for-small-businesses",
+    body: "What “best” should mean: permission, sender setup, predictable pricing — without CRM force-fit.",
+  },
+  {
+    title: "How to switch from Mailchimp",
+    href: "/guides/how-to-switch-from-mailchimp",
+    body: "Longer walkthrough: export, clean, import, verify, test, small send, then cancel.",
+  },
+  {
     title: "Mailchimp alternative",
     href: "/mailchimp-alternative",
     body: "Honest trade-offs plus an approximate cost calculator.",

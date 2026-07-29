@@ -8,6 +8,8 @@ import {
   STRIPE_BILLING_DISABLED_MESSAGE,
   canCreateCheckoutSession,
 } from "@/lib/stripe-billing-gate";
+import { trackEvent } from "@/lib/analytics";
+import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
 const schema = z.object({
   plan: z.enum(["STARTER", "GROWTH", "PRO", "PRO_PLUS"]),
@@ -125,6 +127,13 @@ export async function POST(req: Request) {
       plan: parsed.data.plan,
     },
   });
+
+  try {
+    ensureAnalyticsPersistence();
+    trackEvent("checkout_started", { plan: parsed.data.plan });
+  } catch {
+    /* fail open */
+  }
 
   return NextResponse.json({ url: session.url });
 }

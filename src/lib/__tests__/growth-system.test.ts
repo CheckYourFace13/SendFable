@@ -6,6 +6,8 @@ import {
   normalizeEventName,
   trackEvent,
   analyticsEnabled,
+  isBotUserAgent,
+  scrubProps,
 } from "@/lib/analytics";
 import { SF008_DRAFTS, allEditorialItems } from "@/data/editorial-drafts";
 import { CONTENT_STATUSES, NURTURE_SEQUENCES } from "@/data/content-pipeline";
@@ -14,7 +16,8 @@ import {
   referralCreditCents,
   maybeAwardReferralPaidCredit,
 } from "@/lib/referrals";
-import { indexNowEnabled, submitIndexNow } from "@/lib/indexnow";
+import { indexNowEnabled, submitIndexNow, isPublicIndexableUrl } from "@/lib/indexnow";
+import { nurtureGeneralEnabled, maskEmail } from "@/lib/nurture";
 
 describe("SF-007 analytics contract", () => {
   it("defines required public/activation/revenue events", () => {
@@ -49,10 +52,11 @@ describe("SF-007 analytics contract", () => {
 });
 
 describe("SF-008 editorial batch", () => {
-  it("has exactly 12 SF-008 drafts in OWNER_REVIEW", () => {
+  it("has exactly 12 SF-008 drafts with two published", () => {
     assert.equal(SF008_DRAFTS.length, 12);
+    const published = SF008_DRAFTS.filter((d) => d.status === "PUBLISHED");
+    assert.equal(published.length, 2);
     for (const d of SF008_DRAFTS) {
-      assert.equal(d.status, "OWNER_REVIEW");
       assert.ok(d.directAnswer.length > 40);
       assert.ok(d.faqs.length >= 1);
       assert.ok(d.internalLinkSuggestions.length >= 1);
@@ -61,7 +65,8 @@ describe("SF-008 editorial batch", () => {
     }
   });
 
-  it("includes APPROVED in workflow statuses", () => {
+  it("includes REVISION_NEEDED in workflow statuses", () => {
+    assert.ok((CONTENT_STATUSES as readonly string[]).includes("REVISION_NEEDED"));
     assert.ok((CONTENT_STATUSES as readonly string[]).includes("APPROVED"));
   });
 
@@ -90,6 +95,24 @@ describe("SF-009 referral credits gate", () => {
   });
 });
 
+describe("SF-012 analytics privacy helpers", () => {
+  it("detects bots and scrubs PII-shaped props", () => {
+    assert.equal(isBotUserAgent("Googlebot/2.1"), true);
+    assert.equal(isBotUserAgent("Mozilla/5.0 Chrome/120"), false);
+    const clean = scrubProps({ email: "a@b.com", count: 2, subject: "hi", plan: "GROWTH" });
+    assert.equal(clean.email, undefined);
+    assert.equal(clean.subject, undefined);
+    assert.equal(clean.count, 2);
+    assert.equal(clean.plan, "GROWTH");
+  });
+
+  it("blocks private IndexNow paths", () => {
+    assert.equal(isPublicIndexableUrl("/admin"), false);
+    assert.equal(isPublicIndexableUrl("/billing"), false);
+    assert.equal(isPublicIndexableUrl("/pricing"), true);
+  });
+});
+
 describe("SF-007 IndexNow", () => {
   it("is disabled without key", () => {
     assert.equal(indexNowEnabled(), false);
@@ -99,5 +122,12 @@ describe("SF-007 IndexNow", () => {
     const r = await submitIndexNow(["https://sendfable.com/"]);
     assert.equal(r.ok, false);
     assert.equal(r.skipped, "INDEXNOW_KEY unset");
+  });
+});
+
+describe("SF-014 nurture gates", () => {
+  it("keeps general nurture off and masks emails", () => {
+    assert.equal(nurtureGeneralEnabled(), false);
+    assert.equal(maskEmail("chris@example.com"), "ch***@example.com");
   });
 });

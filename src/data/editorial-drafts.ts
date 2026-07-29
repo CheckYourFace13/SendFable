@@ -16,13 +16,16 @@ export type EditorialDraft = ContentBrief & {
 };
 
 const base = (
-  partial: Omit<EditorialDraft, "author" | "reviewer" | "factCheckStatus" | "competitorPricingFresh" | "lastUpdated" | "lastReviewed" | "status"> &
-    Partial<Pick<EditorialDraft, "status" | "factCheckStatus">>
+  partial: Omit<
+    EditorialDraft,
+    "author" | "reviewer" | "factCheckStatus" | "competitorPricingFresh" | "lastUpdated" | "lastReviewed" | "status"
+  > &
+    Partial<Pick<EditorialDraft, "status" | "factCheckStatus" | "competitorPricingFresh">>
 ): EditorialDraft => ({
   author: "SendFable editorial",
   reviewer: "Pending owner",
   factCheckStatus: partial.factCheckStatus ?? "needs_sources",
-  competitorPricingFresh: false,
+  competitorPricingFresh: partial.competitorPricingFresh ?? false,
   lastUpdated: "2026-07-29",
   lastReviewed: "2026-07-29",
   status: partial.status ?? "OWNER_REVIEW",
@@ -32,6 +35,9 @@ const base = (
 export const SF008_DRAFTS: EditorialDraft[] = [
   base({
     id: "sf008-01-best-mc-alt-smb",
+    status: "PUBLISHED",
+    factCheckStatus: "passed",
+    competitorPricingFresh: true,
     title: "Best Mailchimp alternative for small businesses",
     targetQuery: "best mailchimp alternative for small business",
     searchIntent: "commercial",
@@ -84,6 +90,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-02-mc-pricing-explained",
+    status: "FACT_CHECK",
+    factCheckStatus: "needs_sources",
     title: "Mailchimp pricing explained",
     targetQuery: "mailchimp pricing explained",
     searchIntent: "commercial",
@@ -93,7 +101,6 @@ export const SF008_DRAFTS: EditorialDraft[] = [
     refreshDue: "2026-08-29",
     internalLinkSuggestions: ["/guides/mailchimp-vs-sendfable-pricing", "/mailchimp-pricing-alternative", "/pricing"],
     notes: "Must cite dated snapshot only; refresh with competitor review job",
-    factCheckStatus: "needs_sources",
     directAnswer:
       "Mailchimp pricing is contact-tiered and plan-tiered: free or low tiers cover small lists with limits; paid plans unlock higher contact caps and features. Exact dollars change — always verify on Mailchimp’s site and treat any third-party table as a dated snapshot.",
     sections: [
@@ -128,6 +135,9 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-03-switch-from-mc",
+    status: "PUBLISHED",
+    factCheckStatus: "passed",
+    competitorPricingFresh: true,
     title: "How to switch from Mailchimp",
     targetQuery: "how to switch from mailchimp",
     searchIntent: "informational",
@@ -167,6 +177,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-04-mc-vs-sf",
+    status: "REVISION_NEEDED",
+    factCheckStatus: "needs_sources",
     title: "Mailchimp vs SendFable",
     targetQuery: "mailchimp vs sendfable",
     searchIntent: "comparison",
@@ -202,6 +214,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-05-affordable-em",
+    status: "REVISION_NEEDED",
+    factCheckStatus: "needs_sources",
     title: "Affordable email marketing software",
     targetQuery: "affordable email marketing software",
     searchIntent: "commercial",
@@ -234,6 +248,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-06-without-crm",
+    status: "OWNER_REVIEW",
+    factCheckStatus: "pending",
     title: "Simple email marketing without a CRM",
     targetQuery: "email marketing without crm",
     searchIntent: "informational",
@@ -266,6 +282,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-07-start-list",
+    status: "OWNER_REVIEW",
+    factCheckStatus: "pending",
     title: "How to start a small-business email list",
     targetQuery: "how to start an email list for small business",
     searchIntent: "informational",
@@ -298,6 +316,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-08-how-often",
+    status: "OWNER_REVIEW",
+    factCheckStatus: "pending",
     title: "How often should a small business send emails?",
     targetQuery: "how often should small business send emails",
     searchIntent: "informational",
@@ -330,6 +350,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-09-avoid-spam",
+    status: "OWNER_REVIEW",
+    factCheckStatus: "pending",
     title: "How to avoid emails going to spam",
     targetQuery: "how to avoid emails going to spam",
     searchIntent: "informational",
@@ -362,6 +384,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-10-restaurants",
+    status: "OWNER_REVIEW",
+    factCheckStatus: "pending",
     title: "Email marketing for restaurants",
     targetQuery: "email marketing for restaurants",
     searchIntent: "informational",
@@ -394,6 +418,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-11-local",
+    status: "OWNER_REVIEW",
+    factCheckStatus: "pending",
     title: "Email marketing for local businesses",
     targetQuery: "email marketing for local businesses",
     searchIntent: "informational",
@@ -426,6 +452,8 @@ export const SF008_DRAFTS: EditorialDraft[] = [
   }),
   base({
     id: "sf008-12-newsletter-examples",
+    status: "REVISION_NEEDED",
+    factCheckStatus: "pending",
     title: "Email newsletter examples for small businesses",
     targetQuery: "email newsletter examples for small business",
     searchIntent: "informational",

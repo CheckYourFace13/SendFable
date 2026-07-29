@@ -1,17 +1,32 @@
 import { prisma } from "@/lib/prisma";
 import {
+  analyticsRetentionDays,
   registerAnalyticsDeliver,
   type AnalyticsContext,
   type AnalyticsEvent,
 } from "@/lib/analytics";
 
 let registered = false;
+const DEDUPE_WINDOW_MS = 45_000;
 
 /** Idempotent: wire first-party event persistence when analytics is enabled. */
 export function ensureAnalyticsPersistence() {
   if (registered) return;
   registered = true;
   registerAnalyticsDeliver(async (event, props, ctx) => {
+    if (ctx.sessionId) {
+      const recent = await prisma.productAnalyticsEvent.findFirst({
+        where: {
+          sessionId: ctx.sessionId.slice(0, 64),
+          event,
+          path: ctx.path?.slice(0, 500) || null,
+          createdAt: { gte: new Date(Date.now() - DEDUPE_WINDOW_MS) },
+        },
+        select: { id: true },
+      });
+      if (recent) return;
+    }
+
     await prisma.productAnalyticsEvent.create({
       data: {
         event,
@@ -30,15 +45,26 @@ export function ensureAnalyticsPersistence() {
   });
 }
 
-export async function funnelCounts(days = 30) {
+export async function funnelCounts(days = 30, opts?: { excludeQa?: boolean }) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-  const rows = await prisma.productAnalyticsEvent.groupBy({
-    by: ["event"],
+  const rows = await prisma.productAnalyticsEvent.findMany({
     where: { createdAt: { gte: since } },
-    _count: { _all: true },
+    select: { event: true, props: true },
   });
-  return Object.fromEntries(rows.map((r) => [r.event, r._count._all])) as Record<
-    AnalyticsEvent | string,
-    number
-  >;
+  const counts: Record<string, number> = {};
+  for (const row of rows) {
+    const props = (row.props || {}) as Record<string, unknown>;
+    if (opts?.excludeQa !== false && props.qa === true) continue;
+    counts[row.event] = (counts[row.event] || 0) + 1;
+  }
+  return counts as Record<AnalyticsEvent | string, number>;
+}
+
+export async function pruneAnalyticsOlderThanRetention(): Promise<number> {
+  const days = analyticsRetentionDays();
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const res = await prisma.productAnalyticsEvent.deleteMany({
+    where: { createdAt: { lt: cutoff } },
+  });
+  return res.count;
 }

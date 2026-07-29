@@ -9,7 +9,21 @@ export async function GET() {
   if (!ctx) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   ensureAnalyticsPersistence();
-  const counts = analyticsEnabled() ? await funnelCounts(30) : {};
+  const counts = analyticsEnabled() ? await funnelCounts(30, { excludeQa: true }) : {};
+
+  let qaEventTotal = 0;
+  if (analyticsEnabled()) {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const rows = await prisma.productAnalyticsEvent.findMany({
+      where: { createdAt: { gte: since } },
+      select: { props: true },
+    });
+    for (const row of rows) {
+      const props = (row.props || {}) as Record<string, unknown>;
+      if (props.qa === true) qaEventTotal += 1;
+    }
+  }
+
   const stages = FUNNEL_STAGES.map((s) => ({
     id: s.id,
     count: s.events.reduce((sum, e) => sum + (counts[e] || 0), 0),
@@ -19,7 +33,10 @@ export async function GET() {
   const topPaths = analyticsEnabled()
     ? await prisma.productAnalyticsEvent.groupBy({
         by: ["path"],
-        where: { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, path: { not: null } },
+        where: {
+          createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+          path: { not: null },
+        },
         _count: { _all: true },
         orderBy: { _count: { path: "desc" } },
         take: 20,
@@ -43,6 +60,8 @@ export async function GET() {
     analyticsEnabled: analyticsEnabled(),
     days: 30,
     stages,
+    qaEventTotal,
+    note: "Funnel totals exclude props.qa=true owner QA traffic",
     topPaths: topPaths.map((r) => ({ path: r.path, count: r._count._all })),
     topCampaigns: topCampaigns.map((r) => ({ campaign: r.utmCampaign, count: r._count._all })),
   });

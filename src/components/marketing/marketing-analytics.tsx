@@ -26,7 +26,7 @@ function captureUtm(search: URLSearchParams) {
   const campaign = search.get("utm_campaign") || undefined;
   const content = search.get("utm_content") || undefined;
   const term = search.get("utm_term") || undefined;
-  if (!source && !medium && !campaign) return null;
+  if (!source && !medium && !campaign && !search.get("sf_qa")) return null;
   const touch = [source, medium, campaign].filter(Boolean).join("|");
   try {
     if (!localStorage.getItem(FIRST_TOUCH_KEY) && touch) {
@@ -39,44 +39,74 @@ function captureUtm(search: URLSearchParams) {
   return { source, medium, campaign, content, term, touch };
 }
 
+function deviceCategory(): "mobile" | "tablet" | "desktop" | "unknown" {
+  try {
+    const ua = navigator.userAgent;
+    if (/iPad|Tablet/i.test(ua)) return "tablet";
+    if (/Mobi|iPhone|Android/i.test(ua)) return "mobile";
+    return "desktop";
+  } catch {
+    return "unknown";
+  }
+}
+
+function referrerDomain(): string | undefined {
+  try {
+    if (!document.referrer) return undefined;
+    const host = new URL(document.referrer).hostname.toLowerCase();
+    if (!host || host.endsWith("sendfable.com")) return undefined;
+    return host.slice(0, 120);
+  } catch {
+    return undefined;
+  }
+}
+
 export function trackClientEvent(
   event: string,
   props?: Record<string, number | boolean | string>
 ) {
   if (typeof window === "undefined") return;
-  const search = new URLSearchParams(window.location.search);
-  const utm = captureUtm(search);
-  const body = {
-    event,
-    props: props ?? {},
-    path: window.location.pathname,
-    utmSource: utm?.source,
-    utmMedium: utm?.medium,
-    utmCampaign: utm?.campaign,
-    utmContent: utm?.content,
-    utmTerm: utm?.term,
-    sessionId: readSessionId(),
-    firstTouch: (() => {
-      try {
-        return localStorage.getItem(FIRST_TOUCH_KEY) || undefined;
-      } catch {
-        return undefined;
-      }
-    })(),
-    lastTouch: (() => {
-      try {
-        return localStorage.getItem(LAST_TOUCH_KEY) || undefined;
-      } catch {
-        return undefined;
-      }
-    })(),
-  };
-  void fetch("/api/analytics/event", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    keepalive: true,
-  }).catch(() => undefined);
+  try {
+    const search = new URLSearchParams(window.location.search);
+    const utm = captureUtm(search);
+    const qa = search.get("sf_qa") === "1" || utm?.campaign === "sf_qa" || utm?.source === "sf_qa";
+    const body = {
+      event,
+      props: props ?? {},
+      path: window.location.pathname,
+      utmSource: utm?.source,
+      utmMedium: utm?.medium,
+      utmCampaign: utm?.campaign,
+      utmContent: utm?.content,
+      utmTerm: utm?.term,
+      sessionId: readSessionId(),
+      firstTouch: (() => {
+        try {
+          return localStorage.getItem(FIRST_TOUCH_KEY) || undefined;
+        } catch {
+          return undefined;
+        }
+      })(),
+      lastTouch: (() => {
+        try {
+          return localStorage.getItem(LAST_TOUCH_KEY) || undefined;
+        } catch {
+          return undefined;
+        }
+      })(),
+      qaTraffic: qa,
+      referrerDomain: referrerDomain(),
+      deviceCategory: deviceCategory(),
+    };
+    void fetch("/api/analytics/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    /* fail open */
+  }
 }
 
 /** Lightweight page-view instrumentation for marketing routes. */
@@ -96,7 +126,8 @@ export function MarketingAnalytics() {
       pathname.startsWith("/best-") ||
       pathname.startsWith("/email-marketing") ||
       pathname === "/how-sendfable-works" ||
-      pathname === "/about"
+      pathname === "/about" ||
+      pathname === "/partners"
     ) {
       event = "guide_view";
     } else {

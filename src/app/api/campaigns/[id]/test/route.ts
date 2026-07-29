@@ -13,6 +13,8 @@ import {
   CAMPAIGN_SEND_DISABLED_MESSAGE,
   isCampaignSendEnabled,
 } from "@/lib/campaign-send-gate";
+import { trackEvent } from "@/lib/analytics";
+import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
 const schema = z.object({
   email: z.string().email().optional(),
@@ -88,6 +90,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     where: { id: campaign.id },
     data: { testSentAt: new Date() },
   });
+
+  try {
+    ensureAnalyticsPersistence();
+    trackEvent("test_send_completed");
+  } catch {
+    /* fail open */
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -5,6 +5,20 @@ export const runtime = "nodejs";
 
 const RESOURCES = [
   {
+    title: "Best Mailchimp alternative for small businesses",
+    description:
+      "How to choose a Mailchimp alternative for small businesses without fake savings claims.",
+    path: "/guides/best-mailchimp-alternative-for-small-businesses",
+    date: "2026-07-29",
+  },
+  {
+    title: "How to switch from Mailchimp",
+    description:
+      "Permission-first checklist to leave Mailchimp: export, clean, import, verify, test, send.",
+    path: "/guides/how-to-switch-from-mailchimp",
+    date: "2026-07-29",
+  },
+  {
     title: "Email marketing guide",
     description:
       "A practical guide to lists, authentication, campaigns, and measuring what matters.",

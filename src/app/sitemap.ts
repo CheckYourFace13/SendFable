@@ -43,6 +43,8 @@ export const SITEMAP_PATHS = [
   "/guides/export-contacts-from-mailchimp",
   "/guides/import-mailchimp-contacts-to-sendfable",
   "/guides/mailchimp-vs-sendfable-pricing",
+  "/guides/best-mailchimp-alternative-for-small-businesses",
+  "/guides/how-to-switch-from-mailchimp",
   "/alternatives/mailchimp",
   "/vs/mailchimp",
   "/compare",

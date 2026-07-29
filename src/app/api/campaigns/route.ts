@@ -6,6 +6,8 @@ import type { Prisma } from "@prisma/client";
 import { compileEmailHtml } from "@/lib/email-compiler";
 import { createSimpleDesign } from "@/lib/simple-design";
 import { isSmsAccountSignupEnabled, isSmsCodeEnabled } from "@/lib/sms/flags";
+import { trackEvent } from "@/lib/analytics";
+import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -85,6 +87,13 @@ export async function POST(req: Request) {
       compiledHtml,
     },
   });
+
+  try {
+    ensureAnalyticsPersistence();
+    trackEvent("campaign_created");
+  } catch {
+    /* fail open */
+  }
 
   return NextResponse.json({ campaign }, { status: 201 });
 }

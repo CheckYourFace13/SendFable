@@ -11,6 +11,8 @@ import {
   validateIntakeIdentifiers,
 } from "@/lib/sms/contact-intake";
 import { applyOptIn } from "@/lib/sms/consent";
+import { trackEvent } from "@/lib/analytics";
+import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
 export async function GET(req: Request) {
   const ctx = await getApiContext();
@@ -156,6 +158,12 @@ export async function POST(req: Request) {
           source: smsConsentSource || "manual",
         },
       });
+    }
+    try {
+      ensureAnalyticsPersistence();
+      trackEvent("contact_created");
+    } catch {
+      /* fail open */
     }
     return NextResponse.json({ contact }, { status: 201 });
   } catch (e) {

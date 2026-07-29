@@ -9,6 +9,8 @@ import { normalizeEmail, randomToken } from "@/lib/utils";
 import { findReferrerByCode } from "@/lib/referrals";
 import { publicSignupAllowed } from "@/lib/early-launch";
 import { recordPolicyAcceptance } from "@/lib/policy-acceptance";
+import { trackEvent } from "@/lib/analytics";
+import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
 const signupSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -111,6 +113,14 @@ export async function POST(req: Request) {
 
   const token = await signToken("email-verify", { userId: user.id, email }, "24h");
   await sendEmailVerification(email, token);
+
+  try {
+    ensureAnalyticsPersistence();
+    trackEvent("signup_complete");
+    trackEvent("workspace_created");
+  } catch {
+    /* fail open */
+  }
 
   return NextResponse.json({ ok: true });
 }

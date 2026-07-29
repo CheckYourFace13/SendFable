@@ -1096,6 +1096,35 @@ model ProductAnalyticsEvent {
   @@index([utmCampaign, createdAt])
 }
 
+/// IndexNow submission audit (no secrets stored).
+model IndexNowSubmission {
+  id        String   @id @default(cuid())
+  url       String
+  ok        Boolean
+  status    Int?
+  batchSize Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@index([url, createdAt])
+  @@index([createdAt])
+}
+
+/// Controlled nurture send log — test-mode and future production.
+model NurtureSendLog {
+  id          String   @id @default(cuid())
+  sequenceId  String
+  stepDay     Int
+  /// Masked recipient for reporting (local***@domain)
+  recipientMask String
+  status      String // sent | blocked | failed
+  testMode    Boolean  @default(true)
+  meta        Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([sequenceId, createdAt])
+  @@index([createdAt])
+}
+
 /// Partner program applications — review queue only until program is live.
 model PartnerApplication {
   id           String   @id @default(cuid())

@@ -2,11 +2,11 @@
  * First-party product analytics — privacy-conscious funnel events.
  *
  * Rules:
- * - Event names + numeric/boolean props only
+ * - Event names + numeric/boolean/string props only (scrubbed)
  * - Never send emails, phones, subjects, bodies, mailing addresses,
- *   sender identities, Stripe IDs, or tokens
+ *   sender identities, Stripe IDs, tokens, or full IP addresses
  * - Disabled unless ANALYTICS_ENABLED=true
- * - Optional persistence to ProductAnalyticsEvent when DB is available
+ * - Failures fail open (never throw into product flows)
  */
 
 export const ANALYTICS_EVENTS = [
@@ -45,7 +45,6 @@ export const ANALYTICS_EVENTS = [
 
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];
 
-/** Legacy aliases kept for existing call sites */
 const LEGACY_MAP: Record<string, AnalyticsEvent> = {
   pricing_viewed: "pricing_view",
   signup_started: "signup_start",
@@ -69,10 +68,19 @@ export type AnalyticsContext = {
   sessionId?: string;
   firstTouch?: string;
   lastTouch?: string;
+  referrerDomain?: string;
+  deviceCategory?: "mobile" | "tablet" | "desktop" | "unknown";
+  qaTraffic?: boolean;
 };
 
 export function analyticsEnabled(): boolean {
   return process.env.ANALYTICS_ENABLED === "true";
+}
+
+export function analyticsRetentionDays(): number {
+  const raw = Number(process.env.ANALYTICS_RETENTION_DAYS || "90");
+  if (!Number.isFinite(raw) || raw < 7) return 90;
+  return Math.min(Math.floor(raw), 730);
 }
 
 export function normalizeEventName(event: string): AnalyticsEvent | null {
@@ -82,18 +90,43 @@ export function normalizeEventName(event: string): AnalyticsEvent | null {
   return LEGACY_MAP[event] ?? null;
 }
 
-function scrubProps(props?: AnalyticsProps): Record<string, number | boolean | string> {
+export function scrubProps(props?: AnalyticsProps): Record<string, number | boolean | string> {
   if (!props) return {};
   const out: Record<string, number | boolean | string> = {};
   for (const [k, v] of Object.entries(props)) {
     if (v === undefined) continue;
-    // Hard block common PII-shaped keys
-    if (/email|phone|subject|body|address|token|secret|stripe|password/i.test(k)) continue;
+    if (/email|phone|subject|body|address|token|secret|stripe|password|ip\b/i.test(k)) continue;
     if (typeof v === "string" && v.length > 120) continue;
     if (typeof v === "string" && v.includes("@")) continue;
     out[k] = v;
   }
   return out;
+}
+
+const BOT_UA =
+  /bot|crawler|spider|slurp|bingpreview|facebookexternalhit|embedly|quora|pinterest|redditbot|applebot|semrush|ahrefs|mj12|dotbot|petalbot|bytespider|gptbot|claudebot|curl|wget|python-requests|httpclient|headless/i;
+
+export function isBotUserAgent(ua: string | null | undefined): boolean {
+  if (!ua || ua.trim().length < 3) return true;
+  return BOT_UA.test(ua);
+}
+
+export function deviceCategoryFromUa(ua: string | null | undefined): AnalyticsContext["deviceCategory"] {
+  if (!ua) return "unknown";
+  if (/ipad|tablet/i.test(ua)) return "tablet";
+  if (/mobi|iphone|android(?!.*tablet)/i.test(ua)) return "mobile";
+  return "desktop";
+}
+
+export function referrerDomainFrom(referer: string | null | undefined): string | undefined {
+  if (!referer) return undefined;
+  try {
+    const host = new URL(referer).hostname.toLowerCase();
+    if (!host || host.endsWith("sendfable.com")) return undefined;
+    return host.slice(0, 120);
+  } catch {
+    return undefined;
+  }
 }
 
 type DeliverFn = (
@@ -104,7 +137,6 @@ type DeliverFn = (
 
 let deliverImpl: DeliverFn | null = null;
 
-/** Allow server bootstrap to register DB persistence without circular imports. */
 export function registerAnalyticsDeliver(fn: DeliverFn) {
   deliverImpl = fn;
 }
@@ -114,23 +146,22 @@ export function trackEvent(
   props?: AnalyticsProps,
   ctx: AnalyticsContext = {}
 ): void {
-  if (!analyticsEnabled()) return;
-  const name = normalizeEventName(event);
-  if (!name) return;
-  const clean = scrubProps(props);
-  // Structured log (no PII by scrubber)
-  console.log("[analytics]", name, clean, {
-    path: ctx.path,
-    utm: ctx.utmCampaign || ctx.utmSource,
-  });
-  if (deliverImpl) {
-    void Promise.resolve(deliverImpl(name, clean, ctx)).catch(() => {
-      /* never break product flows */
-    });
+  try {
+    if (!analyticsEnabled()) return;
+    const name = normalizeEventName(event);
+    if (!name) return;
+    const clean = scrubProps(props);
+    if (ctx.qaTraffic) clean.qa = true;
+    if (ctx.referrerDomain) clean.referrerDomain = ctx.referrerDomain.slice(0, 120);
+    if (ctx.deviceCategory) clean.deviceCategory = ctx.deviceCategory;
+    if (deliverImpl) {
+      void Promise.resolve(deliverImpl(name, clean, ctx)).catch(() => undefined);
+    }
+  } catch {
+    /* fail open */
   }
 }
 
-/** Funnel stages for admin reporting */
 export const FUNNEL_STAGES: { id: string; events: AnalyticsEvent[] }[] = [
   { id: "organic_landing", events: ["homepage_view", "pricing_view", "comparison_view", "guide_view"] },
   { id: "signup", events: ["signup_start", "signup_complete"] },
