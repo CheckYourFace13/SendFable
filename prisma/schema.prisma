@@ -1074,3 +1074,41 @@ model SmsAdminSetting {
   inboundAnomalyThreshold        Int      @default(2000)
   updatedAt                      DateTime @updatedAt
 }
+
+/// First-party product analytics (no PII — scrubbed props only).
+model ProductAnalyticsEvent {
+  id          String   @id @default(cuid())
+  event       String
+  props       Json     @default("{}")
+  path        String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  sessionId   String?
+  firstTouch  String?
+  lastTouch   String?
+  createdAt   DateTime @default(now())
+
+  @@index([event, createdAt])
+  @@index([createdAt])
+  @@index([utmCampaign, createdAt])
+}
+
+/// Partner program applications — review queue only until program is live.
+model PartnerApplication {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  company      String?
+  website      String?
+  partnerType  String // designer | agency | consultant | chamber | other
+  audienceNote String?  @db.Text
+  status       String   @default("NEW") // NEW | REVIEWING | APPROVED | DECLINED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}

@@ -1,6 +1,7 @@
 # Analytics decision
 
-Decided 2026-07-24 (Phase 10 of the production-readiness pass).
+Decided 2026-07-24 (Phase 10 of the production-readiness pass).  
+Updated 2026-07-29 (SF-007): first-party persistence path approved; still **no third-party** analytics.
 
 ## Decision: no third-party analytics at launch
 
@@ -8,26 +9,26 @@ Decided 2026-07-24 (Phase 10 of the production-readiness pass).
 - The Plausible instance running on the shared VPS belongs to
   **RentalNoodle** (`plausible.rentalnoodle.com`) and must not be reused.
 - Consequently the site sets **only strictly-necessary first-party cookies**
-  (session + CSRF), which is what the Privacy Policy cookie section states,
-  and no cookie-consent banner is required.
+  (session + CSRF). The marketing beacon may use `localStorage` for an anonymous
+  session id and first/last UTM touch — not a third-party cookie.
+- No cookie-consent banner is required for this first-party design.
 
-## What exists instead
+## What exists
 
-`src/lib/analytics.ts` — a typed, first-party event interface
-(`trackEvent(event, props)`) covering the launch funnel (pricing viewed,
-signup, auth, workspace created, sender verified, CSV import counts, campaign
-created, test email, checkout, subscription lifecycle, first campaign sent).
+`src/lib/analytics.ts` — typed funnel events (public, activation, revenue).  
+`src/lib/analytics-persist.ts` — optional `ProductAnalyticsEvent` rows when
+`ANALYTICS_ENABLED=true`.  
+`POST /api/analytics/event` — rate-limited beacon.  
+`/admin/funnel` — stage report.
 
-It is **disabled by default** (`ANALYTICS_ENABLED` unset) and its delivery is
-a stub. Privacy rules are enforced by the type contract: event names and
-numeric counts only — never email addresses, contact lists, campaign content,
-Stripe IDs, or per-recipient open/click data.
+Privacy scrubber drops email/phone/subject/body/address/token-shaped props.
 
-## To enable later
+## To enable collection
 
-1. Owner approves a provider (self-hosted Plausible instance for Sendfable, or
-   a first-party events table).
-2. Implement delivery inside `trackEvent`, wire call sites, set
-   `ANALYTICS_ENABLED=true`.
-3. Update the Privacy Policy cookie section **before** deploying if the
-   provider sets cookies.
+1. Owner sets `ANALYTICS_ENABLED=true` in production.
+2. Confirm Privacy/Cookies language still accurate (first-party only).
+3. Use `/admin/funnel` for Organic → Paid monitoring.
+
+## Still not approved
+
+- GA4, Plausible (shared), Segment, or any third-party script without a new decision record.

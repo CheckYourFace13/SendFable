@@ -56,6 +56,7 @@ export const SITEMAP_PATHS = [
   "/solutions/local-events",
   "/solutions/professional-services",
   "/migrate/mailchimp",
+  "/partners",
   "/terms",
   "/privacy",
   "/cookies",

@@ -17,6 +17,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "stripe:setup": "tsx scripts/stripe-setup.ts",
     "stripe:sms-setup": "tsx scripts/stripe-sms-setup.ts",
+    "growth:jobs": "tsx scripts/growth-jobs.ts",
     "test": "node scripts/run-tests.mjs",
     "seo:check": "tsx scripts/seo-check.ts"
   },

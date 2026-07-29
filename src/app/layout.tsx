@@ -16,6 +16,9 @@ const display = Fraunces({
   display: "swap",
 });
 
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+const bingVerification = process.env.BING_SITE_VERIFICATION?.trim();
+
 export const metadata: Metadata = {
   metadataBase: new URL(publicOrigin()),
   title: {
@@ -26,6 +29,12 @@ export const metadata: Metadata = {
     "Create beautiful emails, manage your audience and understand every campaign with a simpler email-marketing platform built for small businesses.",
   applicationName: "Sendfable",
   manifest: "/manifest.webmanifest",
+  verification: {
+    ...(googleVerification ? { google: googleVerification } : {}),
+    ...(bingVerification
+      ? { other: { "msvalidate.01": bingVerification } }
+      : {}),
+  },
   openGraph: {
     type: "website",
     siteName: "Sendfable",

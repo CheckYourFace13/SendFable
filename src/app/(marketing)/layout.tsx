@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { AnnouncementBar } from "@/components/marketing/home/announcement-bar";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/components/marketing/json-ld";
+import { MarketingAnalytics } from "@/components/marketing/marketing-analytics";
 
 /** Avoid baking launch-flag copy into static HTML at Docker build time. */
 export const dynamic = "force-dynamic";
@@ -15,6 +17,9 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />
+      <Suspense fallback={null}>
+        <MarketingAnalytics />
+      </Suspense>
     </div>
   );
 }

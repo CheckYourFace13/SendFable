@@ -49,6 +49,15 @@ export default function AdminOverviewPage() {
         <Link className="text-coral underline" href="/admin/competitors">
           Competitor freshness
         </Link>
+        <Link className="text-coral underline" href="/admin/editorial">
+          Editorial
+        </Link>
+        <Link className="text-coral underline" href="/admin/funnel">
+          Funnel
+        </Link>
+        <Link className="text-coral underline" href="/admin/partners">
+          Partners
+        </Link>
         <Link className="text-coral underline" href="/settings/ses">
           SES readiness
         </Link>

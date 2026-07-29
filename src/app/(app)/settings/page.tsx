@@ -174,7 +174,8 @@ export default function SettingsPage() {
       <div className="mb-8 max-w-xl space-y-4 rounded-xl border bg-white p-6">
         <h3 className="font-semibold">Referrals</h3>
         <p className="text-sm text-muted-foreground">
-          Share your link. Credits are placeholder (non-monetary) for now.
+          Share your link. Account credits stay inactive until the referral program is
+          owner-approved (REFERRAL_CREDITS_ENABLED). Ledger entries today are non-monetary placeholders.
         </p>
         <div>
           <Label>Your code</Label>

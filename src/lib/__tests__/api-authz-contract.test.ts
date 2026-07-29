@@ -33,6 +33,8 @@ const PUBLIC_BY_DESIGN = new Set([
   "webhooks/ses", // SNS signature verified
   "webhooks/stripe", // Stripe signature verified
   "webhooks/telnyx", // Telnyx signature verified; 404 while inbound flag off
+  "analytics/event", // first-party beacon; rate-limited; no PII; gated by ANALYTICS_ENABLED
+  "partners/apply", // public partner application; honeypot + rate limit
 ]);
 
 const AUTH_MARKERS = [/getApiContext\s*\(/, /requirePlatformAdmin\s*\(/, /\bauth\s*\(\)/];

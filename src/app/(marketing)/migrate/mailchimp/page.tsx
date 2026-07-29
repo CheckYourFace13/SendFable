@@ -92,6 +92,10 @@ export default function MigrateFromMailchimpPage() {
       <h1 className="font-display text-4xl font-bold tracking-tight text-ink">
         Migrate from Mailchimp to Sendfable
       </h1>
+      <AnswerLead
+        question="Moving from Mailchimp?"
+        answer="SendFable helps you import your permission-based contacts, configure your sender and prepare your first campaign. We do not import data you lack permission to use, and we do not advertise full-service migration until support capacity is approved."
+      />
       <p className="mt-3 text-lg text-ink/65">
         Leave complexity without losing the people who asked to hear from you. This guide is CSV-first
         and permission-first.

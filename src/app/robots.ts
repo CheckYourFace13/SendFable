@@ -30,6 +30,7 @@ export default function robots(): MetadataRoute.Robots {
           "/compare/",
           "/solutions/",
           "/vs/",
+          "/partners",
           "/terms",
           "/privacy",
           "/acceptable-use",

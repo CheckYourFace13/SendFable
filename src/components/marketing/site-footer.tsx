@@ -53,6 +53,8 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/email-marketing-guide", label: "Email marketing guide" },
       { href: "/deliverability", label: "Deliverability" },
       { href: "/switch-from-mailchimp", label: "Switch from Mailchimp" },
+      { href: "/migrate/mailchimp", label: "Mailchimp migration" },
+      { href: "/partners", label: "Partners" },
       { href: "/changelog", label: "Changelog" },
     ],
   },
