@@ -22,6 +22,12 @@ if (!connection) {
 }
 
 const concurrency = Number(process.env.WORKER_CONCURRENCY || 5);
+/** Global SES send ceiling for launch (default 5/s). See PLATFORM_SEND_RATE_PER_SEC. */
+const platformSendPerSec = (() => {
+  const n = Number(process.env.PLATFORM_SEND_RATE_PER_SEC || 5);
+  if (!Number.isFinite(n) || n < 1) return 5;
+  return Math.min(Math.floor(n), 14);
+})();
 
 const worker = new Worker<CampaignSendJob>(
   CAMPAIGN_QUEUE,
@@ -42,11 +48,18 @@ const worker = new Worker<CampaignSendJob>(
   {
     connection,
     concurrency,
+    // BullMQ group limiter — complements acquirePlatformSendSlot in campaign-send.
+    limiter: {
+      max: platformSendPerSec,
+      duration: 1000,
+    },
   }
 );
 
 worker.on("ready", () => {
-  console.log(`[worker] listening on queue "${CAMPAIGN_QUEUE}" (concurrency=${concurrency})`);
+  console.log(
+    `[worker] listening on queue "${CAMPAIGN_QUEUE}" (concurrency=${concurrency}, platformSendRate=${platformSendPerSec}/s)`
+  );
 });
 
 worker.on("failed", (job, err) => {

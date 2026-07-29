@@ -20,6 +20,7 @@ import {
   assertCampaignSendEnabled,
   CampaignSendDisabledError,
 } from "@/lib/campaign-send-gate";
+import { acquirePlatformSendSlot } from "@/lib/platform-send-rate";
 
 /**
  * Snapshot recipients and enqueue (or inline-process) a campaign send.
@@ -207,6 +208,8 @@ export async function sendOneRecipient(recipientId: string): Promise<void> {
   const { from, replyTo } = resolveFromHeaders(identity);
 
   try {
+    // Conservative global ceiling (default 5/s) — below AWS account MaxSendRate.
+    await acquirePlatformSendSlot();
     const result = await sendEmail({
       from,
       to: recipient.email,

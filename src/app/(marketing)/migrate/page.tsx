@@ -92,7 +92,7 @@ export default function MigratePage() {
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild>
-          <Link href="/early-access">Request early access</Link>
+          <Link href="/signup">Start free</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/migrate/mailchimp">Leave Mailchimp guide</Link>
@@ -131,7 +131,7 @@ export default function MigratePage() {
 
       <MarketingCta
         title="Import when you are ready"
-        body="Join early access, map your CSV when invited, verify a sender, and send a small test campaign before you cut over."
+        body="Start free, map your CSV, verify a sender, and send a small test campaign before you cut over."
         secondaryHref="/pricing"
         secondaryLabel="See pricing"
       />

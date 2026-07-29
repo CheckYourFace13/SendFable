@@ -1,12 +1,13 @@
-# Final launch activation checklist (DO NOT RUN YET)
+# Final launch activation checklist
 
-Ordered sequence for **public** launch. Execute only after:
+**Updated 2026-07-29:** SES production access is **APPROVED** (case `178491867800933`).
+See `docs/SES_PRODUCTION_APPROVAL_2026-07-29.md` and `docs/EMAIL_LAUNCH_STATUS_2026-07-29.md`.
 
-1. SES `ProductionAccessEnabled=true`, `SendingEnabled=true`, `EnforcementStatus=HEALTHY`
-2. Controlled SES production-send test **PASS** (`docs/SES_CONTROLLED_PRODUCTION_TEST_PLAN.md`)
-3. Explicit owner launch authorization
+Ordered sequence for **public** email launch. Execute after controlled SES production-send evidence.
 
-## Exact launch flag changes (prepared — not applied)
+SMS remains dark — do **not** set any `SENDFABLE_SMS_*` live/public/billing flags.
+
+## Exact launch flag changes
 
 ```
 EARLY_LAUNCH=false
@@ -15,6 +16,7 @@ STRIPE_BILLING_ENABLED=true
 STRIPE_OWNER_TEST_ENABLED=false
 CAMPAIGN_SEND_ENABLED=true
 SES_CONTROLLED_TEST_ENABLED=false
+PLATFORM_SEND_RATE_PER_SEC=5
 ```
 
 ## Ordered activation sequence

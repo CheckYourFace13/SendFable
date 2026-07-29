@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 
 export function MarketingCta({
   title = "Ready to send your story?",
-  body = "Join early access or log in if you already have an account. Keep email simple: add people, write, send.",
-  primaryHref = "/early-access",
-  primaryLabel = "Request early access",
+  body = "Start free, import opted-in contacts, and send your first campaign. Keep email simple: add people, write, send.",
+  primaryHref = "/signup",
+  primaryLabel = "Start free",
   secondaryHref = "/login",
   secondaryLabel = "Log in",
 }: {

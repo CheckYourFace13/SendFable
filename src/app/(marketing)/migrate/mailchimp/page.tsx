@@ -152,7 +152,7 @@ export default function MigrateFromMailchimpPage() {
 
       <MarketingCta
         title="Ready to leave Mailchimp complexity?"
-        body="Request early access, import your cleaned CSV, and send a test from Simple Mode."
+        body="Start free, import your cleaned CSV, and send a test from Simple Mode."
       />
     </div>
   );

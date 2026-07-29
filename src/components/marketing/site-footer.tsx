@@ -63,7 +63,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/integrations", label: "Integrations" },
       { href: "/contact", label: "Contact & support" },
       { href: "/login", label: "Log in" },
-      { href: "/early-access", label: "Early access" },
+      { href: "/signup", label: "Start free" },
     ],
   },
   {

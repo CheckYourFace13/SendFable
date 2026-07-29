@@ -1,17 +1,21 @@
 # Known limitations
 
+## Status update — 2026-07-29 (SES production approved)
+
+**SES case 178491867800933: APPROVED.** Sandbox removed in `us-east-1`.
+Quota 50,000/day · MaxSendRate 14/sec · live API `ProductionAccessEnabled=true`,
+`ReviewDetails.Status=GRANTED`. Record: `docs/SES_PRODUCTION_APPROVAL_2026-07-29.md`.
+
+Email launch branch: `launch/email-production-2026-07-29`.  
+**SMS product (`feature/sms-product`) deliberately deferred** from this email launch
+(see `docs/EMAIL_LAUNCH_STATUS_2026-07-29.md`).
+
+Application send ceiling at launch: **5 msg/s** (`PLATFORM_SEND_RATE_PER_SEC`).
+
 ## Status update — 2026-07-25 (SES classification correction)
 
-**SES case 178491867800933:** Submitted/open — awaiting AWS review.
+**Historical.** Superseded by 2026-07-29 approval above.
 
-Earlier reports treated `GetAccount` → `Details.ReviewDetails.Status = DENIED` as an
-explicit AWS denial. Owner evidence is only the “new Support case opened” email.
-`ProductionAccessEnabled=false` only means the account is still in the sandbox.
-Do **not** submit an appeal or a second production-access request unless AWS
-explicitly rejects the request or asks for more information.
-
-Correction: `docs/SES_CASE_STATUS_CORRECTION_2026-07-25.md`  
-Follow-up draft (unsubmitted): `docs/SES_PRODUCTION_ACCESS_FOLLOWUP_DRAFT.md`
 
 **Second-workspace / role QA (2026-07-25):** **PASS** — see `docs/PRODUCTION_QA_RESULTS.md`.
 Accounts: Workspace B (`support@sendfable.com`), Workspace A ADMIN (`legal@`), MEMBER (`privacy@`).
@@ -42,10 +46,10 @@ dependency; **disabled** = intentionally off for launch safety.
 | Area | Status |
 |---|---|
 | Stripe live billing (products, prices, webhook, portal, checkout, refund) | **Live-proven** 2026-07-26 at Starter **$12** (paid → webhook STARTER → immediate cancel → full refund → FREE). Earlier $9 proof superseded for catalog price. Public billing remains **disabled**. See `docs/STRIPE_STARTER12_LIFECYCLE_2026-07-26.md`. |
-| SES identity/pipeline | Configured and verified (domain, DKIM, MAIL FROM, config set, SNS destination confirmed). **Blocked on public send**: `ProductionAccessEnabled=false` (sandbox quotas). Case `178491867800933`: **AWS requested additional information — awaiting owner response** (API `ReviewDetails.Status` may still show `DENIED`; do not auto-appeal). See `docs/SES_CASE_REVIEW_OWNER_INSTRUCTIONS.md` and `docs/PRE_APPROVAL_READINESS_2026-07-26.md`. |
-| Off-host encrypted backups | **Live** (age + S3). Local + off-host success markers rechecked 2026-07-26. |
-| Campaign sending | Code-complete + unit-tested; **disabled** for public (`CAMPAIGN_SEND_ENABLED=false`) and blocked by SES sandbox for real-world sends. |
-| Public signup | **Disabled** (`ALLOW_PUBLIC_SIGNUP=false`, early-access waitlist live). |
+| SES identity/pipeline | **Production access APPROVED** 2026-07-29 (case `178491867800933`): sandbox removed, 50k/day, 14/sec. Identity/DKIM/MAIL FROM/config set/SNS verified live. See `docs/SES_PRODUCTION_APPROVAL_2026-07-29.md`. |
+| Off-host encrypted backups | **Live** (age + S3). Local + off-host success markers rechecked 2026-07-29. |
+| Campaign sending | Code-complete + unit-tested; app rate ceiling **5 msg/s**. Public send gated by `CAMPAIGN_SEND_ENABLED` until launch activation. |
+| Public signup | Gated by `ALLOW_PUBLIC_SIGNUP` / `EARLY_LAUNCH` until launch activation (see `docs/EMAIL_LAUNCH_STATUS_2026-07-29.md`). |
 | Login callback redirects | Fixed 2026-07-24: centralized `safeCallbackPath` validation (client + Auth.js `redirect` callback), unit-tested against encoded/double-encoded/backslash/scheme bypasses. |
 | Tracked-link click redirects | Fixed 2026-07-24: click-time re-validation (`safeClickRedirectUrl`), unsafe targets land on branded `/link-unavailable`, unit-tested. |
 | Unknown routes | Fixed 2026-07-24: unknown public URLs return a real branded 404 (noindex); login redirect only for known app sections. |

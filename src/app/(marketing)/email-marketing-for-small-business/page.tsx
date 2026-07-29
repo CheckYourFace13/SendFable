@@ -178,7 +178,7 @@ export default function EmailMarketingForSmallBusinessPage() {
 
       <MarketingCta
         title="Start with a list you already have"
-        body="Request early access, then import opted-in contacts and write your first short campaign."
+        body="Start free, then import opted-in contacts and write your first short campaign."
       />
     </div>
   );

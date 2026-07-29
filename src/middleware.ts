@@ -113,6 +113,14 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/early-access", req.nextUrl.origin));
   }
 
+  // After public launch: early-access funnel → signup.
+  if (
+    (!earlyLaunch || process.env.ALLOW_PUBLIC_SIGNUP === "true") &&
+    (pathname === "/early-access" || pathname.startsWith("/early-access/"))
+  ) {
+    return NextResponse.redirect(new URL("/signup", req.nextUrl.origin));
+  }
+
   if (!isLoggedIn && !isPublicPath(pathname)) {
     // Unknown URL (not public, not a known app section) → real 404 from Next.
     if (!isAppPath(pathname)) {

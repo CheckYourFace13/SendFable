@@ -154,11 +154,11 @@ export default function TermsPage() {
         <li>Quotas, sending ramps, auto-pause thresholds, and workspace sending holds</li>
       </LegalUl>
       <p>
-        <strong>Early-launch / provider gates.</strong> Campaign sending, public billing checkout,
-        public signup, and SES-controlled tests may be disabled by configuration flags even when the
-        UI exists. Amazon SES production access and other provider approvals may further limit
-        delivery. We do not guarantee inbox placement, open rates, click rates, deliverability,
-        uptime, or revenue outcomes.
+        <strong>Feature gates.</strong> Campaign sending, public billing checkout, public signup,
+        and controlled delivery tests may be disabled by configuration flags even when the UI
+        exists. Delivery depends on Amazon SES and related infrastructure capacity, reputation, and
+        recipient providers. We do not guarantee inbox placement, open rates, click rates,
+        deliverability, uptime, or revenue outcomes.
       </p>
 
       <LegalH2>8. Monitoring, abuse, suspension, and termination</LegalH2>

@@ -34,8 +34,10 @@ Migrations run on app start (`prisma migrate deploy`).
 ## Env
 
 - File: `/opt/sendfable/.env` (mode `600`, never commit)
-- `EARLY_LAUNCH=true`, `ALLOW_PUBLIC_SIGNUP=false`
-- AWS / Stripe secrets blank until those services are enabled
+- Launch flags: see `docs/EMAIL_LAUNCH_STATUS_2026-07-29.md` and `docs/FINAL_LAUNCH_ACTIVATION_CHECKLIST.md`
+- SES production access **approved** 2026-07-29 (case `178491867800933`) — record in `docs/SES_PRODUCTION_APPROVAL_2026-07-29.md`
+- Keep `PLATFORM_SEND_RATE_PER_SEC=5` at launch (AWS account max is 14/sec)
+- Do **not** enable SMS env flags on email launch
 - Owner bootstrap password: `/root/sendfable-secrets/owner-password.txt` (root-only)
 
 ## Nginx

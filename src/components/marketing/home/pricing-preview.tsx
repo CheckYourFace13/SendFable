@@ -22,12 +22,12 @@ function planBlurb(plan: Plan): string[] {
   else lines.push("No platform badge");
   if (p.customDomains) lines.push("Custom domain authentication");
   // Team seats exist in code for Pro / Pro Plus but are not advertised publicly
-  // while invites remain early-launch / SES constrained.
+  // while invites remain constrained.
   return lines;
 }
 
-/** Early-access CTA — public signup and public Checkout remain locked. */
-const PRICING_CTA_HREF = "/early-access";
+/** Public signup CTA — Checkout remains plan-gated server-side. */
+const PRICING_CTA_HREF = "/signup";
 
 export function PricingPreview({
   embedded = false,
@@ -144,7 +144,7 @@ export function PricingPreview({
                 variant={recommended ? "default" : "outline"}
               >
                 <Link href={PRICING_CTA_HREF}>
-                  {key === "FREE" ? "Request early access" : "Request early access"}
+                  {key === "FREE" ? "Start free" : "Get started"}
                 </Link>
               </Button>
             </li>

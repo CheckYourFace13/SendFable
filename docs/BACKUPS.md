@@ -43,6 +43,6 @@ point `DATABASE_URL` at it, start containers, verify `/api/health`.
 
 ## Rechecked 2026-07-26
 
-- **Last successful local backup:** `/root/sendfable-backups/last-success` → 2026-07-26T03:15:01Z
-- **Last successful off-host upload:** `/root/sendfable-backups/last-offhost-success` → same window (daily + weekly `.age`)
+- **Last successful local backup:** `/root/sendfable-backups/last-success` → 2026-07-29T03:15:01+00:00
+- **Last successful off-host upload:** `/root/sendfable-backups/last-offhost-success` → 2026-07-29T03:15:04+00:00
 - **Last successful restore drill:** 2026-07-24 (documented). Refresh before public launch activation.

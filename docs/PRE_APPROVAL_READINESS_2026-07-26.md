@@ -2,15 +2,14 @@
 
 ## Overall verdict
 
-**CONDITIONAL GO** — all owner-controlled launch engineering work for this stage is complete.  
-Public launch remains blocked only by:
+**SUPERSEDED for SES status by `docs/SES_PRODUCTION_APPROVAL_2026-07-29.md` and `docs/EMAIL_LAUNCH_STATUS_2026-07-29.md` (2026-07-29).**
 
-1. AWS SES production approval (owner must respond to AWS’s request for additional information on case `178491867800933`)
-2. Controlled SES production-send test (not run)
-3. Final owner launch authorization (checklist prepared, not executed)
+Historical note below retained for audit. SES production access was **approved** 2026-07-29 (case `178491867800933`).
 
-Do **not** state 100% ready until the controlled SES test passes.  
-Early-access wording and all launch flags remain **locked**.
+---
+
+**Prior CONDITIONAL GO (2026-07-26)** — owner-controlled launch engineering complete at that date; public launch was blocked by SES approval (now granted), controlled send test, and final activation.
+
 
 ## Launch score
 
