@@ -82,6 +82,9 @@ export default function HowSendfableWorksPage() {
         campaign, and send through managed delivery infrastructure — then review useful results.
       </p>
       <p className="mt-2 text-sm text-ink/55">Last updated {SENDFABLE_FACTS.lastUpdated}.</p>
+      <p className="mt-4 text-sm text-slate-700">
+        <strong>SMS status:</strong> {SENDFABLE_FACTS.smsStatus.publicAnswer}
+      </p>
 
       <ol className="mt-10 space-y-8">
         {STEPS.map((step, i) => (
