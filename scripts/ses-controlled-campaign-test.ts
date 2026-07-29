@@ -114,7 +114,7 @@ async function main() {
       audienceType: "tags",
       audienceTagIds: [tag.id],
       senderIdentityId: sender.id,
-      designJson: design,
+      designJson: JSON.parse(JSON.stringify(design)),
     },
   });
 
