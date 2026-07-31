@@ -2,7 +2,7 @@
 
 Permanent numbered work references for major SendFable production tasks.
 
-**Current production app commit (verified 2026-07-31):** `c880c31` (pre–SF-016 app); SF-016 Stripe catalog + env live  
+**Current production app commit (verified 2026-07-31):** `678fac9`  
 **Deploy:** SF-016 live SMS Stripe catalog (inactive; flags false)  
 **Backup:** env `/root/sendfable-backups/sendfable-env-sf016-20260731-152652.bak`; DB `/root/sendfable-backups/sendfable-20260729-202150.sql.gz`  
 **Rollback:** restore env backup; leave Stripe SMS products inactive  
@@ -19,7 +19,7 @@ Permanent numbered work references for major SendFable production tasks.
 | [SF-013](./SF-013_FIRST_CONTENT_PUBLICATION.md) | 2026-07-29 | First content publication (2) | Done | same | `c880c31` | `c880c31` |
 | [SF-014](./SF-014_GROWTH_AUTOMATION_TEST.md) | 2026-07-29 | Growth automation controlled testing | Done | same | `c880c31` | `c880c31` |
 | [SF-015](./SF-015_OWNER_DECISIONS.md) | 2026-07-29 | External account + SMS launch package | Done | same | `c880c31` | `c880c31` |
-| [SF-016](./SF-016_LIVE_STRIPE_SMS_CATALOG.md) | 2026-07-31 | Live Stripe SMS catalog preparation | Done | `sf/016-live-sms-catalog` | TBD | TBD |
+| [SF-016](./SF-016_LIVE_STRIPE_SMS_CATALOG.md) | 2026-07-31 | Live Stripe SMS catalog preparation | Done | `sf/016-live-sms-catalog` | `678fac9` | `678fac9` |
 
 ## SF-012 record
 
