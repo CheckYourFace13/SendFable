@@ -10,7 +10,12 @@
  * No MMS. No international.
  */
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import {
+  createHmac,
+  createPublicKey,
+  timingSafeEqual,
+  verify as cryptoVerify,
+} from "node:crypto";
 import { calculateSegments } from "@/lib/sms/segments";
 import { assertSmsFlag } from "@/lib/sms/flags";
 import type {
@@ -28,6 +33,37 @@ import type {
   SmsWebhookValidation,
 } from "@/lib/sms/provider";
 import { MOCK_PROVIDER_COSTS } from "@/lib/sms/mock-provider";
+
+const WEBHOOK_TIMESTAMP_TOLERANCE_SEC = 300;
+
+/** Verify Telnyx Ed25519 webhook signature over `{timestamp}|{rawBody}`. */
+export function verifyTelnyxEd25519(
+  rawBody: string,
+  timestamp: string,
+  signatureB64: string,
+  publicKeyB64: string
+): boolean {
+  try {
+    const raw = Buffer.from(publicKeyB64.trim(), "base64");
+    // Telnyx portal key is typically raw 32-byte Ed25519; also accept SPKI DER.
+    const key =
+      raw.length === 32
+        ? createPublicKey({
+            key: Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), raw]),
+            format: "der",
+            type: "spki",
+          })
+        : createPublicKey({ key: raw, format: "der", type: "spki" });
+    return cryptoVerify(
+      null,
+      Buffer.from(`${timestamp}|${rawBody}`, "utf8"),
+      key,
+      Buffer.from(signatureB64.trim(), "base64")
+    );
+  } catch {
+    return false;
+  }
+}
 
 const TELNYX_API_BASE = "https://api.telnyx.com/v2";
 
@@ -95,32 +131,45 @@ export class TelnyxSmsProvider implements SmsProvider {
   }
 
   /**
-   * Telnyx signs webhooks with Ed25519 (telnyx-signature-ed25519 +
-   * telnyx-timestamp). Until the live public key is configured we also
-   * support an HMAC shared-secret mode for controlled testing.
-   * Validation NEVER makes a network call.
+   * Telnyx signs production webhooks with Ed25519
+   * (`telnyx-signature-ed25519` + `telnyx-timestamp`) over `{timestamp}|{rawBody}`.
+   * Prefer `TELNYX_PUBLIC_KEY`. HMAC via `TELNYX_WEBHOOK_SECRET` remains as a
+   * controlled-test fallback only. Validation NEVER makes a network call.
    */
   validateWebhook(rawBody: string, headers: Record<string, string | null>): SmsWebhookValidation {
-    const secret = process.env.TELNYX_WEBHOOK_SECRET?.trim();
-    if (!secret) return { valid: false, reason: "TELNYX_WEBHOOK_SECRET not configured" };
-
     const timestamp = headers["telnyx-timestamp"];
-    const signature = headers["telnyx-signature-hmac"] ?? headers["telnyx-signature-ed25519"];
-    if (!timestamp || !signature) return { valid: false, reason: "missing signature headers" };
+    if (!timestamp) return { valid: false, reason: "missing telnyx-timestamp" };
 
-    // Reject stale webhooks (> 5 minutes)
     const ts = Number(timestamp);
-    if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 300) {
+    if (
+      !Number.isFinite(ts) ||
+      Math.abs(Date.now() / 1000 - ts) > WEBHOOK_TIMESTAMP_TOLERANCE_SEC
+    ) {
       return { valid: false, reason: "stale or invalid timestamp" };
     }
 
-    const expected = createHmac("sha256", secret).update(`${timestamp}|${rawBody}`).digest("hex");
-    const a = Buffer.from(expected, "utf8");
-    const b = Buffer.from(signature, "utf8");
-    if (a.length !== b.length || !timingSafeEqual(a, b)) {
-      return { valid: false, reason: "signature mismatch" };
+    const ed25519Sig = headers["telnyx-signature-ed25519"]?.trim();
+    const publicKey = process.env.TELNYX_PUBLIC_KEY?.trim();
+    if (ed25519Sig && publicKey) {
+      const ok = verifyTelnyxEd25519(rawBody, timestamp, ed25519Sig, publicKey);
+      return ok ? { valid: true } : { valid: false, reason: "ed25519 signature mismatch" };
     }
-    return { valid: true };
+
+    // Controlled-test HMAC fallback (not Telnyx production signing).
+    const secret = process.env.TELNYX_WEBHOOK_SECRET?.trim();
+    const hmacSig = headers["telnyx-signature-hmac"]?.trim();
+    if (secret && hmacSig) {
+      const expected = createHmac("sha256", secret).update(`${timestamp}|${rawBody}`).digest("hex");
+      const a = Buffer.from(expected, "utf8");
+      const b = Buffer.from(hmacSig, "utf8");
+      if (a.length === b.length && timingSafeEqual(a, b)) return { valid: true };
+      return { valid: false, reason: "hmac signature mismatch" };
+    }
+
+    if (!publicKey && !secret) {
+      return { valid: false, reason: "TELNYX_PUBLIC_KEY (or TELNYX_WEBHOOK_SECRET) not configured" };
+    }
+    return { valid: false, reason: "missing signature headers" };
   }
 
   handleDeliveryEvent(payload: unknown): DeliveryEvent | null {

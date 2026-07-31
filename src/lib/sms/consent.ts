@@ -116,10 +116,53 @@ export function applyOptOut(): { nextStatus: SmsConsentStatus; addSuppression: t
 }
 
 /** Current version of the SMS consent disclosure shown on forms. */
-export const SMS_CONSENT_DISCLOSURE_VERSION = "sms-consent-2026-07-26";
+export const SMS_CONSENT_DISCLOSURE_VERSION = "sms-consent-2026-07-31";
 
-export const SMS_CONSENT_DISCLOSURE_TEXT =
-  "I agree to receive marketing text messages from this business at the phone " +
-  "number provided. Consent is not a condition of purchase. Message and data " +
-  "rates may apply. Message frequency varies. Reply STOP to unsubscribe or " +
-  "HELP for help.";
+/**
+ * Build the customer-facing SMS opt-in disclosure for a specific end business.
+ * Brand/DBA must be the end customer's identity — never a platform-only label
+ * that would hide who is texting.
+ */
+export function buildSmsConsentDisclosure(input: {
+  brandName: string;
+  privacyPolicyUrl?: string | null;
+  smsTermsUrl?: string | null;
+}): string {
+  const brand = input.brandName.trim() || "this business";
+  const privacy = input.privacyPolicyUrl?.trim() || "https://sendfable.com/privacy";
+  const terms = input.smsTermsUrl?.trim() || "https://sendfable.com/terms";
+  return (
+    `I agree to receive recurring marketing and conversational text messages from ${brand} ` +
+    `at the mobile number provided. Message frequency varies. Message and data rates may apply. ` +
+    `Consent is optional and is not a condition of purchase. Reply STOP to unsubscribe or HELP for help. ` +
+    `View Privacy Policy (${privacy}) and SMS Terms (${terms}). ` +
+    `Mobile information will not be sold or shared with third parties for their marketing.`
+  );
+}
+
+/** @deprecated Prefer buildSmsConsentDisclosure({ brandName }) for TCR accuracy. */
+export const SMS_CONSENT_DISCLOSURE_TEXT = buildSmsConsentDisclosure({
+  brandName: "this business",
+});
+
+/** Standard HELP reply template — brand must be the end business. */
+export function buildSmsHelpReply(input: {
+  brandName: string;
+  supportEmail?: string | null;
+  supportPhone?: string | null;
+}): string {
+  const brand = input.brandName.trim() || "this business";
+  const contact =
+    [input.supportEmail?.trim(), input.supportPhone?.trim()].filter(Boolean).join(" or ") ||
+    "the business that texted you";
+  return (
+    `${brand}: For help, contact ${contact}. Msg&data rates may apply. ` +
+    `Reply STOP to unsubscribe.`
+  );
+}
+
+/** Standard STOP confirmation — brand must be the end business. */
+export function buildSmsStopReply(brandName: string): string {
+  const brand = brandName.trim() || "this business";
+  return `You are unsubscribed from ${brand} texts. No more messages will be sent. Reply HELP for help.`;
+}

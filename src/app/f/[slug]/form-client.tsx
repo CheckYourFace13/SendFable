@@ -8,11 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
+type PublicForm = {
+  name: string;
+  fields: { key: string; label: string; type: string; required?: boolean }[];
+  collectPhone?: boolean;
+  brandName?: string;
+  privacyPolicyUrl?: string;
+  smsTermsUrl?: string;
+  smsConsentDisclosure?: string;
+};
+
 export function HostedFormClient({ slug }: { slug: string }) {
   const search = useSearchParams();
   const embed = search.get("embed") === "1";
-  const [form, setForm] = useState<any>(null);
+  const [form, setForm] = useState<PublicForm | null>(null);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
+  const [smsConsent, setSmsConsent] = useState(false);
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -26,9 +37,11 @@ export function HostedFormClient({ slug }: { slug: string }) {
         setForm(data.form);
         const init: Record<string, string | boolean> = {};
         for (const f of data.form.fields) {
+          // Never precheck SMS (or any) consent checkbox from field defs.
           init[f.key] = f.type === "checkbox" ? false : "";
         }
         setValues(init);
+        setSmsConsent(false);
       }
     })();
   }, [slug]);
@@ -38,10 +51,15 @@ export function HostedFormClient({ slug }: { slug: string }) {
     setLoading(true);
     setError("");
     try {
+      const fields: Record<string, string | boolean> = { ...values };
+      if (showSmsConsent) {
+        // Separate optional SMS consent — never inferred from phone presence.
+        fields.smsConsent = smsConsent;
+      }
       const res = await fetch("/api/forms/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, fields: values }),
+        body: JSON.stringify({ slug, fields }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
@@ -61,6 +79,12 @@ export function HostedFormClient({ slug }: { slug: string }) {
       </div>
     );
   }
+
+  const hasPhoneField =
+    form.collectPhone ||
+    form.fields.some((f) => f.type === "phone" || f.key === "phone" || f.key === "mobile");
+  const showSmsConsent = hasPhoneField;
+  const visibleFields = form.fields.filter((f) => f.key !== "smsConsent");
 
   return (
     <div
@@ -87,17 +111,18 @@ export function HostedFormClient({ slug }: { slug: string }) {
           <>
             <h1 className="text-xl font-semibold">{form.name}</h1>
             <form onSubmit={submit} className="mt-6 space-y-4">
-              {(form.fields as any[]).map((field) => (
+              {visibleFields.map((field) => (
                 <div key={field.key}>
                   {field.type === "checkbox" ? (
-                    <label className="flex items-center gap-2 text-sm">
+                    <label className="flex items-start gap-2 text-sm">
                       <Checkbox
                         checked={!!values[field.key]}
                         onCheckedChange={(c) =>
                           setValues((v) => ({ ...v, [field.key]: !!c }))
                         }
+                        className="mt-0.5"
                       />
-                      {field.label}
+                      <span>{field.label}</span>
                     </label>
                   ) : (
                     <>
@@ -106,7 +131,13 @@ export function HostedFormClient({ slug }: { slug: string }) {
                         {field.required ? " *" : ""}
                       </Label>
                       <Input
-                        type={field.type === "email" ? "email" : "text"}
+                        type={
+                          field.type === "email"
+                            ? "email"
+                            : field.type === "phone"
+                              ? "tel"
+                              : "text"
+                        }
                         required={field.required}
                         value={String(values[field.key] || "")}
                         onChange={(e) =>
@@ -117,6 +148,38 @@ export function HostedFormClient({ slug }: { slug: string }) {
                   )}
                 </div>
               ))}
+
+              {showSmsConsent && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <label className="flex items-start gap-2 text-sm">
+                    <Checkbox
+                      checked={smsConsent}
+                      onCheckedChange={(c) => setSmsConsent(!!c)}
+                      className="mt-0.5"
+                      // Optional — never required, never prechecked
+                    />
+                    <span className="leading-snug text-slate-700">
+                      {form.smsConsentDisclosure ||
+                        `I agree to receive text messages from ${form.brandName || "this business"}. Consent is optional.`}
+                    </span>
+                  </label>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Optional. Email signup does not imply SMS consent.{" "}
+                    {form.privacyPolicyUrl && (
+                      <a className="underline" href={form.privacyPolicyUrl} target="_blank" rel="noreferrer">
+                        Privacy Policy
+                      </a>
+                    )}
+                    {form.privacyPolicyUrl && form.smsTermsUrl ? " · " : null}
+                    {form.smsTermsUrl && (
+                      <a className="underline" href={form.smsTermsUrl} target="_blank" rel="noreferrer">
+                        SMS Terms
+                      </a>
+                    )}
+                  </p>
+                </div>
+              )}
+
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Submitting…" : "Subscribe"}

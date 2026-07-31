@@ -26,13 +26,18 @@ import type {
   SmsWebhookValidation,
 } from "@/lib/sms/provider";
 
-/** Cost assumptions used by the mock (mirrors Telnyx list-price assumptions). */
+/**
+ * Cost assumptions for ISV / customer-specific 10DLC (Telnyx pass-through fees
+ * as of SF-017; verify against current Telnyx fee tables before launch).
+ * Telnyx states 10DLC registry fees are passed through at cost.
+ */
 export const MOCK_PROVIDER_COSTS: ProviderCosts = {
-  outboundPerSegmentMicros: 8_000n, // $0.008 assumed 10DLC outbound
-  inboundPerSegmentMicros: 8_000n, // $0.008 assumed inbound
-  numberMonthlyMicros: 1_500_000n, // $1.50/mo assumed local number
-  registrationOneTimeMicros: 48_500_000n, // $48.50 assumed brand + campaign setup
-  campaignMonthlyMicros: 12_500_000n, // $12.50/mo assumed 10DLC campaign fees
+  outboundPerSegmentMicros: 8_000n, // ~$0.008 platform + carrier blend assumption
+  inboundPerSegmentMicros: 8_000n,
+  numberMonthlyMicros: 1_500_000n, // ~$1.50/mo local number rental assumption
+  // Brand $4.50 + campaign review $15 + enhanced vetting ~$40 + 3×$10 campaign MRC prepaid ≈ $89.50
+  registrationOneTimeMicros: 89_500_000n,
+  campaignMonthlyMicros: 10_000_000n, // $10/mo standard Marketing/Mixed campaign MRC
   source: "assumption",
 };
 

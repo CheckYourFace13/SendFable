@@ -291,6 +291,7 @@ model Workspace {
   smsActivation         SmsActivation?
   smsNumbers            SmsNumber[]
   smsRegistrations      SmsRegistration[]
+  smsComplianceProfile  SmsComplianceProfile?
   smsMessages           SmsMessage[]
   smsUsageLedger        SmsUsageLedger[]
   smsMonthlyUsage       SmsMonthlyUsage[]
@@ -861,6 +862,65 @@ model SmsRegistration {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, kind])
+}
+
+/// Customer-specific SMS compliance / 10DLC registration profile (SF-017).
+/// EIN/BRN stored only as ciphertext (SMS_SENSITIVE_DATA_KEY). Never store
+/// Telnyx API secrets here. Workspace-scoped — never shared across tenants.
+model SmsComplianceProfile {
+  id        String @id @default(cuid())
+  workspaceId String @unique
+
+  legalEntityName   String?
+  dbaBrandName      String?
+  /// AES-GCM ciphertext of EIN/BRN — never plaintext
+  einBrnCiphertext  String?
+  registrationType  String? // "10DLC" | "TOLL_FREE" | "SOLE_PROPRIETOR"
+  registrationCountry String? @default("US")
+  entityType        String? // PRIVATE_PROFIT | NON_PROFIT | SOLE_PROPRIETOR | ...
+  street            String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String? @default("US")
+  websiteUrl        String?
+  supportEmail      String?
+  supportPhone      String?
+  industryVertical  String?
+  smsUseCase        String?
+  estimatedMonthlyVolume Int?
+  optInDescription  String? @db.Text
+  optInFormUrl      String?
+  optInEvidenceUrl  String? // screenshot / evidence URL (not binary blob)
+  privacyPolicyUrl  String?
+  smsTermsUrl       String?
+  sampleMessage1    String? @db.Text
+  sampleMessage2    String? @db.Text
+  helpResponse      String? @db.Text
+  stopResponse      String? @db.Text
+
+  brandId           String?
+  campaignId        String?
+  numberId          String?
+  provider          String  @default("telnyx")
+  /// upstream_csp | downstream_csp | native
+  providerAccountRelationship String?
+  status            SmsRegistrationStatus @default(NOT_STARTED)
+  rejectionReason   String? @db.Text
+  submittedAt       DateTime?
+  approvedAt        DateTime?
+
+  /// Fee tracking (micros) — informational; billing via exceptional charges
+  brandFeeMicros            BigInt @default(0)
+  vettingFeeMicros          BigInt @default(0)
+  campaignFeeMicros         BigInt @default(0)
+  numberMonthlyFeeMicros    BigInt @default(0)
+
+  retentionHoldUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
 /// Every SMS in or out of the platform (inbox + outbox). Bodies are retained
