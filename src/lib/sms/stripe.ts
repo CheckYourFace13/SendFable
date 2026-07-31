@@ -62,18 +62,26 @@ export function smsPlanFromPriceId(
   return null;
 }
 
-/** Stable lookup keys for products/prices created by the setup script. */
+/** Stable v1 lookup keys for products/prices created by scripts/stripe-sms-setup.ts. */
 export const SMS_STRIPE_LOOKUP_KEYS = {
-  TEXT_ENTRY: "sms_text_entry_monthly",
-  TEXT_ESSENTIALS: "sms_text_essentials_monthly",
-  TEXT_ESSENTIALS_BUNDLED: "sms_text_essentials_monthly_bundled",
-  TEXT_ADVANTAGE: "sms_text_advantage_monthly",
-  TEXT_ADVANTAGE_BUNDLED: "sms_text_advantage_monthly_bundled",
-  ACTIVATION: "sms_activation_fee",
-  OUTBOUND_TEXT_ENTRY: "sms_outbound_text_entry",
-  OUTBOUND_TEXT_ESSENTIALS: "sms_outbound_text_essentials",
-  OUTBOUND_TEXT_ADVANTAGE: "sms_outbound_text_advantage",
-  INBOUND_OVERAGE: "sms_inbound_overage",
+  TEXT_ENTRY: "sendfable_sms_text_entry_monthly_v1",
+  TEXT_ESSENTIALS: "sendfable_sms_text_essentials_monthly_v1",
+  TEXT_ESSENTIALS_BUNDLED: "sendfable_sms_text_essentials_bundle_monthly_v1",
+  TEXT_ADVANTAGE: "sendfable_sms_text_advantage_monthly_v1",
+  TEXT_ADVANTAGE_BUNDLED: "sendfable_sms_text_advantage_bundle_monthly_v1",
+  ACTIVATION: "sendfable_sms_activation_v1",
+  OUTBOUND_TEXT_ENTRY: "sendfable_sms_text_entry_outbound_segment_v1",
+  OUTBOUND_TEXT_ESSENTIALS: "sendfable_sms_text_essentials_outbound_segment_v1",
+  OUTBOUND_TEXT_ADVANTAGE: "sendfable_sms_text_advantage_outbound_segment_v1",
+  INBOUND_OVERAGE: "sendfable_sms_incoming_overage_segment_v1",
+} as const;
+
+/** Billing Meter event names (immutable after Stripe meter creation). */
+export const SMS_STRIPE_METER_EVENTS = {
+  TEXT_ENTRY_OUTBOUND: "sms_text_entry_outbound_segments_v1",
+  TEXT_ESSENTIALS_OUTBOUND: "sms_text_essentials_outbound_segments_v1",
+  TEXT_ADVANTAGE_OUTBOUND: "sms_text_advantage_outbound_segments_v1",
+  INBOUND_OVERAGE: "sms_incoming_overage_segments_v1",
 } as const;
 
 // ─── Webhook handling ─────────────────────────────────────────────────────────

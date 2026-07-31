@@ -32,7 +32,15 @@ Uses the **current Billing Meters** model supported by `stripe@16` / API `2024-0
 
 **Not** the deprecated per-subscription-item usage-record API.
 
-Setup script: `npx tsx scripts/stripe-sms-setup.ts` (dry-run by default; live requires `--confirm-live-sms-setup` **and** `SENDFABLE_SMS_BILLING_ENABLED=true`).
+Setup script: `npx tsx scripts/stripe-sms-setup.ts` (dry-run by default).
+
+Live **catalog-only** creation (products/prices/meters; SMS billing flags stay false):
+
+`npx tsx scripts/stripe-sms-setup.ts --confirm-live-sms-catalog`
+
+Legacy live path (requires `SENDFABLE_SMS_BILLING_ENABLED=true`): `--confirm-live-sms-setup`.
+
+Read-only helpers: `--preflight-live`, `--validate-live-catalog`.
 
 ## Bundle recalculation
 
