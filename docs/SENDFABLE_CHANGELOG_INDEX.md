@@ -2,7 +2,7 @@
 
 Permanent numbered work references for major SendFable production tasks.
 
-**Current production app commit (verified 2026-07-31):** `678fac9`  
+**Current production app commit (verified 2026-07-31):** `23a642c`  
 **Deploy:** SF-016 live SMS Stripe catalog (inactive; flags false)  
 **Backup:** env `/root/sendfable-backups/sendfable-env-sf016-20260731-152652.bak`; DB `/root/sendfable-backups/sendfable-20260729-202150.sql.gz`  
 **Rollback:** restore env backup; leave Stripe SMS products inactive  
