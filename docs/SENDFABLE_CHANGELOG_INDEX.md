@@ -19,7 +19,7 @@ Permanent numbered work references for major SendFable production tasks.
 | [SF-014](./SF-014_GROWTH_AUTOMATION_TEST.md) | 2026-07-29 | Growth automation controlled testing | Done | same | `c880c31` | `c880c31` |
 | [SF-015](./SF-015_OWNER_DECISIONS.md) | 2026-07-29 | External account + SMS launch package | Done | same | `c880c31` | `c880c31` |
 | [SF-016](./SF-016_LIVE_STRIPE_SMS_CATALOG.md) | 2026-07-31 | Live Stripe SMS catalog preparation | Done | `sf/016-live-sms-catalog` | `b04db30` | `b04db30` |
-| [SF-017](./SF-017_TELNYX_ISV_ARCHITECTURE.md) | 2026-07-31 | Telnyx ISV architecture + account readiness | Done | `sf/017-telnyx-isv-readiness` | TBD | TBD |
+| [SF-017](./SF-017_TELNYX_ISV_ARCHITECTURE.md) | 2026-07-31 | Telnyx ISV architecture + account readiness | Done | `sf/017-telnyx-isv-readiness` | `0fa4315` | `0fa4315` |
 
 ## SF-016 record
 
