@@ -8,8 +8,8 @@ Complete local / dark readiness for customer SMS onboarding, compliance review, 
 |-------|--------|
 | Starting commit | `a68cc41` (docs tip) / production app `0fa4315` |
 | Branch | `sf/019-sms-launch-readiness` |
-| Final commit | `1e96e2b` |
-| Production commit | _(filled after deploy)_ |
+| Final commit | `1e96e2b` (feature) / `03ba4c5` (merge to main) |
+| Production commit | `03ba4c5` |
 | Telnyx Request ID | `ec782151-3915-94c0-a4bc-dedd0122f279` |
 | External charges | **$0** |
 | Numbers purchased | **0** |
