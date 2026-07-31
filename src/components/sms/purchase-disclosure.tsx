@@ -51,10 +51,10 @@ export function SmsPurchaseDisclosure({
           covers standard onboarding, standard brand and campaign registration preparation and
           dedicated-number setup. It does not guarantee carrier approval.
         </li>
-        <li>
-          Longer messages may use multiple segments. Unicode characters and emojis may increase
-          the segment count.
-        </li>
+          <li>
+            Longer messages may use multiple segments. Unicode characters and emojis may increase
+            the segment count. Replies you send from the inbox are outbound billable segments.
+          </li>
         <li>
           Carrier registration is required before texting begins, and activation can take several
           weeks.

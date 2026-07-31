@@ -164,7 +164,18 @@ export async function processInboundSms(
     }
   }
 
-  // 7. Email notification for ordinary replies (not STOP/HELP keywords)
+  // 7. Compliance auto-replies (HELP/STOP) — mock or live only when reply flag on
+  if (stop || help) {
+    await maybeSendComplianceAutoReply({
+      workspaceId,
+      fromE164: number.phoneE164,
+      toE164: event.from,
+      kind: stop ? "stop" : "help",
+      inboundMessageId: message.id,
+    });
+  }
+
+  // 8. Email notification for ordinary replies (not STOP/HELP keywords)
   if (!stop && !help) {
     try {
       await sendSmsInboundNotification({
@@ -188,6 +199,72 @@ export async function processInboundSms(
     help,
     contactId: contact?.id ?? null,
   };
+}
+
+async function maybeSendComplianceAutoReply(input: {
+  workspaceId: string;
+  fromE164: string;
+  toE164: string;
+  kind: "stop" | "help";
+  inboundMessageId: string;
+}): Promise<void> {
+  const { isSmsReplyEnabled } = await import("@/lib/sms/flags");
+  if (!isSmsReplyEnabled()) return;
+
+  const profile = await prisma.smsComplianceProfile.findUnique({
+    where: { workspaceId: input.workspaceId },
+  });
+  const { buildSmsHelpReply, buildSmsStopReply } = await import("@/lib/sms/consent");
+  const brand =
+    profile?.dbaBrandName?.trim() ||
+    profile?.legalEntityName?.trim() ||
+    "this business";
+  const body =
+    input.kind === "stop"
+      ? profile?.stopResponse?.trim() || buildSmsStopReply(brand)
+      : profile?.helpResponse?.trim() ||
+        buildSmsHelpReply({
+          brandName: brand,
+          supportEmail: profile?.supportEmail,
+          supportPhone: profile?.supportPhone,
+        });
+
+  try {
+    const { getSmsProvider } = await import("@/lib/sms/provider-registry");
+    const { calculateSegments } = await import("@/lib/sms/segments");
+    const provider = getSmsProvider();
+    const idempotencyKey = `compliance:${input.kind}:${input.inboundMessageId}`;
+    const result = await provider.sendMessage({
+      workspaceId: input.workspaceId,
+      from: input.fromE164,
+      to: input.toE164,
+      body,
+      idempotencyKey,
+    });
+    const info = calculateSegments(body);
+    await prisma.smsMessage.create({
+      data: {
+        workspaceId: input.workspaceId,
+        direction: "OUTBOUND",
+        fromE164: input.fromE164,
+        toE164: input.toE164,
+        body,
+        encoding: result.encoding ?? info.encoding,
+        segments: result.segments ?? info.segments,
+        status: result.status === "accepted" ? "SENT" : "FAILED",
+        providerMessageId: result.providerMessageId,
+        provider: provider.name,
+        providerCostMicros: result.providerCostMicros ?? 0n,
+        isOptOutKeyword: input.kind === "stop",
+        isHelpKeyword: input.kind === "help",
+      },
+    });
+  } catch (err) {
+    console.error(
+      `[sms] compliance auto-reply failed for ${input.inboundMessageId}`,
+      err
+    );
+  }
 }
 
 async function recordWebhookEvent(source: string, externalId: string, type: string) {

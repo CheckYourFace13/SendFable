@@ -71,6 +71,12 @@ export default function AdminSmsPage() {
         description={`SMS customers, usage, margins and controls for ${data.month}.`}
       />
 
+      <p className="text-sm">
+        <a className="underline" href="/admin/sms/compliance">
+          Compliance review queue
+        </a>
+      </p>
+
       <section>
         <h2 className="mb-2 text-sm font-semibold">Feature flags</h2>
         <div className="flex flex-wrap gap-2 text-xs">

@@ -21,6 +21,10 @@ const schema = z.object({
     "change-plan",
     "release-number",
     "reconcile-provider-invoice",
+    "kill-switch-on",
+    "kill-switch-off",
+    "provider-incident-on",
+    "provider-incident-off",
   ]),
   workspaceId: z.string().min(1),
   chargeId: z.string().optional(),
@@ -190,6 +194,33 @@ export async function POST(req: Request) {
         mismatch,
       });
       return NextResponse.json({ ok: true, mismatch });
+    }
+    case "kill-switch-on":
+    case "kill-switch-off": {
+      // Workspace-scoped kill: pause all SMS subs + mark compliance suspended when on
+      const on = action === "kill-switch-on";
+      await prisma.smsSubscription.updateMany({
+        where: { workspaceId },
+        data: { status: on ? "PAUSED" : "ACTIVE" },
+      });
+      if (on) {
+        await prisma.smsComplianceProfile.updateMany({
+          where: { workspaceId, reviewStatus: { in: ["APPROVED", "PROVIDER_PENDING", "READY_FOR_PROVIDER"] } },
+          data: { reviewStatus: "SUSPENDED" },
+        });
+      }
+      await audit({ killSwitch: on });
+      return NextResponse.json({ ok: true, killSwitch: on });
+    }
+    case "provider-incident-on":
+    case "provider-incident-off": {
+      const on = action === "provider-incident-on";
+      await prisma.smsSubscription.updateMany({
+        where: { workspaceId },
+        data: { status: on ? "PAUSED" : "ACTIVE" },
+      });
+      await audit({ providerIncident: on });
+      return NextResponse.json({ ok: true, providerIncident: on });
     }
     default:
       return NextResponse.json({ error: "Unknown action" }, { status: 400 });
