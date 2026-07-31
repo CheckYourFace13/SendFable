@@ -4,8 +4,8 @@
 **Date:** 2026-07-31  
 **Starting commit:** production app `c880c31`; docs tip `0d3dfbb`  
 **Branch:** `sf/016-live-sms-catalog`  
-**Final commit:** `23a642c`  
-**Production commit:** `23a642c`  
+**Final commit:** `c97d58b`  
+**Production commit:** `c97d58b`  
 
 ---
 
