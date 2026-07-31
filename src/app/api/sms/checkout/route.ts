@@ -4,11 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
 import { getStripe } from "@/lib/stripe";
 import {
-  isSmsAccountSignupEnabled,
-  isSmsActivationPurchaseEnabled,
-  isSmsBillingEnabled,
-  isSmsCodeEnabled,
-} from "@/lib/sms/flags";
+  assertSmsCatalogConfigured,
+  assertSmsLiveBillingWritesAllowed,
+  SmsBillingGuardError,
+} from "@/lib/sms/billing-guards";
 import { isBundleEligible, resolveSmsPricing, type SmsPlanKey } from "@/lib/sms/pricing";
 import {
   SMS_ACTIVATION_PRICE_ENV,
@@ -24,21 +23,17 @@ const schema = z.object({
 });
 
 /**
- * Start an SMS subscription Checkout. HARD-GATED:
- *  - SENDFABLE_SMS_ACCOUNT_SIGNUP_ENABLED must be true (product visible)
- *  - SENDFABLE_SMS_BILLING_ENABLED must be true (Stripe writes allowed)
- *  - SENDFABLE_SMS_ACTIVATION_PURCHASE_ENABLED must be true (activation fee)
- * With defaults, this endpoint can never create a Stripe object.
+ * Start an SMS subscription Checkout. HARD-GATED via billing-guards (SF-019E):
+ * defaults refuse all Stripe writes. Activation fee is a one-time line item.
  */
 export async function POST(req: Request) {
-  if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled()) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-  if (!isSmsBillingEnabled() || !isSmsActivationPurchaseEnabled()) {
-    return NextResponse.json(
-      { error: "Text messaging billing is not activated yet" },
-      { status: 403 }
-    );
+  try {
+    assertSmsLiveBillingWritesAllowed();
+  } catch (e) {
+    if (e instanceof SmsBillingGuardError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    throw e;
   }
 
   const ctx = await getApiContext();
@@ -69,15 +64,21 @@ export async function POST(req: Request) {
   const eligible = isBundleEligible(plan, emailState);
   const pricing = resolveSmsPricing(plan, emailState);
 
+  try {
+    assertSmsCatalogConfigured(plan, eligible);
+  } catch (e) {
+    if (e instanceof SmsBillingGuardError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    throw e;
+  }
+
   const fixedPrice = smsFixedPriceId(plan, eligible);
-  const meteredPrice = process.env[SMS_METERED_PRICE_ENV_KEYS[plan]]?.trim();
-  const overagePrice = process.env[SMS_INBOUND_OVERAGE_PRICE_ENV]?.trim();
-  const activationPrice = process.env[SMS_ACTIVATION_PRICE_ENV]?.trim();
-  if (!fixedPrice || !meteredPrice || !overagePrice || !activationPrice) {
-    return NextResponse.json(
-      { error: "SMS prices are not configured (run scripts/stripe-sms-setup.ts)" },
-      { status: 503 }
-    );
+  const meteredPrice = process.env[SMS_METERED_PRICE_ENV_KEYS[plan]]!.trim();
+  const overagePrice = process.env[SMS_INBOUND_OVERAGE_PRICE_ENV]!.trim();
+  const activationPrice = process.env[SMS_ACTIVATION_PRICE_ENV]!.trim();
+  if (!fixedPrice) {
+    return NextResponse.json({ error: "SMS fixed price is not configured" }, { status: 503 });
   }
 
   // Create the pending local records first (entitlement is only granted by
@@ -117,6 +118,9 @@ export async function POST(req: Request) {
       { price: fixedPrice, quantity: 1 },
       { price: meteredPrice },
       { price: overagePrice },
+      // One-time activation — Stripe treats non-recurring prices on subscription
+      // checkout as invoice items on the first invoice.
+      { price: activationPrice, quantity: 1 },
     ],
     subscription_data: {
       metadata: { workspaceId: ctx.workspace.id, product: "sms" },

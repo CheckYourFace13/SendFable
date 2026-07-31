@@ -157,6 +157,22 @@ enum SmsRegistrationStatus {
   REJECTED
 }
 
+/// Internal compliance-review queue statuses (SF-019). Distinct from
+/// provider-facing SmsRegistrationStatus so carrier state stays separate.
+enum SmsComplianceReviewStatus {
+  DRAFT
+  CUSTOMER_SUBMITTED
+  INTERNAL_REVIEW
+  NEEDS_CUSTOMER_CHANGES
+  READY_FOR_PROVIDER
+  PROVIDER_SUBMITTED
+  PROVIDER_PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+  CANCELLED
+}
+
 enum SmsConsentAction {
   OPT_IN
   RE_OPT_IN
@@ -864,12 +880,15 @@ model SmsRegistration {
   @@index([workspaceId, kind])
 }
 
-/// Customer-specific SMS compliance / 10DLC registration profile (SF-017).
+/// Customer-specific SMS compliance / 10DLC registration profile (SF-017/019).
 /// EIN/BRN stored only as ciphertext (SMS_SENSITIVE_DATA_KEY). Never store
 /// Telnyx API secrets here. Workspace-scoped — never shared across tenants.
 model SmsComplianceProfile {
-  id        String @id @default(cuid())
+  id          String @id @default(cuid())
   workspaceId String @unique
+
+  /// Plan the customer intends to purchase (locked at submit)
+  selectedPlan String? // TEXT_ENTRY | TEXT_ESSENTIALS | TEXT_ADVANTAGE
 
   legalEntityName   String?
   dbaBrandName      String?
@@ -898,6 +917,9 @@ model SmsComplianceProfile {
   sampleMessage2    String? @db.Text
   helpResponse      String? @db.Text
   stopResponse      String? @db.Text
+  /// Customer acknowledgement of frequency / rates / dedicated number / registration
+  disclosureAcceptedAt DateTime?
+  disclosureVersion    String?
 
   brandId           String?
   campaignId        String?
@@ -905,10 +927,19 @@ model SmsComplianceProfile {
   provider          String  @default("telnyx")
   /// upstream_csp | downstream_csp | native
   providerAccountRelationship String?
-  status            SmsRegistrationStatus @default(NOT_STARTED)
+
+  /// Internal SendFable compliance queue
+  reviewStatus      SmsComplianceReviewStatus @default(DRAFT)
+  /// Provider/carrier-facing status (legacy enum)
+  providerStatus    SmsRegistrationStatus @default(NOT_STARTED)
   rejectionReason   String? @db.Text
+  internalNotes     String? @db.Text
+  feeEstimateCents  Int?
+  marginEstimateBp  Int?
   submittedAt       DateTime?
   approvedAt        DateTime?
+  reviewedAt        DateTime?
+  reviewedByUserId  String?
 
   /// Fee tracking (micros) — informational; billing via exceptional charges
   brandFeeMicros            BigInt @default(0)
@@ -921,6 +952,26 @@ model SmsComplianceProfile {
   updatedAt DateTime @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  reviewEvents SmsComplianceReviewEvent[]
+}
+
+/// Immutable audit trail for compliance status transitions (SF-019).
+model SmsComplianceReviewEvent {
+  id          String   @id @default(cuid())
+  profileId   String
+  workspaceId String
+  fromStatus  SmsComplianceReviewStatus?
+  toStatus    SmsComplianceReviewStatus
+  actorUserId String?
+  note        String?  @db.Text
+  /// Never store EIN/BRN here
+  meta        Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  profile SmsComplianceProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([profileId, createdAt])
 }
 
 /// Every SMS in or out of the platform (inbox + outbox). Bodies are retained
