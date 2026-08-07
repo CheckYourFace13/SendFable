@@ -26,12 +26,14 @@ export default function SegmentsPage() {
     void load();
   }, []);
 
-  async function create() {
+  async function create(forcedName?: string) {
+    const segmentName = (forcedName ?? name).trim();
+    if (!segmentName) return toast.error("Name your group");
     const res = await fetch("/api/segments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name,
+        name: segmentName,
         rules: { match: "all", conditions: [{ field: "status", operator: "eq", value: "SUBSCRIBED" }] },
       }),
     });
@@ -59,8 +61,11 @@ export default function SegmentsPage() {
       {segments.length === 0 ? (
         <EmptyState
           icon={<BarChart3 />}
-          title="No segments yet"
-          description="Build rule-based audiences with live contact counts."
+          title="No saved groups yet"
+          description="Optional: create a group when you want to email part of your list. Most people start with everyone who's subscribed."
+          action={
+            <Button onClick={() => void create("Subscribed contacts")}>Create a group</Button>
+          }
         />
       ) : (
         <ul className="divide-y rounded-xl border bg-white">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { AlertTriangle } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { SidebarNav } from "@/components/app/sidebar-nav";
@@ -11,6 +12,10 @@ import { PolicyReacceptBanner } from "@/components/app/policy-reaccept-banner";
 import { requireWorkspaceContext } from "@/lib/session";
 import { needsPolicyReacceptance } from "@/lib/policy-acceptance";
 import { PLANS } from "@/lib/plans";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, workspace } = await requireWorkspaceContext();

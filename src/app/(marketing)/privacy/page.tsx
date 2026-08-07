@@ -139,20 +139,21 @@ export default function PrivacyPage() {
         </li>
       </LegalUl>
       <p>
-        <strong>Analytics:</strong> we do not currently load third-party advertising or product
-        analytics cookies (no Google Analytics, PostHog, Plausible, or similar on the public site as
-        of the Effective Date). Campaign open/click tracking is first-party product functionality
-        for Customers, not a public-site advertising stack. Monitoring is primarily application
-        health checks and operational logs — not a marketed third-party APM brand.
+        <strong>Analytics:</strong> SendFable records first-party product funnel events when enabled
+        (no advertising cookies). Optional Google Analytics 4 may be loaded when a measurement ID is
+        configured by the operator; it is not required for the Service to function. We do not load
+        Meta Pixel, PostHog, or Plausible by default. Campaign open/click tracking is first-party
+        product functionality for Customers. Monitoring is primarily application health checks and
+        operational logs.
       </p>
 
       <LegalH2>7. Cookies</LegalH2>
       <p>
         See the full <LegalA href={POLICY_PATHS.cookies}>Cookie disclosure</LegalA>. In short,
         SendFable uses first-party cookies that are necessary to run the Service (session / Auth.js
-        cookies, CSRF protection, and a workspace-preference cookie). We do not currently set
-        advertising cookies, so we do not show a marketing cookie-consent banner. If that changes,
-        we will update this Policy and site behavior first.
+        cookies, CSRF protection, and a workspace-preference cookie). Optional GA4, when configured,
+        may set analytics cookies from Google — enable only with an updated consent posture if your
+        jurisdiction requires it. We do not set advertising cookies by default.
       </p>
 
       <LegalH2>8. International processing</LegalH2>

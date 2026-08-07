@@ -65,7 +65,12 @@ export function DashboardCharts({
         </div>
         <ul className="mt-4 divide-y">
           {campaigns.length === 0 && (
-            <li className="py-8 text-center text-sm text-muted-foreground">No campaigns yet</li>
+            <li className="space-y-2 py-8 text-center text-sm text-muted-foreground">
+              <p>Results will appear after you send your first campaign.</p>
+              <Link href="/campaigns/new" className="font-medium text-coral hover:underline">
+                Create a campaign
+              </Link>
+            </li>
           )}
           {campaigns.map((c) => (
             <li key={c.id} className="flex items-center justify-between gap-3 py-3">

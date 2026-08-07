@@ -1,10 +1,11 @@
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SolutionPage } from "@/components/marketing/solution-page";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing for retail stores",
-  description:
-    "Retail email marketing with Sendfable: product drops, seasonal promos, and win-back campaigns for shops that want simple tools.",
-};
+  description: "Retail email marketing with Sendfable: product drops, seasonal promos, and win-back campaigns for shops that want simple tools.",
+  path: "/solutions/retail",
+});
 
 export default function RetailSolutionPage() {
   return (

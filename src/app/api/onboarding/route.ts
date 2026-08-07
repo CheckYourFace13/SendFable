@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { randomToken } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 const patchSchema = z.object({
   step: z.number().int().min(0).max(10).optional(),
@@ -108,6 +109,9 @@ export async function PATCH(req: Request) {
       secondaryColor: parsed.data.workspace?.secondaryColor,
     },
   });
+
+  if (parsed.data.complete) trackEvent("onboarding_completed");
+  else if (parsed.data.skip) trackEvent("onboarding_skipped");
 
   return NextResponse.json({
     step: workspace.onboardingStep,

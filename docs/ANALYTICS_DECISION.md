@@ -1,34 +1,38 @@
 # Analytics decision
 
 Decided 2026-07-24 (Phase 10 of the production-readiness pass).  
-Updated 2026-07-29 (SF-007): first-party persistence path approved; still **no third-party** analytics.
+Updated 2026-07-29 (SF-007): first-party persistence path approved.  
+Updated 2026-08-07 (CRO completion): usage thresholds start at 80%; feedback free-text is first-party only.
 
-## Decision: no third-party analytics at launch
+## Architecture
 
-- No analytics vendor is approved for Sendfable.
-- The Plausible instance running on the shared VPS belongs to
-  **RentalNoodle** (`plausible.rentalnoodle.com`) and must not be reused.
-- Consequently the site sets **only strictly-necessary first-party cookies**
-  (session + CSRF). The marketing beacon may use `localStorage` for an anonymous
-  session id and first/last UTM touch — not a third-party cookie.
-- No cookie-consent banner is required for this first-party design.
+1. **First-party** (`ANALYTICS_ENABLED=true`) — `ProductAnalyticsEvent` + `/admin/funnel`.
+2. **Optional GA4** — loads only when `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set (`G-…`).
+3. Site works with neither configured.
 
-## What exists
+Client events go through `src/lib/track.ts` (deduped) → first-party beacon + optional GA4 mirror.  
+Server events use `trackEvent` in `src/lib/analytics.ts` (first-party only).
 
-`src/lib/analytics.ts` — typed funnel events (public, activation, revenue).  
-`src/lib/analytics-persist.ts` — optional `ProductAnalyticsEvent` rows when
-`ANALYTICS_ENABLED=true`.  
-`POST /api/analytics/event` — rate-limited beacon.  
-`/admin/funnel` — stage report.
+No PII (emails, phones, subjects, bodies, tokens, free-text feedback notes) is sent to GA4.
+`feedback_note_text` and prop keys matching note/body/content/html/sms are blocked from GA4.
 
-Privacy scrubber drops email/phone/subject/body/address/token-shaped props.
+## Events mirrored to GA4 (when configured)
 
-## To enable collection
+Marketing: `pricing_view`, `signup_cta_clicked`, `plan_cta_clicked`, `login_clicked`, industry/template page views.  
+Activation: `signup_completed`, `onboarding_*`, `sender_verified`, `contacts_*`, `first_campaign_*`, `campaign_*`.  
+Monetization: `usage_*`, `upgrade_prompt_*`, `checkout_*`, `subscription_*`, `plan_*`.  
+Feedback: `feedback_submitted` with `rating` only (not free-text).
 
-1. Owner sets `ANALYTICS_ENABLED=true` in production.
-2. Confirm Privacy/Cookies language still accurate (first-party only).
-3. Use `/admin/funnel` for Organic → Paid monitoring.
+## Still optional / not auto-enabled
 
-## Still not approved
+- Google Ads conversion ID (`NEXT_PUBLIC_GOOGLE_ADS_ID`) — stub env only
+- Meta Pixel (`NEXT_PUBLIC_META_PIXEL_ID`) — stub env only
+- GTM — not required; add later if Ads+Meta+GA need one container
 
-- GA4, Plausible (shared), Segment, or any third-party script without a new decision record.
+## To enable
+
+1. Set `ANALYTICS_ENABLED=true` for first-party funnel persistence.
+2. Set `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-…` for GA4 (rebuild required for Next public env).
+3. Update Privacy / Cookies copy if GA4 is turned on in production.
+4. Use `/admin/funnel` for Organic → Paid monitoring.
+

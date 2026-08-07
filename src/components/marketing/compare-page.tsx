@@ -275,7 +275,7 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
 
       <MarketingCta
         title="Ready to try the simple path?"
-        body="Create your free account — 500 contacts, no credit card required."
+        body={`Create your free account — ${PLANS.FREE.contactCap.toLocaleString()} contacts, no credit card required.`}
         primaryLabel="Start writing free"
         secondaryHref="/migrate"
         secondaryLabel="Migration help"

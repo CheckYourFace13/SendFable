@@ -55,31 +55,49 @@ export default function CampaignsPage() {
       {!loading && campaigns.length === 0 ? (
         <EmptyState
           icon={<Send />}
-          title="No campaigns yet"
-          description="Create a campaign to reach your audience."
-          action={<Button onClick={() => void create()}>Create campaign</Button>}
+          title="Create your first campaign"
+          description="Start from a simple email — or open Templates if you want a saved design."
+          action={
+            <div className="flex flex-col items-center gap-2 sm:flex-row">
+              <Button onClick={() => void create()}>Create your first campaign</Button>
+              <Button asChild variant="outline">
+                <Link href="/library">Browse templates</Link>
+              </Button>
+            </div>
+          }
         />
       ) : (
         <ul className="divide-y rounded-xl border bg-white">
           {campaigns.map((c) => (
             <li key={c.id}>
-              <Link
-                href={`/campaigns/${c.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50"
-              >
-                <div>
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50">
+                <Link href={`/campaigns/${c.id}`} className="min-w-0 flex-1">
                   <div className="font-medium">{c.name}</div>
                   <div className="text-sm text-muted-foreground">
                     {c.subject || "No subject"} · {formatDate(c.updatedAt)}
                   </div>
-                </div>
-                <div className="flex items-center gap-4 text-sm">
+                </Link>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="text-muted-foreground">
                     {formatNumber(c.sentCount)} sent · {formatNumber(c.openCount)} opens
                   </span>
                   <Badge variant="secondary">{c.status}</Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      const res = await fetch(`/api/campaigns/${c.id}/duplicate`, {
+                        method: "POST",
+                      });
+                      const data = await res.json();
+                      if (!res.ok) return toast.error(data.error || "Could not copy");
+                      router.push(`/campaigns/${data.campaign.id}`);
+                    }}
+                  >
+                    Reuse
+                  </Button>
                 </div>
-              </Link>
+              </div>
             </li>
           ))}
         </ul>

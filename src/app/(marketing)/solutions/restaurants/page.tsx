@@ -1,10 +1,11 @@
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SolutionPage } from "@/components/marketing/solution-page";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing for restaurants",
-  description:
-    "Sendfable for restaurants and cafés: specials, events, and reserved-list updates with affordable plans and clean list tools.",
-};
+  description: "Sendfable for restaurants and cafés: specials, events, and reserved-list updates with affordable plans and clean list tools.",
+  path: "/solutions/restaurants",
+});
 
 export default function RestaurantsSolutionPage() {
   return (

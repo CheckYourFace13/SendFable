@@ -24,11 +24,13 @@ export default function FormsPage() {
     })();
   }, []);
 
-  async function create() {
+  async function create(forcedName?: string) {
+    const formName = (forcedName ?? name).trim();
+    if (!formName) return toast.error("Name your form");
     const res = await fetch("/api/forms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name: formName }),
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.error || "Failed");
@@ -54,8 +56,11 @@ export default function FormsPage() {
       {forms.length === 0 ? (
         <EmptyState
           icon={<ListChecks />}
-          title="No forms yet"
-          description="Create a hosted signup form to grow your list."
+          title="Grow your list with a signup form"
+          description="Share a simple page so new people can join with permission."
+          action={
+            <Button onClick={() => void create("Newsletter signup")}>Create signup form</Button>
+          }
         />
       ) : (
         <ul className="divide-y rounded-xl border bg-white">

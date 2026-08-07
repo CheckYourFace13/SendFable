@@ -99,11 +99,11 @@ export const SENDFABLE_FACTS = {
     },
     {
       q: "Is SendFable free?",
-      a: "Yes. The Free plan includes up to 500 contacts and 1,000 emails per month. No credit card is required to start.",
+      a: `Yes. The Free plan includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails per month. No credit card is required to start.`,
     },
     {
       q: "How much does SendFable cost?",
-      a: "Paid plans: Starter $12/mo, Growth $29/mo, Pro $69/mo, Pro Plus $99/mo (or annual equivalents with two months free). See /pricing for current limits.",
+      a: `Paid plans: Starter $${PLANS.STARTER.monthlyPrice}/mo, Growth $${PLANS.GROWTH.monthlyPrice}/mo, Pro $${PLANS.PRO.monthlyPrice}/mo, Pro Plus $${PLANS.PRO_PLUS.monthlyPrice}/mo (or annual equivalents with two months free). See /pricing for current limits.`,
     },
     {
       q: "Is SendFable cheaper than Mailchimp?",

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { freePlanPromise } from "@/lib/plans";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
@@ -88,8 +89,7 @@ function SignupForm() {
       <CardHeader>
         <CardTitle className="text-ink">Create your account</CardTitle>
         <CardDescription>
-          Free for up to 500 contacts and 1,000 emails/month. Any email address works. No credit
-          card required.
+          {freePlanPromise()}. Any email address works. No credit card required.
         </CardDescription>
       </CardHeader>
       <CardContent>

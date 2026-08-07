@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/tokens";
 import { appUrl } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 export async function GET(req: Request) {
   const token = new URL(req.url).searchParams.get("token");
@@ -32,6 +33,7 @@ export async function GET(req: Request) {
         isDefault: !hasDefault,
       },
     });
+    trackEvent("sender_verified");
   }
 
   return NextResponse.redirect(appUrl("/settings/senders?verified=1"));

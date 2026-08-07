@@ -1,10 +1,11 @@
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SolutionPage } from "@/components/marketing/solution-page";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing for contractors",
-  description:
-    "Email for contractors and trades: seasonal reminders, project updates, and referral asks with Sendfable.",
-};
+  description: "Email for contractors and trades: seasonal reminders, project updates, and referral asks with Sendfable.",
+  path: "/solutions/contractors",
+});
 
 export default function ContractorsSolutionPage() {
   return (

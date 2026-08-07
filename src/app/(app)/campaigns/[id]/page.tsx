@@ -38,6 +38,9 @@ export default function CampaignDetailPage() {
   const [confidence, setConfidence] = useState<any>(null);
   const [mailingAddress, setMailingAddress] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string | null>(null);
+  const [confirmWhen, setConfirmWhen] = useState<"now" | "schedule" | null>(null);
+  const [launching, setLaunching] = useState(false);
+  const [tab, setTab] = useState("setup");
 
   const load = useCallback(async () => {
     const [cRes, iRes, tRes, sRes, wRes] = await Promise.all([
@@ -76,6 +79,19 @@ export default function CampaignDetailPage() {
     })();
   }, [campaign?.audienceType, campaign?.audienceTagIds, campaign?.audienceSegmentId, params.id, campaign]);
 
+  async function refreshConfidence() {
+    const res = await fetch(`/api/campaigns/${params.id}/confidence`);
+    const data = await res.json();
+    if (res.ok) setConfidence(data);
+    return data;
+  }
+
+  useEffect(() => {
+    if (tab !== "review" || !campaign) return;
+    void refreshConfidence();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, params.id]);
+
   async function patch(body: Record<string, unknown>) {
     setSaving(true);
     const res = await fetch(`/api/campaigns/${params.id}`, {
@@ -93,6 +109,7 @@ export default function CampaignDetailPage() {
   }
 
   async function launch(when: "now" | "schedule") {
+    setLaunching(true);
     const res = await fetch(`/api/campaigns/${params.id}/launch`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -102,6 +119,8 @@ export default function CampaignDetailPage() {
       }),
     });
     const data = await res.json();
+    setLaunching(false);
+    setConfirmWhen(null);
     if (!res.ok) {
       toast.error(data.error || "Launch failed");
       if (data.upgradeRequired) router.push("/billing");
@@ -109,6 +128,14 @@ export default function CampaignDetailPage() {
     }
     toast.success(when === "now" ? "Campaign launching" : "Campaign scheduled");
     setCampaign(data.campaign);
+  }
+
+  async function duplicate() {
+    const res = await fetch(`/api/campaigns/${params.id}/duplicate`, { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) return toast.error(data.error || "Could not copy");
+    toast.success("Draft copy created");
+    router.push(`/campaigns/${data.campaign.id}`);
   }
 
   async function control(action: "pause" | "resume" | "cancel") {
@@ -138,6 +165,9 @@ export default function CampaignDetailPage() {
     <div>
       <PageHeader title={campaign.name} description={campaign.subject || "No subject yet"}>
         <Badge variant="secondary">{campaign.status}</Badge>
+        <Button variant="outline" size="sm" onClick={() => void duplicate()}>
+          Reuse as new draft
+        </Button>
         {campaign.status === "COMPLETED" && (
           <Button asChild variant="outline" size="sm">
             <Link href={`/campaigns/${campaign.id}/report`}>View report</Link>
@@ -154,11 +184,11 @@ export default function CampaignDetailPage() {
         )}
       </PageHeader>
 
-      <Tabs defaultValue="setup">
-        <TabsList>
-          <TabsTrigger value="setup">Setup</TabsTrigger>
-          <TabsTrigger value="design">Design</TabsTrigger>
-          <TabsTrigger value="review">Review & send</TabsTrigger>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="flex h-auto w-full flex-wrap gap-1">
+          <TabsTrigger value="setup" className="min-h-11 flex-1 sm:flex-none">Details</TabsTrigger>
+          <TabsTrigger value="design" className="min-h-11 flex-1 sm:flex-none">Write email</TabsTrigger>
+          <TabsTrigger value="review" className="min-h-11 flex-1 sm:flex-none">Review &amp; send</TabsTrigger>
         </TabsList>
 
         <TabsContent value="setup" className="mt-6 space-y-6 max-w-2xl">
@@ -191,7 +221,7 @@ export default function CampaignDetailPage() {
             />
           </div>
           <div>
-            <Label>From</Label>
+            <Label>Who it&apos;s from</Label>
             <Select
               value={campaign.senderIdentityId || ""}
               disabled={!editable}
@@ -213,7 +243,7 @@ export default function CampaignDetailPage() {
             </Select>
           </div>
           <div>
-            <Label>Audience</Label>
+            <Label>Who receives this</Label>
             <Select
               value={campaign.audienceType}
               disabled={!editable}
@@ -224,9 +254,9 @@ export default function CampaignDetailPage() {
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All subscribed contacts</SelectItem>
-                <SelectItem value="tags">By tags</SelectItem>
-                <SelectItem value="segment">By segment</SelectItem>
+                <SelectItem value="all">Everyone who&apos;s subscribed</SelectItem>
+                <SelectItem value="tags">People with a tag</SelectItem>
+                <SelectItem value="segment">A saved group</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -318,99 +348,207 @@ export default function CampaignDetailPage() {
         </TabsContent>
 
         <TabsContent value="review" className="mt-6 max-w-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Send Confidence</h3>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                await patch({
-                  designJson: campaign.designJson,
-                  compiledHtml: campaign.compiledHtml,
-                  rawHtmlMode: !!campaign.rawHtmlMode,
-                });
-                const res = await fetch(`/api/campaigns/${params.id}/confidence`);
-                const data = await res.json();
-                if (res.ok) setConfidence(data);
-                else toast.error(data.error || "Could not score");
-              }}
-            >
-              Refresh score
-            </Button>
-          </div>
-          {confidence ? (
-            <div className="rounded-xl border bg-white p-5">
-              <div className="text-3xl font-bold tracking-tight">{confidence.score}/100</div>
-              <p className="mt-1 text-xs text-muted-foreground">{confidence.disclaimer}</p>
-              <ul className="mt-4 space-y-3 text-sm">
-                {confidence.checks.map((c: any) => (
-                  <li
-                    key={c.id}
-                    className={
-                      c.level === "error"
-                        ? "text-red-700"
-                        : c.level === "warning"
-                          ? "text-amber-800"
-                          : "text-emerald-800"
-                    }
-                  >
-                    <div className="font-medium">
-                      {c.label}
-                      {c.blocksSend ? (
-                        <span className="ml-2 text-xs font-normal uppercase tracking-wide">
-                          blocks send
-                        </span>
-                      ) : null}
+          {(() => {
+            const sender = identities.find((i) => i.id === campaign.senderIdentityId);
+            const whenLabel =
+              confirmWhen === "schedule" && scheduleAt
+                ? new Date(scheduleAt).toLocaleString(undefined, {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    timeZoneName: "short",
+                  })
+                : "Send now";
+            const blockers = (confidence?.checks || []).filter(
+              (c: { blocksSend?: boolean; level: string }) => c.blocksSend || c.level === "error"
+            );
+            const warnings = (confidence?.checks || []).filter(
+              (c: { blocksSend?: boolean; level: string }) =>
+                !c.blocksSend && c.level === "warning"
+            );
+            const oks = (confidence?.checks || []).filter(
+              (c: { level: string }) => c.level === "ok"
+            );
+            const ready =
+              confidence?.canSend &&
+              blockers.length === 0 &&
+              (audienceCount ?? 0) > 0;
+
+            return (
+              <>
+                <div className="rounded-xl border bg-white p-5 space-y-4">
+                  <h3 className="font-semibold">Before you send</h3>
+                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">Send to</dt>
+                      <dd className="mt-0.5 text-lg font-semibold">
+                        {audienceCount === null
+                          ? "…"
+                          : `${audienceCount.toLocaleString()} contact${audienceCount === 1 ? "" : "s"}`}
+                      </dd>
                     </div>
-                    <p className="text-ink/80">{c.detail}</p>
-                    {c.why ? <p className="text-xs text-muted-foreground">Why it matters: {c.why}</p> : null}
-                    {c.fixHref && c.level !== "ok" ? (
-                      <a href={c.fixHref} className="text-xs font-medium text-coral underline">
-                        Fix this
-                      </a>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Refresh the score before sending. It checks sender, address, subject, audience, and
-              list health — not inbox placement.
-            </p>
-          )}
-          {editable && campaign.status !== "SCHEDULED" && (
-            <div className="flex flex-wrap gap-3">
-              <Button
-                onClick={() => void launch("now")}
-                disabled={confidence ? !confidence.canSend : false}
-              >
-                Send now
-              </Button>
-              <div className="flex items-end gap-2">
-                <div>
-                  <Label className="text-xs">Schedule</Label>
-                  <Input
-                    type="datetime-local"
-                    value={scheduleAt}
-                    onChange={(e) => setScheduleAt(e.target.value)}
-                  />
+                    <div>
+                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">Subject</dt>
+                      <dd className="mt-0.5 font-medium">{campaign.subject || "—"}</dd>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">From</dt>
+                      <dd className="mt-0.5 font-medium">
+                        {sender
+                          ? sender.displayName
+                            ? `${sender.displayName} · ${sender.value}`
+                            : sender.value
+                          : "Choose a verified sender in Details"}
+                      </dd>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">When</dt>
+                      <dd className="mt-0.5 font-medium">
+                        {confirmWhen ? whenLabel : "Choose send now or a scheduled time below"}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
-                <Button
-                  variant="outline"
-                  disabled={!scheduleAt || (confidence ? !confidence.canSend : false)}
-                  onClick={() => void launch("schedule")}
-                >
-                  Schedule
-                </Button>
-              </div>
-            </div>
-          )}
-          {campaign.status === "SCHEDULED" && (
-            <Button variant="outline" onClick={() => void control("cancel")}>
-              Cancel schedule
-            </Button>
-          )}
+
+                <div className="rounded-xl border bg-white p-5">
+                  {confidence ? (
+                    ready ? (
+                      <div>
+                        <p className="text-lg font-semibold text-emerald-800">Ready to send</p>
+                        <ul className="mt-2 space-y-1 text-sm text-emerald-900">
+                          {oks.slice(0, 6).map((c: { id: string; label: string }) => (
+                            <li key={c.id}>✓ {c.label}</li>
+                          ))}
+                          {(audienceCount ?? 0) > 0 ? (
+                            <li>✓ {audienceCount!.toLocaleString()} recipients</li>
+                          ) : null}
+                        </ul>
+                        {warnings.length > 0 ? (
+                          <ul className="mt-3 space-y-2 text-sm text-amber-900">
+                            {warnings.map((c: { id: string; label: string; detail: string; fixHref?: string }) => (
+                              <li key={c.id}>
+                                <span className="font-medium">{c.label}</span>
+                                <span className="text-ink/70"> — {c.detail}</span>
+                                {c.fixHref ? (
+                                  <a href={c.fixHref} className="ml-1 text-coral underline">
+                                    Fix
+                                  </a>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-semibold text-red-800">Needs attention before sending</p>
+                        <ul className="mt-3 space-y-3 text-sm">
+                          {blockers.map((c: { id: string; label: string; detail: string; fixHref?: string }) => (
+                            <li key={c.id} className="text-red-800">
+                              <div className="font-medium">{c.label}</div>
+                              <p className="text-ink/80">{c.detail}</p>
+                              {c.fixHref ? (
+                                <a href={c.fixHref} className="text-xs font-medium text-coral underline">
+                                  Fix this
+                                </a>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Checking your email…</p>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="mt-3"
+                    onClick={async () => {
+                      await patch({
+                        designJson: campaign.designJson,
+                        compiledHtml: campaign.compiledHtml,
+                        rawHtmlMode: !!campaign.rawHtmlMode,
+                      });
+                      const data = await refreshConfidence();
+                      if (!data?.score && data?.error) toast.error(data.error || "Could not score");
+                    }}
+                  >
+                    Refresh checks
+                  </Button>
+                </div>
+
+                {editable && campaign.status !== "SCHEDULED" && !confirmWhen && (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                    <Button
+                      className="min-h-11"
+                      onClick={() => setConfirmWhen("now")}
+                      disabled={confidence ? !confidence.canSend : true}
+                    >
+                      Send now
+                    </Button>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                      <div>
+                        <Label className="text-xs">Schedule (your local time)</Label>
+                        <Input
+                          type="datetime-local"
+                          className="min-h-11"
+                          value={scheduleAt}
+                          onChange={(e) => setScheduleAt(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="min-h-11"
+                        disabled={!scheduleAt || (confidence ? !confidence.canSend : true)}
+                        onClick={() => setConfirmWhen("schedule")}
+                      >
+                        Schedule
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {editable && confirmWhen && (
+                  <div className="rounded-xl border border-coral/30 bg-coral/5 p-5 space-y-4">
+                    <p className="font-medium">
+                      {confirmWhen === "now"
+                        ? "Send this campaign now?"
+                        : `Schedule for ${whenLabel}?`}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {audienceCount?.toLocaleString() ?? "—"} contacts · {campaign.subject || "No subject"}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        className="min-h-11"
+                        loading={launching}
+                        onClick={() => void launch(confirmWhen)}
+                      >
+                        {confirmWhen === "now" ? "Send campaign" : "Confirm schedule"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="min-h-11"
+                        disabled={launching}
+                        onClick={() => setConfirmWhen(null)}
+                      >
+                        Back to edit
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {campaign.status === "SCHEDULED" && (
+                  <Button variant="outline" onClick={() => void control("cancel")}>
+                    Cancel schedule
+                  </Button>
+                )}
+              </>
+            );
+          })()}
         </TabsContent>
       </Tabs>
     </div>

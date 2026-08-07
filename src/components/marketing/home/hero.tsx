@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HeroProductComposition } from "./hero-composition";
+import { PLANS } from "@/lib/plans";
 
 export function Hero() {
   return (
@@ -8,7 +9,7 @@ export function Hero() {
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:py-24">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">
-            Email marketing made human
+            Email marketing for small businesses
           </p>
           <h1 className="mt-4 font-display text-display-xl text-ink text-balance">
             Send emails people want to open.
@@ -27,12 +28,18 @@ export function Hero() {
               variant="outline"
               className="border-ink/20 bg-page text-ink hover:bg-parchment"
             >
-              <Link href="#how-it-works">See how it works</Link>
+              <Link href="/pricing">See pricing</Link>
             </Button>
           </div>
           <p className="mt-4 text-sm text-ink/70">
-            500 contacts. No credit card. No complicated setup.
+            {PLANS.FREE.contactCap.toLocaleString()} contacts · No credit card · Cancel anytime
           </p>
+          <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink/60">
+            <li>Transparent limits</li>
+            <li>Easy unsubscribe</li>
+            <li>Sender verification</li>
+            <li>No long-term contracts</li>
+          </ul>
         </div>
         <HeroProductComposition />
       </div>

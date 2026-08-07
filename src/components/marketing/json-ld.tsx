@@ -14,28 +14,44 @@ export function JsonLd({ data }: { data: JsonLdValue }) {
   );
 }
 
-/** Per-page metadata with canonical + OG — use on inner SEO pages (not homepage hero). */
+const DEFAULT_OG_IMAGE = {
+  url: "/brand/sendfable-social-card.jpg",
+  width: 1200,
+  height: 630,
+  alt: "SendFable — Simple email marketing for small businesses. Start free.",
+} as const;
+
+/** Per-page metadata with canonical + OG — use on all public marketing pages. */
 export function marketingPageMeta(opts: {
   title: string;
   description: string;
   path: string;
+  /** Optional absolute or site-relative image path (defaults to social card JPG). */
+  image?: string;
+  noIndex?: boolean;
 }): Metadata {
   const url = appUrl(opts.path);
+  const image = opts.image
+    ? { ...DEFAULT_OG_IMAGE, url: opts.image }
+    : DEFAULT_OG_IMAGE;
   return {
     title: opts.title,
     description: opts.description,
     alternates: { canonical: url },
+    ...(opts.noIndex ? { robots: { index: false, follow: false } } : {}),
     openGraph: {
       title: opts.title,
       description: opts.description,
       url,
       type: "website",
       siteName: "Sendfable",
+      images: [image],
     },
     twitter: {
       card: "summary_large_image",
       title: opts.title,
       description: opts.description,
+      images: [image.url],
     },
   };
 }

@@ -68,9 +68,16 @@ export default function TemplatesPage() {
       {templates.length === 0 ? (
         <EmptyState
           icon={<FileText />}
-          title="No templates yet"
-          description="Save designs you reuse across campaigns."
-          action={<Button onClick={() => void create()}>Create template</Button>}
+          title="No saved designs yet"
+          description="Nothing's broken — save a campaign design here when you want to reuse it. Or create a campaign now."
+          action={
+            <div className="flex flex-col items-center gap-2 sm:flex-row">
+              <Button onClick={() => router.push("/campaigns/new")}>Create a campaign</Button>
+              <Button variant="outline" onClick={() => void create()}>
+                Save a blank template
+              </Button>
+            </div>
+          }
         />
       ) : (
         <ul className="divide-y rounded-xl border bg-white">

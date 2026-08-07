@@ -20,6 +20,8 @@ import {
   type PaidPlanKey,
 } from "@/lib/plans";
 import type { Plan } from "@prisma/client";
+import { UsageUpgradeBanner } from "@/components/app/usage-upgrade-banner";
+import { track } from "@/lib/track";
 
 export default function BillingPage() {
   const [plan, setPlan] = useState<Plan>("FREE");
@@ -36,10 +38,12 @@ export default function BillingPage() {
         setUsage(data.usage);
       }
     })();
+    track("pricing_from_app_viewed");
   }, []);
 
   async function checkout(target: PaidPlanKey) {
     setLoading(target);
+    track("plan_cta_clicked", { plan: target, interval: annual ? "year" : "month" });
     try {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
@@ -72,6 +76,15 @@ export default function BillingPage() {
 
   return (
     <div>
+      <UsageUpgradeBanner
+        planName={current.name}
+        planIsFree={plan === "FREE"}
+        emailsUsed={usage.emails}
+        emailsCap={current.emailsPerMonth}
+        contactsUsed={usage.contacts}
+        contactsCap={current.contactCap}
+        surface="billing"
+      />
       <PageHeader title="Billing" description={`You're on the ${current.name} plan.`}>
         {plan !== "FREE" && (
           <Button variant="outline" onClick={() => void portal()}>

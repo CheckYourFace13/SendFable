@@ -108,6 +108,8 @@ export async function POST(req: Request) {
               paymentFailedAt: null,
             },
           });
+          const { trackEvent } = await import("@/lib/analytics");
+          trackEvent("subscription_cancelled");
           // Losing the email plan removes bundle eligibility (never SMS service).
           await recalcSmsBundleForCustomer(String(sub.customer));
         }
@@ -202,4 +204,14 @@ async function applySubscription(sub: Stripe.Subscription, userIdHint?: string |
       paymentFailedAt: null,
     },
   });
+
+  if (keepPaid) {
+    const { trackEvent } = await import("@/lib/analytics");
+    const wasFree = user.plan === "FREE";
+    trackEvent(wasFree ? "checkout_completed" : "plan_upgraded", {
+      plan: mapped.plan,
+      interval: mapped.interval,
+    });
+    if (wasFree) trackEvent("subscription_started", { plan: mapped.plan });
+  }
 }

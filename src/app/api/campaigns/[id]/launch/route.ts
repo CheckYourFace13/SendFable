@@ -126,6 +126,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       where: { id: campaign.id },
       data: { status: "SCHEDULED", scheduledAt: at, recipientCount },
     });
+    const prior = await prisma.campaign.count({
+      where: {
+        workspaceId: ctx.workspace.id,
+        status: { in: ["COMPLETED", "SCHEDULED", "SENDING"] },
+        id: { not: campaign.id },
+      },
+    });
+    if (prior === 0) {
+      const { trackEvent } = await import("@/lib/analytics");
+      trackEvent("first_campaign_scheduled");
+    }
     return NextResponse.json({ campaign: updated });
   }
 
@@ -134,6 +145,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const updated = await prisma.campaign.findUnique({ where: { id: campaign.id } });
     // Placeholder referral credit on first successful launch
     void maybeAwardReferralSignupCredit(ctx.user.id, "first_campaign");
+    const priorSends = await prisma.campaign.count({
+      where: {
+        workspaceId: ctx.workspace.id,
+        status: "COMPLETED",
+        id: { not: campaign.id },
+      },
+    });
+    if (priorSends === 0) {
+      const { trackEvent } = await import("@/lib/analytics");
+      trackEvent("first_campaign_sent");
+    }
     return NextResponse.json({ campaign: updated, ...result });
   } catch (err) {
     if (err instanceof CampaignSendDisabledError) {

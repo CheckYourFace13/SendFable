@@ -111,6 +111,11 @@ export function upToEmails(plan: Plan): string {
   return `Up to ${PLANS[plan].emailsPerMonth.toLocaleString()} emails/month`;
 }
 
+/** Short Free-plan promise for signup/marketing — always from PLANS.FREE. */
+export function freePlanPromise(): string {
+  return `Free for up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month`;
+}
+
 export function annualEffectiveMonthly(plan: Plan): number {
   const p = PLANS[plan];
   if (!p.yearlyPrice) return 0;

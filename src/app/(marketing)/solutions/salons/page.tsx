@@ -1,10 +1,11 @@
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SolutionPage } from "@/components/marketing/solution-page";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing for salons and spas",
-  description:
-    "Salon and spa email marketing: booking prompts, membership renewals, and new-service announcements on Sendfable.",
-};
+  description: "Salon and spa email marketing: booking prompts, membership renewals, and new-service announcements on Sendfable.",
+  path: "/solutions/salons",
+});
 
 export default function SalonsSolutionPage() {
   return (

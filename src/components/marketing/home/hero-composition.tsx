@@ -15,10 +15,10 @@ export function HeroProductComposition() {
         </svg>
       </div>
 
-      {/* Audience mini panel */}
+      {/* Audience mini panel — decorative product chrome, not customer metrics */}
       <div className="absolute -left-2 bottom-24 z-20 w-36 rounded-lg border-2 border-ink/10 bg-page p-3 shadow-lg sm:-left-6 sm:w-40">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-ink/70">Audience</p>
-        <p className="mt-1 font-display text-lg text-ink">248 readers</p>
+        <p className="mt-1 font-display text-lg text-ink">Your list</p>
         <div className="mt-2 flex -space-x-1.5">
           {["#F26A4F", "#1E8179", "#17213B", "#DCD8F9"].map((c) => (
             <span
@@ -30,10 +30,10 @@ export function HeroProductComposition() {
         </div>
       </div>
 
-      {/* Analytics mini panel */}
+      {/* Analytics mini panel — decorative product chrome */}
       <div className="absolute -right-1 bottom-8 z-20 w-36 rounded-lg border-2 border-ink/10 bg-ink p-3 text-page shadow-lg sm:right-0 sm:w-40">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-page/50">Opened</p>
-        <p className="mt-0.5 font-display text-xl text-coral">42%</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-page/50">Results</p>
+        <p className="mt-0.5 font-display text-xl text-coral">Opens</p>
         <div className="mt-2 flex items-end gap-1">
           {[40, 65, 45, 80, 55, 70].map((h, i) => (
             <span

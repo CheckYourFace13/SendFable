@@ -5,6 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { JsonLd, faqJsonLd } from "@/components/marketing/json-ld";
+import { PLANS } from "@/lib/plans";
 
 const FAQS = [
   {
@@ -33,7 +34,7 @@ const FAQS = [
   },
   {
     q: "Is there a free plan?",
-    a: "Yes. Free includes up to 500 contacts and up to 1,000 emails per month, with a “Sent with Sendfable” badge. No credit card required to start.",
+    a: `Yes. Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and up to ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails per month, with a “Sent with Sendfable” badge. No credit card required to start.`,
   },
   {
     q: "Can Sendfable help me design the email?",

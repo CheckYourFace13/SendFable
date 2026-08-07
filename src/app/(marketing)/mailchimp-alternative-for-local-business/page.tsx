@@ -49,7 +49,7 @@ export default function Page() {
         <li>New location or parking change announcement</li>
       </ul>
       <p className="mt-8 text-sm">
-        <Link className="text-coral hover:underline" href="/email-marketing-for-local-business">
+        <Link className="text-coral hover:underline" href="/solutions/professional-services">
           Local email marketing guide
         </Link>{" "}
         ·{" "}

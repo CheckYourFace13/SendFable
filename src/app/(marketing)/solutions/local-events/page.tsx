@@ -1,10 +1,11 @@
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SolutionPage } from "@/components/marketing/solution-page";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing for local events",
-  description:
-    "Email for venues and local event organizers: lineup reveals, ticket reminders, and day-of logistics with Sendfable.",
-};
+  description: "Email for venues and local event organizers: lineup reveals, ticket reminders, and day-of logistics with Sendfable.",
+  path: "/solutions/local-events",
+});
 
 export default function LocalEventsSolutionPage() {
   return (

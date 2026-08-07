@@ -10,13 +10,14 @@ import { DeliverabilityStory } from "@/components/marketing/home/deliverability-
 import { PricingPreview } from "@/components/marketing/home/pricing-preview";
 import { HomeFaq } from "@/components/marketing/home/home-faq";
 import { FinalCta } from "@/components/marketing/home/final-cta";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
+import { PLANS } from "@/lib/plans";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Sendfable — Simple Email Marketing for Small Businesses",
-  description:
-    "Create beautiful emails, manage your audience and understand every campaign with a simpler email-marketing platform built for small businesses.",
-  alternates: { canonical: "/" },
-};
+  description: `Create and send email campaigns without the complexity. Free plan includes ${PLANS.FREE.contactCap} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month — no credit card.`,
+  path: "/",
+});
 
 export default function HomePage() {
   return (

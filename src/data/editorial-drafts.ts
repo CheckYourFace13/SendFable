@@ -393,7 +393,7 @@ export const SF008_DRAFTS: EditorialDraft[] = [
     targetPath: "/guides/email-marketing-for-restaurants",
     proposedPublish: "2026-08-19",
     refreshDue: "2026-11-19",
-    internalLinkSuggestions: ["/email-marketing-for-restaurants", "/solutions/restaurants", "/mailchimp-alternative-for-restaurants"],
+    internalLinkSuggestions: ["/solutions/restaurants", "/mailchimp-alternative-for-restaurants"],
     notes: "",
     directAnswer:
       "Restaurant email marketing works when guests opt in for menus, events, and hours — then receive short, useful messages on a cadence the kitchen and managers can actually keep.",
@@ -427,7 +427,7 @@ export const SF008_DRAFTS: EditorialDraft[] = [
     targetPath: "/guides/email-marketing-for-local-businesses",
     proposedPublish: "2026-08-20",
     refreshDue: "2026-11-20",
-    internalLinkSuggestions: ["/email-marketing-for-local-business", "/mailchimp-alternative-for-local-business"],
+    internalLinkSuggestions: ["/solutions/professional-services", "/mailchimp-alternative-for-local-business"],
     notes: "",
     directAnswer:
       "Local businesses win with email by talking to nearby customers about hours, offers, and community events — with permission — instead of spraying national-style blast templates.",
@@ -447,7 +447,7 @@ export const SF008_DRAFTS: EditorialDraft[] = [
         a: "No. Build permissioned contacts from real customers and site visitors.",
       },
     ],
-    sources: [{ label: "/email-marketing-for-local-business", note: "Cluster page" }],
+    sources: [{ label: "/solutions/professional-services", note: "Cluster page" }],
     cta: { href: "/signup", label: "Start free" },
   }),
   base({

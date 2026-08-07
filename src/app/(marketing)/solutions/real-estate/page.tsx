@@ -1,10 +1,11 @@
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SolutionPage } from "@/components/marketing/solution-page";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing for real estate agents",
-  description:
-    "Sendfable for real estate: listing alerts, open houses, and market notes with professional From addresses and simple segments.",
-};
+  description: "Sendfable for real estate: listing alerts, open houses, and market notes with professional From addresses and simple segments.",
+  path: "/solutions/real-estate",
+});
 
 export default function RealEstateSolutionPage() {
   return (

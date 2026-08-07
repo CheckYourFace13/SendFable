@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const STEPS = [
   {
     title: "Verify your sender",
@@ -42,8 +44,7 @@ export function DeliverabilityStory() {
               suppression, and pre-send checks.
             </p>
             <div className="mt-8" aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/illustrations/letter-journey.svg"
                 alt=""
                 width={240}

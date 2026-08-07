@@ -5,8 +5,10 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/components/marketing/json-ld";
 import { MarketingAnalytics } from "@/components/marketing/marketing-analytics";
 
-/** Avoid baking launch-flag copy into static HTML at Docker build time. */
-export const dynamic = "force-dynamic";
+/**
+ * Evergreen marketing pages are statically cacheable. The announcement bar is
+ * static product copy (not env-gated). Auth/personalization lives under (app).
+ */
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (

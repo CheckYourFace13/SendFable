@@ -2,13 +2,14 @@ import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { PricingPreview } from "@/components/marketing/home/pricing-preview";
 import { SmsPricingSection } from "@/components/marketing/sms-pricing";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
+import { PLANS } from "@/lib/plans";
 
-export const metadata = {
-  title: "Pricing",
-  description:
-    "SendFable pricing: Free, Starter, Growth, Pro, and Pro Plus with clear contact and email limits. Two months free with annual billing.",
-  alternates: { canonical: "/pricing" },
-};
+export const metadata = marketingPageMeta({
+  title: "Pricing — Free to Pro Plus",
+  description: `Simple SendFable plans: Free (${PLANS.FREE.contactCap} contacts), Starter $${PLANS.STARTER.monthlyPrice}/mo, Growth $${PLANS.GROWTH.monthlyPrice}/mo, Pro $${PLANS.PRO.monthlyPrice}/mo, Pro Plus $${PLANS.PRO_PLUS.monthlyPrice}/mo. Clear limits. Annual saves two months.`,
+  path: "/pricing",
+});
 
 export default function PricingPage() {
   return (

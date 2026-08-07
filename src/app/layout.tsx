@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { Toaster } from "sonner";
+import { AnalyticsScripts } from "@/components/analytics/analytics-scripts";
 import "./globals.css";
 import { publicOrigin } from "@/lib/utils";
+import { PLANS } from "@/lib/plans";
 
 const sans = Inter({
   subsets: ["latin"],
@@ -25,8 +27,7 @@ export const metadata: Metadata = {
     default: "Sendfable — Simple Email Marketing for Small Businesses",
     template: "%s · Sendfable",
   },
-  description:
-    "Create beautiful emails, manage your audience and understand every campaign with a simpler email-marketing platform built for small businesses.",
+  description: `Simple email marketing for small businesses. Start free with ${PLANS.FREE.contactCap} contacts — no credit card required.`,
   applicationName: "Sendfable",
   manifest: "/manifest.webmanifest",
   verification: {
@@ -39,15 +40,21 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "Sendfable",
     title: "Sendfable — Simple Email Marketing for Small Businesses",
-    description:
-      "Create beautiful emails, manage your audience and understand every campaign with a simpler email-marketing platform built for small businesses.",
-    images: [{ url: "/brand/sendfable-social-card.svg", width: 1200, height: 630, alt: "sendfable" }],
+    description: `Create and send email campaigns without the complexity. Free plan includes ${PLANS.FREE.contactCap} contacts — no credit card.`,
+    images: [
+      {
+        url: "/brand/sendfable-social-card.jpg",
+        width: 1200,
+        height: 630,
+        alt: "SendFable — Simple email marketing for small businesses. Start free.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Sendfable — Simple Email Marketing for Small Businesses",
-    description: "Every email tells your story.",
-    images: ["/brand/sendfable-social-card.svg"],
+    description: `Simple email marketing for small businesses. Start free — ${PLANS.FREE.contactCap} contacts, no credit card.`,
+    images: ["/brand/sendfable-social-card.jpg"],
   },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
@@ -65,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
       <body className="min-h-screen font-sans">
         {children}
+        <AnalyticsScripts />
         <Toaster richColors position="top-right" />
       </body>
     </html>

@@ -2,10 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { publicSignupAllowed } from "@/lib/early-launch";
+import { PLANS } from "@/lib/plans";
 
 export const metadata = {
   title: "Start free",
-  description: "Create your free SendFable account — 500 contacts, no credit card required.",
+  description: `Create your free SendFable account — ${PLANS.FREE.contactCap} contacts, no credit card required.`,
 };
 
 export const dynamic = "force-dynamic";
@@ -23,8 +24,8 @@ export default function EarlyAccessPage() {
         Create your free account
       </h1>
       <p className="mt-4 text-ink/70">
-        Public signup is open. Start with 500 contacts and send your first campaign — no credit card
-        required.
+        Public signup is open. Start with {PLANS.FREE.contactCap.toLocaleString()} contacts and send
+        your first campaign — no credit card required.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">

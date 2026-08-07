@@ -377,6 +377,11 @@ export async function POST(req: Request) {
     },
   });
 
+  if (created > 0) {
+    const { trackEvent } = await import("@/lib/analytics");
+    trackEvent("contact_imported", { count: created });
+  }
+
   return NextResponse.json({
     created,
     invalid,

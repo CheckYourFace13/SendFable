@@ -330,33 +330,33 @@ export function EmailBuilder({
       });
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] min-h-[560px] overflow-hidden rounded-xl border bg-white">
-      {/* Palette */}
-      <aside className="w-44 shrink-0 overflow-y-auto border-r p-3">
+    <div className="flex h-auto min-h-[480px] flex-col overflow-hidden rounded-xl border bg-white md:h-[calc(100vh-12rem)] md:min-h-[560px] md:flex-row">
+      {/* Palette — horizontal on mobile, side on desktop */}
+      <aside className="max-h-40 shrink-0 overflow-y-auto border-b p-3 md:max-h-none md:w-44 md:border-b-0 md:border-r">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs font-semibold uppercase text-muted-foreground">Blocks</div>
         </div>
         <button
           type="button"
-          className="mb-3 w-full rounded-md border px-2 py-1.5 text-left text-xs"
+          className="mb-3 min-h-11 w-full rounded-md border px-2 py-1.5 text-left text-xs"
           onClick={() => onSimpleModeChange?.(!simpleMode)}
         >
           {simpleMode ? "More options…" : "Simple mode"}
         </button>
-        <div className="space-y-1">
+        <div className="flex gap-1 overflow-x-auto md:block md:space-y-1 md:overflow-visible">
           {palette.map((item) => (
             <button
               key={item.type}
               type="button"
               onClick={() => addBlock(item.type)}
-              className="flex min-h-11 w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+              className="flex min-h-11 shrink-0 items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral md:w-full"
             >
               {item.icon}
               {item.label}
             </button>
           ))}
         </div>
-        <div className="mt-4 border-t pt-3">
+        <div className="mt-4 hidden border-t pt-3 md:block">
           <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Merge tags</div>
           {MERGE_TAG_OPTIONS.map((t) => (
             <button
@@ -372,12 +372,13 @@ export function EmailBuilder({
       </aside>
 
       {/* Canvas */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between border-b px-4 py-2">
+      <div className="flex min-h-[320px] min-w-0 flex-1 flex-col">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 sm:px-4">
           <div className="flex gap-1">
             <Button
               type="button"
               size="sm"
+              className="min-h-11"
               variant={preview === "desktop" ? "default" : "ghost"}
               onClick={() => setPreview("desktop")}
             >
@@ -386,6 +387,7 @@ export function EmailBuilder({
             <Button
               type="button"
               size="sm"
+              className="min-h-11"
               variant={preview === "mobile" ? "default" : "ghost"}
               onClick={() => setPreview("mobile")}
             >
@@ -396,6 +398,7 @@ export function EmailBuilder({
             <Button
               type="button"
               size="sm"
+              className="min-h-11"
               variant={rawMode ? "default" : "outline"}
               onClick={() => {
                 if (!rawMode) setRawHtml(compiled);
@@ -409,7 +412,7 @@ export function EmailBuilder({
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-slate-100 p-6">
+        <div className="flex-1 overflow-y-auto bg-slate-100 p-3 sm:p-6">
           {rawMode ? (
             <Textarea
               className="h-full min-h-[400px] font-mono text-xs"
@@ -443,7 +446,7 @@ export function EmailBuilder({
               </DndContext>
               {!design.blocks.length && (
                 <div className="py-16 text-center text-sm text-muted-foreground">
-                  Add blocks from the left palette
+                  Add blocks from the palette
                 </div>
               )}
             </div>
@@ -451,11 +454,11 @@ export function EmailBuilder({
         </div>
       </div>
 
-      {/* Properties */}
-      <aside className="w-72 shrink-0 overflow-y-auto border-l p-4">
-        <div className="mb-3 text-xs font-semibold uppercase text-muted-foreground">Properties</div>
+      {/* Properties — bottom sheet style on mobile */}
+      <aside className="max-h-64 shrink-0 overflow-y-auto border-t p-4 md:max-h-none md:w-72 md:border-l md:border-t-0">
+        <div className="mb-3 text-xs font-semibold uppercase text-muted-foreground">Edit</div>
         {!selected || rawMode ? (
-          <p className="text-sm text-muted-foreground">Select a block to edit</p>
+          <p className="text-sm text-muted-foreground">Tap a block to edit</p>
         ) : (
           <div className="space-y-3">
             {selected.type === "heading" && (

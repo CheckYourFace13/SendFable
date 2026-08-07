@@ -202,11 +202,19 @@ export default function ContactsPage() {
         <EmptyState
           icon={<Tags />}
           title="No contacts yet"
-          description="Import a CSV or add contacts manually to start building your audience."
+          description="Add people who asked to hear from you — then you can send your first email."
           action={
-            <Button asChild>
-              <Link href="/contacts/import">Import CSV</Link>
-            </Button>
+            <div className="flex flex-col items-center gap-2 sm:flex-row">
+              <Button asChild>
+                <Link href="/contacts/import">Import CSV</Link>
+              </Button>
+              <Button variant="outline" onClick={() => setAddOpen(true)}>
+                Add manually
+              </Button>
+              <Button asChild variant="ghost">
+                <Link href="/forms">Signup form</Link>
+              </Button>
+            </div>
           }
         />
       ) : (

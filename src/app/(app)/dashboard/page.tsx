@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Users, Mail, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { requireWorkspaceContext, getWorkspaceOwner } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -8,13 +7,13 @@ import { PLANS } from "@/lib/plans";
 import { ensureSendCountReset } from "@/lib/quota";
 import { formatNumber } from "@/lib/utils";
 import { DashboardCharts } from "./dashboard-charts";
-import { SetupChecklist } from "./setup-checklist";
-import { externalEmailActive } from "@/lib/early-launch";
+import { UsageUpgradeBanner } from "@/components/app/usage-upgrade-banner";
+import { FirstSendFeedback } from "@/components/app/first-send-feedback";
 
 export default async function DashboardPage() {
   const { user, workspace } = await requireWorkspaceContext();
 
-  if (!workspace.onboardingCompletedAt && workspace.onboardingStep < 10) {
+  if (!workspace.onboardingCompletedAt && workspace.onboardingStep < 4) {
     const campaignCount = await prisma.campaign.count({
       where: { workspaceId: workspace.id },
     });
@@ -26,7 +25,7 @@ export default async function DashboardPage() {
   const owner = await ensureSendCountReset(await getWorkspaceOwner(workspace.id));
   const plan = PLANS[owner.plan];
 
-  const [contactCount, campaignCount, recentCampaigns, completedCount, verifiedSender, testedCampaign] =
+  const [contactCount, campaignCount, recentCampaigns, completedCount, verifiedSender] =
     await Promise.all([
       prisma.contact.count({ where: { workspaceId: workspace.id } }),
       prisma.campaign.count({ where: { workspaceId: workspace.id } }),
@@ -41,107 +40,98 @@ export default async function DashboardPage() {
       prisma.senderIdentity.count({
         where: { workspaceId: workspace.id, status: "VERIFIED" },
       }),
-      prisma.campaign.count({
-        where: { workspaceId: workspace.id, testSentAt: { not: null } },
-      }),
     ]);
 
   const firstRun = completedCount === 0;
-  const checklist = [
+  const firstSendSteps = [
     {
-      id: "profile",
-      label: "Complete business profile",
-      href: "/settings",
-      done: !!(workspace.name?.trim() && workspace.businessDescription?.trim()),
-      hint: "Add your business name and a short description.",
+      id: "ready",
+      label: "Account ready",
+      done: true,
+      href: "/dashboard",
     },
     {
-      id: "address",
-      label: "Add physical mailing address",
-      href: "/settings",
-      done: !!workspace.mailingAddress?.trim(),
-      hint: "Required by law in every email footer.",
+      id: "contacts",
+      label: "Add contacts",
+      done: contactCount > 0,
+      href: "/contacts",
     },
     {
       id: "sender",
       label: "Verify sender",
-      href: "/settings/senders",
       done: verifiedSender > 0,
-      hint: "Confirm the From address people will see.",
-    },
-    {
-      id: "contacts",
-      label: "Import contacts",
-      href: "/contacts/import",
-      done: contactCount > 0,
-      hint: "Only people who asked to hear from you.",
+      href: "/settings/senders",
     },
     {
       id: "campaign",
-      label: "Create first campaign",
-      href: "/campaigns/new",
+      label: "Create campaign",
       done: campaignCount > 0,
-      hint: "Pick a goal and write a short message.",
-    },
-    {
-      id: "test",
-      label: "Send a test",
-      href: campaignCount ? "/campaigns" : "/campaigns/new",
-      done: testedCampaign > 0,
-      hint: "Preview in your own inbox (local outbox until SES is on).",
-    },
-    {
-      id: "delivery",
-      label: "Activate delivery",
-      href: "/settings/ses",
-      done: externalEmailActive(),
-      hint: "Amazon SES must be configured before real customer sends.",
+      href: "/campaigns/new",
     },
   ];
 
+  const nextStep =
+    firstSendSteps.find((s) => !s.done) ??
+    ({ id: "send", label: "Review & send", href: "/campaigns", done: false } as const);
+  const continueHref = nextStep.href;
+
   if (firstRun) {
     return (
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          What do you want to do?
+      <div className="mx-auto max-w-xl">
+        <UsageUpgradeBanner
+          planName={plan.name}
+          planIsFree={owner.plan === "FREE"}
+          emailsUsed={owner.monthlySendCount}
+          emailsCap={plan.emailsPerMonth}
+          contactsUsed={contactCount}
+          contactsCap={plan.contactCap}
+          surface="dashboard"
+        />
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Let&apos;s send your first campaign
         </h1>
-        <p className="mt-2 text-muted-foreground">
-          Three steps. Keep it simple — advanced tools stay in the sidebar when you need them.
+        <p className="mt-2 text-sm text-muted-foreground">
+          One clear path — we&apos;ll take you to the next incomplete step.
         </p>
 
-        <div className="mt-10 grid gap-4">
-          <ActionCard
-            href="/contacts/import"
-            icon={<Users className="h-6 w-6" />}
-            title="Add people"
-            description="Import a spreadsheet or type in contacts who asked to hear from you."
-          />
-          <ActionCard
-            href="/campaigns/new"
-            icon={<Mail className="h-6 w-6" />}
-            title="Create an email"
-            description="Pick a goal, write a short message, and send a test to yourself."
-          />
-          <ActionCard
-            href={recentCampaigns[0] ? `/campaigns/${recentCampaigns[0].id}/report` : "/campaigns"}
-            icon={<BarChart3 className="h-6 w-6" />}
-            title="View results"
-            description="See who got your email and what to do next after you send."
-            muted={!recentCampaigns.length}
-          />
+        <ol className="mt-8 space-y-2 text-sm">
+          {firstSendSteps.map((item, i) => (
+            <li key={item.id}>
+              <Link
+                href={item.href}
+                className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition hover:border-coral/40 ${
+                  item.done ? "border-emerald-200 bg-emerald-50/60" : "bg-white"
+                }`}
+              >
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                    item.done ? "bg-emerald-600 text-white" : "bg-ink text-page"
+                  }`}
+                  aria-hidden
+                >
+                  {item.done ? "✓" : i + 1}
+                </span>
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+
+        <div className="mt-8">
+          <Button asChild size="lg" className="w-full sm:w-auto">
+            <Link href={continueHref}>Continue</Link>
+          </Button>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Next: {nextStep.label}
+          </p>
         </div>
 
-        <SetupChecklist items={checklist} />
-
-        <div className="mt-8 flex flex-wrap gap-3 text-sm">
+        <div className="mt-10 flex flex-wrap gap-3 text-sm">
           <Link href="/onboarding" className="text-teal hover:underline">
-            Continue setup wizard
+            Guided setup
           </Link>
           <Link href="/contacts/migrate" className="text-muted-foreground hover:underline">
             Migrate from another tool
-          </Link>
-          <Link href="/settings/senders" className="text-muted-foreground hover:underline">
-            Verify sender
           </Link>
         </div>
       </div>
@@ -166,6 +156,16 @@ export default async function DashboardPage() {
 
   return (
     <div>
+      <UsageUpgradeBanner
+        planName={plan.name}
+        planIsFree={owner.plan === "FREE"}
+        emailsUsed={owner.monthlySendCount}
+        emailsCap={plan.emailsPerMonth}
+        contactsUsed={contactCount}
+        contactsCap={plan.contactCap}
+        surface="dashboard"
+      />
+      <FirstSendFeedback show={completedCount === 1} />
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Home</h1>
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link href="/contacts/import">Add people</Link>
+            <Link href="/campaigns">Reuse a campaign</Link>
           </Button>
           <Button asChild>
             <Link href="/campaigns/new">Create an email</Link>
@@ -186,34 +186,5 @@ export default async function DashboardPage() {
 
       <DashboardCharts growth={growth} campaigns={recentCampaigns} />
     </div>
-  );
-}
-
-function ActionCard({
-  href,
-  icon,
-  title,
-  description,
-  muted,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  muted?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-start gap-4 rounded-2xl border bg-white p-6 shadow-sm transition hover:border-coral/50 ${
-        muted ? "opacity-70" : ""
-      }`}
-    >
-      <div className="rounded-xl bg-parchment p-3 text-ink">{icon}</div>
-      <div>
-        <div className="text-lg font-semibold">{title}</div>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      </div>
-    </Link>
   );
 }

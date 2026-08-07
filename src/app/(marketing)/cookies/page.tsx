@@ -48,16 +48,21 @@ export default function CookiesPage() {
         </li>
       </LegalUl>
 
-      <LegalH2>What we do not use today</LegalH2>
+      <LegalH2>What we do not use by default</LegalH2>
       <LegalUl>
         <li>Advertising or retargeting cookies</li>
-        <li>Third-party product analytics cookies (for example Google Analytics, PostHog, Plausible)</li>
-        <li>Social media tracking pixels on the marketing site</li>
+        <li>Meta Pixel or other social tracking pixels on the marketing site</li>
+        <li>PostHog, Plausible, or similar third-party product analytics (unless separately configured)</li>
       </LegalUl>
       <p>
-        Because we currently use only necessary first-party cookies, we do not display a marketing
-        cookie-consent banner. If we add non-essential cookies, we will update this disclosure and
-        obtain consent where required before enabling them.
+        Optional Google Analytics 4 may be enabled by the operator via a public measurement ID. Until
+        that ID is set, we do not load GA. If GA is enabled and your jurisdiction requires consent for
+        analytics cookies, update this disclosure and add a consent banner before turning it on in
+        production.
+      </p>
+      <p>
+        Necessary first-party cookies do not require a marketing cookie-consent banner. Non-essential
+        cookies should only be enabled after this disclosure and consent behavior are updated.
       </p>
 
       <LegalH2>Campaign tracking (not a marketing-site cookie banner topic)</LegalH2>

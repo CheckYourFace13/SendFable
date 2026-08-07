@@ -2,13 +2,18 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { JsonLd, softwareApplicationJsonLd } from "@/components/marketing/json-ld";
+import {
+  JsonLd,
+  marketingPageMeta,
+  softwareApplicationJsonLd,
+} from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email templates for small businesses",
   description:
     "Browse Sendfable industry email templates for restaurants, retail, nonprofits, and more — then customize in the drag-and-drop builder.",
-};
+  path: "/templates",
+});
 
 const CATEGORIES = [
   {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
+import { PLANS } from "@/lib/plans";
 
 export function FinalCta() {
   return (
@@ -30,7 +31,9 @@ export function FinalCta() {
           >
             <Link href="/signup">Start writing free</Link>
           </Button>
-          <p className="mt-4 text-sm text-page/70">500 contacts. No credit card.</p>
+          <p className="mt-4 text-sm text-page/70">
+            {PLANS.FREE.contactCap.toLocaleString()} contacts · No credit card · No hidden fees
+          </p>
         </div>
 
         <div className="relative mx-auto w-full max-w-sm" aria-hidden="true">

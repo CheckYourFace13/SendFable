@@ -1,10 +1,11 @@
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SolutionPage } from "@/components/marketing/solution-page";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing for nonprofits",
-  description:
-    "Affordable email for nonprofits: appeals, events, and impact updates with compliant footers and list hygiene on Sendfable.",
-};
+  description: "Affordable email for nonprofits: appeals, events, and impact updates with compliant footers and list hygiene on Sendfable.",
+  path: "/solutions/nonprofits",
+});
 
 export default function NonprofitsSolutionPage() {
   return (
