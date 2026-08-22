@@ -27,8 +27,10 @@ describe("SF-007 analytics contract", () => {
       "comparison_view",
       "signup_complete",
       "first_campaign_sent",
+      "second_campaign_sent",
       "checkout_completed",
       "referral_attributed",
+      "referral_badge_click",
     ]) {
       assert.ok((ANALYTICS_EVENTS as readonly string[]).includes(e));
     }

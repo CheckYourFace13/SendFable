@@ -16,7 +16,7 @@ export const SENDFABLE_FACTS = {
   positioning: "Simple, affordable email marketing for small businesses.",
   supportingMessage:
     "Build a permission-based audience, create polished emails, send through managed delivery infrastructure, track useful results, and avoid paying for a giant CRM or ecommerce suite you do not need.",
-  lastUpdated: "2026-07-29",
+  lastUpdated: "2026-08-22",
   launchStatus: "public" as const,
   smsStatus: {
     publiclyAvailable: false,

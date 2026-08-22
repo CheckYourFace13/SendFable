@@ -5,12 +5,14 @@ import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { competitorPricing, PRICING_LAST_CHECKED } from "@/data/competitor-pricing";
 import { PLANS } from "@/lib/plans";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Mailchimp alternative for simple sending",
   description:
     "Looking for a Mailchimp alternative? Sendfable offers lower typical pricing, any-email signup, and SES delivery — with an honest comparison of trade-offs.",
-};
+  path: "/alternatives/mailchimp",
+});
 
 const mc = competitorPricing("mailchimp");
 

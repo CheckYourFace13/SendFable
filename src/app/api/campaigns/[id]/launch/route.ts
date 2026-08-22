@@ -152,9 +152,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         id: { not: campaign.id },
       },
     });
+    const { trackEvent } = await import("@/lib/analytics");
     if (priorSends === 0) {
-      const { trackEvent } = await import("@/lib/analytics");
       trackEvent("first_campaign_sent");
+    } else if (priorSends === 1) {
+      trackEvent("second_campaign_sent");
     }
     return NextResponse.json({ campaign: updated, ...result });
   } catch (err) {

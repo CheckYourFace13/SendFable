@@ -32,7 +32,7 @@ export default function AdminFunnelPage() {
     <div className="space-y-8">
       <PageHeader
         title="Signup funnel"
-        description="Organic landing → signup → workspace → sender → contacts → campaign → first send → paid. First-party events only."
+        description="Organic landing → signup → workspace → sender → contacts → campaign → first send → second send → upgrade → checkout → paid. First-party events only."
       />
 
       <p className="text-sm text-muted-foreground">

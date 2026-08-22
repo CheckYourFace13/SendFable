@@ -11,12 +11,14 @@ import {
   PUBLIC_MAILBOXES,
 } from "@/lib/legal-policies";
 import { LegalA, LegalH2, LegalUl } from "@/components/legal/legal-doc";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Security & responsible disclosure",
   description:
     "SendFable security practices, customer responsibilities, and how to report vulnerabilities — without unverified compliance badges.",
-};
+  path: "/security",
+});
 
 export default function SecurityPage() {
   return (

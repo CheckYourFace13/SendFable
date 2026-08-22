@@ -15,8 +15,8 @@ export function Hero() {
             Send emails people want to open.
           </h1>
           <p className="mt-5 max-w-prose text-lg leading-relaxed text-charcoal/80">
-            Create beautiful campaigns, reach the right people and understand what
-            worked—without fighting a complicated marketing platform.
+            Build a list, write a clear email, and see who opened — without paying for CRM features
+            you will never use.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button asChild size="lg" className="bg-coral-solid text-white hover:bg-coral-hover">

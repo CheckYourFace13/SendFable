@@ -2,12 +2,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Integrations",
   description:
     "Sendfable integrates Amazon SES for delivery, Stripe for billing, CSV for audiences, and hosted forms for signup — without a bloated app marketplace.",
-};
+  path: "/integrations",
+});
 
 const INTEGRATIONS = [
   {

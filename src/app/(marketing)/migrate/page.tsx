@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Migrate to Sendfable from Mailchimp and others",
   description:
     "Move your list from Mailchimp, Constant Contact, Brevo, MailerLite, Kit, or a CSV export. Practical migration steps without locking you into OAuth signup.",
-};
+  path: "/migrate",
+});
 
 const SOURCES = [
   {

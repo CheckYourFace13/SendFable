@@ -47,6 +47,7 @@ const MARKETING_PAGES: Array<{ route: string; file: string }> = [
   },
   { route: "/vs/mailchimp", file: path.join(MARKETING_ROOT, "vs", "mailchimp", "page.tsx") },
   { route: "/compare", file: path.join(MARKETING_ROOT, "compare", "page.tsx") },
+  { route: "/solutions", file: path.join(MARKETING_ROOT, "solutions", "page.tsx") },
   {
     route: "/solutions/restaurants",
     file: path.join(MARKETING_ROOT, "solutions", "restaurants", "page.tsx"),

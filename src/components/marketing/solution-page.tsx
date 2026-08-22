@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
+import { SOLUTION_RELATED_LINKS } from "@/data/solution-related-links";
 
 export function SolutionPage({
   industry,
@@ -21,12 +22,14 @@ export function SolutionPage({
   plays: string[];
   faqs: { q: string; a: string }[];
 }) {
+  const related = SOLUTION_RELATED_LINKS[path] ?? [];
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Solutions", href: path },
+          { label: "Solutions", href: "/solutions" },
           { label: industry, href: path, current: true },
         ]}
       />
@@ -62,6 +65,21 @@ export function SolutionPage({
           ))}
         </ul>
       </section>
+
+      {related.length > 0 && (
+        <section className="mt-14 rounded-xl border border-ink/10 bg-parchment/40 p-6">
+          <h2 className="text-lg font-semibold text-ink">Related resources</h2>
+          <ul className="mt-4 space-y-2 text-sm">
+            {related.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="text-coral hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="mt-14">
         <h2 className="text-2xl font-bold tracking-tight">FAQ</h2>

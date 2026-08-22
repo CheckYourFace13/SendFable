@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { isReferralBadgeLanding } from "@/lib/referral-badge";
 
 const SESSION_KEY = "sf_aid";
 const FIRST_TOUCH_KEY = "sf_ft";
@@ -115,7 +116,11 @@ export function MarketingAnalytics() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    captureUtm(new URLSearchParams(searchParams?.toString() || ""));
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    captureUtm(params);
+    if (pathname === "/" && isReferralBadgeLanding(params)) {
+      trackClientEvent("referral_badge_click");
+    }
     let event = "guide_view";
     if (pathname === "/") event = "homepage_view";
     else if (pathname === "/pricing") event = "pricing_view";

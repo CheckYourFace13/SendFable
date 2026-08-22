@@ -43,6 +43,7 @@ export const ANALYTICS_EVENTS = [
   "test_send_completed",
   "first_campaign_scheduled",
   "first_campaign_sent",
+  "second_campaign_sent",
   // Monetization
   "usage_80_percent",
   "usage_90_percent",
@@ -57,6 +58,7 @@ export const ANALYTICS_EVENTS = [
   "plan_downgraded",
   "subscription_cancelled",
   "referral_attributed",
+  "referral_badge_click",
   "feedback_submitted",
 ] as const;
 
@@ -187,5 +189,8 @@ export const FUNNEL_STAGES: { id: string; events: AnalyticsEvent[] }[] = [
   { id: "contacts_added", events: ["contact_created", "contact_imported"] },
   { id: "campaign_created", events: ["campaign_created"] },
   { id: "first_campaign_sent", events: ["first_campaign_sent"] },
-  { id: "paid_conversion", events: ["checkout_completed", "plan_upgraded"] },
+  { id: "second_campaign_sent", events: ["second_campaign_sent"] },
+  { id: "upgrade_intent", events: ["upgrade_prompt_viewed", "upgrade_prompt_clicked", "pricing_from_app_viewed"] },
+  { id: "checkout", events: ["checkout_started"] },
+  { id: "paid_conversion", events: ["checkout_completed", "plan_upgraded", "subscription_started"] },
 ];

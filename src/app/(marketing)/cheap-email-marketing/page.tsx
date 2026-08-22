@@ -3,14 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { PLANS } from "@/lib/plans";
 import { PRICING_DISCLAIMER, PRICING_LAST_CHECKED } from "@/data/competitor-pricing";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Cheap email marketing that still delivers",
   description:
-    "Lower-cost email marketing with Sendfable: a free plan, paid tiers priced under typical Mailchimp Standard rates, and clear limits — not race-to-the-bottom spam tools.",
-};
+    "Lower-cost email marketing with Sendfable: free plan, Starter from $12/mo, and clear limits — not race-to-the-bottom spam tools.",
+  path: "/cheap-email-marketing",
+});
 
 const FAQS = [
   {

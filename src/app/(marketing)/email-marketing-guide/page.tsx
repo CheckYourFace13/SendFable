@@ -3,14 +3,16 @@ import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import {
   JsonLd,
   articleJsonLd,
+  marketingPageMeta,
 } from "@/components/marketing/json-ld";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing guide for small businesses",
   description:
     "A practical Sendfable guide to building a consented list, authenticating mail, writing campaigns, and reading results without hype.",
-};
+  path: "/email-marketing-guide",
+});
 
 const TOC = [
   { id: "permission", label: "1. Permission before volume" },

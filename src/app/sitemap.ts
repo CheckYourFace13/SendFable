@@ -6,6 +6,7 @@ import { listPublicCompetitors } from "@/data/competitors";
 export const SITEMAP_PATHS = [
   "/",
   "/about",
+  "/solutions",
   "/how-sendfable-works",
   "/pricing",
   "/features",
