@@ -22,7 +22,10 @@
     "referral:qa": "tsx scripts/referral-controlled-test.ts",
     "test": "node scripts/run-tests.mjs",
     "test:activation": "node scripts/activation-smoke.mjs",
-    "seo:check": "tsx scripts/seo-check.ts"
+    "seo:check": "tsx scripts/seo-check.ts",
+    "telnyx:connectivity": "tsx scripts/telnyx-connectivity-check.ts",
+    "test:e2e": "playwright test",
+    "test:live-crawl": "node scripts/live-public-crawl.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -75,6 +78,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.7.5",
     "@types/papaparse": "^5.3.14",
