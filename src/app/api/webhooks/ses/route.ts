@@ -114,6 +114,40 @@ export async function POST(req: Request) {
     }));
 
   if (!recip) {
+    // Acquisition outreach messages (separate from customer campaigns)
+    try {
+      const { handleAcquisitionSesEvent } = await import("@/lib/acquisition/lifecycle");
+      const handled = await handleAcquisitionSesEvent({
+        sesMessageId: messageId,
+        eventType,
+        bounceType: note.bounce?.bounceType,
+        emails: [
+          ...(note.bounce?.bouncedRecipients?.map((r) => r.emailAddress).filter(Boolean) as string[]),
+          ...(note.complaint?.complainedRecipients
+            ?.map((r) => r.emailAddress)
+            .filter(Boolean) as string[]),
+        ],
+      });
+      if (handled) {
+        // Still apply global suppression for hard bounce/complaint hygiene
+        if (eventType === "Bounce") {
+          const bounceType = note.bounce?.bounceType || "Permanent";
+          if (bounceType === "Permanent" || bounceType === "Undetermined") {
+            for (const r of note.bounce?.bouncedRecipients ?? []) {
+              if (r.emailAddress) await suppressGlobal(r.emailAddress, "HARD_BOUNCE");
+            }
+          }
+        } else if (eventType === "Complaint") {
+          for (const r of note.complaint?.complainedRecipients ?? []) {
+            if (r.emailAddress) await suppressGlobal(r.emailAddress, "COMPLAINT");
+          }
+        }
+        return NextResponse.json({ ok: true, acquisition: true });
+      }
+    } catch (err) {
+      console.warn("[ses-webhook] acquisition handler error", err);
+    }
+
     console.warn("[ses-webhook] unknown messageId", messageId, eventType);
     // Controlled / transactional sends may not have CampaignRecipient rows.
     // Still enforce global suppression from SES hard bounce / complaint payloads.

@@ -30,6 +30,7 @@ const PUBLIC_BY_DESIGN = new Set([
   "t/o/[recipientId]", // open tracking token IDs
   "unsubscribe", // signed unsubscribe token
   "unsubscribe/one-click", // RFC 8058 one-click
+  "acquisition/unsubscribe", // signed acquisition outreach opt-out
   "webhooks/ses", // SNS signature verified
   "webhooks/stripe", // Stripe signature verified
   "webhooks/telnyx", // Telnyx signature verified; 404 while inbound flag off

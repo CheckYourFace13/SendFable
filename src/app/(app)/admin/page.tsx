@@ -55,6 +55,9 @@ export default function AdminOverviewPage() {
         <Link className="text-coral underline" href="/admin/funnel">
           Funnel
         </Link>
+        <Link className="text-coral underline" href="/admin/acquisition">
+          Acquisition
+        </Link>
         <Link className="text-coral underline" href="/admin/partners">
           Partners
         </Link>

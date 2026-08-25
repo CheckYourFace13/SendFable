@@ -1252,3 +1252,165 @@ model PartnerApplication {
   @@index([status, createdAt])
   @@index([email])
 }
+
+// ─── Customer acquisition outreach (flag-gated; sending off by default) ──────
+
+enum AcquisitionProspectStatus {
+  DISCOVERED
+  QUALIFIED
+  NEEDS_EMAIL
+  QUEUED
+  CONTACTED
+  FOLLOW_UP_1
+  FOLLOW_UP_2
+  OUTREACH_COMPLETE
+  REPLIED
+  INTERESTED
+  SIGNED_UP
+  PAID
+  NOT_INTERESTED
+  UNSUBSCRIBED
+  BOUNCED
+  COMPLAINT
+  SUPPRESSED
+  REJECTED
+  PAUSED
+  INCORRECT
+}
+
+enum AcquisitionMessageStep {
+  INITIAL
+  FOLLOW_UP_1
+  FOLLOW_UP_2
+}
+
+enum AcquisitionMessageStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  DELIVERED
+  BOUNCED
+  COMPLAINED
+  FAILED
+  CANCELLED
+  SKIPPED
+}
+
+/// Small-business prospect for outbound acquisition (B2B).
+model AcquisitionProspect {
+  id                       String                     @id @default(cuid())
+  businessName             String
+  website                  String
+  /// Normalized registrable host (no www)
+  domain                   String
+  city                     String?
+  state                    String?
+  category                 String
+  tier                     Int                        @default(2)
+  sourceUrl                String?
+  sourceKind               String                     @default("seed")
+  discoveredAt             DateTime                   @default(now())
+  contactEmail             String?
+  contactPageUrl           String?
+  phone                    String?
+  /// Only set when verified from a public source — never guessed
+  firstName                String?
+  newsletterPresent        Boolean                    @default(false)
+  eventsPromotionsPresent  Boolean                    @default(false)
+  competitorPlatform       String?
+  activeWebsite            Boolean                    @default(false)
+  fitSignals               Json                       @default("[]")
+  score                    Int                        @default(0)
+  personalizationClaim     String?
+  personalizationSourceUrl String?
+  personalizationEvidence  String?                    @db.Text
+  generatedOpener          String?                    @db.Text
+  status                   AcquisitionProspectStatus  @default(DISCOVERED)
+  suppressionReason        String?
+  ownerApproved            Boolean                    @default(false)
+  lastContactedAt          DateTime?
+  nextFollowUpAt           DateTime?
+  replyClass               String?
+  signedUpUserId           String?
+  signupAt                 DateTime?
+  firstSendAt              DateTime?
+  paidAt                   DateTime?
+  landingPagePath          String?
+  meta                     Json                       @default("{}")
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+
+  messages AcquisitionMessage[]
+  events   AcquisitionEvent[]
+
+  @@unique([domain])
+  @@index([contactEmail])
+  @@index([status, score])
+  @@index([nextFollowUpAt])
+  @@index([discoveredAt])
+  @@index([category])
+}
+
+model AcquisitionMessage {
+  id           String                    @id @default(cuid())
+  prospectId   String
+  step         AcquisitionMessageStep
+  subject      String
+  bodyText     String                    @db.Text
+  status       AcquisitionMessageStatus  @default(DRAFT)
+  scheduledAt  DateTime?
+  sentAt       DateTime?
+  sesMessageId String?
+  deliveredAt  DateTime?
+  bounceAt     DateTime?
+  complaintAt  DateTime?
+  error        String?
+  dryRun       Boolean                   @default(false)
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  prospect AcquisitionProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId, step])
+  @@index([sesMessageId])
+  @@index([status, scheduledAt])
+  @@index([sentAt])
+}
+
+model AcquisitionEvent {
+  id         String   @id @default(cuid())
+  prospectId String?
+  type       String
+  meta       Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  prospect AcquisitionProspect? @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+
+  @@index([type, createdAt])
+  @@index([prospectId, createdAt])
+  @@index([createdAt])
+}
+
+/// Permanent acquisition suppressions (email and/or domain).
+model AcquisitionSuppression {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  domain    String?
+  reason    String
+  source    String   @default("system")
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([domain])
+  @@index([reason, createdAt])
+}
+
+/// Singleton pipeline control row (id = "default").
+model AcquisitionPipelineControl {
+  id                String    @id @default("default")
+  paused            Boolean   @default(false)
+  pauseReason       String?
+  lastDailyReportAt DateTime?
+  lastTickAt        DateTime?
+  updatedAt         DateTime  @updatedAt
+}

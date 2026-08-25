@@ -109,3 +109,16 @@ setInterval(async () => {
     console.error("[worker] schedule poll error", err);
   }
 }, 30_000);
+
+// Acquisition pipeline tick (flag-gated; no-ops when SENDFABLE_ACQUISITION_ENABLED=false)
+setInterval(async () => {
+  try {
+    const { runAcquisitionTick } = await import("@/lib/acquisition/tick");
+    const result = await runAcquisitionTick();
+    if (result.ran && process.env.WORKER_VERBOSE) {
+      console.log("[worker] acquisition tick", result.actions.join(","));
+    }
+  } catch (err) {
+    console.error("[worker] acquisition tick error", err);
+  }
+}, 60_000);

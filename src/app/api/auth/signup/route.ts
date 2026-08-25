@@ -122,5 +122,12 @@ export async function POST(req: Request) {
     /* fail open */
   }
 
+  try {
+    const { matchSignupToAcquisition } = await import("@/lib/acquisition/lifecycle");
+    await matchSignupToAcquisition({ userId: user.id, email });
+  } catch {
+    /* fail open — acquisition matching must not block signup */
+  }
+
   return NextResponse.json({ ok: true });
 }
