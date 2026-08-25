@@ -19,3 +19,7 @@ npm-debug.log*
 .env.*
 !.env.example
 stripe-live-setup-result.json
+
+test-results/
+playwright-report/
+
