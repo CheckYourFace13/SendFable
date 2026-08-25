@@ -13,6 +13,7 @@ declare module "imapflow" {
         subject?: string;
         from?: Array<{ address?: string }>;
         replyTo?: Array<{ address?: string }>;
+        to?: Array<{ address?: string }>;
       };
       source?: Buffer;
     }>;

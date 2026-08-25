@@ -24,7 +24,11 @@ export const ACQUISITION_RAMP_STAGES: Record<number, { newPerDay: number; totalP
 export const ACQUISITION_MAX_STAGE = 4;
 export const ACQUISITION_MIN_BUSINESS_DAYS_PER_STAGE = 3;
 /** Prefer this From when env unset — must still pass SES verification at send time. */
-export const ACQUISITION_PREFERRED_FROM = "Chris at SendFable <chris@sendfable.com>";
+export const ACQUISITION_PREFERRED_FROM = "Casey at SendFable <casey@sendfable.com>";
+/** Outbound address used for acquisition (alias may deliver into support@). */
+export const ACQUISITION_SENDER_EMAIL = "casey@sendfable.com";
+/** IMAP mailbox that receives Casey replies (Hostinger alias target). */
+export const ACQUISITION_IMAP_MAILBOX_HINT = "support@sendfable.com";
 
 function truthy(raw: string | undefined): boolean {
   if (raw === undefined || raw === "") return false;
@@ -108,8 +112,7 @@ export function parseFromEmail(fromHeader: string): string | null {
 export function acquisitionReplyTo(): string {
   return (
     (process.env.SENDFABLE_ACQUISITION_REPLY_TO || "").trim() ||
-    (process.env.OWNER_ALERT_EMAIL || "").trim() ||
-    "chris@sendfable.com"
+    ACQUISITION_SENDER_EMAIL
   );
 }
 
@@ -135,6 +138,15 @@ export function acquisitionImapConfigured(): boolean {
   );
 }
 
+/** TLS/SSL for IMAP — default true for port 993. */
+export function acquisitionImapSecure(): boolean {
+  const raw = (process.env.SENDFABLE_ACQUISITION_IMAP_SECURE || "").trim().toLowerCase();
+  if (raw === "false" || raw === "0" || raw === "no") return false;
+  if (raw === "true" || raw === "1" || raw === "yes") return true;
+  const port = Number(process.env.SENDFABLE_ACQUISITION_IMAP_PORT || 993);
+  return port === 993;
+}
+
 export function reportAcquisitionFlags(): Record<string, string | number | boolean | null> {
   return {
     SENDFABLE_ACQUISITION_ENABLED: acquisitionFlag("SENDFABLE_ACQUISITION_ENABLED"),
@@ -153,5 +165,6 @@ export function reportAcquisitionFlags(): Record<string, string | number | boole
     SENDFABLE_ACQUISITION_FROM: acquisitionFromAddress(),
     SENDFABLE_ACQUISITION_REPLY_TO: acquisitionReplyTo(),
     imapConfigured: acquisitionImapConfigured(),
+    imapMailboxHint: ACQUISITION_IMAP_MAILBOX_HINT,
   };
 }

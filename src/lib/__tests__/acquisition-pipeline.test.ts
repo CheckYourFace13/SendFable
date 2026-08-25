@@ -272,4 +272,37 @@ describe("acquisition autonomy gates", () => {
     assert.equal(classifyReplyBody("Not interested"), "NOT_INTERESTED");
     assert.equal(classifyReplyBody("What does pricing look like?"), "QUESTION");
   });
+
+  it("recognizes Casey acquisition replies inside support@ inbox", async () => {
+    const { isCaseyAcquisitionInbound, extractRecipientEmails } = await import(
+      "@/lib/acquisition/reply-imap"
+    );
+    const raw = [
+      "Delivered-To: support@sendfable.com",
+      "X-Original-To: casey@sendfable.com",
+      "To: Casey at SendFable <casey@sendfable.com>",
+      "From: owner@localbrew.test",
+      "Subject: Re: Quick question about Local Brew",
+      "",
+      "Interested — tell me more",
+    ].join("\r\n");
+    const recipients = extractRecipientEmails(raw);
+    assert.ok(recipients.includes("casey@sendfable.com"));
+    assert.equal(
+      isCaseyAcquisitionInbound({
+        toRecipients: recipients,
+        subject: "Re: Quick question about Local Brew",
+        fromEmail: "owner@localbrew.test",
+      }),
+      true
+    );
+    assert.equal(
+      isCaseyAcquisitionInbound({
+        toRecipients: ["support@sendfable.com"],
+        subject: "Website is down",
+        fromEmail: "stranger@example.com",
+      }),
+      false
+    );
+  });
 });

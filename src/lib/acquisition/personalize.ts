@@ -52,7 +52,7 @@ export function buildInitialEmail(
     "",
     "Would you be open to taking a look?",
     "",
-    "Chris",
+    "Casey",
     "SendFable",
     site,
     "",
@@ -75,7 +75,7 @@ export function buildFollowUp1(
     "",
     `Would it be useful for ${input.businessName}?`,
     "",
-    "Chris",
+    "Casey",
     "",
     `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");
@@ -99,7 +99,7 @@ export function buildFollowUp2(
     `If you ever want a simpler way to email customers, SendFable is at ${site.replace(/^https?:\/\//, "")}.`,
     "",
     "Thanks,",
-    "Chris",
+    "Casey",
     "",
     `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");

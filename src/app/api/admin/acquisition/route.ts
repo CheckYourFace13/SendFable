@@ -16,7 +16,15 @@ export async function GET() {
 }
 
 const postSchema = z.object({
-  action: z.enum(["discover", "queue_drafts", "pause", "resume", "reduce_stage"]),
+  action: z.enum([
+    "discover",
+    "queue_drafts",
+    "pause",
+    "resume",
+    "reduce_stage",
+    "test_imap",
+    "test_sender",
+  ]),
   reason: z.string().max(200).optional(),
   limit: z.number().int().min(1).max(50).optional(),
 });
@@ -43,6 +51,19 @@ export async function POST(req: Request) {
     const { reduceStage } = await import("@/lib/acquisition/ramp");
     const stage = await reduceStage(parsed.data.reason || "owner_reduce");
     return NextResponse.json({ ok: true, stage });
+  }
+  if (parsed.data.action === "test_imap") {
+    const { testAcquisitionImapLogin } = await import("@/lib/acquisition/reply-imap");
+    const result = await testAcquisitionImapLogin();
+    return NextResponse.json(result);
+  }
+  if (parsed.data.action === "test_sender") {
+    const { verifyAcquisitionSender, clearSenderVerificationCache } = await import(
+      "@/lib/acquisition/sender"
+    );
+    clearSenderVerificationCache();
+    const result = await verifyAcquisitionSender();
+    return NextResponse.json(result);
   }
   if (parsed.data.action === "discover") {
     if (!acquisitionEnabled() || !acquisitionDiscoveryEnabled()) {
