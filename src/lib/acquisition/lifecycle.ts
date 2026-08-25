@@ -173,6 +173,17 @@ export async function handleAcquisitionSesEvent(opts: {
       data: { status: "COMPLAINED", complaintAt: new Date() },
     });
     await suppressProspect(msg.prospectId, "COMPLAINT", "complaint");
+    try {
+      const { alertOwnerException } = await import("@/lib/acquisition/notify");
+      const { hardPauseAcquisition } = await import("@/lib/acquisition/ramp");
+      await hardPauseAcquisition("complaint_received");
+      await alertOwnerException(
+        "SendFable acquisition complaint received",
+        `An acquisition outreach complaint was recorded. Pipeline hard-paused.\nMessage: ${msg.id}\nProspect: ${msg.prospectId}`
+      );
+    } catch {
+      /* ignore */
+    }
     return true;
   }
 

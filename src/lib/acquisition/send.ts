@@ -1,7 +1,3 @@
-import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/mailer";
-import { appUrl } from "@/lib/utils";
-import { signToken } from "@/lib/tokens";
 import {
   acquisitionFromAddress,
   acquisitionPhysicalAddress,
@@ -27,7 +23,12 @@ import {
   FOLLOW_UP_2_DAYS,
   isWithinSendWindow,
 } from "@/lib/acquisition/schedule";
+import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import type { AcquisitionMessageStep } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/mailer";
+import { appUrl } from "@/lib/utils";
+import { signToken } from "@/lib/tokens";
 
 async function unsubUrlFor(prospectId: string, email: string): Promise<string> {
   const token = await signToken(
@@ -168,12 +169,13 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
   const window = isWithinSendWindow(new Date(), tz);
   if (!window.ok) return { ok: false, reason: window.reason };
 
-  const gate = await runQualityGate(p, { requireFrom: true });
+  const gate = await runQualityGate(p, { requireFrom: true, autonomous: true });
   if (!gate.ok) return { ok: false, reason: gate.failures.join(",") };
   if (!bodyHasUnsubscribe(msg.bodyText)) return { ok: false, reason: "missing_unsubscribe" };
 
-  const from = acquisitionFromAddress();
-  if (!from) return { ok: false, reason: "from_not_configured" };
+  const sender = await verifyAcquisitionSender();
+  if (!sender.ok) return { ok: false, reason: `sender_not_verified:${sender.detail}` };
+  const from = sender.from;
 
   try {
     const result = await sendEmail({

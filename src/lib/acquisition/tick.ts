@@ -6,27 +6,30 @@ import {
 } from "@/lib/acquisition/flags";
 import { withAcquisitionLock } from "@/lib/acquisition/lock";
 import { runDiscovery } from "@/lib/acquisition/discovery/discover";
+import { autoApproveAndQueue } from "@/lib/acquisition/auto-approve";
 import {
   draftMessageForProspect,
-  queueQualifiedDrafts,
   sendAcquisitionMessage,
 } from "@/lib/acquisition/send";
 import {
-  checkOutreachSafetyAndMaybePause,
   ensurePipelineControl,
   isPipelinePaused,
 } from "@/lib/acquisition/caps";
 import {
+  evaluateAutoRamp,
+  evaluateSafetyPauseAndBackoff,
+} from "@/lib/acquisition/ramp";
+import {
   defaultProspectTimeZone,
   isWithinSendWindow,
 } from "@/lib/acquisition/schedule";
-import { sendDailyAcquisitionReportIfDue } from "@/lib/acquisition/report";
-import { acquisitionOwnerAlertEmail } from "@/lib/acquisition/flags";
-import { sendEmail, platformFrom } from "@/lib/mailer";
+import { pollAcquisitionReplies } from "@/lib/acquisition/reply-imap";
+import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
+import { alertOwnerException } from "@/lib/acquisition/notify";
 
 /**
- * Single tick of the acquisition scheduler. Idempotent via locks.
- * Safe when flags are off (no-ops).
+ * Autonomous acquisition tick — discovery, approve, send, replies, ramp.
+ * No daily owner report noise; exception alerts only.
  */
 export async function runAcquisitionTick(now = new Date()): Promise<{
   ran: boolean;
@@ -45,69 +48,105 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
     });
 
     const hourUtc = now.getUTCHours();
-    // Approximate US daytime windows in UTC — discovery ~12:00 UTC (7am CT),
-    // send window checked per prospect TZ, daily report ~22:00 UTC (5pm CT).
-    if (acquisitionDiscoveryEnabled() && hourUtc === 12) {
-      const disc = await runDiscovery({ limit: 30, enrich: true });
+    const minute = now.getUTCMinutes();
+
+    // Hourly reply poll (when IMAP configured)
+    if (minute < 2) {
+      const replies = await pollAcquisitionReplies();
+      actions.push(`replies:${replies.processed}:${replies.reason || "ok"}`);
+    }
+
+    // Discovery ~12:00–13:00 UTC once per hour bucket
+    if (acquisitionDiscoveryEnabled() && hourUtc === 12 && minute < 5) {
+      const disc = await runDiscovery({ limit: 40, enrich: true });
       actions.push(`discover:${disc.upserted}/${disc.attempted}`);
-      const queued = await queueQualifiedDrafts({
-        limit: 20,
-        dryRun: !acquisitionSendingEnabled(),
-      });
-      actions.push(`queue_drafts:${queued}`);
+    }
+
+    // Auto-approve continuously during business hours UTC 13–21
+    if (acquisitionDiscoveryEnabled() && hourUtc >= 13 && hourUtc <= 21 && minute < 5) {
+      const ap = await autoApproveAndQueue({ limit: 25 });
+      actions.push(`auto_approve:${ap.approved}`);
     }
 
     const paused = await isPipelinePaused();
     if (!paused.paused && acquisitionSendingEnabled()) {
-      await checkOutreachSafetyAndMaybePause();
-      const again = await isPipelinePaused();
-      if (!again.paused) {
-        // Process due follow-ups → draft then send
-        const due = await prisma.acquisitionProspect.findMany({
-          where: {
-            nextFollowUpAt: { lte: now },
-            status: { in: ["CONTACTED", "FOLLOW_UP_1"] },
-            contactEmail: { not: null },
-          },
-          take: 15,
+      const sender = await verifyAcquisitionSender();
+      if (!sender.ok) {
+        actions.push(`sender_blocked:${sender.detail}`);
+        // Alert at most once per day via event dedupe
+        const since = new Date(Date.now() - 20 * 60 * 60 * 1000);
+        const recent = await prisma.acquisitionEvent.findFirst({
+          where: { type: "sender_blocked_alert", createdAt: { gte: since } },
         });
-        for (const p of due) {
-          const step = p.status === "CONTACTED" ? "FOLLOW_UP_1" : "FOLLOW_UP_2";
-          await draftMessageForProspect(p.id, step, { dryRun: false });
+        if (!recent) {
+          await alertOwnerException(
+            "SendFable acquisition cannot send — sender not SES-verified",
+            `Preferred From: ${sender.from}\nDetail: ${sender.detail}\n\nVerify the identity in AWS SES (us-east-1), then sending can resume automatically.`
+          );
+          await prisma.acquisitionEvent.create({
+            data: { type: "sender_blocked_alert", meta: { detail: sender.detail } },
+          });
         }
-
-        const candidates = await prisma.acquisitionMessage.findMany({
-          where: {
-            dryRun: false,
-            status: { in: ["DRAFT", "SCHEDULED"] },
-          },
-          include: { prospect: true },
-          orderBy: { createdAt: "asc" },
-          take: 30,
-        });
-
-        let sent = 0;
-        for (const m of candidates) {
-          const tz = defaultProspectTimeZone(m.prospect.state);
-          if (!isWithinSendWindow(now, tz).ok) continue;
-          const r = await sendAcquisitionMessage(m.id);
-          if (r.ok) {
-            sent++;
-            actions.push(`sent:${m.step}`);
+      } else {
+        const safety = await evaluateSafetyPauseAndBackoff();
+        actions.push(`safety:${safety.ok ? "ok" : "paused"}`);
+        if (safety.ok) {
+          const due = await prisma.acquisitionProspect.findMany({
+            where: {
+              nextFollowUpAt: { lte: now },
+              status: { in: ["CONTACTED", "FOLLOW_UP_1"] },
+              contactEmail: { not: null },
+            },
+            take: 15,
+          });
+          for (const p of due) {
+            const step = p.status === "CONTACTED" ? "FOLLOW_UP_1" : "FOLLOW_UP_2";
+            await draftMessageForProspect(p.id, step, { dryRun: false });
           }
+
+          const candidates = await prisma.acquisitionMessage.findMany({
+            where: {
+              dryRun: false,
+              status: { in: ["DRAFT", "SCHEDULED"] },
+            },
+            include: { prospect: true },
+            orderBy: { createdAt: "asc" },
+            take: 30,
+          });
+
+          let sent = 0;
+          let failStreak = 0;
+          for (const m of candidates) {
+            const tz = defaultProspectTimeZone(m.prospect.state);
+            if (!isWithinSendWindow(now, tz).ok) continue;
+            const r = await sendAcquisitionMessage(m.id);
+            if (r.ok) {
+              sent++;
+              failStreak = 0;
+              actions.push(`sent:${m.step}`);
+            } else if (r.reason === "send_failed") {
+              failStreak++;
+              if (failStreak >= 5) {
+                const { hardPauseAcquisition } = await import("@/lib/acquisition/ramp");
+                await hardPauseAcquisition("repeated_send_failures");
+                actions.push("hard_pause:send_failures");
+                break;
+              }
+            }
+          }
+          if (sent === 0) actions.push("send:none");
         }
-        if (sent === 0) actions.push("send:none");
       }
     } else if (!acquisitionSendingEnabled()) {
       actions.push("sending_off");
     } else {
-      actions.push("paused");
+      actions.push(`paused:${paused.reason || "yes"}`);
     }
 
-    // Hourly-ish safety + daily report near 22:00 UTC
-    if (hourUtc === 22) {
-      const report = await sendDailyAcquisitionReportIfDue();
-      actions.push(report.sent ? "report_sent" : `report_skip:${report.reason}`);
+    // Ramp eval once daily ~22:00 UTC
+    if (hourUtc === 22 && minute < 5) {
+      const ramp = await evaluateAutoRamp(now);
+      actions.push(`ramp:${ramp.reason}:stage${ramp.stage}`);
     }
 
     return actions;
@@ -117,15 +156,4 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
   return { ran: true, actions: lock.result || [] };
 }
 
-export async function alertOwner(subject: string, body: string): Promise<void> {
-  const to = acquisitionOwnerAlertEmail();
-  if (!to) return;
-  await sendEmail({
-    from: platformFrom("SendFable Acquisition"),
-    to,
-    subject,
-    text: body,
-    html: `<pre>${body.replace(/</g, "&lt;")}</pre>`,
-    tags: { kind: "acquisition_alert" },
-  });
-}
+export { alertOwnerException as alertOwner } from "@/lib/acquisition/notify";

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { requirePlatformAdmin } from "@/lib/platform-admin";
 import { getAcquisitionDashboard } from "@/lib/acquisition/report";
 import { runDiscovery } from "@/lib/acquisition/discovery/discover";
-import { queueQualifiedDrafts } from "@/lib/acquisition/send";
 import { pausePipeline, resumePipeline } from "@/lib/acquisition/caps";
 import { acquisitionDiscoveryEnabled, acquisitionEnabled } from "@/lib/acquisition/flags";
 import { z } from "zod";
@@ -17,7 +16,7 @@ export async function GET() {
 }
 
 const postSchema = z.object({
-  action: z.enum(["discover", "queue_drafts", "pause", "resume"]),
+  action: z.enum(["discover", "queue_drafts", "pause", "resume", "reduce_stage"]),
   reason: z.string().max(200).optional(),
   limit: z.number().int().min(1).max(50).optional(),
 });
@@ -40,6 +39,11 @@ export async function POST(req: Request) {
     await resumePipeline();
     return NextResponse.json({ ok: true, paused: false });
   }
+  if (parsed.data.action === "reduce_stage") {
+    const { reduceStage } = await import("@/lib/acquisition/ramp");
+    const stage = await reduceStage(parsed.data.reason || "owner_reduce");
+    return NextResponse.json({ ok: true, stage });
+  }
   if (parsed.data.action === "discover") {
     if (!acquisitionEnabled() || !acquisitionDiscoveryEnabled()) {
       return NextResponse.json(
@@ -54,11 +58,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, summary });
   }
   if (parsed.data.action === "queue_drafts") {
-    const n = await queueQualifiedDrafts({
-      limit: parsed.data.limit ?? 20,
-      dryRun: true,
-    });
-    return NextResponse.json({ ok: true, drafted: n });
+    const { autoApproveAndQueue } = await import("@/lib/acquisition/auto-approve");
+    const n = await autoApproveAndQueue({ limit: parsed.data.limit ?? 20 });
+    return NextResponse.json({ ok: true, ...n });
   }
 
   return NextResponse.json({ error: "Unknown" }, { status: 400 });

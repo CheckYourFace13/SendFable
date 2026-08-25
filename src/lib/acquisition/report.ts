@@ -1,12 +1,21 @@
-import { prisma } from "@/lib/prisma";
+import { ensurePipelineControl, isPipelinePaused } from "@/lib/acquisition/caps";
 import {
+  acquisitionAutoApprove,
+  acquisitionAutoRamp,
   acquisitionFromAddress,
+  acquisitionImapConfigured,
   acquisitionOwnerAlertEmail,
   reportAcquisitionFlags,
 } from "@/lib/acquisition/flags";
 import { sendEmail, platformFrom } from "@/lib/mailer";
-import { ensurePipelineControl, isPipelinePaused } from "@/lib/acquisition/caps";
 import { buildWeeklyOptimization } from "@/lib/acquisition/weekly";
+import {
+  canRampGiven,
+  getStageCaps,
+  ratesOverDays,
+} from "@/lib/acquisition/ramp";
+import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
+import { prisma } from "@/lib/prisma";
 
 function startOfUtcDay(d = new Date()): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -285,15 +294,80 @@ export async function getAcquisitionDashboard() {
   });
 
   const weekly = await buildWeeklyOptimization(7);
+  const stageCaps = await getStageCaps();
+  const rates7 = await ratesOverDays(7);
+  const control = await ensurePipelineControl();
+  const entered = control.stageEnteredAt || control.updatedAt;
+  const bizDays = Math.max(
+    0,
+    Math.floor((Date.now() - entered.getTime()) / (24 * 60 * 60 * 1000))
+  );
+  const rampCheck = canRampGiven({
+    autoRamp: acquisitionAutoRamp(),
+    stage: stageCaps.stage,
+    businessDaysInStage: bizDays,
+    sent: rates7.sent,
+    bounceRate: rates7.bounceRate,
+    complaintRate: rates7.complaintRate,
+    unsubRate: rates7.unsubRate,
+  });
+  const sender = await verifyAcquisitionSender();
+  const allReplies = await prisma.acquisitionEvent.findMany({
+    where: { type: "reply" },
+    select: { meta: true },
+    take: 1000,
+  });
+  const positiveAll = allReplies.filter(
+    (e) => (e.meta as { replyClass?: string })?.replyClass === "POSITIVE"
+  ).length;
+
+  let autonomyStatus = "DISABLED";
+  if (paused.paused) autonomyStatus = control.hardPause ? "HARD_PAUSED" : "PAUSED";
+  else if (flags.SENDFABLE_ACQUISITION_ENABLED) {
+    if (!flags.SENDFABLE_ACQUISITION_SENDING_ENABLED) autonomyStatus = "DISCOVERY_ONLY";
+    else if (!sender.ok) autonomyStatus = "SENDER_BLOCKED";
+    else autonomyStatus = "AUTONOMOUS";
+  }
+
+  const autonomy = {
+    status: autonomyStatus,
+    stage: stageCaps.stage,
+    newPerDay: stageCaps.newPerDay,
+    totalPerDay: stageCaps.totalPerDay,
+    todaySent: today.sent,
+    rates7d: {
+      bouncePct: Math.round(rates7.bounceRate * 10000) / 100,
+      complaintPct: Math.round(rates7.complaintRate * 10000) / 100,
+      unsubPct: Math.round(rates7.unsubRate * 10000) / 100,
+      sent: rates7.sent,
+    },
+    replies: overall.replies,
+    positiveReplies: positiveAll,
+    signups: overall.signups,
+    firstSends: overall.firstSends,
+    paid: overall.paid,
+    nextRamp: rampCheck.eligible
+      ? `eligible → stage ${Math.min(4, stageCaps.stage + 1)}`
+      : rampCheck.reason,
+    pauseReason: paused.reason,
+    hardPause: control.hardPause,
+    senderOk: sender.ok,
+    senderDetail: sender.detail,
+    imapConfigured: acquisitionImapConfigured(),
+    autoApprove: acquisitionAutoApprove(),
+    autoRamp: acquisitionAutoRamp(),
+  };
 
   return {
     flags,
     fromConfigured: Boolean(acquisitionFromAddress()),
     paused: paused.paused,
     pauseReason: paused.reason,
+    hardPause: control.hardPause,
     today,
     overall,
     pipeline,
+    autonomy,
     topIndustries: byCategory.map((r) => ({
       category: r.category,
       count: r._count,

@@ -1,12 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import {
-  acquisitionDailyNewLimit,
-  acquisitionDailyTotalLimit,
-} from "@/lib/acquisition/flags";
-import {
-  BOUNCE_PAUSE_THRESHOLD,
-  COMPLAINT_PAUSE_THRESHOLD,
-} from "@/lib/plans";
+import { acquisitionDailyNewLimit, acquisitionDailyTotalLimit } from "@/lib/acquisition/flags";
+import { getEffectiveRampStage } from "@/lib/acquisition/ramp";
 
 function startOfUtcDay(d = new Date()): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -22,32 +16,49 @@ export async function countSentToday(): Promise<{ total: number; initial: number
     },
     select: { step: true },
   });
-  const total = rows.length;
-  const initial = rows.filter((r) => r.step === "INITIAL").length;
-  return { total, initial };
+  return {
+    total: rows.length,
+    initial: rows.filter((r) => r.step === "INITIAL").length,
+  };
 }
 
 export async function canSendNewToday(): Promise<boolean> {
+  const stage = await getEffectiveRampStage();
   const { total, initial } = await countSentToday();
-  return initial < acquisitionDailyNewLimit() && total < acquisitionDailyTotalLimit();
+  return (
+    initial < acquisitionDailyNewLimit(stage) && total < acquisitionDailyTotalLimit(stage)
+  );
 }
 
 export async function canSendAnyToday(): Promise<boolean> {
+  const stage = await getEffectiveRampStage();
   const { total } = await countSentToday();
-  return total < acquisitionDailyTotalLimit();
+  return total < acquisitionDailyTotalLimit(stage);
 }
 
 export async function ensurePipelineControl() {
   return prisma.acquisitionPipelineControl.upsert({
     where: { id: "default" },
-    create: { id: "default" },
+    create: {
+      id: "default",
+      rampStage: 1,
+      stageEnteredAt: new Date(),
+    },
     update: {},
   });
 }
 
-export async function isPipelinePaused(): Promise<{ paused: boolean; reason?: string | null }> {
+export async function isPipelinePaused(): Promise<{
+  paused: boolean;
+  reason?: string | null;
+  hardPause?: boolean;
+}> {
   const c = await ensurePipelineControl();
-  return { paused: c.paused, reason: c.pauseReason };
+  return {
+    paused: c.paused,
+    reason: c.pauseReason,
+    hardPause: c.hardPause,
+  };
 }
 
 export async function pausePipeline(reason: string): Promise<void> {
@@ -65,50 +76,26 @@ export async function resumePipeline(): Promise<void> {
   await ensurePipelineControl();
   await prisma.acquisitionPipelineControl.update({
     where: { id: "default" },
-    data: { paused: false, pauseReason: null },
+    data: { paused: false, pauseReason: null, hardPause: false },
   });
   await prisma.acquisitionEvent.create({
     data: { type: "pipeline_resumed", meta: {} },
   });
 }
 
-/** Recent live outreach window for safety rates (last 200 non-dry-run sends). */
+/** @deprecated use evaluateSafetyPauseAndBackoff from ramp.ts */
 export async function checkOutreachSafetyAndMaybePause(): Promise<{
   ok: boolean;
   bounceRate: number;
   complaintRate: number;
   paused: boolean;
 }> {
-  const recent = await prisma.acquisitionMessage.findMany({
-    where: {
-      dryRun: false,
-      status: { in: ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] },
-      sentAt: { not: null },
-    },
-    orderBy: { sentAt: "desc" },
-    take: 200,
-    select: { status: true },
-  });
-  if (recent.length < 20) {
-    return { ok: true, bounceRate: 0, complaintRate: 0, paused: false };
-  }
-  const bounced = recent.filter((r) => r.status === "BOUNCED").length;
-  const complained = recent.filter((r) => r.status === "COMPLAINED").length;
-  const bounceRate = bounced / recent.length;
-  const complaintRate = complained / recent.length;
-  let paused = false;
-  if (complaintRate >= COMPLAINT_PAUSE_THRESHOLD || bounceRate >= BOUNCE_PAUSE_THRESHOLD) {
-    await pausePipeline(
-      complaintRate >= COMPLAINT_PAUSE_THRESHOLD
-        ? `complaint_rate_${(complaintRate * 100).toFixed(2)}%`
-        : `bounce_rate_${(bounceRate * 100).toFixed(2)}%`
-    );
-    paused = true;
-  }
+  const { evaluateSafetyPauseAndBackoff } = await import("@/lib/acquisition/ramp");
+  const r = await evaluateSafetyPauseAndBackoff();
   return {
-    ok: !paused,
-    bounceRate,
-    complaintRate,
-    paused,
+    ok: r.ok,
+    bounceRate: r.rates.bounceRate,
+    complaintRate: r.rates.complaintRate,
+    paused: !r.ok,
   };
 }

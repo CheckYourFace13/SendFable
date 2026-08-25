@@ -89,6 +89,38 @@ export default function AdminAcquisitionPage() {
         </Badge>
       </div>
 
+      <section className="rounded-xl border bg-white p-5">
+        <h2 className="font-semibold">Autonomy status</h2>
+        {data.autonomy && (
+          <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              Status: <strong>{data.autonomy.status}</strong>
+            </div>
+            <div>
+              Stage: <strong>{data.autonomy.stage}</strong> ({data.autonomy.newPerDay} new /{" "}
+              {data.autonomy.totalPerDay} total)
+            </div>
+            <div>
+              Today sent: <strong>{data.autonomy.todaySent}</strong>
+            </div>
+            <div>7d bounce: {data.autonomy.rates7d?.bouncePct}%</div>
+            <div>7d complaint: {data.autonomy.rates7d?.complaintPct}%</div>
+            <div>7d unsub: {data.autonomy.rates7d?.unsubPct}%</div>
+            <div>Replies: {data.autonomy.replies}</div>
+            <div>Positive: {data.autonomy.positiveReplies}</div>
+            <div>Signups: {data.autonomy.signups}</div>
+            <div>First sends: {data.autonomy.firstSends}</div>
+            <div>Paid: {data.autonomy.paid}</div>
+            <div>Next ramp: {data.autonomy.nextRamp}</div>
+            <div>Sender: {data.autonomy.senderOk ? "OK" : data.autonomy.senderDetail}</div>
+            <div>IMAP replies: {data.autonomy.imapConfigured ? "configured" : "not configured"}</div>
+            {data.autonomy.pauseReason && (
+              <div className="text-red-700">Pause: {data.autonomy.pauseReason}</div>
+            )}
+          </div>
+        )}
+      </section>
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -104,7 +136,7 @@ export default function AdminAcquisitionPage() {
           className="rounded-lg border px-3 py-1.5 text-sm"
           onClick={() => void action("queue_drafts", { limit: 20 })}
         >
-          {busy === "queue_drafts" ? "…" : "Queue dry-run drafts"}
+          {busy === "queue_drafts" ? "…" : "Auto-approve queue"}
         </button>
         <button
           type="button"
@@ -113,6 +145,14 @@ export default function AdminAcquisitionPage() {
           onClick={() => void action(data.paused ? "resume" : "pause", { reason: "owner" })}
         >
           {data.paused ? "Resume pipeline" : "Pause pipeline"}
+        </button>
+        <button
+          type="button"
+          disabled={!!busy}
+          className="rounded-lg border px-3 py-1.5 text-sm"
+          onClick={() => void action("reduce_stage", { reason: "owner" })}
+        >
+          Reduce stage
         </button>
       </div>
 

@@ -7,7 +7,6 @@
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma";
 import { runDiscovery } from "../src/lib/acquisition/discovery/discover";
-import { queueQualifiedDrafts } from "../src/lib/acquisition/send";
 import { reportAcquisitionFlags } from "../src/lib/acquisition/flags";
 import { ACQUISITION_SEED_CATALOG } from "../src/lib/acquisition/discovery/seed-catalog";
 
@@ -31,8 +30,20 @@ async function main() {
   console.log(`  needsEmail:${summary.needsEmail}`);
   console.log(`  skipped:   ${summary.skipped}`);
 
-  const drafted = await queueQualifiedDrafts({ limit: 30, dryRun: true });
-  console.log(`\nDry-run drafts queued: ${drafted}`);
+  const { autoApproveAndQueue } = await import("../src/lib/acquisition/auto-approve");
+  // Force auto-approve path for dry-run inspection without enabling sending
+  const prevAA = process.env.SENDFABLE_ACQUISITION_AUTO_APPROVE;
+  const prevE = process.env.SENDFABLE_ACQUISITION_ENABLED;
+  process.env.SENDFABLE_ACQUISITION_ENABLED = "true";
+  process.env.SENDFABLE_ACQUISITION_AUTO_APPROVE = "true";
+  const drafted = await autoApproveAndQueue({ limit: 30 });
+  if (prevAA === undefined) delete process.env.SENDFABLE_ACQUISITION_AUTO_APPROVE;
+  else process.env.SENDFABLE_ACQUISITION_AUTO_APPROVE = prevAA;
+  if (prevE === undefined) delete process.env.SENDFABLE_ACQUISITION_ENABLED;
+  else process.env.SENDFABLE_ACQUISITION_ENABLED = prevE;
+
+  console.log(`\nAuto-approve: ${drafted.approved} approved, ${drafted.skipped} skipped`);
+  console.log("Skip reasons:", drafted.reasons);
 
   const liveSent = await prisma.acquisitionMessage.count({
     where: { dryRun: false, status: { in: ["SENT", "DELIVERED"] } },
@@ -40,15 +51,15 @@ async function main() {
   console.log(`Live acquisition emails sent (should be 0): ${liveSent}`);
 
   console.log("\nSample prospects (no emails printed in full):");
-  for (const p of summary.prospects.slice(0, 12)) {
+  for (const p of summary.prospects.slice(0, 15)) {
     const emailBit = p.hasEmail ? "email:yes" : "email:no";
     console.log(
       `  - ${p.businessName} (${p.city || "?"}) · ${p.category} · score ${p.score} · ${p.status} · ${emailBit}`
     );
   }
 
-  if (summary.attempted < 20) {
-    console.error("FAIL: attempted fewer than 20 seeds");
+  if (summary.attempted < 25) {
+    console.error("FAIL: attempted fewer than 25 seeds");
     process.exit(1);
   }
   if (liveSent > 0) {

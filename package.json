@@ -61,6 +61,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
+    "imapflow": "^1.0.184",
     "ioredis": "^5.4.1",
     "jose": "^5.9.4",
     "libphonenumber-js": "^1.13.9",

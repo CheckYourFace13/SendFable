@@ -36,13 +36,26 @@ describe("acquisition flags", () => {
     assert.equal(ACQUISITION_FLAG_DEFAULTS.SENDFABLE_ACQUISITION_ENABLED, false);
     assert.equal(ACQUISITION_FLAG_DEFAULTS.SENDFABLE_ACQUISITION_DISCOVERY_ENABLED, false);
     assert.equal(ACQUISITION_FLAG_DEFAULTS.SENDFABLE_ACQUISITION_SENDING_ENABLED, false);
+    assert.equal(ACQUISITION_FLAG_DEFAULTS.SENDFABLE_ACQUISITION_AUTO_APPROVE, false);
+    assert.equal(ACQUISITION_FLAG_DEFAULTS.SENDFABLE_ACQUISITION_AUTO_RAMP, false);
   });
 
-  it("reads default limits", () => {
-    // Clear overrides for this assertion path when unset
-    assert.equal(acquisitionMinScore() >= 65 || acquisitionMinScore() === Number(process.env.SENDFABLE_ACQUISITION_MIN_SCORE), true);
-    assert.ok(acquisitionDailyNewLimit() >= 1);
-    assert.ok(acquisitionDailyTotalLimit() >= acquisitionDailyNewLimit() || true);
+  it("defaults min score to 70 and stage-1 caps when overrides unset", () => {
+    const prevM = process.env.SENDFABLE_ACQUISITION_MIN_SCORE;
+    const prevN = process.env.SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT;
+    const prevT = process.env.SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT;
+    const prevS = process.env.SENDFABLE_ACQUISITION_RAMP_STAGE;
+    delete process.env.SENDFABLE_ACQUISITION_MIN_SCORE;
+    delete process.env.SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT;
+    delete process.env.SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT;
+    delete process.env.SENDFABLE_ACQUISITION_RAMP_STAGE;
+    assert.equal(acquisitionMinScore(), 70);
+    assert.equal(acquisitionDailyNewLimit(1), 5);
+    assert.equal(acquisitionDailyTotalLimit(1), 10);
+    if (prevM !== undefined) process.env.SENDFABLE_ACQUISITION_MIN_SCORE = prevM;
+    if (prevN !== undefined) process.env.SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT = prevN;
+    if (prevT !== undefined) process.env.SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT = prevT;
+    if (prevS !== undefined) process.env.SENDFABLE_ACQUISITION_RAMP_STAGE = prevS;
   });
 
   it("flag helper respects explicit false", () => {
@@ -189,14 +202,74 @@ describe("acquisition seed catalog", () => {
 });
 
 describe("acquisition daily caps logic (pure)", () => {
-  it("new limit is less than or equal total by default config intent", () => {
+  it("stage caps match autonomy plan", () => {
     const prevN = process.env.SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT;
     const prevT = process.env.SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT;
     delete process.env.SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT;
     delete process.env.SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT;
-    assert.equal(acquisitionDailyNewLimit(), 10);
-    assert.equal(acquisitionDailyTotalLimit(), 25);
+    assert.equal(acquisitionDailyNewLimit(1), 5);
+    assert.equal(acquisitionDailyTotalLimit(1), 10);
+    assert.equal(acquisitionDailyNewLimit(4), 30);
+    assert.equal(acquisitionDailyTotalLimit(4), 50);
     if (prevN !== undefined) process.env.SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT = prevN;
     if (prevT !== undefined) process.env.SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT = prevT;
+  });
+});
+
+describe("acquisition autonomy gates", () => {
+  it("requires email domain to match website", async () => {
+    const { emailMatchesWebsiteDomain, isUsBusinessState } = await import(
+      "@/lib/acquisition/quality-gate"
+    );
+    assert.equal(emailMatchesWebsiteDomain("info@halfacrebeer.com", "halfacrebeer.com"), true);
+    assert.equal(emailMatchesWebsiteDomain("owner@gmail.com", "halfacrebeer.com"), false);
+    assert.equal(isUsBusinessState("IL"), true);
+    assert.equal(isUsBusinessState("Ontario"), false);
+  });
+
+  it("ramp and pause helpers enforce sample and thresholds", async () => {
+    const { canRampGiven, shouldHardPause, shouldReduceStage } = await import(
+      "@/lib/acquisition/ramp"
+    );
+    assert.equal(
+      canRampGiven({
+        autoRamp: true,
+        stage: 1,
+        businessDaysInStage: 3,
+        sent: 40,
+        bounceRate: 0.01,
+        complaintRate: 0,
+        unsubRate: 0.01,
+      }).eligible,
+      true
+    );
+    assert.equal(
+      canRampGiven({
+        autoRamp: true,
+        stage: 1,
+        businessDaysInStage: 1,
+        sent: 40,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 0,
+      }).eligible,
+      false
+    );
+    assert.equal(
+      shouldHardPause({ sent: 50, bounceRate: 0.06, complaintRate: 0, unsubRate: 0 }).pause,
+      true
+    );
+    assert.equal(
+      shouldReduceStage({ sent: 50, bounceRate: 0.03, unsubRate: 0 }),
+      true
+    );
+  });
+
+  it("classifies reply bodies", async () => {
+    const { classifyReplyBody } = await import("@/lib/acquisition/reply-imap");
+    assert.equal(classifyReplyBody("Please unsubscribe me"), "UNSUBSCRIBE");
+    assert.equal(classifyReplyBody("Sounds good — tell me more"), "POSITIVE");
+    assert.equal(classifyReplyBody("Not interested"), "NOT_INTERESTED");
+    assert.equal(classifyReplyBody("What does pricing look like?"), "QUESTION");
   });
 });

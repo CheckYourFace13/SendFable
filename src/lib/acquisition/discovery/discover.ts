@@ -10,7 +10,12 @@ import {
   scoreProspect,
 } from "@/lib/acquisition/scoring";
 import { claimFromEvidence } from "@/lib/acquisition/personalize";
-import { normalizeDomain, normalizeWebsite } from "@/lib/acquisition/normalize";
+import {
+  isLikelyPersonalConsumerEmail,
+  normalizeDomain,
+  normalizeWebsite,
+} from "@/lib/acquisition/normalize";
+import { emailMatchesWebsiteDomain, isUsBusinessState } from "@/lib/acquisition/quality-gate";
 import {
   isExistingCustomerDomainOrEmail,
   isSuppressed,
@@ -114,8 +119,15 @@ async function upsertFromSeed(
   let status: "DISCOVERED" | "QUALIFIED" | "NEEDS_EMAIL" | "REJECTED" = "DISCOVERED";
   if (!activeWebsite && enrich) status = "REJECTED";
   else if (!contactEmail) status = "NEEDS_EMAIL";
-  else if (score >= min && claim) status = "QUALIFIED";
-  else status = "DISCOVERED";
+  else if (
+    score >= min &&
+    claim &&
+    emailMatchesWebsiteDomain(contactEmail, domain) &&
+    !isLikelyPersonalConsumerEmail(contactEmail) &&
+    isUsBusinessState(seed.state)
+  ) {
+    status = "QUALIFIED";
+  } else status = "DISCOVERED";
 
   const fitSignals = Object.entries(signals)
     .filter(([, v]) => v)

@@ -1410,7 +1410,13 @@ model AcquisitionPipelineControl {
   id                String    @id @default("default")
   paused            Boolean   @default(false)
   pauseReason       String?
+  /// Owner/security hard pause — requires owner resume
+  hardPause         Boolean   @default(false)
+  rampStage         Int       @default(1)
+  stageEnteredAt    DateTime?
+  lastRampEvalAt    DateTime?
   lastDailyReportAt DateTime?
   lastTickAt        DateTime?
+  workerFailStreak  Int       @default(0)
   updatedAt         DateTime  @updatedAt
 }

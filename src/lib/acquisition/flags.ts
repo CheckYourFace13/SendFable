@@ -1,15 +1,30 @@
 /**
- * Customer-acquisition outreach flags. All send/discovery paths default OFF.
- * Flip only after dry-run PASS and explicit owner approval.
+ * Autonomous acquisition flags & ramp stage config.
+ * Defaults keep live sending OFF until env explicitly enables.
  */
 
 export const ACQUISITION_FLAG_DEFAULTS = {
   SENDFABLE_ACQUISITION_ENABLED: false,
   SENDFABLE_ACQUISITION_DISCOVERY_ENABLED: false,
   SENDFABLE_ACQUISITION_SENDING_ENABLED: false,
+  SENDFABLE_ACQUISITION_AUTO_APPROVE: false,
+  SENDFABLE_ACQUISITION_AUTO_RAMP: false,
 } as const;
 
 export type AcquisitionBoolFlag = keyof typeof ACQUISITION_FLAG_DEFAULTS;
+
+/** Stage caps: new/day, total/day. Stage 4 is hard ceiling. */
+export const ACQUISITION_RAMP_STAGES: Record<number, { newPerDay: number; totalPerDay: number }> = {
+  1: { newPerDay: 5, totalPerDay: 10 },
+  2: { newPerDay: 10, totalPerDay: 20 },
+  3: { newPerDay: 20, totalPerDay: 35 },
+  4: { newPerDay: 30, totalPerDay: 50 },
+};
+
+export const ACQUISITION_MAX_STAGE = 4;
+export const ACQUISITION_MIN_BUSINESS_DAYS_PER_STAGE = 3;
+/** Prefer this From when env unset — must still pass SES verification at send time. */
+export const ACQUISITION_PREFERRED_FROM = "Chris at SendFable <chris@sendfable.com>";
 
 function truthy(raw: string | undefined): boolean {
   if (raw === undefined || raw === "") return false;
@@ -35,31 +50,59 @@ export function acquisitionSendingEnabled(): boolean {
   return acquisitionEnabled() && acquisitionFlag("SENDFABLE_ACQUISITION_SENDING_ENABLED");
 }
 
+export function acquisitionAutoApprove(): boolean {
+  return acquisitionEnabled() && acquisitionFlag("SENDFABLE_ACQUISITION_AUTO_APPROVE");
+}
+
+export function acquisitionAutoRamp(): boolean {
+  return acquisitionEnabled() && acquisitionFlag("SENDFABLE_ACQUISITION_AUTO_RAMP");
+}
+
 function intEnv(name: string, fallback: number): number {
   const n = Number(process.env[name]);
   if (!Number.isFinite(n) || n < 0) return fallback;
   return Math.floor(n);
 }
 
-/** New initial outreach emails per calendar day (UTC). */
-export function acquisitionDailyNewLimit(): number {
-  return intEnv("SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT", 10);
+export function acquisitionRampStageFromEnv(): number {
+  const s = intEnv("SENDFABLE_ACQUISITION_RAMP_STAGE", 1);
+  return Math.min(ACQUISITION_MAX_STAGE, Math.max(1, s));
 }
 
-/** Total acquisition emails (new + follow-ups) per calendar day (UTC). */
-export function acquisitionDailyTotalLimit(): number {
-  return intEnv("SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT", 25);
+export function capsForStage(stage: number): { newPerDay: number; totalPerDay: number } {
+  const s = Math.min(ACQUISITION_MAX_STAGE, Math.max(1, stage));
+  return ACQUISITION_RAMP_STAGES[s] || ACQUISITION_RAMP_STAGES[1];
 }
 
-/** Minimum prospect score to queue/send. */
+/** Effective new/day: stage caps unless explicit override env set. */
+export function acquisitionDailyNewLimit(stage?: number): number {
+  if (process.env.SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT) {
+    return intEnv("SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT", 5);
+  }
+  return capsForStage(stage ?? acquisitionRampStageFromEnv()).newPerDay;
+}
+
+export function acquisitionDailyTotalLimit(stage?: number): number {
+  if (process.env.SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT) {
+    return intEnv("SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT", 10);
+  }
+  return capsForStage(stage ?? acquisitionRampStageFromEnv()).totalPerDay;
+}
+
+/** Auto-approve / send threshold — default 70. */
 export function acquisitionMinScore(): number {
-  return intEnv("SENDFABLE_ACQUISITION_MIN_SCORE", 65);
+  return intEnv("SENDFABLE_ACQUISITION_MIN_SCORE", 70);
 }
 
-/** Dedicated From for acquisition (must be SES-verified). Empty = not configured. */
-export function acquisitionFromAddress(): string | null {
+export function acquisitionFromAddress(): string {
   const raw = (process.env.SENDFABLE_ACQUISITION_FROM || "").trim();
-  return raw || null;
+  return raw || ACQUISITION_PREFERRED_FROM;
+}
+
+export function parseFromEmail(fromHeader: string): string | null {
+  const m = fromHeader.match(/<([^>]+)>/);
+  const email = (m ? m[1] : fromHeader).trim().toLowerCase();
+  return email.includes("@") ? email : null;
 }
 
 export function acquisitionReplyTo(): string {
@@ -84,6 +127,14 @@ export function acquisitionPhysicalAddress(): string {
   );
 }
 
+export function acquisitionImapConfigured(): boolean {
+  return Boolean(
+    (process.env.SENDFABLE_ACQUISITION_IMAP_HOST || "").trim() &&
+      (process.env.SENDFABLE_ACQUISITION_IMAP_USER || "").trim() &&
+      (process.env.SENDFABLE_ACQUISITION_IMAP_PASS || "").trim()
+  );
+}
+
 export function reportAcquisitionFlags(): Record<string, string | number | boolean | null> {
   return {
     SENDFABLE_ACQUISITION_ENABLED: acquisitionFlag("SENDFABLE_ACQUISITION_ENABLED"),
@@ -93,10 +144,14 @@ export function reportAcquisitionFlags(): Record<string, string | number | boole
     SENDFABLE_ACQUISITION_SENDING_ENABLED: acquisitionFlag(
       "SENDFABLE_ACQUISITION_SENDING_ENABLED"
     ),
+    SENDFABLE_ACQUISITION_AUTO_APPROVE: acquisitionFlag("SENDFABLE_ACQUISITION_AUTO_APPROVE"),
+    SENDFABLE_ACQUISITION_AUTO_RAMP: acquisitionFlag("SENDFABLE_ACQUISITION_AUTO_RAMP"),
+    SENDFABLE_ACQUISITION_RAMP_STAGE: acquisitionRampStageFromEnv(),
     SENDFABLE_ACQUISITION_DAILY_NEW_LIMIT: acquisitionDailyNewLimit(),
     SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT: acquisitionDailyTotalLimit(),
     SENDFABLE_ACQUISITION_MIN_SCORE: acquisitionMinScore(),
     SENDFABLE_ACQUISITION_FROM: acquisitionFromAddress(),
     SENDFABLE_ACQUISITION_REPLY_TO: acquisitionReplyTo(),
+    imapConfigured: acquisitionImapConfigured(),
   };
 }
