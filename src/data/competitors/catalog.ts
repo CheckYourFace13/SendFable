@@ -1,6 +1,6 @@
 import type { CompetitorRecord } from "./types";
 
-const CHECKED = "2026-07-29";
+const CHECKED = "2026-08-24";
 
 function rec(
   partial: Omit<CompetitorRecord, "pricingLastChecked" | "featuresLastChecked" | "reviewStatus"> & {

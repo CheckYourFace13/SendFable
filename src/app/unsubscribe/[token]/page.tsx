@@ -39,6 +39,15 @@ export default function UnsubscribePage() {
             <p className="mt-2 text-sm text-muted-foreground">
               You won&apos;t receive further emails from this list. Sorry to see you go.
             </p>
+            <p className="mt-6 text-xs text-muted-foreground">
+              Email tooling by{" "}
+              <a
+                className="underline-offset-2 hover:underline"
+                href="https://sendfable.com/?utm_source=unsubscribe&utm_medium=confirmation&utm_campaign=product_loop"
+              >
+                SendFable
+              </a>
+            </p>
           </>
         ) : (
           <>

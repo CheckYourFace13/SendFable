@@ -38,6 +38,26 @@ const MARKETING_PAGES: Array<{ route: string; file: string }> = [
     file: path.join(MARKETING_ROOT, "cheap-email-marketing", "page.tsx"),
   },
   {
+    route: "/email-marketing-cost",
+    file: path.join(MARKETING_ROOT, "email-marketing-cost", "page.tsx"),
+  },
+  {
+    route: "/email-newsletter-software",
+    file: path.join(MARKETING_ROOT, "email-newsletter-software", "page.tsx"),
+  },
+  {
+    route: "/small-business-newsletter-software",
+    file: path.join(MARKETING_ROOT, "small-business-newsletter-software", "page.tsx"),
+  },
+  {
+    route: "/mailerlite-alternative",
+    file: path.join(MARKETING_ROOT, "mailerlite-alternative", "page.tsx"),
+  },
+  {
+    route: "/constant-contact-alternative",
+    file: path.join(MARKETING_ROOT, "constant-contact-alternative", "page.tsx"),
+  },
+  {
     route: "/email-marketing-without-gmail",
     file: path.join(MARKETING_ROOT, "email-marketing-without-gmail", "page.tsx"),
   },

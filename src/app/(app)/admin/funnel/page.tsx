@@ -41,10 +41,15 @@ export default function AdminFunnelPage() {
       </p>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {data.stages.map((s: any) => (
+        {data.stages.map((s: any, i: number) => {
+          const prev = i > 0 ? data.stages[i - 1]?.count : null;
+          const rate =
+            prev && prev > 0 ? `${Math.round((s.count / prev) * 100)}% of prior` : null;
+          return (
           <div key={s.id} className="rounded-xl border bg-white p-4">
             <div className="text-xs text-muted-foreground">{s.id}</div>
             <div className="mt-1 text-2xl font-semibold">{s.count}</div>
+            {rate && <div className="text-xs text-muted-foreground">{rate}</div>}
             <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
               {s.events.map((e: any) => (
                 <li key={e.event}>
@@ -53,7 +58,17 @@ export default function AdminFunnelPage() {
               ))}
             </ul>
           </div>
-        ))}
+          );
+        })}
+      </section>
+
+      <section className="rounded-xl border bg-white p-5">
+        <h2 className="font-semibold">Weekly snapshot (same 30-day window)</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Use stage counts above for visitors → signup → first send → checkout → paid. Top paths and
+          UTM campaigns below show where traffic comes from. Footer badge visits appear as UTM{" "}
+          <code className="text-xs">footer_badge</code> / event <code className="text-xs">referral_badge_click</code>.
+        </p>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">

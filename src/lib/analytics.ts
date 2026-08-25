@@ -182,7 +182,7 @@ export function trackEvent(
 }
 
 export const FUNNEL_STAGES: { id: string; events: AnalyticsEvent[] }[] = [
-  { id: "organic_landing", events: ["homepage_view", "pricing_view", "comparison_view", "guide_view"] },
+  { id: "organic_landing", events: ["homepage_view", "pricing_view", "comparison_view", "guide_view", "industry_page_view", "template_page_view", "referral_badge_click"] },
   { id: "signup", events: ["signup_start", "signup_complete"] },
   { id: "workspace", events: ["workspace_created", "onboarding_completed"] },
   { id: "sender_verified", events: ["sender_verified"] },

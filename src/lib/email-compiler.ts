@@ -3,7 +3,7 @@
  * No external paid services — pure string compilation.
  */
 
-import { REFERRAL_BADGE_URL } from "@/lib/referral-badge";
+import { REFERRAL_BADGE_URL, REFERRAL_BADGE_LABEL_HTML } from "@/lib/referral-badge";
 
 export type BlockType =
   | "heading"
@@ -142,7 +142,7 @@ function blockFooter(props: Record<string, unknown>, opts: CompileOptions): stri
   const address = String(props.mailingAddress ?? opts.mailingAddress ?? "").trim();
   const unsub = opts.unsubscribeUrl ?? "{{unsubscribe_url}}";
   const badge = opts.showSendfableBadge
-    ? `<div style="margin-top:12px;"><a href="${attr(REFERRAL_BADGE_URL)}" style="font-size:11px;color:#9ca3af;text-decoration:none;">Sent with <strong style="color:#4F46E5;">Sendfable</strong></a></div>`
+    ? `<div style="margin-top:12px;"><a href="${attr(REFERRAL_BADGE_URL)}" style="font-size:11px;color:#9ca3af;text-decoration:none;">${REFERRAL_BADGE_LABEL_HTML}</a></div>`
     : "";
   const identityLines = [
     businessName ? `<div style="margin-bottom:4px;font-weight:600;color:#6b7280;">${esc(businessName)}</div>` : "",

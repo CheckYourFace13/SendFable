@@ -38,6 +38,31 @@ const LINKS = [
     body: "SPF, DKIM, DMARC, From-rewrite, and a before-you-send checklist.",
   },
   {
+    title: "Email marketing cost",
+    href: "/email-marketing-cost",
+    body: "What a small business actually pays — Free through Pro Plus, with contact and send caps.",
+  },
+  {
+    title: "Constant Contact alternative",
+    href: "/constant-contact-alternative",
+    body: "When SendFable fits vs phone-assisted ESP familiarity.",
+  },
+  {
+    title: "MailerLite alternative",
+    href: "/mailerlite-alternative",
+    body: "Simple campaigns and clear limits without suite sprawl.",
+  },
+  {
+    title: "How often to email customers",
+    href: "/guides/how-often-to-email-customers",
+    body: "Weekly vs monthly cadence for local businesses.",
+  },
+  {
+    title: "Build a list without buying one",
+    href: "/guides/build-email-list-without-buying",
+    body: "Permission-based collection — purchased lists are not allowed.",
+  },
+  {
     title: "Best Mailchimp alternative for small businesses",
     href: "/guides/best-mailchimp-alternative-for-small-businesses",
     body: "What “best” should mean: permission, sender setup, predictable pricing — without CRM force-fit.",

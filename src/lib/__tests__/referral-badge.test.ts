@@ -9,6 +9,7 @@ describe("referral badge attribution", () => {
     assert.equal(url.searchParams.get("utm_source"), "email");
     assert.equal(url.searchParams.get("utm_medium"), "footer_badge");
     assert.equal(url.searchParams.get("utm_campaign"), "free_plan");
+    assert.ok(url.pathname.includes("signup") || url.pathname === "/signup" || url.href.includes("/signup"));
   });
 
   it("detects referral badge landings", () => {

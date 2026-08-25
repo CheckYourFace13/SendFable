@@ -118,7 +118,10 @@ export function MarketingAnalytics() {
   useEffect(() => {
     const params = new URLSearchParams(searchParams?.toString() || "");
     captureUtm(params);
-    if (pathname === "/" && isReferralBadgeLanding(params)) {
+    if (
+      (pathname === "/" || pathname === "/signup") &&
+      isReferralBadgeLanding(params)
+    ) {
       trackClientEvent("referral_badge_click");
     }
     let event = "guide_view";

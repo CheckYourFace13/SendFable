@@ -39,14 +39,27 @@ If you run a restaurant, brewery, or local shop and want a second opinion on you
 **Not for:** Enterprise journeys, deep CRM, or SMS-first marketing (yet).  
 **Proof points:** Managed SES, From-rewrite for strict DMARC, transparent plans, no purchased lists.
 
-## Hashtags (use sparingly)
+## 8 useful posts (edit voice; do not auto-post)
 
-`#smallbusiness` `#emailmarketing` `#restaurantmarketing` `#shoplocal`
+1. **Why I built this** — Tired of paying for email tools with 40 features you never open. SendFable is contacts → write → send. Free for 500 contacts.
+2. **Free plan clarity** — 500 contacts, 1,000 emails/month, no card. Badge on Free sends; remove it when you upgrade.
+3. **Mailchimp complexity** — If you only send weekly specials, you may not need a suite. Comparison: sendfable.com/mailchimp-alternative
+4. **Permission > purchased lists** — Buying emails is how you train spam filters. Guide: /guides/build-email-list-without-buying
+5. **How often to email** — Weekly if useful; monthly if that’s all the news you have. /guides/how-often-to-email-customers
+6. **Deliverability without fear-mongering** — SPF/DKIM/DMARC in plain English: /guides/spf-dkim-dmarc-explained
+7. **Restaurant angle** — Friday specials to people who opted in beat boosting a post into the void. /solutions/restaurants
+8. **Cost** — What email marketing costs a small business: /email-marketing-cost
 
-## UTM for social
+Always UTM: `?utm_source=linkedin&utm_medium=post&utm_campaign=launch_2026`
 
-```
-?utm_source=linkedin|facebook|instagram
-&utm_medium=post|bio
-&utm_campaign=launch_2026
-```
+## Screenshot checklist (owner captures from product)
+
+- Campaign editor (desktop + mobile preview)
+- Send Confidence ready state
+- Template gallery
+- Contacts list
+- Results / analytics
+- Pricing page
+- Onboarding step 1
+
+Store under `docs/screenshots/` when ready. No fake customer metrics in frames.

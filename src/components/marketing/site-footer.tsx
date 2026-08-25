@@ -39,6 +39,8 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/compare", label: "All comparisons" },
       { href: "/compare/mailchimp", label: "vs Mailchimp" },
       { href: "/mailchimp-alternative", label: "Mailchimp alternative" },
+      { href: "/mailerlite-alternative", label: "MailerLite alternative" },
+      { href: "/constant-contact-alternative", label: "Constant Contact alternative" },
       { href: "/compare/mailerlite", label: "vs MailerLite" },
       { href: "/compare/brevo", label: "vs Brevo" },
       { href: "/best-email-marketing-software", label: "Best by use case" },

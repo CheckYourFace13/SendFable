@@ -42,6 +42,12 @@ export default function AboutPage() {
           Local shops, restaurants, breweries, contractors, nonprofits, real-estate teams, and other
           small businesses that need permission-based email without buying an enterprise marketing suite.
         </p>
+        <h2 className="text-xl font-semibold text-ink">Why it exists</h2>
+        <p>
+          SendFable is built by iScream Studio INC because too many small teams were paying for tools
+          they barely used — or fighting interfaces meant for marketing departments. We kept the product
+          narrow on purpose: contacts, campaigns, forms, managed delivery, and clear limits.
+        </p>
         <h2 className="text-xl font-semibold text-ink">Who it is not for</h2>
         <ul className="list-disc space-y-2 pl-5">
           {SENDFABLE_FACTS.limitations.map((l) => (
