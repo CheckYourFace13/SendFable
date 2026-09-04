@@ -5,6 +5,16 @@ import {
   type SeedBusiness,
 } from "@/lib/acquisition/discovery/seed-catalog";
 import { enrichWebsite } from "@/lib/acquisition/discovery/enrich";
+import { marketsForDiscoveryRun } from "@/lib/acquisition/discovery/markets";
+import {
+  ENTERPRISE_DOMAIN_BLOCKLIST,
+  fetchContinuousDiscoveryCandidates,
+  type OsmCandidate,
+} from "@/lib/acquisition/discovery/overpass";
+import {
+  getInventoryHealth,
+  INVENTORY_MIN_QUALIFIED,
+} from "@/lib/acquisition/discovery/inventory";
 import {
   isRepeatCustomerCategory,
   scoreProspect,
@@ -12,6 +22,7 @@ import {
 import { claimFromEvidence } from "@/lib/acquisition/personalize";
 import {
   isLikelyPersonalConsumerEmail,
+  isValidEmailSyntax,
   normalizeDomain,
   normalizeWebsite,
 } from "@/lib/acquisition/normalize";
@@ -20,6 +31,7 @@ import {
   isExistingCustomerDomainOrEmail,
   isSuppressed,
 } from "@/lib/acquisition/suppression";
+import { alertOwnerException } from "@/lib/acquisition/notify";
 
 export type DiscoverOptions = {
   limit?: number;
@@ -27,14 +39,21 @@ export type DiscoverOptions = {
   enrich?: boolean;
   seed?: SeedBusiness[];
   dryRunTag?: boolean;
+  /** Force seed-only (bootstrap/tests). Default: continuous OSM + optional seed fill. */
+  seedOnly?: boolean;
+  /** Inject candidates (tests / dry-run). */
+  candidates?: Array<SeedBusiness & { sourceKind?: string }>;
 };
 
 export type DiscoverSummary = {
   attempted: number;
   upserted: number;
+  newDomains: number;
   qualified: number;
   needsEmail: number;
   skipped: number;
+  source: string;
+  markets: string[];
   prospects: Array<{
     id: string;
     businessName: string;
@@ -44,22 +63,57 @@ export type DiscoverSummary = {
     hasEmail: boolean;
     city?: string | null;
     category: string;
+    sourceKind?: string;
   }>;
 };
 
-async function upsertFromSeed(
-  seed: SeedBusiness,
-  enrich: boolean
-): Promise<{ id: string; status: string; score: number; hasEmail: boolean } | null> {
-  const domain = normalizeDomain(seed.website);
-  if (!domain || domain === "example.com") {
-    return null; // skip placeholder
+const TERMINAL = new Set([
+  "CONTACTED",
+  "FOLLOW_UP_1",
+  "FOLLOW_UP_2",
+  "OUTREACH_COMPLETE",
+  "SIGNED_UP",
+  "PAID",
+  "UNSUBSCRIBED",
+  "BOUNCED",
+  "COMPLAINT",
+  "SUPPRESSED",
+  "NOT_INTERESTED",
+  "QUEUED",
+]);
+
+function landingForCategory(category: string): string {
+  if (category === "brewery" || category === "taproom") return "/solutions/breweries";
+  if (category === "restaurant" || category === "cafe" || category === "bakery") {
+    return "/solutions/restaurants";
   }
+  if (category === "salon") return "/solutions/salons";
+  if (category === "retail") return "/solutions/retail";
+  if (category === "real_estate") return "/solutions/real-estate";
+  if (category === "nonprofit") return "/solutions/nonprofits";
+  if (category === "contractor") return "/solutions/contractors";
+  if (category === "events") return "/solutions/local-events";
+  if (category === "professional") return "/solutions/professional-services";
+  return "/email-marketing-for-small-business";
+}
+
+async function upsertCandidate(
+  seed: SeedBusiness & { sourceKind?: string },
+  enrich: boolean
+): Promise<{
+  id: string;
+  status: string;
+  score: number;
+  hasEmail: boolean;
+  isNew: boolean;
+  changed: boolean;
+} | null> {
+  const domain = normalizeDomain(seed.website);
+  if (!domain || domain === "example.com") return null;
+  if (ENTERPRISE_DOMAIN_BLOCKLIST.has(domain)) return null;
 
   const existing = await prisma.acquisitionProspect.findUnique({ where: { domain } });
-  if (existing && ["CONTACTED", "FOLLOW_UP_1", "FOLLOW_UP_2", "OUTREACH_COMPLETE", "SIGNED_UP", "PAID", "UNSUBSCRIBED", "BOUNCED", "COMPLAINT", "SUPPRESSED", "NOT_INTERESTED"].includes(existing.status)) {
-    return null;
-  }
+  if (existing && TERMINAL.has(existing.status)) return null;
 
   const supp = await isSuppressed(null, domain);
   if (supp.suppressed) return null;
@@ -76,7 +130,7 @@ async function upsertFromSeed(
   if (enrich) {
     const en = await enrichWebsite(normalizeWebsite(seed.website));
     activeWebsite = en.activeWebsite;
-    contactEmail = en.bestEmail;
+    contactEmail = en.bestEmail && isValidEmailSyntax(en.bestEmail) ? en.bestEmail : undefined;
     newsletterPresent = en.newsletterPresent;
     eventsPromotionsPresent = en.eventsPromotionsPresent;
     competitorPlatform = en.competitorPlatform;
@@ -133,6 +187,7 @@ async function upsertFromSeed(
     .filter(([, v]) => v)
     .map(([k]) => k);
 
+  const sourceKind = seed.sourceKind || "seed_catalog";
   const data = {
     businessName: seed.businessName,
     website: normalizeWebsite(seed.website),
@@ -142,7 +197,7 @@ async function upsertFromSeed(
     category: seed.category,
     tier: seed.tier,
     sourceUrl: normalizeWebsite(seed.website),
-    sourceKind: "seed_catalog",
+    sourceKind,
     contactEmail: contactEmail || null,
     contactPageUrl: contactPageUrl || null,
     newsletterPresent,
@@ -156,68 +211,121 @@ async function upsertFromSeed(
     personalizationEvidence: claim?.evidence || null,
     generatedOpener: claim?.claim || null,
     status,
-    landingPagePath:
-      seed.category === "brewery" || seed.category === "taproom"
-        ? "/solutions/breweries"
-        : seed.category === "restaurant" || seed.category === "cafe" || seed.category === "bakery"
-          ? "/solutions/restaurants"
-          : "/pricing",
+    landingPagePath: landingForCategory(seed.category),
   };
+
+  const isNew = !existing;
+  const changed =
+    isNew ||
+    !existing ||
+    existing.status !== status ||
+    existing.score !== score ||
+    existing.contactEmail !== (contactEmail || null);
 
   const row = existing
     ? await prisma.acquisitionProspect.update({ where: { id: existing.id }, data })
     : await prisma.acquisitionProspect.create({ data });
 
-  await prisma.acquisitionEvent.create({
-    data: {
-      prospectId: row.id,
-      type: "discovered",
-      meta: { score, status: row.status, enriched: enrich },
-    },
-  });
+  if (isNew) {
+    await prisma.acquisitionEvent.create({
+      data: {
+        prospectId: row.id,
+        type: "discovered_new",
+        meta: { score, status: row.status, enriched: enrich, sourceKind },
+      },
+    });
+  } else if (changed) {
+    await prisma.acquisitionEvent.create({
+      data: {
+        prospectId: row.id,
+        type: "discovered",
+        meta: { score, status: row.status, enriched: enrich, sourceKind, refreshed: true },
+      },
+    });
+  }
 
   return {
     id: row.id,
     status: row.status,
     score: row.score,
     hasEmail: Boolean(row.contactEmail),
+    isNew,
+    changed,
   };
 }
 
 /**
- * Discover prospects from the seed catalog (+ optional live enrich).
- * Gated by discovery flag unless force=true (dry-run script).
+ * Continuous discovery: OSM Overpass (rotating US markets) + optional seed bootstrap.
+ * Seed catalog alone is NOT sufficient for autonomous growth.
  */
 export async function runDiscovery(
   opts: DiscoverOptions & { force?: boolean } = {}
 ): Promise<DiscoverSummary> {
   if (!opts.force && !acquisitionDiscoveryEnabled()) {
-    return {
-      attempted: 0,
-      upserted: 0,
-      qualified: 0,
-      needsEmail: 0,
-      skipped: 0,
-      prospects: [],
-    };
+    return emptySummary("disabled");
   }
 
-  const seeds = (opts.seed || ACQUISITION_SEED_CATALOG).slice(0, opts.limit ?? 40);
   const enrich = opts.enrich !== false;
+  const limit = opts.limit ?? 40;
+  let source = "continuous";
+  let markets: string[] = [];
+  let batch: Array<SeedBusiness & { sourceKind?: string }> = [];
+
+  if (opts.candidates?.length) {
+    batch = opts.candidates.slice(0, limit);
+    source = "injected";
+  } else if (opts.seedOnly || opts.seed) {
+    batch = (opts.seed || ACQUISITION_SEED_CATALOG).slice(0, limit);
+    source = "seed_catalog";
+  } else {
+    const marketList = marketsForDiscoveryRun(new Date(), 3);
+    markets = marketList.map((m) => `${m.city}, ${m.state}`);
+    try {
+      const { candidates, byMarket } = await fetchContinuousDiscoveryCandidates(marketList, {
+        maxCandidates: Math.max(limit * 3, 60),
+      });
+      // Prefer domains we have never seen
+      const existingDomains = new Set(
+        (
+          await prisma.acquisitionProspect.findMany({
+            select: { domain: true },
+          })
+        ).map((p) => p.domain)
+      );
+      const fresh = candidates.filter((c) => !existingDomains.has(normalizeDomain(c.website)));
+      const pool = [...fresh, ...candidates.filter((c) => existingDomains.has(normalizeDomain(c.website)))];
+      batch = pool.slice(0, limit);
+      source = `osm_overpass:${byMarket.map((m) => `${m.city}:${m.count}`).join(",")}`;
+    } catch (err) {
+      console.warn("[acquisition] continuous discovery failed, falling back to seed", err);
+      // Bootstrap only — fill gaps, do not rely on seed as the sole source long-term
+      batch = ACQUISITION_SEED_CATALOG.slice(0, Math.min(10, limit));
+      source = "seed_fallback";
+    }
+
+    // If continuous returned nothing usable, try seed once as bootstrap
+    if (batch.length === 0) {
+      batch = ACQUISITION_SEED_CATALOG.slice(0, Math.min(15, limit));
+      source = "seed_bootstrap";
+    }
+  }
+
   let upserted = 0;
+  let newDomains = 0;
   let qualified = 0;
   let needsEmail = 0;
   let skipped = 0;
   const prospects: DiscoverSummary["prospects"] = [];
 
-  for (const seed of seeds) {
+  for (const seed of batch) {
     try {
-      const r = await upsertFromSeed(seed, enrich);
+      const r = await upsertCandidate(seed, enrich);
       if (!r) {
         skipped++;
         continue;
       }
       upserted++;
+      if (r.isNew) newDomains++;
       if (r.status === "QUALIFIED") qualified++;
       if (r.status === "NEEDS_EMAIL") needsEmail++;
       const full = await prisma.acquisitionProspect.findUnique({ where: { id: r.id } });
@@ -231,20 +339,97 @@ export async function runDiscovery(
           hasEmail: Boolean(full.contactEmail),
           city: full.city,
           category: full.category,
+          sourceKind: full.sourceKind,
         });
       }
     } catch (err) {
       skipped++;
-      console.warn("[acquisition] discover seed failed", seed.website, err);
+      console.warn("[acquisition] discover candidate failed", seed.website, err);
+    }
+  }
+
+  await prisma.acquisitionEvent.create({
+    data: {
+      type: "discovery_run",
+      meta: {
+        source,
+        markets,
+        attempted: batch.length,
+        upserted,
+        newDomains,
+        qualified,
+        needsEmail,
+        skipped,
+      },
+    },
+  });
+
+  // Owner alert when continuous discovery yields zero NEW domains while inventory starved
+  if (newDomains === 0 && !opts.seedOnly) {
+    const health = await getInventoryHealth();
+    if (health.discoveryStarved || health.status === "STARVED") {
+      const since = new Date(Date.now() - 20 * 60 * 60 * 1000);
+      const recent = await prisma.acquisitionEvent.findFirst({
+        where: { type: "discovery_starved_alert", createdAt: { gte: since } },
+      });
+      if (!recent) {
+        await alertOwnerException(
+          "SendFable acquisition discovery STARVED",
+          `Continuous discovery found 0 new domains.\nSource: ${source}\nMarkets: ${markets.join("; ") || "—"}\nSendable inventory: ${health.sendableInventory}\n\nCheck Overpass connectivity and inventory on /admin/acquisition.`
+        );
+        await prisma.acquisitionEvent.create({
+          data: { type: "discovery_starved_alert", meta: { source, markets } },
+        });
+      }
     }
   }
 
   return {
-    attempted: seeds.length,
+    attempted: batch.length,
     upserted,
+    newDomains,
     qualified,
     needsEmail,
     skipped,
+    source,
+    markets,
     prospects,
   };
 }
+
+function emptySummary(source: string): DiscoverSummary {
+  return {
+    attempted: 0,
+    upserted: 0,
+    newDomains: 0,
+    qualified: 0,
+    needsEmail: 0,
+    skipped: 0,
+    source,
+    markets: [],
+    prospects: [],
+  };
+}
+
+/** Whether the tick should run discovery now (inventory-driven, rate-limited). */
+export async function shouldRunDiscoveryNow(now = new Date()): Promise<boolean> {
+  if (!acquisitionDiscoveryEnabled()) return false;
+
+  // At most one discovery_run per ~50 minutes (protect Overpass + site fetches)
+  const recent = await prisma.acquisitionEvent.findFirst({
+    where: {
+      type: "discovery_run",
+      createdAt: { gte: new Date(now.getTime() - 50 * 60_000) },
+    },
+    select: { id: true },
+  });
+  if (recent) return false;
+
+  const health = await getInventoryHealth(now);
+  if (health.needsDiscovery) return true;
+  // Daily full pass even when healthy (UTC noon bucket)
+  return now.getUTCHours() === 12 && now.getUTCMinutes() < 5;
+}
+
+export { INVENTORY_MIN_QUALIFIED };
+export type { OsmCandidate };

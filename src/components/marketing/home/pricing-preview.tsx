@@ -22,11 +22,11 @@ function planBlurb(plan: Plan): string[] {
   else lines.push("No platform badge");
   if (p.customDomains) lines.push("Custom domain authentication");
   // Team seats exist in code for Pro / Pro Plus but are not advertised publicly
-  // while invites remain constrained.
+  // while invites remain early-launch / SES constrained.
   return lines;
 }
 
-/** Public signup CTA — Checkout remains plan-gated server-side. */
+/** Public signup CTA — product is generally available. */
 const PRICING_CTA_HREF = "/signup";
 
 export function PricingPreview({
@@ -74,7 +74,7 @@ export function PricingPreview({
       {!embedded && (
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-display-md text-ink text-balance">
-            Clear pricing. Start writing free.
+            Clear pricing. Start free.
           </h2>
           <p className="mt-3 text-charcoal/75">
             Limits you can read. Upgrade when your list grows — no mystery add-ons on this page.
@@ -120,13 +120,13 @@ export function PricingPreview({
                 )}
               </div>
               <div className="mt-3 flex flex-wrap items-baseline gap-1">
-                <span className="font-display text-4xl text-ink">{`$${price}`}</span>
+                <span className="font-display text-4xl text-ink">${price}</span>
                 <span className="text-sm text-ink/55">
                   {key === "FREE" ? "" : annual ? "/mo billed yearly" : "/mo"}
                 </span>
               </div>
               {annual && key !== "FREE" && (
-                <p className="mt-1 text-xs text-teal">{`$${p.yearlyPrice}/year`}</p>
+                <p className="mt-1 text-xs text-teal">${p.yearlyPrice}/year</p>
               )}
               <ul className="mt-5 flex-1 space-y-1.5 text-sm text-charcoal/75">
                 {planBlurb(key).map((line) => (

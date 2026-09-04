@@ -6,8 +6,8 @@ export function MarketingCta({
   body = "Start writing free, import opted-in contacts, and send your first campaign. No credit card required.",
   primaryHref = "/signup",
   primaryLabel = "Start writing free",
-  secondaryHref = "/pricing",
-  secondaryLabel = "View pricing",
+  secondaryHref = "/login",
+  secondaryLabel = "Log in",
 }: {
   title?: string;
   body?: string;

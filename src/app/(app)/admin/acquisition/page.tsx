@@ -90,6 +90,51 @@ export default function AdminAcquisitionPage() {
       </div>
 
       <section className="rounded-xl border bg-white p-5">
+        <h2 className="font-semibold">Growth health</h2>
+        {data.growthHealth && (
+          <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              Discovery:{" "}
+              <strong
+                className={
+                  data.growthHealth.discovery === "STARVED" ? "text-red-700" : "text-emerald-700"
+                }
+              >
+                {data.growthHealth.discovery}
+              </strong>
+            </div>
+            <div>
+              Qualified inventory: <strong>{data.growthHealth.qualifiedInventory}</strong>
+            </div>
+            <div>
+              Days of inventory: <strong>{data.growthHealth.daysOfInventory}</strong>
+            </div>
+            <div>Last discovery: {data.growthHealth.lastDiscoveryAt || "—"}</div>
+            <div>Last email sent: {data.growthHealth.lastEmailSentAt || "—"}</div>
+            <div>
+              Sent today: <strong>{data.growthHealth.sentToday}</strong>
+            </div>
+            <div>Sent 7d: {data.growthHealth.sent7d}</div>
+            <div>Delivered 7d: {data.growthHealth.delivered7d}</div>
+            <div>Replies 7d: {data.growthHealth.replies7d}</div>
+            <div>Signups 7d: {data.growthHealth.signups7d}</div>
+            <div>Paid 7d: {data.growthHealth.paid7d}</div>
+            <div>
+              Ramp stage: <strong>{data.growthHealth.rampStage}</strong>
+            </div>
+            <div>Next ramp: {data.growthHealth.nextRamp}</div>
+            <div>Last tick: {data.autonomy?.lastTickAt || "—"}</div>
+          </div>
+        )}
+        {data.growthHealth?.discovery === "STARVED" && (
+          <p className="mt-3 text-sm text-red-800">
+            Inventory is starved — continuous discovery should refill automatically. If this persists
+            48h, check Overpass connectivity and worker logs.
+          </p>
+        )}
+      </section>
+
+      <section className="rounded-xl border bg-white p-5">
         <h2 className="font-semibold">Autonomy status</h2>
         {data.autonomy && (
           <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">

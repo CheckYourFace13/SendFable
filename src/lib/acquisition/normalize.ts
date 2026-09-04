@@ -36,12 +36,52 @@ export function normalizeBusinessKey(name: string, domain: string): string {
   return `${n}|${normalizeDomain(domain)}`;
 }
 
+const FILE_EXT_TLDS = new Set([
+  "css",
+  "js",
+  "mjs",
+  "cjs",
+  "ts",
+  "tsx",
+  "jsx",
+  "map",
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "svg",
+  "webp",
+  "ico",
+  "woff",
+  "woff2",
+  "ttf",
+  "eot",
+  "mp4",
+  "webm",
+  "pdf",
+  "json",
+  "xml",
+  "txt",
+  "html",
+  "htm",
+]);
+
 export function isValidEmailSyntax(email: string): boolean {
   const e = normalizeEmail(email);
-  // Conservative: no consecutive dots, TLD ≥ 2
-  return /^[a-z0-9](?:[a-z0-9._%+-]*[a-z0-9])?@[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i.test(
-    e
-  );
+  // Conservative: no consecutive dots, TLD 2–24 letters, reject asset/file extensions
+  if (
+    !/^[a-z0-9](?:[a-z0-9._%+-]*[a-z0-9])?@[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,24}$/i.test(
+      e
+    )
+  ) {
+    return false;
+  }
+  const tld = e.split(".").pop()?.toLowerCase() || "";
+  if (FILE_EXT_TLDS.has(tld)) return false;
+  // Reject numeric-only host labels like "11.css" style noise
+  const host = e.split("@")[1] || "";
+  if (/^\d+\./.test(host)) return false;
+  return true;
 }
 
 /** Prefer published business mailboxes over generic consumer providers for scoring. */

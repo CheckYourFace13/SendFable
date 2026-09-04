@@ -77,6 +77,8 @@ describe("acquisition normalize + dedupe keys", () => {
     assert.equal(isValidEmailSyntax("info@brew.example"), true);
     assert.equal(isValidEmailSyntax("not-an-email"), false);
     assert.equal(isValidEmailSyntax("a@b.c"), false);
+    assert.equal(isValidEmailSyntax("ecom-swiper@11.css"), false);
+    assert.equal(isValidEmailSyntax("foo@bar.png"), false);
   });
 
   it("detects consumer emails", () => {
@@ -137,6 +139,8 @@ describe("acquisition personalization + compliance", () => {
     assert.match(built.subject, /Test Brewery/);
     assert.match(built.bodyText, new RegExp(String(PLANS.FREE.contactCap)));
     assert.match(built.bodyText, /unsubscribe|no thanks/i);
+    assert.match(built.bodyText, /email-marketing-for-small-business/);
+    assert.match(built.bodyText, /without the complexity/);
     assert.ok(bodyHasUnsubscribe(built.bodyText));
     assert.ok(!openerLooksFabricated(built.opener));
   });
@@ -194,10 +198,66 @@ describe("acquisition enrich analyzer", () => {
   });
 });
 
-describe("acquisition seed catalog", () => {
-  it("has at least 20 real seed businesses", () => {
-    const real = ACQUISITION_SEED_CATALOG.filter((s) => !s.website.includes("example.com"));
-    assert.ok(real.length >= 20);
+describe("acquisition continuous discovery (OSM)", () => {
+  it("parses Overpass elements and filters enterprises", async () => {
+    const { parseOverpassElements, ENTERPRISE_DOMAIN_BLOCKLIST } = await import(
+      "@/lib/acquisition/discovery/overpass"
+    );
+    const { marketsForDiscoveryRun } = await import("@/lib/acquisition/discovery/markets");
+    const markets = marketsForDiscoveryRun(new Date("2026-09-03T12:00:00Z"), 3);
+    assert.equal(markets.length, 3);
+    assert.ok(markets[0]!.state.length === 2);
+
+    const parsed = parseOverpassElements(
+      [
+        {
+          type: "node",
+          id: 10,
+          tags: {
+            name: "Neighborhood Salon",
+            website: "https://neighborhoodsalon.example",
+            shop: "hairdresser",
+          },
+        },
+        {
+          type: "node",
+          id: 11,
+          tags: { name: "REI", website: "https://www.rei.com", shop: "sports" },
+        },
+      ],
+      { city: "Denver", state: "CO", lat: 39.7, lon: -104.9 }
+    );
+    assert.equal(parsed.length, 1);
+    assert.equal(parsed[0]!.category, "salon");
+    assert.equal(ENTERPRISE_DOMAIN_BLOCKLIST.has("rei.com"), true);
+  });
+
+  it("allows ramp after 10 healthy sends (not 30)", async () => {
+    const { canRampGiven } = await import("@/lib/acquisition/ramp");
+    assert.equal(
+      canRampGiven({
+        autoRamp: true,
+        stage: 1,
+        businessDaysInStage: 5,
+        sent: 10,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 0,
+      }).eligible,
+      true
+    );
+    assert.equal(
+      canRampGiven({
+        autoRamp: true,
+        stage: 1,
+        businessDaysInStage: 5,
+        sent: 9,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 0,
+      }).eligible,
+      false
+    );
   });
 });
 

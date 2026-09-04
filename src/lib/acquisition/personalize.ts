@@ -21,7 +21,7 @@ function greeting(firstName?: string | null): string {
 }
 
 function freePlanLine(): string {
-  return `It's free for up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails a month, and I'm looking for a few businesses willing to try it with a real campaign.`;
+  return `It's free for up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month — no credit card.`;
 }
 
 /**
@@ -44,17 +44,17 @@ export function buildInitialEmail(
     "",
     opener,
     "",
-    "I built SendFable for small businesses that want to email customers without dealing with complicated software.",
+    "I built SendFable for small businesses that want email marketing without the complexity and pricing creep of the bigger platforms.",
     "",
     freePlanLine(),
     "",
-    "If you want, I can help get your first campaign set up.",
+    "If useful, I can help you get a first campaign out quickly.",
     "",
     "Would you be open to taking a look?",
     "",
     "Casey",
     "SendFable",
-    site,
+    `${site}/email-marketing-for-small-business?utm_source=casey&utm_medium=email&utm_campaign=acquisition`,
     "",
     `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");

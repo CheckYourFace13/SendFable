@@ -329,6 +329,40 @@ export async function getAcquisitionDashboard() {
     else autonomyStatus = "AUTONOMOUS";
   }
 
+  const { getInventoryHealth } = await import("@/lib/acquisition/discovery/inventory");
+  const inventory = await getInventoryHealth();
+
+  const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const growthHealth = {
+    discovery: inventory.status === "STARVED" || inventory.discoveryStarved ? "STARVED" : "ACTIVE",
+    qualifiedInventory: inventory.sendableInventory,
+    daysOfInventory: inventory.daysOfInventory,
+    lastDiscoveryAt: inventory.lastDiscoveryAt?.toISOString() ?? null,
+    lastEmailSentAt: inventory.lastEmailSentAt?.toISOString() ?? null,
+    sentToday: today.sent,
+    sent7d: rates7.sent,
+    delivered7d: await prisma.acquisitionMessage.count({
+      where: { dryRun: false, deliveredAt: { gte: since7 } },
+    }),
+    replies7d: await prisma.acquisitionEvent.count({
+      where: { type: "reply", createdAt: { gte: since7 } },
+    }),
+    signups7d: await prisma.acquisitionEvent.count({
+      where: { type: "signup_matched", createdAt: { gte: since7 } },
+    }),
+    paid7d: await prisma.acquisitionProspect.count({
+      where: { paidAt: { gte: since7 } },
+    }),
+    rampStage: stageCaps.stage,
+    nextRamp: rampCheck.eligible
+      ? `eligible → stage ${Math.min(4, stageCaps.stage + 1)}`
+      : rampCheck.reason,
+    sourceKinds: await prisma.acquisitionProspect.groupBy({
+      by: ["sourceKind"],
+      _count: true,
+    }),
+  };
+
   const autonomy = {
     status: autonomyStatus,
     stage: stageCaps.stage,
@@ -346,9 +380,7 @@ export async function getAcquisitionDashboard() {
     signups: overall.signups,
     firstSends: overall.firstSends,
     paid: overall.paid,
-    nextRamp: rampCheck.eligible
-      ? `eligible → stage ${Math.min(4, stageCaps.stage + 1)}`
-      : rampCheck.reason,
+    nextRamp: growthHealth.nextRamp,
     pauseReason: paused.reason,
     hardPause: control.hardPause,
     senderOk: sender.ok,
@@ -356,6 +388,7 @@ export async function getAcquisitionDashboard() {
     imapConfigured: acquisitionImapConfigured(),
     autoApprove: acquisitionAutoApprove(),
     autoRamp: acquisitionAutoRamp(),
+    lastTickAt: control.lastTickAt?.toISOString() ?? null,
   };
 
   return {
@@ -368,6 +401,8 @@ export async function getAcquisitionDashboard() {
     overall,
     pipeline,
     autonomy,
+    growthHealth,
+    inventory,
     topIndustries: byCategory.map((r) => ({
       category: r.category,
       count: r._count,

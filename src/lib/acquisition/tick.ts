@@ -5,7 +5,11 @@ import {
   acquisitionSendingEnabled,
 } from "@/lib/acquisition/flags";
 import { withAcquisitionLock } from "@/lib/acquisition/lock";
-import { runDiscovery } from "@/lib/acquisition/discovery/discover";
+import {
+  runDiscovery,
+  shouldRunDiscoveryNow,
+} from "@/lib/acquisition/discovery/discover";
+import { getInventoryHealth } from "@/lib/acquisition/discovery/inventory";
 import { autoApproveAndQueue } from "@/lib/acquisition/auto-approve";
 import {
   draftMessageForProspect,
@@ -56,14 +60,19 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
       actions.push(`replies:${replies.processed}:${replies.reason || "ok"}`);
     }
 
-    // Discovery ~12:00–13:00 UTC once per hour bucket
-    if (acquisitionDiscoveryEnabled() && hourUtc === 12 && minute < 5) {
-      const disc = await runDiscovery({ limit: 40, enrich: true });
-      actions.push(`discover:${disc.upserted}/${disc.attempted}`);
+    // Inventory-driven continuous discovery (also daily noon). Limit enrich load.
+    if (acquisitionDiscoveryEnabled() && minute < 2 && (await shouldRunDiscoveryNow(now))) {
+      const health = await getInventoryHealth(now);
+      const limit = health.status === "STARVED" ? 35 : health.status === "LOW" ? 25 : 20;
+      const disc = await runDiscovery({ limit, enrich: true });
+      actions.push(
+        `discover:${disc.newDomains}new/${disc.upserted}up/${disc.attempted} (${disc.source})`
+      );
+      actions.push(`inventory:${health.sendableInventory}:${health.status}`);
     }
 
-    // Auto-approve continuously during business hours UTC 13–21
-    if (acquisitionDiscoveryEnabled() && hourUtc >= 13 && hourUtc <= 21 && minute < 5) {
+    // Auto-approve frequently when inventory exists or was just discovered
+    if (acquisitionDiscoveryEnabled() && hourUtc >= 12 && hourUtc <= 22 && minute < 5) {
       const ap = await autoApproveAndQueue({ limit: 25 });
       actions.push(`auto_approve:${ap.approved}`);
     }

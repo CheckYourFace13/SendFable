@@ -1,6 +1,6 @@
 /**
- * Acquisition dry-run — discovers/enriches ≥20 seed businesses, drafts messages,
- * NEVER sends live email (SENDING stays off; all drafts marked dryRun).
+ * Acquisition dry-run — continuous OSM discovery + optional seed bootstrap.
+ * NEVER sends live email.
  *
  * Usage: npx tsx scripts/acquisition-dry-run.ts
  */
@@ -9,6 +9,7 @@ import { prisma } from "../src/lib/prisma";
 import { runDiscovery } from "../src/lib/acquisition/discovery/discover";
 import { reportAcquisitionFlags } from "../src/lib/acquisition/flags";
 import { ACQUISITION_SEED_CATALOG } from "../src/lib/acquisition/discovery/seed-catalog";
+import { normalizeDomain } from "../src/lib/acquisition/normalize";
 
 async function main() {
   console.log("=== SendFable Acquisition Dry Run ===\n");
@@ -16,54 +17,41 @@ async function main() {
   console.log(`Seed catalog size: ${ACQUISITION_SEED_CATALOG.length}`);
   console.log("Live sends: FORBIDDEN in this script.\n");
 
-  // force bypasses discovery flag so we can QA offline of production flags
+  const seedDomains = new Set(
+    ACQUISITION_SEED_CATALOG.map((s) => normalizeDomain(s.website)).filter(Boolean)
+  );
+
+  // Continuous discovery (OSM) — force bypasses discovery flag
   const summary = await runDiscovery({
     force: true,
-    enrich: true,
-    limit: 30,
+    enrich: false, // domain inventory proof without hammering every site
+    limit: 40,
   });
 
   console.log("Discovery:");
+  console.log(`  source:    ${summary.source}`);
+  console.log(`  markets:   ${summary.markets.join("; ") || "—"}`);
   console.log(`  attempted: ${summary.attempted}`);
   console.log(`  upserted:  ${summary.upserted}`);
+  console.log(`  newDomains:${summary.newDomains}`);
   console.log(`  qualified: ${summary.qualified}`);
   console.log(`  needsEmail:${summary.needsEmail}`);
   console.log(`  skipped:   ${summary.skipped}`);
 
-  const { autoApproveAndQueue } = await import("../src/lib/acquisition/auto-approve");
-  // Force auto-approve path for dry-run inspection without enabling sending
-  const prevAA = process.env.SENDFABLE_ACQUISITION_AUTO_APPROVE;
-  const prevE = process.env.SENDFABLE_ACQUISITION_ENABLED;
-  process.env.SENDFABLE_ACQUISITION_ENABLED = "true";
-  process.env.SENDFABLE_ACQUISITION_AUTO_APPROVE = "true";
-  const drafted = await autoApproveAndQueue({ limit: 30 });
-  if (prevAA === undefined) delete process.env.SENDFABLE_ACQUISITION_AUTO_APPROVE;
-  else process.env.SENDFABLE_ACQUISITION_AUTO_APPROVE = prevAA;
-  if (prevE === undefined) delete process.env.SENDFABLE_ACQUISITION_ENABLED;
-  else process.env.SENDFABLE_ACQUISITION_ENABLED = prevE;
-
-  console.log(`\nAuto-approve: ${drafted.approved} approved, ${drafted.skipped} skipped`);
-  console.log("Skip reasons:", drafted.reasons);
+  const outside = summary.prospects.filter((p) => !seedDomains.has(p.domain));
+  console.log(`\nProspects outside seed catalog: ${outside.length}`);
+  for (const p of outside.slice(0, 25)) {
+    console.log(`  - ${p.businessName} · ${p.domain} · ${p.city || "?"} · ${p.sourceKind || "?"}`);
+  }
 
   const liveSent = await prisma.acquisitionMessage.count({
     where: { dryRun: false, status: { in: ["SENT", "DELIVERED"] } },
   });
-  console.log(`Live acquisition emails sent (should be 0): ${liveSent}`);
+  console.log(`\nLive acquisition emails sent this run: 0 (script does not send)`);
+  console.log(`Existing live SENT/DELIVERED in DB (informational): ${liveSent}`);
 
-  console.log("\nSample prospects (no emails printed in full):");
-  for (const p of summary.prospects.slice(0, 15)) {
-    const emailBit = p.hasEmail ? "email:yes" : "email:no";
-    console.log(
-      `  - ${p.businessName} (${p.city || "?"}) · ${p.category} · score ${p.score} · ${p.status} · ${emailBit}`
-    );
-  }
-
-  if (summary.attempted < 25) {
-    console.error("FAIL: attempted fewer than 25 seeds");
-    process.exit(1);
-  }
-  if (liveSent > 0) {
-    console.error("FAIL: live sends detected during dry-run");
+  if (summary.attempted < 1 && summary.source.startsWith("osm")) {
+    console.error("FAIL: continuous discovery returned nothing");
     process.exit(1);
   }
 

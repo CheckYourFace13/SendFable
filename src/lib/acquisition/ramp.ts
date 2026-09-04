@@ -24,7 +24,8 @@ const SOFT_UNSUB = 0.02;
 const RAMP_COMPLAINT_MAX = 0.0005;
 const RAMP_BOUNCE_MAX = 0.02;
 const RAMP_UNSUB_MAX = 0.02;
-const MIN_SAMPLE_FOR_RAMP = 30;
+/** Enough volume to judge delivery health before ramping (was 30 — blocked Stage 1 forever when inventory starved). */
+const MIN_SAMPLE_FOR_RAMP = 10;
 const MIN_SAMPLE_FOR_HARD = 20;
 
 async function ensureControl() {

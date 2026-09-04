@@ -115,7 +115,21 @@ setInterval(async () => {
   try {
     const { runAcquisitionTick } = await import("@/lib/acquisition/tick");
     const result = await runAcquisitionTick();
-    if (result.ran && process.env.WORKER_VERBOSE) {
+    if (!result.ran) return;
+    // Always log meaningful actions; skip silent lock_busy / empty no-ops noise
+    const interesting = result.actions.some(
+      (a) =>
+        a.startsWith("discover:") ||
+        a.startsWith("sent:") ||
+        a.startsWith("auto_approve:") ||
+        a.startsWith("ramp:") ||
+        a.startsWith("sender_blocked") ||
+        a.startsWith("hard_pause") ||
+        a.startsWith("replies:") ||
+        a.startsWith("paused:") ||
+        a.startsWith("inventory:")
+    );
+    if (interesting || process.env.WORKER_VERBOSE) {
       console.log("[worker] acquisition tick", result.actions.join(","));
     }
   } catch (err) {
