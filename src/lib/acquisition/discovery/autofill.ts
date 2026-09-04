@@ -133,7 +133,7 @@ export async function runInventoryAutofill(
     if (health.sendableInventory >= health.preferredTarget) break;
     if (!health.canDiscoverMoreToday) break;
 
-    const remaining = health.dailyCeiling - health.attemptsToday - attempted;
+    const remaining = health.dailyCeiling - health.attemptsToday;
     if (remaining <= 0) break;
 
     const limit =

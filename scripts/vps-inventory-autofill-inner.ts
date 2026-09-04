@@ -47,12 +47,12 @@ async function main() {
   let approved = 0;
 
   if (acquisitionDiscoveryEnabled() && before.sendableInventory < before.preferredTarget) {
-    const maxBatches = before.status === "STARVED" ? 3 : 2;
+    const maxBatches = before.status === "STARVED" ? 5 : 4;
     for (let i = 0; i < maxBatches; i++) {
       const health = await getInventoryHealth();
       if (health.sendableInventory >= health.preferredTarget) break;
       if (!health.canDiscoverMoreToday) break;
-      const remaining = health.dailyCeiling - health.attemptsToday - attempted;
+      const remaining = health.dailyCeiling - health.attemptsToday;
       if (remaining <= 0) break;
       const limit =
         health.status === "STARVED"
@@ -62,7 +62,7 @@ async function main() {
         limit,
         enrich: true,
         marketCount: health.status === "STARVED" ? 5 : 4,
-        marketOffset: i + new Date().getUTCHours(),
+        marketOffset: i + new Date().getUTCHours() + Math.floor(Date.now() / 60000),
       });
       batches++;
       attempted += disc.attempted;
