@@ -126,7 +126,9 @@ export async function POST(req: Request) {
           ...(note.complaint?.complainedRecipients
             ?.map((r) => r.emailAddress)
             .filter(Boolean) as string[]),
+          ...(note.delivery?.recipients?.filter(Boolean) as string[]),
         ],
+        tags: note.mail?.tags,
       });
       if (handled) {
         // Still apply global suppression for hard bounce/complaint hygiene

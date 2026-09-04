@@ -197,12 +197,13 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
     });
 
     const now = new Date();
+    const sesId = (result.messageId || "").replace(/^<|>$/g, "").trim();
     await prisma.acquisitionMessage.update({
       where: { id: msg.id },
       data: {
         status: "SENT",
         sentAt: now,
-        sesMessageId: result.messageId,
+        sesMessageId: sesId || result.messageId,
       },
     });
 
@@ -240,11 +241,18 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
       data: {
         prospectId: p.id,
         type: "sent",
-        meta: { step: msg.step, sesMessageId: result.messageId, dev: result.dev },
+        meta: { step: msg.step, sesMessageId: sesId || result.messageId, dev: result.dev },
+      },
+    });
+    await prisma.acquisitionEvent.create({
+      data: {
+        prospectId: p.id,
+        type: "ses_accepted",
+        meta: { step: msg.step, sesMessageId: sesId || result.messageId, messageId: msg.id },
       },
     });
 
-    return { ok: true, messageId: result.messageId };
+    return { ok: true, messageId: sesId || result.messageId };
   } catch (err) {
     await prisma.acquisitionMessage.update({
       where: { id: msg.id },

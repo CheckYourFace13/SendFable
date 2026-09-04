@@ -133,21 +133,75 @@ export async function handleAcquisitionSesEvent(opts: {
   eventType: string;
   bounceType?: string;
   emails?: string[];
+  /** Optional SES mail tags for fallback attribution */
+  tags?: Record<string, string[] | string | undefined>;
 }): Promise<boolean> {
-  const msg = await prisma.acquisitionMessage.findFirst({
+  const normalizedId = opts.sesMessageId.replace(/^<|>$/g, "").trim();
+  let msg = await prisma.acquisitionMessage.findFirst({
     where: {
       OR: [
         { sesMessageId: opts.sesMessageId },
-        { sesMessageId: opts.sesMessageId.replace(/^<|>$/g, "") },
+        { sesMessageId: normalizedId },
+        { sesMessageId: `<${normalizedId}>` },
       ],
     },
   });
+
+  // Fallback: match by acquisition tags (kind + prospectId) when MessageId casing/format drifts
+  if (!msg && opts.tags) {
+    const kind = tagValue(opts.tags, "kind");
+    const prospectId = tagValue(opts.tags, "prospectId");
+    if (kind === "acquisition" && prospectId) {
+      msg = await prisma.acquisitionMessage.findFirst({
+        where: {
+          prospectId: { startsWith: prospectId },
+          dryRun: false,
+          sentAt: { not: null },
+          status: { in: ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] },
+        },
+        orderBy: { sentAt: "desc" },
+      });
+    }
+  }
+
+  // Fallback: recipient email + recent SENT acquisition message
+  if (!msg && opts.emails?.length) {
+    const emails = opts.emails.map((e) => e.toLowerCase());
+    const since = new Date(Date.now() - 14 * 24 * 3600_000);
+    const candidates = await prisma.acquisitionMessage.findMany({
+      where: {
+        dryRun: false,
+        sentAt: { gte: since },
+        status: { in: ["SENT", "DELIVERED"] },
+        prospect: { contactEmail: { in: emails, mode: "insensitive" } },
+      },
+      orderBy: { sentAt: "desc" },
+      take: 5,
+    });
+    msg = candidates[0] || null;
+  }
+
   if (!msg) return false;
+
+  // Backfill canonical MessageId if we matched via fallback
+  if (msg.sesMessageId !== normalizedId && normalizedId) {
+    await prisma.acquisitionMessage.update({
+      where: { id: msg.id },
+      data: { sesMessageId: normalizedId },
+    });
+  }
 
   if (opts.eventType === "Delivery") {
     await prisma.acquisitionMessage.update({
       where: { id: msg.id },
       data: { status: "DELIVERED", deliveredAt: new Date() },
+    });
+    await prisma.acquisitionEvent.create({
+      data: {
+        prospectId: msg.prospectId,
+        type: "delivered",
+        meta: { sesMessageId: normalizedId, messageId: msg.id },
+      },
     });
     return true;
   }
@@ -163,6 +217,13 @@ export async function handleAcquisitionSesEvent(opts: {
         data: { status: "BOUNCED", bounceAt: new Date() },
       });
       await suppressProspect(msg.prospectId, "BOUNCED", "hard_bounce");
+      await prisma.acquisitionEvent.create({
+        data: {
+          prospectId: msg.prospectId,
+          type: "bounced",
+          meta: { sesMessageId: normalizedId, bounceType: opts.bounceType || null },
+        },
+      });
     }
     return true;
   }
@@ -173,6 +234,13 @@ export async function handleAcquisitionSesEvent(opts: {
       data: { status: "COMPLAINED", complaintAt: new Date() },
     });
     await suppressProspect(msg.prospectId, "COMPLAINT", "complaint");
+    await prisma.acquisitionEvent.create({
+      data: {
+        prospectId: msg.prospectId,
+        type: "complained",
+        meta: { sesMessageId: normalizedId },
+      },
+    });
     try {
       const { alertOwnerException } = await import("@/lib/acquisition/notify");
       const { hardPauseAcquisition } = await import("@/lib/acquisition/ramp");
@@ -188,4 +256,13 @@ export async function handleAcquisitionSesEvent(opts: {
   }
 
   return true;
+}
+
+function tagValue(
+  tags: Record<string, string[] | string | undefined>,
+  key: string
+): string | undefined {
+  const raw = tags[key] ?? tags[key.toLowerCase()];
+  if (Array.isArray(raw)) return raw[0];
+  return typeof raw === "string" ? raw : undefined;
 }

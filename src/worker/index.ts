@@ -121,6 +121,7 @@ setInterval(async () => {
       (a) =>
         a.startsWith("discover:") ||
         a.startsWith("sent:") ||
+        a.startsWith("send:") ||
         a.startsWith("auto_approve:") ||
         a.startsWith("ramp:") ||
         a.startsWith("sender_blocked") ||
