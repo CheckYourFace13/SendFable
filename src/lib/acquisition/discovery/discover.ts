@@ -228,7 +228,13 @@ async function upsertCandidate(
 
   const row = existing
     ? await prisma.acquisitionProspect.update({ where: { id: existing.id }, data })
-    : await prisma.acquisitionProspect.create({ data });
+    : await prisma.acquisitionProspect
+        .create({ data })
+        .catch(async (err: { code?: string }) => {
+          if (err?.code !== "P2002") throw err;
+          // Concurrent discovery of same domain — update the winner
+          return prisma.acquisitionProspect.update({ where: { domain }, data });
+        });
 
   if (isNew) {
     await prisma.acquisitionEvent.create({

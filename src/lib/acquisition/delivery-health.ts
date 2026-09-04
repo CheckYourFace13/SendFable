@@ -8,6 +8,12 @@ import { alertOwnerException } from "@/lib/acquisition/notify";
 const DELIVERY_GRACE_MS = 4 * 60 * 60 * 1000;
 
 /**
+ * Only watch Casey sends after the SES attribution fix (97766b1) / Sep 4 2026 window.
+ * Historical SENT rows from before tagging/normalization are ignored.
+ */
+const ATTRIBUTION_WATCH_FROM = new Date("2026-09-04T14:00:00.000Z"); // Fri 9am America/Chicago
+
+/**
  * Find SENT acquisition messages older than 4h with no delivery/bounce/complaint.
  * Alert owner once with exact AWS console path if SNS Delivery may be missing.
  */
@@ -19,7 +25,7 @@ export async function checkAcquisitionDeliveryAttribution(
     where: {
       dryRun: false,
       status: "SENT",
-      sentAt: { lte: cutoff, not: null },
+      sentAt: { lte: cutoff, gte: ATTRIBUTION_WATCH_FROM, not: null },
       deliveredAt: null,
       bounceAt: null,
       complaintAt: null,
@@ -31,7 +37,7 @@ export async function checkAcquisitionDeliveryAttribution(
 
   if (stuck.length === 0) return { pending: 0, alerted: false };
 
-  const since = new Date(Date.now() - 20 * 60 * 60 * 1000);
+  const since = new Date(Date.now() - 20 * 60 * 60_000);
   const recent = await prisma.acquisitionEvent.findFirst({
     where: { type: "delivery_events_missing_alert", createdAt: { gte: since } },
   });

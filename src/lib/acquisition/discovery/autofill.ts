@@ -57,7 +57,8 @@ export async function shouldRunDiscoveryNow(now = new Date()): Promise<boolean> 
  * STARVED runs more markets / larger batches; never lowers score threshold.
  */
 export async function runInventoryAutofill(
-  now = new Date()
+  now = new Date(),
+  opts?: { force?: boolean }
 ): Promise<AutofillResult> {
   const healthBefore = await getInventoryHealth(now);
   if (!acquisitionDiscoveryEnabled()) {
@@ -73,7 +74,7 @@ export async function runInventoryAutofill(
       healthAfter: healthBefore,
     };
   }
-  if (!(await shouldRunDiscoveryNow(now))) {
+  if (!opts?.force && !(await shouldRunDiscoveryNow(now))) {
     return {
       ran: false,
       reason: "cooldown_or_healthy",
@@ -86,6 +87,34 @@ export async function runInventoryAutofill(
       healthAfter: healthBefore,
     };
   }
+  if (opts?.force) {
+    if (healthBefore.sendableInventory >= healthBefore.preferredTarget) {
+      return {
+        ran: false,
+        reason: "healthy",
+        batches: 0,
+        attempted: 0,
+        newDomains: 0,
+        qualified: 0,
+        approved: 0,
+        healthBefore,
+        healthAfter: healthBefore,
+      };
+    }
+    if (!healthBefore.canDiscoverMoreToday) {
+      return {
+        ran: false,
+        reason: "daily_ceiling",
+        batches: 0,
+        attempted: 0,
+        newDomains: 0,
+        qualified: 0,
+        approved: 0,
+        healthBefore,
+        healthAfter: healthBefore,
+      };
+    }
+  }
 
   let batches = 0;
   let attempted = 0;
@@ -93,7 +122,11 @@ export async function runInventoryAutofill(
   let qualified = 0;
   let approved = 0;
   const maxBatches =
-    healthBefore.status === "STARVED" ? 3 : healthBefore.status === "LOW" ? 2 : 1;
+    healthBefore.status === "STARVED"
+      ? 5
+      : healthBefore.status === "LOW"
+        ? 4
+        : 1;
 
   for (let i = 0; i < maxBatches; i++) {
     const health = await getInventoryHealth(now);

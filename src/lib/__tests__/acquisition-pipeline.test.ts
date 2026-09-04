@@ -278,6 +278,15 @@ describe("acquisition continuous discovery (OSM)", () => {
     assert.equal(inventoryTargetForStage(1).preferredTarget, 100);
     assert.equal(inventoryTargetForStage(2).preferredTarget, 140);
   });
+
+  it("raises discovery ceiling when inventory is below preferred target", async () => {
+    const { discoveryCeilingForDeficit, DISCOVERY_DAILY_ATTEMPT_CEILING } = await import(
+      "@/lib/acquisition/discovery/inventory"
+    );
+    assert.equal(discoveryCeilingForDeficit(100, 100), DISCOVERY_DAILY_ATTEMPT_CEILING);
+    assert.ok(discoveryCeilingForDeficit(100, 29) > DISCOVERY_DAILY_ATTEMPT_CEILING);
+    assert.equal(discoveryCeilingForDeficit(100, 0), 600);
+  });
 });
 
 describe("acquisition daily caps logic (pure)", () => {

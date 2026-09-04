@@ -26,8 +26,20 @@ export const INVENTORY_MIN_DAYS = 14;
 /** Alert when no newly QUALIFIED prospects for this long. */
 export const DISCOVERY_STARVED_HOURS = 48;
 
-/** Safe enrich ceiling per UTC day (protects Overpass + site fetches). */
+/** Base safe enrich ceiling per UTC day (protects Overpass + site fetches). */
 export const DISCOVERY_DAILY_ATTEMPT_CEILING = 200;
+/** Hard cap even when inventory is deeply starved. */
+export const DISCOVERY_DAILY_ATTEMPT_HARD_CAP = 600;
+
+/** Scale daily ceiling with inventory deficit (~8 enrich attempts per needed qualified). */
+export function discoveryCeilingForDeficit(
+  preferredTarget: number,
+  sendableInventory: number
+): number {
+  const deficit = Math.max(0, preferredTarget - sendableInventory);
+  const scaled = Math.max(DISCOVERY_DAILY_ATTEMPT_CEILING, deficit * 8);
+  return Math.min(DISCOVERY_DAILY_ATTEMPT_HARD_CAP, scaled);
+}
 
 /** Cooldown between discovery runs (minutes) by inventory status. */
 export const DISCOVERY_COOLDOWN_MINUTES = {
@@ -141,7 +153,7 @@ export async function getInventoryHealth(now = new Date()): Promise<InventoryHea
   });
 
   const attemptsToday = await discoveryAttemptsToday(now);
-  const dailyCeiling = DISCOVERY_DAILY_ATTEMPT_CEILING;
+  const dailyCeiling = discoveryCeilingForDeficit(preferredTarget, inv.sendableInventory);
   const canDiscoverMoreToday = attemptsToday < dailyCeiling;
 
   let status: InventoryStatus = "HEALTHY";
