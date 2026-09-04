@@ -157,22 +157,42 @@ export function claimFromEvidence(ev: {
     };
   }
   if (ev.category === "brewery" || ev.category === "taproom") {
-    if (snippet) {
-      return {
-        claim:
-          "Your site highlights releases or events — a short email is often how taprooms fill the room.",
-        evidence: snippet,
-      };
-    }
+    return {
+      claim: snippet
+        ? "Your site highlights releases or events — a short email is often how taprooms fill the room."
+        : "I came across your brewery site and thought a simple email tool might help you stay in touch with regulars.",
+      evidence: snippet || "public brewery/taproom website with published contact path",
+    };
   }
-  if (ev.category === "restaurant" || ev.category === "cafe" || ev.category === "bakery") {
-    if (snippet) {
-      return {
-        claim:
-          "Your site highlights specials or what's happening — email is a simple way to remind locals.",
-        evidence: snippet,
-      };
-    }
+  if (
+    ev.category === "restaurant" ||
+    ev.category === "cafe" ||
+    ev.category === "bakery"
+  ) {
+    return {
+      claim: snippet
+        ? "Your site highlights specials or what's happening — email is a simple way to remind locals."
+        : "I came across your restaurant site and thought a simple email tool might help you stay in touch with regulars.",
+      evidence: snippet || "public restaurant/cafe website with published contact path",
+    };
+  }
+  if (
+    ev.category === "salon" ||
+    ev.category === "fitness" ||
+    ev.category === "retail" ||
+    ev.category === "pet" ||
+    ev.category === "events" ||
+    ev.category === "contractor" ||
+    ev.category === "real_estate" ||
+    ev.category === "professional" ||
+    ev.category === "nonprofit" ||
+    ev.category === "local_services"
+  ) {
+    return {
+      claim:
+        "I came across your business website and thought a simpler email marketing tool might be useful for staying in touch with customers.",
+      evidence: snippet || "public local-business website with published contact path",
+    };
   }
   return null;
 }

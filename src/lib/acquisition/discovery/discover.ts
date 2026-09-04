@@ -146,12 +146,19 @@ async function upsertCandidate(
     if (es.suppressed) return null;
   }
 
+  const emailOk =
+    Boolean(contactEmail) &&
+    isValidEmailSyntax(contactEmail!) &&
+    emailMatchesWebsiteDomain(contactEmail!, domain) &&
+    !isLikelyPersonalConsumerEmail(contactEmail!);
+
   const signals = {
     newsletterPresent,
     eventsPromotionsPresent,
     repeatCustomerBusiness:
       seed.hints?.repeatCustomer ?? isRepeatCustomerCategory(seed.category),
     publicBusinessEmail: Boolean(contactEmail),
+    domainMatchedBusinessEmail: emailOk,
     activeWebsite,
     competitorEmailTool: Boolean(competitorPlatform),
     clearLocalSmallBusiness: seed.hints?.localSmall ?? seed.tier === 1,
@@ -173,13 +180,7 @@ async function upsertCandidate(
   let status: "DISCOVERED" | "QUALIFIED" | "NEEDS_EMAIL" | "REJECTED" = "DISCOVERED";
   if (!activeWebsite && enrich) status = "REJECTED";
   else if (!contactEmail) status = "NEEDS_EMAIL";
-  else if (
-    score >= min &&
-    claim &&
-    emailMatchesWebsiteDomain(contactEmail, domain) &&
-    !isLikelyPersonalConsumerEmail(contactEmail) &&
-    isUsBusinessState(seed.state)
-  ) {
+  else if (score >= min && claim && emailOk && isUsBusinessState(seed.state)) {
     status = "QUALIFIED";
   } else status = "DISCOVERED";
 

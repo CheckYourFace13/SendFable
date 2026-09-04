@@ -3,6 +3,8 @@ export type ScoreSignals = {
   eventsPromotionsPresent?: boolean;
   repeatCustomerBusiness?: boolean;
   publicBusinessEmail?: boolean;
+  /** Published email whose domain matches the business website (stronger than generic public email). */
+  domainMatchedBusinessEmail?: boolean;
   activeWebsite?: boolean;
   competitorEmailTool?: boolean;
   clearLocalSmallBusiness?: boolean;
@@ -18,6 +20,7 @@ export const SCORE_WEIGHTS = {
   eventsPromotionsPresent: 15,
   repeatCustomerBusiness: 15,
   publicBusinessEmail: 10,
+  domainMatchedBusinessEmail: 25,
   activeWebsite: 10,
   competitorEmailTool: 10,
   clearLocalSmallBusiness: 10,
@@ -35,6 +38,7 @@ export function scoreProspect(signals: ScoreSignals): number {
   if (signals.eventsPromotionsPresent) s += SCORE_WEIGHTS.eventsPromotionsPresent;
   if (signals.repeatCustomerBusiness) s += SCORE_WEIGHTS.repeatCustomerBusiness;
   if (signals.publicBusinessEmail) s += SCORE_WEIGHTS.publicBusinessEmail;
+  if (signals.domainMatchedBusinessEmail) s += SCORE_WEIGHTS.domainMatchedBusinessEmail;
   if (signals.activeWebsite) s += SCORE_WEIGHTS.activeWebsite;
   if (signals.competitorEmailTool) s += SCORE_WEIGHTS.competitorEmailTool;
   if (signals.clearLocalSmallBusiness) s += SCORE_WEIGHTS.clearLocalSmallBusiness;

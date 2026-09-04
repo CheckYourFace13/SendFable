@@ -157,7 +157,14 @@ describe("acquisition personalization + compliance", () => {
   });
 
   it("returns null without solid evidence", () => {
-    assert.equal(claimFromEvidence({ category: "restaurant" }), null);
+    assert.equal(claimFromEvidence({ category: "unknown_widget" }), null);
+  });
+
+  it("allows truthful category openers for local SMBs without inventing tools", () => {
+    const c = claimFromEvidence({ category: "restaurant" });
+    assert.ok(c);
+    assert.match(c!.claim, /came across your restaurant site/i);
+    assert.ok(!/mailchimp|constant contact/i.test(c!.claim));
   });
 });
 
