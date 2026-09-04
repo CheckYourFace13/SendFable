@@ -120,6 +120,7 @@ setInterval(async () => {
     const interesting = result.actions.some(
       (a) =>
         a.startsWith("discover:") ||
+        a.startsWith("autofill:") ||
         a.startsWith("sent:") ||
         a.startsWith("send:") ||
         a.startsWith("auto_approve:") ||
@@ -128,7 +129,8 @@ setInterval(async () => {
         a.startsWith("hard_pause") ||
         a.startsWith("replies:") ||
         a.startsWith("paused:") ||
-        a.startsWith("inventory:")
+        a.startsWith("inventory:") ||
+        a.startsWith("delivery_pending:")
     );
     if (interesting || process.env.WORKER_VERBOSE) {
       console.log("[worker] acquisition tick", result.actions.join(","));

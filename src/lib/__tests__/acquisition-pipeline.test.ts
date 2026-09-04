@@ -266,6 +266,18 @@ describe("acquisition continuous discovery (OSM)", () => {
       false
     );
   });
+
+  it("scales inventory targets by ramp stage", async () => {
+    const { inventoryTargetForStage, INVENTORY_MIN_BY_STAGE } = await import(
+      "@/lib/acquisition/discovery/inventory"
+    );
+    assert.equal(INVENTORY_MIN_BY_STAGE[1], 70);
+    assert.equal(INVENTORY_MIN_BY_STAGE[2], 140);
+    assert.equal(INVENTORY_MIN_BY_STAGE[3], 280);
+    assert.equal(INVENTORY_MIN_BY_STAGE[4], 420);
+    assert.equal(inventoryTargetForStage(1).preferredTarget, 100);
+    assert.equal(inventoryTargetForStage(2).preferredTarget, 140);
+  });
 });
 
 describe("acquisition daily caps logic (pure)", () => {

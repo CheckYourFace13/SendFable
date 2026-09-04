@@ -56,8 +56,15 @@ export function marketForUtcDay(now = new Date(), offset = 0): DiscoveryMarket {
 }
 
 /** Several markets for one discovery run (primary + neighbors). */
-export function marketsForDiscoveryRun(now = new Date(), count = 3): DiscoveryMarket[] {
+export function marketsForDiscoveryRun(
+  now = new Date(),
+  count = 3,
+  offset = 0
+): DiscoveryMarket[] {
   const out: DiscoveryMarket[] = [];
-  for (let i = 0; i < count; i++) out.push(marketForUtcDay(now, i));
+  // Hour + offset rotates geography within the same day so autofill batches don't
+  // hammer the same city repeatedly.
+  const hourBump = now.getUTCHours() + Math.floor(offset);
+  for (let i = 0; i < count; i++) out.push(marketForUtcDay(now, hourBump + i));
   return out;
 }

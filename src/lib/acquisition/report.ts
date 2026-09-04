@@ -334,11 +334,18 @@ export async function getAcquisitionDashboard() {
 
   const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const growthHealth = {
-    discovery: inventory.status === "STARVED" || inventory.discoveryStarved ? "STARVED" : "ACTIVE",
+    discovery: inventory.status,
+    inventoryStatus: inventory.status,
     qualifiedInventory: inventory.sendableInventory,
+    qualifiedUnsent: inventory.qualifiedUnsent,
+    queuedUnsent: inventory.queuedUnsent,
     daysOfInventory: inventory.daysOfInventory,
+    targetMin: inventory.targetMin,
+    preferredTarget: inventory.preferredTarget,
     lastDiscoveryAt: inventory.lastDiscoveryAt?.toISOString() ?? null,
     lastEmailSentAt: inventory.lastEmailSentAt?.toISOString() ?? null,
+    attemptsToday: inventory.attemptsToday,
+    dailyCeiling: inventory.dailyCeiling,
     sentToday: today.sent,
     sent7d: rates7.sent,
     delivered7d: await prisma.acquisitionMessage.count({

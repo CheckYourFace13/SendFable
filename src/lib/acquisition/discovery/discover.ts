@@ -13,7 +13,6 @@ import {
 } from "@/lib/acquisition/discovery/overpass";
 import {
   getInventoryHealth,
-  INVENTORY_MIN_QUALIFIED,
 } from "@/lib/acquisition/discovery/inventory";
 import {
   isRepeatCustomerCategory,
@@ -43,6 +42,10 @@ export type DiscoverOptions = {
   seedOnly?: boolean;
   /** Inject candidates (tests / dry-run). */
   candidates?: Array<SeedBusiness & { sourceKind?: string }>;
+  /** How many rotating markets to query (default 3). */
+  marketCount?: number;
+  /** Extra market rotation offset (hour/batch) for geographic spread. */
+  marketOffset?: number;
 };
 
 export type DiscoverSummary = {
@@ -279,7 +282,11 @@ export async function runDiscovery(
     batch = (opts.seed || ACQUISITION_SEED_CATALOG).slice(0, limit);
     source = "seed_catalog";
   } else {
-    const marketList = marketsForDiscoveryRun(new Date(), 3);
+    const marketList = marketsForDiscoveryRun(
+      new Date(),
+      opts.marketCount ?? 3,
+      opts.marketOffset ?? 0
+    );
     markets = marketList.map((m) => `${m.city}, ${m.state}`);
     try {
       const { candidates, byMarket } = await fetchContinuousDiscoveryCandidates(marketList, {
@@ -366,9 +373,10 @@ export async function runDiscovery(
   });
 
   // Owner alert when continuous discovery yields zero NEW domains while inventory starved
+  // (48h qualified drought is handled by autofill.maybeAlertDiscoveryStarved)
   if (newDomains === 0 && !opts.seedOnly) {
     const health = await getInventoryHealth();
-    if (health.discoveryStarved || health.status === "STARVED") {
+    if (health.status === "STARVED" && health.sendableInventory === 0) {
       const since = new Date(Date.now() - 20 * 60 * 60 * 1000);
       const recent = await prisma.acquisitionEvent.findFirst({
         where: { type: "discovery_starved_alert", createdAt: { gte: since } },
@@ -412,25 +420,6 @@ function emptySummary(source: string): DiscoverSummary {
   };
 }
 
-/** Whether the tick should run discovery now (inventory-driven, rate-limited). */
-export async function shouldRunDiscoveryNow(now = new Date()): Promise<boolean> {
-  if (!acquisitionDiscoveryEnabled()) return false;
-
-  // At most one discovery_run per ~50 minutes (protect Overpass + site fetches)
-  const recent = await prisma.acquisitionEvent.findFirst({
-    where: {
-      type: "discovery_run",
-      createdAt: { gte: new Date(now.getTime() - 50 * 60_000) },
-    },
-    select: { id: true },
-  });
-  if (recent) return false;
-
-  const health = await getInventoryHealth(now);
-  if (health.needsDiscovery) return true;
-  // Daily full pass even when healthy (UTC noon bucket)
-  return now.getUTCHours() === 12 && now.getUTCMinutes() < 5;
-}
-
-export { INVENTORY_MIN_QUALIFIED };
+export { INVENTORY_MIN_QUALIFIED } from "@/lib/acquisition/discovery/inventory";
+export { shouldRunDiscoveryNow, runInventoryAutofill } from "@/lib/acquisition/discovery/autofill";
 export type { OsmCandidate };

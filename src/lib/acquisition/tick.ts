@@ -5,10 +5,7 @@ import {
   acquisitionSendingEnabled,
 } from "@/lib/acquisition/flags";
 import { withAcquisitionLock } from "@/lib/acquisition/lock";
-import {
-  runDiscovery,
-  shouldRunDiscoveryNow,
-} from "@/lib/acquisition/discovery/discover";
+import { runInventoryAutofill } from "@/lib/acquisition/discovery/autofill";
 import { getInventoryHealth } from "@/lib/acquisition/discovery/inventory";
 import { autoApproveAndQueue } from "@/lib/acquisition/auto-approve";
 import {
@@ -30,10 +27,11 @@ import {
 import { pollAcquisitionReplies } from "@/lib/acquisition/reply-imap";
 import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { alertOwnerException } from "@/lib/acquisition/notify";
+import { checkAcquisitionDeliveryAttribution } from "@/lib/acquisition/delivery-health";
 
 /**
- * Autonomous acquisition tick — discovery, approve, send, replies, ramp.
- * No daily owner report noise; exception alerts only.
+ * Autonomous acquisition tick — discovery autofill, approve, send, replies, ramp.
+ * Inventory STARVED prioritizes discovery; no daily owner noise.
  */
 export async function runAcquisitionTick(now = new Date()): Promise<{
   ran: boolean;
@@ -54,25 +52,42 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
     const hourUtc = now.getUTCHours();
     const minute = now.getUTCMinutes();
 
+    // Inventory first when STARVED/LOW — do not wait for once-daily noon window
+    if (acquisitionDiscoveryEnabled()) {
+      const health = await getInventoryHealth(now);
+      const prioritize =
+        health.status === "STARVED" ||
+        (health.status === "LOW" && minute < 5) ||
+        (minute < 2 && health.needsDiscovery);
+
+      if (prioritize) {
+        const fill = await runInventoryAutofill(now);
+        if (fill.ran) {
+          actions.push(
+            `autofill:${fill.batches}b/${fill.newDomains}new/${fill.qualified}q/${fill.approved}ap`
+          );
+        }
+        const after = fill.healthAfter || health;
+        actions.push(
+          `inventory:${after.sendableInventory}:${after.status}:${after.daysOfInventory}d`
+        );
+      }
+    }
+
     // Hourly reply poll (when IMAP configured)
     if (minute < 2) {
       const replies = await pollAcquisitionReplies();
       actions.push(`replies:${replies.processed}:${replies.reason || "ok"}`);
     }
 
-    // Inventory-driven continuous discovery (also daily noon). Limit enrich load.
-    if (acquisitionDiscoveryEnabled() && minute < 2 && (await shouldRunDiscoveryNow(now))) {
-      const health = await getInventoryHealth(now);
-      const limit = health.status === "STARVED" ? 35 : health.status === "LOW" ? 25 : 20;
-      const disc = await runDiscovery({ limit, enrich: true });
-      actions.push(
-        `discover:${disc.newDomains}new/${disc.upserted}up/${disc.attempted} (${disc.source})`
-      );
-      actions.push(`inventory:${health.sendableInventory}:${health.status}`);
+    // Delivery attribution watch (after Casey sends)
+    if (minute === 15 || minute === 45) {
+      const del = await checkAcquisitionDeliveryAttribution(now);
+      if (del.pending > 0) actions.push(`delivery_pending:${del.pending}`);
     }
 
-    // Auto-approve frequently when inventory exists or was just discovered
-    if (acquisitionDiscoveryEnabled() && hourUtc >= 12 && hourUtc <= 22 && minute < 5) {
+    // Auto-approve throughout the hour when discovery is on
+    if (acquisitionDiscoveryEnabled() && minute < 5) {
       const ap = await autoApproveAndQueue({ limit: 25 });
       actions.push(`auto_approve:${ap.approved}`);
     }
@@ -82,7 +97,6 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
       const sender = await verifyAcquisitionSender();
       if (!sender.ok) {
         actions.push(`sender_blocked:${sender.detail}`);
-        // Alert at most once per day via event dedupe
         const since = new Date(Date.now() - 20 * 60 * 60 * 1000);
         const recent = await prisma.acquisitionEvent.findFirst({
           where: { type: "sender_blocked_alert", createdAt: { gte: since } },

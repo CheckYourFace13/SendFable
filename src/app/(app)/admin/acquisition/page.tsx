@@ -94,21 +94,35 @@ export default function AdminAcquisitionPage() {
         {data.growthHealth && (
           <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              Discovery:{" "}
+              Inventory:{" "}
               <strong
                 className={
-                  data.growthHealth.discovery === "STARVED" ? "text-red-700" : "text-emerald-700"
+                  data.growthHealth.inventoryStatus === "STARVED" ||
+                  data.growthHealth.discovery === "STARVED"
+                    ? "text-red-700"
+                    : data.growthHealth.inventoryStatus === "LOW"
+                      ? "text-amber-700"
+                      : "text-emerald-700"
                 }
               >
-                {data.growthHealth.discovery}
+                {data.growthHealth.inventoryStatus || data.growthHealth.discovery}
               </strong>
             </div>
             <div>
               Qualified inventory: <strong>{data.growthHealth.qualifiedInventory}</strong>
+              {data.growthHealth.preferredTarget
+                ? ` / ${data.growthHealth.preferredTarget} target`
+                : ""}
             </div>
             <div>
               Days of inventory: <strong>{data.growthHealth.daysOfInventory}</strong>
             </div>
+            {typeof data.growthHealth.attemptsToday === "number" && (
+              <div>
+                Discovery today: {data.growthHealth.attemptsToday}/
+                {data.growthHealth.dailyCeiling}
+              </div>
+            )}
             <div>Last discovery: {data.growthHealth.lastDiscoveryAt || "—"}</div>
             <div>Last email sent: {data.growthHealth.lastEmailSentAt || "—"}</div>
             <div>
@@ -126,10 +140,10 @@ export default function AdminAcquisitionPage() {
             <div>Last tick: {data.autonomy?.lastTickAt || "—"}</div>
           </div>
         )}
-        {data.growthHealth?.discovery === "STARVED" && (
+        {(data.growthHealth?.inventoryStatus === "STARVED" ||
+          data.growthHealth?.discovery === "STARVED") && (
           <p className="mt-3 text-sm text-red-800">
-            Inventory is starved — continuous discovery should refill automatically. If this persists
-            48h, check Overpass connectivity and worker logs.
+            Inventory is STARVED — continuous discovery autofill is prioritized automatically.
           </p>
         )}
       </section>
