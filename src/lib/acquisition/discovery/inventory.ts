@@ -31,14 +31,20 @@ export const DISCOVERY_DAILY_ATTEMPT_CEILING = 200;
 /** Hard cap even when inventory is deeply starved. */
 export const DISCOVERY_DAILY_ATTEMPT_HARD_CAP = 600;
 
-/** Scale daily ceiling with inventory deficit (~8 enrich attempts per needed qualified). */
+/** Scale daily ceiling while inventory is below preferred (stable during a fill day). */
 export function discoveryCeilingForDeficit(
   preferredTarget: number,
   sendableInventory: number
 ): number {
-  const deficit = Math.max(0, preferredTarget - sendableInventory);
-  const scaled = Math.max(DISCOVERY_DAILY_ATTEMPT_CEILING, deficit * 8);
-  return Math.min(DISCOVERY_DAILY_ATTEMPT_HARD_CAP, scaled);
+  if (sendableInventory >= preferredTarget) {
+    return DISCOVERY_DAILY_ATTEMPT_CEILING;
+  }
+  // Keep a stable high ceiling for the whole fill day so mid-progress
+  // doesn't shrink the budget as sendable inventory rises.
+  return Math.min(
+    DISCOVERY_DAILY_ATTEMPT_HARD_CAP,
+    Math.max(DISCOVERY_DAILY_ATTEMPT_CEILING, preferredTarget * 8)
+  );
 }
 
 /** Cooldown between discovery runs (minutes) by inventory status. */

@@ -284,7 +284,8 @@ describe("acquisition continuous discovery (OSM)", () => {
       "@/lib/acquisition/discovery/inventory"
     );
     assert.equal(discoveryCeilingForDeficit(100, 100), DISCOVERY_DAILY_ATTEMPT_CEILING);
-    assert.ok(discoveryCeilingForDeficit(100, 29) > DISCOVERY_DAILY_ATTEMPT_CEILING);
+    assert.equal(discoveryCeilingForDeficit(100, 29), 600);
+    assert.equal(discoveryCeilingForDeficit(100, 56), 600);
     assert.equal(discoveryCeilingForDeficit(100, 0), 600);
   });
 });
