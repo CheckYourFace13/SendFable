@@ -17,6 +17,9 @@ export const metadata = marketingPageMeta({
   path: "/email-marketing-for-small-business",
 });
 
+/** Needs request-time searchParams + optional cohort fix flags */
+export const dynamic = "force-dynamic";
+
 const FAQS = [
   {
     q: "What is the simplest email marketing workflow for a small business?",
