@@ -252,9 +252,12 @@ export async function getConversionOptimizationSnapshot(): Promise<ConversionOpt
   const last25 = ratesFromMessages(last25msgs);
   const segments = scoreSegments(last25msgs);
   const usable = segments.filter((s) => s.delivered >= 3 && s.score >= 0);
-  const bestSegment = usable[0] || segments[0] || null;
+  const bestSegment =
+    totalDeliveredInitial >= COHORT_SIZE ? usable[0] || null : null;
   const worstSegment =
-    usable.length > 1 ? usable[usable.length - 1]! : segments[segments.length - 1] || null;
+    totalDeliveredInitial >= COHORT_SIZE && usable.length > 1
+      ? usable[usable.length - 1]!
+      : null;
 
   let status: ConversionOptimizationSnapshot["status"] = "WAITING_FOR_COHORT";
   if (totalDeliveredInitial >= COHORT_SIZE) {
