@@ -43,12 +43,11 @@ export async function GET(req: Request) {
     );
     const flags = await getConversionFixFlags();
     if (flags.fixOnboardingReturn) {
-      const membership = await prisma.membership.findFirst({
-        where: { workspaceId: identity.workspaceId },
-        include: { user: { select: { onboardingCompletedAt: true } } },
-        orderBy: { createdAt: "asc" },
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: identity.workspaceId },
+        select: { onboardingCompletedAt: true },
       });
-      if (membership && !membership.user.onboardingCompletedAt) {
+      if (workspace && !workspace.onboardingCompletedAt) {
         redirectTo = "/settings/senders?verified=1&from=onboarding";
       }
     }
