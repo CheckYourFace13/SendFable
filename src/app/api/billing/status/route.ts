@@ -17,5 +17,15 @@ export async function GET() {
       emails: owner.monthlySendCount,
       contacts,
     },
+    showNoBadgeValue: await (async () => {
+      try {
+        const { getConversionFixFlags } = await import(
+          "@/lib/acquisition/conversion-optimize"
+        );
+        return (await getConversionFixFlags()).fixBillingBadgeValue;
+      } catch {
+        return false;
+      }
+    })(),
   });
 }

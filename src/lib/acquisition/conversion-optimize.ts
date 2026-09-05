@@ -1,18 +1,21 @@
 /**
  * Rolling-cohort conversion optimization for Casey acquisition.
- * Evaluates only after ≥25 delivered INITIAL emails; applies small controlled changes.
+ * Holds all strategy/copy changes until ≥25 delivered INITIAL emails.
+ * Then: report → diagnose ONE bottleneck (A–D) → apply ONE change.
  */
 
 import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_COPY_VERSION,
   isCopyVersionId,
-  nextCopyVersion,
   type CopyVersionId,
 } from "@/lib/acquisition/personalize";
 import { ensurePipelineControl } from "@/lib/acquisition/caps";
+import { alertOwnerException } from "@/lib/acquisition/notify";
 
 export const COHORT_SIZE = 25;
+
+export type Bottleneck = "A" | "B" | "C" | "D" | "NONE";
 
 export type CohortRates = {
   delivered: number;
@@ -47,20 +50,37 @@ export type ConversionOptimizationSnapshot = {
   worstSegment: SegmentScore | null;
   currentCopyVersion: string;
   nextAutoOptimization: string;
-  status: "WAITING_FOR_COHORT" | "HOLDING" | "APPLIED_COPY_ROTATION" | "BIAS_SEGMENTS";
+  status:
+    | "WAITING_FOR_COHORT"
+    | "HOLDING"
+    | "APPLIED_COPY_AB"
+    | "APPLIED_LANDING_FIX"
+    | "APPLIED_ACTIVATION_FIX"
+    | "APPLIED_PAID_FIX"
+    | "BIAS_SEGMENTS";
+  bottleneck: Bottleneck | null;
   preferredCategories: string[];
   preferredSignals: string[];
   totalDeliveredInitial: number;
   sampleNote: string;
+  abTestActive: boolean;
 };
 
-type OptState = {
+export type OptState = {
   preferredCategories?: string[];
   preferredSignals?: string[];
   lastAction?: string;
   lastReason?: string;
   bestSegmentKey?: string;
   worstSegmentKey?: string;
+  bottleneck?: Bottleneck;
+  /** 50/50 A/B of controlled copy against v1a */
+  abTest?: { control: "v1a"; variant: "v1b"; enabled: boolean };
+  /** Gated product fixes — only one set per cohort eval */
+  fixLandingUtm?: boolean;
+  fixOnboardingReturn?: boolean;
+  fixBillingBadgeValue?: boolean;
+  lastReportAt?: string;
 };
 
 function pct(n: number, d: number): number {
@@ -182,7 +202,6 @@ function scoreSegments(
       clicked: r.clicked,
       replied: r.replied,
       signedUp: r.signedUp,
-      // Prefer engagement with enough sample; tiny n deprioritized
       score:
         r.delivered < 3
           ? -1
@@ -191,54 +210,138 @@ function scoreSegments(
     .sort((a, b) => b.score - a.score);
 }
 
-function nextActionText(rates: CohortRates, copyVersion: string): string {
-  if (rates.delivered < COHORT_SIZE) {
-    return `Wait until ${COHORT_SIZE} delivered INITIAL emails (now ${rates.delivered}). No copy/strategy change.`;
-  }
+/**
+ * Primary funnel bottleneck — first matching gate wins (one diagnosis).
+ * A MESSAGE/TARGETING | B LANDING/SIGNUP | C ACTIVATION | D PAID
+ */
+export function diagnoseBottleneck(rates: CohortRates): Bottleneck {
+  if (rates.delivered < COHORT_SIZE) return "NONE";
+
   const engage = rates.clickPct + rates.replyPct;
-  if (engage < 2) {
-    return `If next cohort still <2% click+reply, rotate copy ${copyVersion} → ${nextCopyVersion(copyVersion)} (subject/CTA only).`;
+  // Near-zero engagement → message/targeting
+  if (engage < 2) return "A";
+  // Clicks happen but signups weak
+  if (rates.clickPct >= 2 && rates.signupPct < 1) return "B";
+  // Signups happen but first sends weak
+  if (rates.signupPct >= 1 && rates.firstSendPct < rates.signupPct * 0.5) return "C";
+  // First sends happen but paid weak
+  if (rates.firstSendPct >= 0.5 && rates.paidPct < rates.firstSendPct * 0.5) return "D";
+  return "NONE";
+}
+
+export function formatCohortReport(
+  rates: CohortRates,
+  bottleneck: Bottleneck,
+  action: string
+): string {
+  const label =
+    bottleneck === "A"
+      ? "A. MESSAGE / TARGETING"
+      : bottleneck === "B"
+        ? "B. LANDING / SIGNUP"
+        : bottleneck === "C"
+          ? "C. ACTIVATION"
+          : bottleneck === "D"
+            ? "D. PAID CONVERSION"
+            : "NONE (hold)";
+
+  return [
+    "SendFable acquisition — first rolling cohort (25 DELIVERED INITIAL)",
+    "",
+    `DELIVERED: ${rates.delivered}`,
+    `CLICKS: ${rates.clicked}`,
+    `CLICK RATE: ${rates.clickPct}%`,
+    `REPLIES: ${rates.replied}`,
+    `REPLY RATE: ${rates.replyPct}%`,
+    `POSITIVE REPLIES: ${rates.positiveReplied}`,
+    `SIGNUPS: ${rates.signedUp}`,
+    `SIGNUP RATE: ${rates.signupPct}%`,
+    `FIRST SENDS: ${rates.firstSend}`,
+    `PAID: ${rates.paid}`,
+    "",
+    `PRIMARY BOTTLENECK: ${label}`,
+    `AUTO ACTION (one change): ${action}`,
+    "",
+    "OWNER ACTION: NONE",
+  ].join("\n");
+}
+
+function nextActionText(
+  rates: CohortRates,
+  copyVersion: string,
+  bottleneck: Bottleneck | null
+): string {
+  if (rates.delivered < COHORT_SIZE) {
+    return `Hold all copy/targeting/ramp changes until ${COHORT_SIZE} delivered INITIAL (now ${rates.delivered}).`;
   }
-  if (rates.clickPct >= 2 && rates.signupPct < 1) {
-    return "Inspect landing/signup friction if clicks persist without signups (no wild copy rewrite).";
+  if (bottleneck === "A") {
+    return `A/B test v1b (subject/CTA only) against ${copyVersion || "v1a"} — 50/50 on new INITIAL drafts.`;
   }
-  if (rates.signupPct >= 1 && rates.firstSendPct < 0.5) {
-    return "Improve onboarding/activation if signups occur without first sends.";
+  if (bottleneck === "B") {
+    return "Enable landing→signup UTM preservation fix (single friction).";
   }
-  if (rates.firstSendPct >= 0.5 && rates.paidPct < 0.5) {
-    return "Review upgrade timing/value presentation if first sends occur without paid.";
+  if (bottleneck === "C") {
+    return "Enable onboarding return after sender verify (single activation friction).";
   }
-  return "Hold current copy; keep preferring better segments with exploration.";
+  if (bottleneck === "D") {
+    return "Enable Free→paid 'No platform badge' value line on billing (single paid friction).";
+  }
+  return "Hold copy; soft-prefer better segments with exploration.";
+}
+
+async function readOptState(): Promise<{
+  copyVersion: string;
+  state: OptState;
+}> {
+  const control = await ensurePipelineControl();
+  const copyVersion =
+    (control as { activeCopyVersion?: string }).activeCopyVersion || DEFAULT_COPY_VERSION;
+  const state = ((control as { optimizationState?: OptState }).optimizationState ||
+    {}) as OptState;
+  return { copyVersion, state };
 }
 
 export async function getActiveCopyVersion(): Promise<CopyVersionId> {
-  const control = await ensurePipelineControl();
-  const v = (control as { activeCopyVersion?: string }).activeCopyVersion;
-  return isCopyVersionId(v) ? v : DEFAULT_COPY_VERSION;
+  const { copyVersion, state } = await readOptState();
+  if (state.abTest?.enabled) {
+    // Stable-enough 50/50 without depending on prospect id at draft time
+    return Math.random() < 0.5 ? state.abTest.control : state.abTest.variant;
+  }
+  return isCopyVersionId(copyVersion) ? copyVersion : DEFAULT_COPY_VERSION;
 }
 
 export async function getPreferredDiscoveryBias(): Promise<{
   categories: string[];
   signals: string[];
 }> {
-  const control = await ensurePipelineControl();
-  const state = ((control as { optimizationState?: OptState }).optimizationState ||
-    {}) as OptState;
+  const { state } = await readOptState();
+  // Never bias discovery until first cohort completes
+  const total = await prisma.acquisitionMessage.count({
+    where: { dryRun: false, step: "INITIAL", deliveredAt: { not: null } },
+  });
+  if (total < COHORT_SIZE) return { categories: [], signals: [] };
   return {
     categories: state.preferredCategories || [],
     signals: state.preferredSignals || [],
   };
 }
 
-/**
- * Dashboard + admin snapshot. Does not mutate strategy when under cohort size.
- */
+/** Product-fix gates — false until cohort eval enables exactly one. */
+export async function getConversionFixFlags(): Promise<{
+  fixLandingUtm: boolean;
+  fixOnboardingReturn: boolean;
+  fixBillingBadgeValue: boolean;
+}> {
+  const { state } = await readOptState();
+  return {
+    fixLandingUtm: Boolean(state.fixLandingUtm),
+    fixOnboardingReturn: Boolean(state.fixOnboardingReturn),
+    fixBillingBadgeValue: Boolean(state.fixBillingBadgeValue),
+  };
+}
+
 export async function getConversionOptimizationSnapshot(): Promise<ConversionOptimizationSnapshot> {
-  const control = await ensurePipelineControl();
-  const copyVersion =
-    (control as { activeCopyVersion?: string }).activeCopyVersion || DEFAULT_COPY_VERSION;
-  const state = ((control as { optimizationState?: OptState }).optimizationState ||
-    {}) as OptState;
+  const { copyVersion, state } = await readOptState();
 
   const totalDeliveredInitial = await prisma.acquisitionMessage.count({
     where: {
@@ -259,36 +362,58 @@ export async function getConversionOptimizationSnapshot(): Promise<ConversionOpt
       ? usable[usable.length - 1]!
       : null;
 
+  const bottleneck =
+    totalDeliveredInitial >= COHORT_SIZE
+      ? state.bottleneck || diagnoseBottleneck(last25)
+      : null;
+
   let status: ConversionOptimizationSnapshot["status"] = "WAITING_FOR_COHORT";
   if (totalDeliveredInitial >= COHORT_SIZE) {
-    status =
-      state.lastAction === "copy_rotation"
-        ? "APPLIED_COPY_ROTATION"
-        : state.lastAction === "bias_segments"
-          ? "BIAS_SEGMENTS"
-          : "HOLDING";
+    switch (state.lastAction) {
+      case "copy_ab":
+        status = "APPLIED_COPY_AB";
+        break;
+      case "landing_fix":
+        status = "APPLIED_LANDING_FIX";
+        break;
+      case "activation_fix":
+        status = "APPLIED_ACTIVATION_FIX";
+        break;
+      case "paid_fix":
+        status = "APPLIED_PAID_FIX";
+        break;
+      case "bias_segments":
+        status = "BIAS_SEGMENTS";
+        break;
+      default:
+        status = "HOLDING";
+    }
   }
 
   return {
     last25,
     bestSegment,
     worstSegment,
-    currentCopyVersion: copyVersion,
-    nextAutoOptimization: nextActionText(last25, copyVersion),
+    currentCopyVersion: state.abTest?.enabled
+      ? `A/B ${state.abTest.control} vs ${state.abTest.variant}`
+      : copyVersion,
+    nextAutoOptimization: nextActionText(last25, copyVersion, bottleneck),
     status,
+    bottleneck,
     preferredCategories: state.preferredCategories || [],
     preferredSignals: state.preferredSignals || [],
     totalDeliveredInitial,
     sampleNote:
       totalDeliveredInitial < COHORT_SIZE
-        ? `Statistical caution: only ${totalDeliveredInitial}/${COHORT_SIZE} delivered INITIAL — do not rewrite strategy yet.`
-        : `Evaluating on rolling last ${Math.min(COHORT_SIZE, last25.delivered)} delivered INITIAL.`,
+        ? `HOLD: ${totalDeliveredInitial}/${COHORT_SIZE} delivered INITIAL — no copy, targeting, or ramp changes.`
+        : `Cohort ready — last ${Math.min(COHORT_SIZE, last25.delivered)} delivered INITIAL.`,
+    abTestActive: Boolean(state.abTest?.enabled),
   };
 }
 
 /**
- * Autonomous cohort eval — call from worker tick.
- * Applies at most one small change per full cohort step of 25.
+ * Autonomous cohort eval — no strategy changes before 25 delivered INITIAL.
+ * At each +25 milestone: report, diagnose ONE bottleneck, apply ONE change.
  */
 export async function evaluateConversionCohort(now = new Date()): Promise<{
   evaluated: boolean;
@@ -313,7 +438,6 @@ export async function evaluateConversionCohort(now = new Date()): Promise<{
     };
   }
 
-  // Evaluate every additional 25 delivered since last eval
   if (totalDelivered - lastEvalCount < COHORT_SIZE && lastEvalCount > 0) {
     return {
       evaluated: false,
@@ -326,42 +450,62 @@ export async function evaluateConversionCohort(now = new Date()): Promise<{
   const segments = scoreSegments(msgs).filter((s) => s.delivered >= 3);
   const best = segments[0] || null;
   const worst = segments.length > 1 ? segments[segments.length - 1]! : null;
+  const bottleneck = diagnoseBottleneck(rates);
 
-  let copyVersion =
-    (control as { activeCopyVersion?: string }).activeCopyVersion || DEFAULT_COPY_VERSION;
+  const prevState = ((control as { optimizationState?: OptState }).optimizationState ||
+    {}) as OptState;
+
   let action = "hold";
-  let reason = "engagement_ok_or_insufficient_signal";
-
-  const engage = rates.clickPct + rates.replyPct;
-  if (engage < 2 && rates.delivered >= COHORT_SIZE) {
-    const next = nextCopyVersion(copyVersion);
-    if (next !== copyVersion) {
-      copyVersion = next;
-      action = "copy_rotation";
-      reason = `click+reply ${engage}% near zero — rotate subject/CTA to ${next}`;
-    }
-  }
-
-  const preferredCategories = best ? [best.vertical] : [];
-  const preferredSignals = best ? [best.signal] : [];
-  if (best && action === "hold") {
-    action = "bias_segments";
-    reason = `prefer ${best.key} with exploration; deprioritize ${worst?.key || "n/a"}`;
-  }
-
+  let reason = "no_bottleneck_hold";
   const state: OptState = {
-    preferredCategories,
-    preferredSignals,
-    lastAction: action,
-    lastReason: reason,
+    ...prevState,
+    preferredCategories: [],
+    preferredSignals: [],
+    bottleneck,
     bestSegmentKey: best?.key,
     worstSegmentKey: worst?.key,
+    // Clear prior single-fix flags — only one may be set below
+    abTest: { control: "v1a", variant: "v1b", enabled: false },
+    fixLandingUtm: false,
+    fixOnboardingReturn: false,
+    fixBillingBadgeValue: false,
   };
+
+  // Exactly one change
+  if (bottleneck === "A") {
+    state.abTest = { control: "v1a", variant: "v1b", enabled: true };
+    action = "copy_ab";
+    reason = "A/B v1b subject/CTA vs v1a (50/50 new INITIAL drafts)";
+  } else if (bottleneck === "B") {
+    state.fixLandingUtm = true;
+    action = "landing_fix";
+    reason = "preserve casey UTMs on MarketingCta → /signup";
+  } else if (bottleneck === "C") {
+    state.fixOnboardingReturn = true;
+    action = "activation_fix";
+    reason = "return to onboarding after sender verify";
+  } else if (bottleneck === "D") {
+    state.fixBillingBadgeValue = true;
+    action = "paid_fix";
+    reason = "show No platform badge on paid billing cards";
+  } else if (best) {
+    state.preferredCategories = [best.vertical];
+    state.preferredSignals = [best.signal];
+    action = "bias_segments";
+    reason = `prefer ${best.key} with exploration; soft-deprioritize ${worst?.key || "n/a"}`;
+  }
+
+  state.lastAction = action;
+  state.lastReason = reason;
+  state.lastReportAt = now.toISOString();
+
+  const report = formatCohortReport(rates, bottleneck, `${action}: ${reason}`);
 
   await prisma.acquisitionPipelineControl.update({
     where: { id: "default" },
     data: {
-      activeCopyVersion: copyVersion,
+      // Keep baseline v1a as control; AB handled in getActiveCopyVersion
+      activeCopyVersion: "v1a",
       lastCohortEvalAt: now,
       lastCohortEvalDelivered: totalDelivered,
       optimizationState: state as object,
@@ -370,18 +514,25 @@ export async function evaluateConversionCohort(now = new Date()): Promise<{
 
   await prisma.acquisitionEvent.create({
     data: {
-      type: "conversion_cohort_eval",
+      type: "conversion_cohort_report",
       meta: {
         rates,
+        bottleneck,
         action,
         reason,
-        copyVersion,
         best: best?.key ?? null,
         worst: worst?.key ?? null,
-        delivered: totalDelivered,
+        deliveredTotal: totalDelivered,
+        report,
       },
     },
   });
 
-  return { evaluated: true, action: `${action}:${reason}` };
+  // Informational milestone report — not an owner to-do
+  await alertOwnerException(
+    "SendFable acquisition cohort report (25 delivered INITIAL)",
+    report
+  );
+
+  return { evaluated: true, action: `${bottleneck}:${action}:${reason}` };
 }

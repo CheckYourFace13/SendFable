@@ -59,7 +59,28 @@ const HOW_TO = [
   },
 ];
 
-export default function EmailMarketingForSmallBusinessPage() {
+export default async function EmailMarketingForSmallBusinessPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
+  let preserveSearch: string | null = null;
+  try {
+    const { getConversionFixFlags } = await import(
+      "@/lib/acquisition/conversion-optimize"
+    );
+    const flags = await getConversionFixFlags();
+    if (flags.fixLandingUtm && searchParams) {
+      const q = new URLSearchParams();
+      for (const [k, v] of Object.entries(searchParams)) {
+        if (typeof v === "string") q.set(k, v);
+        else if (Array.isArray(v) && v[0]) q.set(k, v[0]);
+      }
+      preserveSearch = q.toString() || null;
+    }
+  } catch {
+    /* flag optional */
+  }
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <JsonLd
@@ -179,6 +200,7 @@ export default function EmailMarketingForSmallBusinessPage() {
       <MarketingCta
         title="Start with a list you already have"
         body="Start free, then import opted-in contacts and write your first short campaign."
+        preserveSearch={preserveSearch}
       />
     </div>
   );

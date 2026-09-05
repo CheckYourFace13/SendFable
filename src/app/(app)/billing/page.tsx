@@ -28,6 +28,7 @@ export default function BillingPage() {
   const [annual, setAnnual] = useState(false);
   const [usage, setUsage] = useState({ emails: 0, contacts: 0 });
   const [loading, setLoading] = useState<string | null>(null);
+  const [showBadgeValue, setShowBadgeValue] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -36,6 +37,7 @@ export default function BillingPage() {
         const data = await res.json();
         setPlan(data.plan);
         setUsage(data.usage);
+        setShowBadgeValue(Boolean(data.showNoBadgeValue));
       }
     })();
     track("pricing_from_app_viewed");
@@ -169,6 +171,7 @@ export default function BillingPage() {
                 <li>{upToContacts(key)}</li>
                 <li>{upToEmails(key)}</li>
                 {p.customDomains && <li>Custom domain auth</li>}
+                {showBadgeValue && !p.badge && <li>No platform badge</li>}
               </ul>
               <Button
                 className="mt-6 w-full"

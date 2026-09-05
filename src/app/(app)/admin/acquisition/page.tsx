@@ -191,6 +191,11 @@ export default function AdminAcquisitionPage() {
               CURRENT COPY VERSION:{" "}
               <strong>{data.conversionOptimization.currentCopyVersion}</strong>
             </div>
+            {data.conversionOptimization.bottleneck && (
+              <div>
+                BOTTLENECK: <strong>{data.conversionOptimization.bottleneck}</strong>
+              </div>
+            )}
             <div>
               NEXT AUTO-OPTIMIZATION: {data.conversionOptimization.nextAutoOptimization}
             </div>

@@ -36,5 +36,25 @@ export async function GET(req: Request) {
     trackEvent("sender_verified");
   }
 
-  return NextResponse.redirect(appUrl("/settings/senders?verified=1"));
+  let redirectTo = "/settings/senders?verified=1";
+  try {
+    const { getConversionFixFlags } = await import(
+      "@/lib/acquisition/conversion-optimize"
+    );
+    const flags = await getConversionFixFlags();
+    if (flags.fixOnboardingReturn) {
+      const membership = await prisma.membership.findFirst({
+        where: { workspaceId: identity.workspaceId },
+        include: { user: { select: { onboardingCompletedAt: true } } },
+        orderBy: { createdAt: "asc" },
+      });
+      if (membership && !membership.user.onboardingCompletedAt) {
+        redirectTo = "/settings/senders?verified=1&from=onboarding";
+      }
+    }
+  } catch {
+    /* optional */
+  }
+
+  return NextResponse.redirect(appUrl(redirectTo));
 }

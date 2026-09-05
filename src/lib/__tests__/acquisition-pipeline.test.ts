@@ -321,8 +321,50 @@ describe("acquisition continuous discovery (OSM)", () => {
   });
 
   it("requires 25 delivered INITIAL before conversion cohort strategy changes", async () => {
-    const { COHORT_SIZE } = await import("@/lib/acquisition/conversion-optimize");
+    const { COHORT_SIZE, diagnoseBottleneck, formatCohortReport } = await import(
+      "@/lib/acquisition/conversion-optimize"
+    );
     assert.equal(COHORT_SIZE, 25);
+    const empty = {
+      delivered: 5,
+      clicked: 0,
+      replied: 0,
+      positiveReplied: 0,
+      signedUp: 0,
+      firstSend: 0,
+      paid: 0,
+      clickPct: 0,
+      replyPct: 0,
+      positiveReplyPct: 0,
+      signupPct: 0,
+      firstSendPct: 0,
+      paidPct: 0,
+    };
+    assert.equal(diagnoseBottleneck(empty), "NONE");
+    const cold = { ...empty, delivered: 25, clickPct: 0, replyPct: 0 };
+    assert.equal(diagnoseBottleneck(cold), "A");
+    const clicksNoSignup = {
+      ...empty,
+      delivered: 25,
+      clickPct: 4,
+      replyPct: 0,
+      signupPct: 0,
+    };
+    assert.equal(diagnoseBottleneck(clicksNoSignup), "B");
+    const report = formatCohortReport(cold, "A", "copy_ab: test");
+    assert.match(report, /DELIVERED: 25/);
+    assert.match(report, /PRIMARY BOTTLENECK: A\. MESSAGE/);
+    assert.match(report, /OWNER ACTION: NONE/);
+  });
+
+  it("appendUtmParams preserves casey UTMs onto signup", async () => {
+    const { appendUtmParams } = await import("@/components/marketing/marketing-cta");
+    const out = appendUtmParams(
+      "/signup",
+      "utm_source=casey&utm_medium=email&utm_campaign=acquisition&utm_content=v1a"
+    );
+    assert.match(out, /utm_source=casey/);
+    assert.match(out, /\/signup\?/);
   });
 });
 
