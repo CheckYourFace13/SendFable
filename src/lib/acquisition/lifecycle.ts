@@ -61,21 +61,79 @@ export async function matchSignupToAcquisition(opts: {
 }
 
 export async function markAcquisitionPaidForUser(userId: string): Promise<void> {
+  const rows = await prisma.acquisitionProspect.findMany({
+    where: { signedUpUserId: userId, paidAt: null },
+    select: { id: true },
+  });
+  if (!rows.length) return;
   await prisma.acquisitionProspect.updateMany({
-    where: { signedUpUserId: userId, status: "SIGNED_UP" },
+    where: { id: { in: rows.map((r) => r.id) } },
     data: { status: "PAID", paidAt: new Date() },
   });
+  for (const r of rows) {
+    await prisma.acquisitionEvent.create({
+      data: { prospectId: r.id, type: "paid", meta: { userId } },
+    });
+  }
 }
 
 export async function markAcquisitionFirstSendForUser(userId: string): Promise<void> {
-  await prisma.acquisitionProspect.updateMany({
+  const rows = await prisma.acquisitionProspect.findMany({
     where: {
       signedUpUserId: userId,
       firstSendAt: null,
       status: { in: ["SIGNED_UP", "PAID"] },
     },
+    select: { id: true },
+  });
+  if (!rows.length) return;
+  await prisma.acquisitionProspect.updateMany({
+    where: { id: { in: rows.map((r) => r.id) } },
     data: { firstSendAt: new Date() },
   });
+  for (const r of rows) {
+    await prisma.acquisitionEvent.create({
+      data: { prospectId: r.id, type: "first_send", meta: { userId } },
+    });
+  }
+}
+
+export async function markAcquisitionEmailVerifiedForUser(userId: string): Promise<void> {
+  const rows = await prisma.acquisitionProspect.findMany({
+    where: { signedUpUserId: userId, emailVerifiedAt: null },
+    select: { id: true },
+  });
+  if (!rows.length) return;
+  await prisma.acquisitionProspect.updateMany({
+    where: { id: { in: rows.map((r) => r.id) } },
+    data: { emailVerifiedAt: new Date() },
+  });
+  for (const r of rows) {
+    await prisma.acquisitionEvent.create({
+      data: { prospectId: r.id, type: "email_verified", meta: { userId } },
+    });
+  }
+}
+
+export async function markAcquisitionFirstCampaignForUser(userId: string): Promise<void> {
+  const rows = await prisma.acquisitionProspect.findMany({
+    where: {
+      signedUpUserId: userId,
+      firstCampaignAt: null,
+      status: { in: ["SIGNED_UP", "PAID"] },
+    },
+    select: { id: true },
+  });
+  if (!rows.length) return;
+  await prisma.acquisitionProspect.updateMany({
+    where: { id: { in: rows.map((r) => r.id) } },
+    data: { firstCampaignAt: new Date() },
+  });
+  for (const r of rows) {
+    await prisma.acquisitionEvent.create({
+      data: { prospectId: r.id, type: "first_campaign", meta: { userId } },
+    });
+  }
 }
 
 export type ReplyClass =

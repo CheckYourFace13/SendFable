@@ -149,6 +149,62 @@ export default function AdminAcquisitionPage() {
       </section>
 
       <section className="rounded-xl border bg-white p-5">
+        <h2 className="font-semibold">Conversion optimization</h2>
+        {data.conversionOptimization ? (
+          <div className="mt-3 space-y-3 text-sm">
+            <p className="text-muted-foreground">{data.conversionOptimization.sampleNote}</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                LAST 25 DELIVERED:{" "}
+                <strong>{data.conversionOptimization.last25.delivered}</strong>
+              </div>
+              <div>click %: <strong>{data.conversionOptimization.last25.clickPct}%</strong></div>
+              <div>reply %: <strong>{data.conversionOptimization.last25.replyPct}%</strong></div>
+              <div>
+                positive reply %:{" "}
+                <strong>{data.conversionOptimization.last25.positiveReplyPct}%</strong>
+              </div>
+              <div>signup %: <strong>{data.conversionOptimization.last25.signupPct}%</strong></div>
+              <div>
+                first-send %:{" "}
+                <strong>{data.conversionOptimization.last25.firstSendPct}%</strong>
+              </div>
+              <div>paid %: <strong>{data.conversionOptimization.last25.paidPct}%</strong></div>
+            </div>
+            <div>
+              BEST SEGMENT:{" "}
+              <strong>
+                {data.conversionOptimization.bestSegment
+                  ? `${data.conversionOptimization.bestSegment.vertical} + ${data.conversionOptimization.bestSegment.signal}`
+                  : "—"}
+              </strong>
+            </div>
+            <div>
+              WORST SEGMENT:{" "}
+              <strong>
+                {data.conversionOptimization.worstSegment
+                  ? `${data.conversionOptimization.worstSegment.vertical} + ${data.conversionOptimization.worstSegment.signal}`
+                  : "—"}
+              </strong>
+            </div>
+            <div>
+              CURRENT COPY VERSION:{" "}
+              <strong>{data.conversionOptimization.currentCopyVersion}</strong>
+            </div>
+            <div>
+              NEXT AUTO-OPTIMIZATION: {data.conversionOptimization.nextAutoOptimization}
+            </div>
+            <div>
+              Status: <strong>{data.conversionOptimization.status}</strong> · delivered INITIAL
+              total: {data.conversionOptimization.totalDeliveredInitial}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-muted-foreground">Loading conversion metrics…</p>
+        )}
+      </section>
+
+      <section className="rounded-xl border bg-white p-5">
         <h2 className="font-semibold">Autonomy status</h2>
         {data.autonomy && (
           <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">

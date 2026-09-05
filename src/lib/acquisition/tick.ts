@@ -28,6 +28,7 @@ import { pollAcquisitionReplies } from "@/lib/acquisition/reply-imap";
 import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { alertOwnerException } from "@/lib/acquisition/notify";
 import { checkAcquisitionDeliveryAttribution } from "@/lib/acquisition/delivery-health";
+import { evaluateConversionCohort } from "@/lib/acquisition/conversion-optimize";
 
 /**
  * Autonomous acquisition tick — discovery autofill, approve, send, replies, ramp.
@@ -84,6 +85,12 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
     if (minute === 15 || minute === 45) {
       const del = await checkAcquisitionDeliveryAttribution(now);
       if (del.pending > 0) actions.push(`delivery_pending:${del.pending}`);
+    }
+
+    // Conversion cohort eval (every hour; no-ops until 25 delivered INITIAL)
+    if (minute < 3) {
+      const cohort = await evaluateConversionCohort(now);
+      if (cohort.evaluated) actions.push(`conversion:${cohort.action}`);
     }
 
     // Auto-approve throughout the hour when discovery is on

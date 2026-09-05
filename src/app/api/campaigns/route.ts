@@ -91,6 +91,15 @@ export async function POST(req: Request) {
   try {
     ensureAnalyticsPersistence();
     trackEvent("campaign_created");
+    const prior = await prisma.campaign.count({
+      where: { workspaceId: ctx.workspace.id, id: { not: campaign.id } },
+    });
+    if (prior === 0) {
+      const { markAcquisitionFirstCampaignForUser } = await import(
+        "@/lib/acquisition/lifecycle"
+      );
+      await markAcquisitionFirstCampaignForUser(ctx.user.id);
+    }
   } catch {
     /* fail open */
   }

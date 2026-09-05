@@ -130,7 +130,8 @@ setInterval(async () => {
         a.startsWith("replies:") ||
         a.startsWith("paused:") ||
         a.startsWith("inventory:") ||
-        a.startsWith("delivery_pending:")
+        a.startsWith("delivery_pending:") ||
+        a.startsWith("conversion:")
     );
     if (interesting || process.env.WORKER_VERBOSE) {
       console.log("[worker] acquisition tick", result.actions.join(","));

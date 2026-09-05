@@ -288,6 +288,42 @@ describe("acquisition continuous discovery (OSM)", () => {
     assert.equal(discoveryCeilingForDeficit(100, 56), 600);
     assert.equal(discoveryCeilingForDeficit(100, 0), 600);
   });
+
+  it("keeps controlled copy variants small and distinct", async () => {
+    const {
+      buildInitialEmail,
+      nextCopyVersion,
+      DEFAULT_COPY_VERSION,
+    } = await import("@/lib/acquisition/personalize");
+    const a = buildInitialEmail(
+      {
+        businessName: "Test Cafe",
+        claim: "I noticed you already have a newsletter signup on your site.",
+        evidence: "newsletter form",
+        sourceUrl: "https://test.example",
+      },
+      { unsubUrl: "https://sendfable.com/u", copyVersion: "v1a" }
+    );
+    const b = buildInitialEmail(
+      {
+        businessName: "Test Cafe",
+        claim: "I noticed you already have a newsletter signup on your site.",
+        evidence: "newsletter form",
+        sourceUrl: "https://test.example",
+      },
+      { unsubUrl: "https://sendfable.com/u", copyVersion: "v1b" }
+    );
+    assert.notEqual(a.subject, b.subject);
+    assert.match(a.bodyText, /taking a look/);
+    assert.match(b.bodyText, /Worth a quick look/);
+    assert.equal(DEFAULT_COPY_VERSION, "v1a");
+    assert.equal(nextCopyVersion("v1a"), "v1b");
+  });
+
+  it("requires 25 delivered INITIAL before conversion cohort strategy changes", async () => {
+    const { COHORT_SIZE } = await import("@/lib/acquisition/conversion-optimize");
+    assert.equal(COHORT_SIZE, 25);
+  });
 });
 
 describe("acquisition daily caps logic (pure)", () => {

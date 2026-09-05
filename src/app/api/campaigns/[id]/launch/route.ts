@@ -155,6 +155,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const { trackEvent } = await import("@/lib/analytics");
     if (priorSends === 0) {
       trackEvent("first_campaign_sent");
+      try {
+        const { markAcquisitionFirstSendForUser } = await import(
+          "@/lib/acquisition/lifecycle"
+        );
+        await markAcquisitionFirstSendForUser(ctx.user.id);
+      } catch {
+        /* non-blocking */
+      }
     } else if (priorSends === 1) {
       trackEvent("second_campaign_sent");
     }

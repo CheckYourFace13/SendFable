@@ -1334,6 +1334,9 @@ model AcquisitionProspect {
   signedUpUserId           String?
   signupAt                 DateTime?
   firstSendAt              DateTime?
+  /// First product campaign created after acquisition signup
+  firstCampaignAt          DateTime?
+  emailVerifiedAt          DateTime?
   paidAt                   DateTime?
   landingPagePath          String?
   meta                     Json                       @default("{}")
@@ -1364,6 +1367,14 @@ model AcquisitionMessage {
   deliveredAt  DateTime?
   bounceAt     DateTime?
   complaintAt  DateTime?
+  /// First Casey CTA click (via /api/acquisition/c)
+  clickedAt    DateTime?
+  /// Controlled copy A/B id, e.g. v1a / v1b
+  copyVersion  String?
+  /// Opener family: newsletter | events | competitor | category
+  openerType   String?
+  /// Landing path used in CTA (without query)
+  ctaPath      String?
   error        String?
   dryRun       Boolean                   @default(false)
   createdAt    DateTime                  @default(now())
@@ -1375,6 +1386,8 @@ model AcquisitionMessage {
   @@index([sesMessageId])
   @@index([status, scheduledAt])
   @@index([sentAt])
+  @@index([deliveredAt])
+  @@index([copyVersion])
 }
 
 model AcquisitionEvent {
@@ -1418,5 +1431,12 @@ model AcquisitionPipelineControl {
   lastDailyReportAt DateTime?
   lastTickAt        DateTime?
   workerFailStreak  Int       @default(0)
+  /// Active controlled copy variant (v1a, v1b, …)
+  activeCopyVersion String    @default("v1a")
+  lastCohortEvalAt  DateTime?
+  /// Delivered INITIAL count at last cohort evaluation
+  lastCohortEvalDelivered Int @default(0)
+  /// Best/worst segment, next auto-opt action, preferred categories
+  optimizationState Json      @default("{}")
   updatedAt         DateTime  @updatedAt
 }

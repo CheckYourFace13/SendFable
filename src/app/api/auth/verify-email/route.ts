@@ -19,6 +19,14 @@ export async function GET(req: Request) {
   }).catch(() => null);
 
   void maybeAwardReferralSignupCredit(payload.userId, "email_verified");
+  try {
+    const { markAcquisitionEmailVerifiedForUser } = await import(
+      "@/lib/acquisition/lifecycle"
+    );
+    await markAcquisitionEmailVerifiedForUser(payload.userId);
+  } catch {
+    /* non-blocking */
+  }
 
   return NextResponse.redirect(appUrl("/login?verified=1"));
 }

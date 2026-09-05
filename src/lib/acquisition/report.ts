@@ -294,6 +294,10 @@ export async function getAcquisitionDashboard() {
   });
 
   const weekly = await buildWeeklyOptimization(7);
+  const { getConversionOptimizationSnapshot } = await import(
+    "@/lib/acquisition/conversion-optimize"
+  );
+  const conversionOptimization = await getConversionOptimizationSnapshot();
   const stageCaps = await getStageCaps();
   const rates7 = await ratesOverDays(7);
   const control = await ensurePipelineControl();
@@ -417,5 +421,6 @@ export async function getAcquisitionDashboard() {
     topCities: byCity.filter((r) => r.city).map((r) => ({ city: r.city, count: r._count })),
     recent,
     weekly,
+    conversionOptimization,
   };
 }

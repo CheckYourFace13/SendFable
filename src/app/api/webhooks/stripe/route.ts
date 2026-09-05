@@ -213,5 +213,15 @@ async function applySubscription(sub: Stripe.Subscription, userIdHint?: string |
       interval: mapped.interval,
     });
     if (wasFree) trackEvent("subscription_started", { plan: mapped.plan });
+    if (wasFree) {
+      try {
+        const { markAcquisitionPaidForUser } = await import(
+          "@/lib/acquisition/lifecycle"
+        );
+        await markAcquisitionPaidForUser(user.id);
+      } catch {
+        /* non-blocking */
+      }
+    }
   }
 }

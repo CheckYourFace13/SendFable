@@ -308,7 +308,36 @@ export async function runDiscovery(
       );
       const fresh = candidates.filter((c) => !existingDomains.has(normalizeDomain(c.website)));
       const pool = [...fresh, ...candidates.filter((c) => existingDomains.has(normalizeDomain(c.website)))];
-      batch = pool.slice(0, limit);
+      // Prefer better-performing segments (~70%) while keeping exploration (~30%)
+      let ordered = pool;
+      try {
+        const { getPreferredDiscoveryBias } = await import(
+          "@/lib/acquisition/conversion-optimize"
+        );
+        const bias = await getPreferredDiscoveryBias();
+        if (bias.categories.length) {
+          const preferred = pool.filter((c) => bias.categories.includes(c.category));
+          const other = pool.filter((c) => !bias.categories.includes(c.category));
+          const exploreN = Math.max(1, Math.floor(limit * 0.3));
+          ordered = [
+            ...preferred.slice(0, Math.max(0, limit - exploreN)),
+            ...other.slice(0, exploreN),
+            ...preferred.slice(Math.max(0, limit - exploreN)),
+            ...other.slice(exploreN),
+          ];
+          // de-dupe by website while preserving order
+          const seen = new Set<string>();
+          ordered = ordered.filter((c) => {
+            const d = normalizeDomain(c.website);
+            if (seen.has(d)) return false;
+            seen.add(d);
+            return true;
+          });
+        }
+      } catch {
+        /* bias optional */
+      }
+      batch = ordered.slice(0, limit);
       source = `osm_overpass:${byMarket.map((m) => `${m.city}:${m.count}`).join(",")}`;
     } catch (err) {
       console.warn("[acquisition] continuous discovery failed, falling back to seed", err);

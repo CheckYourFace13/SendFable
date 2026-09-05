@@ -5,6 +5,7 @@ export type TokenPurpose =
   | "sender-verify"
   | "unsubscribe"
   | "acquisition-unsub"
+  | "acquisition-click"
   | "form-confirm"
   | "invite";
 

@@ -1,3 +1,7 @@
+/**
+ * Controlled Casey copy versions — small A/B only, no wild rewrites.
+ */
+
 import { PLANS } from "@/lib/plans";
 
 export type PersonalizationInput = {
@@ -14,6 +18,22 @@ export type BuiltOutreach = {
   opener: string;
 };
 
+/** Stable controlled variants. Only advance via cohort eval. */
+export const COPY_VERSIONS = ["v1a", "v1b", "v2a"] as const;
+export type CopyVersionId = (typeof COPY_VERSIONS)[number];
+
+export const DEFAULT_COPY_VERSION: CopyVersionId = "v1a";
+
+export function isCopyVersionId(v: string | null | undefined): v is CopyVersionId {
+  return Boolean(v && (COPY_VERSIONS as readonly string[]).includes(v));
+}
+
+export function nextCopyVersion(current: string): CopyVersionId {
+  const idx = COPY_VERSIONS.indexOf(current as CopyVersionId);
+  if (idx < 0) return "v1b";
+  return COPY_VERSIONS[Math.min(idx + 1, COPY_VERSIONS.length - 1)]!;
+}
+
 function greeting(firstName?: string | null): string {
   const n = (firstName || "").trim();
   if (n && /^[A-Za-z][A-Za-z.'-]{0,39}$/.test(n)) return `Hi ${n},`;
@@ -24,21 +44,63 @@ function freePlanLine(): string {
   return `It's free for up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month — no credit card.`;
 }
 
+function variantBits(
+  version: CopyVersionId,
+  businessName: string
+): { subject: string; ask: string; helpLine: string } {
+  switch (version) {
+    case "v1b":
+      return {
+        subject: `A simpler email tool for ${businessName}?`,
+        ask: "Worth a quick look?",
+        helpLine: "If useful, I can help you get a first campaign out quickly.",
+      };
+    case "v2a":
+      return {
+        subject: `Quick question about ${businessName}`,
+        ask: "Would a simpler free plan be useful?",
+        helpLine: "Happy to help you send a first campaign if you want a hand.",
+      };
+    case "v1a":
+    default:
+      return {
+        subject: `Quick question about ${businessName}`,
+        ask: "Would you be open to taking a look?",
+        helpLine: "If useful, I can help you get a first campaign out quickly.",
+      };
+  }
+}
+
 /**
  * Build initial outreach. Claim/evidence/sourceUrl must be truthful and stored.
  * Does not invent owner names, providers, or metrics.
  */
 export function buildInitialEmail(
   input: PersonalizationInput,
-  opts: { unsubUrl: string; siteUrl?: string }
+  opts: {
+    unsubUrl: string;
+    siteUrl?: string;
+    /** Absolute CTA URL (may be click-tracked) */
+    ctaUrl?: string;
+    copyVersion?: CopyVersionId | string;
+    landingPath?: string;
+  }
 ): BuiltOutreach {
   const opener = input.claim.trim();
   if (!opener) throw new Error("personalization_claim_required");
   if (!input.evidence.trim()) throw new Error("personalization_evidence_required");
   if (!input.sourceUrl.trim()) throw new Error("personalization_source_required");
 
-  const subject = `Quick question about ${input.businessName}`;
+  const version = isCopyVersionId(opts.copyVersion)
+    ? opts.copyVersion
+    : DEFAULT_COPY_VERSION;
+  const bits = variantBits(version, input.businessName);
   const site = opts.siteUrl || "https://sendfable.com";
+  const path = opts.landingPath || "/email-marketing-for-small-business";
+  const cta =
+    opts.ctaUrl ||
+    `${site}${path.startsWith("/") ? path : `/${path}`}?utm_source=casey&utm_medium=email&utm_campaign=acquisition&utm_content=${version}`;
+
   const body = [
     greeting(input.firstName),
     "",
@@ -48,18 +110,18 @@ export function buildInitialEmail(
     "",
     freePlanLine(),
     "",
-    "If useful, I can help you get a first campaign out quickly.",
+    bits.helpLine,
     "",
-    "Would you be open to taking a look?",
+    bits.ask,
     "",
     "Casey",
     "SendFable",
-    `${site}/email-marketing-for-small-business?utm_source=casey&utm_medium=email&utm_campaign=acquisition`,
+    cta,
     "",
     `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");
 
-  return { subject, bodyText: body, opener };
+  return { subject: bits.subject, bodyText: body, opener };
 }
 
 export function buildFollowUp1(
@@ -123,6 +185,17 @@ export function openerLooksFabricated(opener: string): boolean {
   return banned.some((re) => re.test(o));
 }
 
+export function openerTypeFromProspect(p: {
+  newsletterPresent?: boolean;
+  eventsPromotionsPresent?: boolean;
+  competitorPlatform?: string | null;
+}): "newsletter" | "events" | "competitor" | "category" {
+  if (p.newsletterPresent) return "newsletter";
+  if (p.eventsPromotionsPresent) return "events";
+  if (p.competitorPlatform) return "competitor";
+  return "category";
+}
+
 /**
  * Map enrichment evidence → a truthful one-sentence claim.
  * Returns null if nothing solid enough.
@@ -150,7 +223,6 @@ export function claimFromEvidence(ev: {
     };
   }
   if (ev.competitorPlatform) {
-    // Only when confidently observable in page HTML — still don't claim "you use X" as fact about account
     return {
       claim: `I noticed your site links out to an email signup powered by ${ev.competitorPlatform}, which made me think a simpler tool might be useful.`,
       evidence: snippet || `${ev.competitorPlatform} signup widget detected`,
@@ -189,8 +261,9 @@ export function claimFromEvidence(ev: {
     ev.category === "local_services"
   ) {
     return {
-      claim:
-        "I came across your business website and thought a simpler email marketing tool might be useful for staying in touch with customers.",
+      claim: snippet
+        ? "I came across your site and thought staying in touch with customers by email might be useful."
+        : "I came across your business site and thought a simple email tool might help you stay in touch with customers.",
       evidence: snippet || "public local-business website with published contact path",
     };
   }

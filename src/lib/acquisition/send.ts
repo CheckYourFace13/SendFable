@@ -8,7 +8,9 @@ import {
   buildFollowUp1,
   buildFollowUp2,
   buildInitialEmail,
+  openerTypeFromProspect,
 } from "@/lib/acquisition/personalize";
+import { getActiveCopyVersion } from "@/lib/acquisition/conversion-optimize";
 import { bodyHasUnsubscribe, runQualityGate } from "@/lib/acquisition/quality-gate";
 import {
   canSendAnyToday,
@@ -39,6 +41,19 @@ async function unsubUrlFor(prospectId: string, email: string): Promise<string> {
   return appUrl(`/api/acquisition/unsubscribe?token=${encodeURIComponent(token)}`);
 }
 
+async function clickUrlFor(
+  messageId: string,
+  path: string,
+  copyVersion: string
+): Promise<string> {
+  const token = await signToken(
+    "acquisition-click",
+    { messageId, path, v: copyVersion },
+    "90d"
+  );
+  return appUrl(`/api/acquisition/c?t=${encodeURIComponent(token)}`);
+}
+
 function plainToHtml(text: string): string {
   const esc = text
     .replace(/&/g, "&amp;")
@@ -64,11 +79,16 @@ export async function draftMessageForProspect(
   }
 
   const unsub = await unsubUrlFor(p.id, p.contactEmail);
+  const copyVersion = step === "INITIAL" ? await getActiveCopyVersion() : null;
+  const openerType = openerTypeFromProspect(p);
+  const ctaPath = p.landingPagePath || "/email-marketing-for-small-business";
+
   let built;
   if (step === "INITIAL") {
     if (!p.personalizationClaim || !p.personalizationEvidence || !p.personalizationSourceUrl) {
       return { ok: false, reason: "missing_personalization" };
     }
+    // Placeholder CTA swapped after we have message id for click token
     built = buildInitialEmail(
       {
         businessName: p.businessName,
@@ -77,7 +97,12 @@ export async function draftMessageForProspect(
         evidence: p.personalizationEvidence,
         sourceUrl: p.personalizationSourceUrl,
       },
-      { unsubUrl: unsub }
+      {
+        unsubUrl: unsub,
+        copyVersion: copyVersion || "v1a",
+        landingPath: ctaPath,
+        ctaUrl: "ACQ_CTA_PLACEHOLDER",
+      }
     );
   } else if (step === "FOLLOW_UP_1") {
     built = buildFollowUp1(
@@ -92,30 +117,44 @@ export async function draftMessageForProspect(
     return { ok: false, reason: "missing_unsubscribe" };
   }
 
+  const baseData = {
+    subject: built.subject,
+    bodyText: built.bodyText,
+    status: "DRAFT" as const,
+    dryRun: opts?.dryRun ?? false,
+    copyVersion: copyVersion || null,
+    openerType: step === "INITIAL" ? openerType : null,
+    ctaPath: step === "INITIAL" ? ctaPath : null,
+  };
+
+  let messageId: string;
   if (existing) {
     await prisma.acquisitionMessage.update({
       where: { id: existing.id },
+      data: baseData,
+    });
+    messageId = existing.id;
+  } else {
+    const msg = await prisma.acquisitionMessage.create({
       data: {
-        subject: built.subject,
-        bodyText: built.bodyText,
-        status: "DRAFT",
-        dryRun: opts?.dryRun ?? false,
+        prospectId: p.id,
+        step,
+        ...baseData,
       },
     });
-    return { ok: true, messageId: existing.id };
+    messageId = msg.id;
   }
 
-  const msg = await prisma.acquisitionMessage.create({
-    data: {
-      prospectId: p.id,
-      step,
-      subject: built.subject,
-      bodyText: built.bodyText,
-      status: "DRAFT",
-      dryRun: opts?.dryRun ?? false,
-    },
-  });
-  return { ok: true, messageId: msg.id };
+  if (step === "INITIAL" && built.bodyText.includes("ACQ_CTA_PLACEHOLDER")) {
+    const cta = await clickUrlFor(messageId, ctaPath, copyVersion || "v1a");
+    const bodyText = built.bodyText.replace(/ACQ_CTA_PLACEHOLDER/g, cta);
+    await prisma.acquisitionMessage.update({
+      where: { id: messageId },
+      data: { bodyText },
+    });
+  }
+
+  return { ok: true, messageId };
 }
 
 /**

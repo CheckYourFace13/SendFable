@@ -22,4 +22,8 @@ export {
   matchSignupToAcquisition,
   recordAcquisitionReply,
   handleAcquisitionSesEvent,
+  markAcquisitionPaidForUser,
+  markAcquisitionFirstSendForUser,
+  markAcquisitionEmailVerifiedForUser,
+  markAcquisitionFirstCampaignForUser,
 } from "@/lib/acquisition/lifecycle";
