@@ -122,11 +122,11 @@ export async function POST(req: Request) {
         eventType,
         bounceType: note.bounce?.bounceType,
         emails: [
-          ...(note.bounce?.bouncedRecipients?.map((r) => r.emailAddress).filter(Boolean) as string[]),
+          ...(note.bounce?.bouncedRecipients?.map((r) => r.emailAddress).filter(Boolean) ?? []),
           ...(note.complaint?.complainedRecipients
             ?.map((r) => r.emailAddress)
-            .filter(Boolean) as string[]),
-          ...(note.delivery?.recipients?.filter(Boolean) as string[]),
+            .filter(Boolean) ?? []),
+          ...(note.delivery?.recipients?.filter(Boolean) ?? []),
         ],
         tags: note.mail?.tags,
       });
