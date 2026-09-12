@@ -141,7 +141,19 @@ export function SiteFooter() {
 
       <div className="border-t border-ink/10 bg-page">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-center text-xs text-ink/55 sm:flex-row sm:px-6 sm:text-left">
-          <p>© {new Date().getFullYear()} sendfable. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} sendfable. All rights reserved.
+            {" · "}
+            Built by{" "}
+            <a
+              href="https://iscreamstudio.com"
+              className="underline decoration-ink/25 underline-offset-2 hover:text-ink/80"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              iScream Studio
+            </a>
+          </p>
           <p className="font-medium text-ink/70">Every email tells your story.</p>
         </div>
       </div>

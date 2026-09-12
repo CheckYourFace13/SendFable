@@ -10,6 +10,9 @@ import { alertOwnerException } from "@/lib/acquisition/notify";
 
 export type SafetyRates = {
   sent: number;
+  bounced: number;
+  complained: number;
+  unsubscribed: number;
   bounceRate: number;
   complaintRate: number;
   unsubRate: number;
@@ -27,6 +30,12 @@ const RAMP_UNSUB_MAX = 0.02;
 /** Enough volume to judge delivery health before ramping (was 30 — blocked Stage 1 forever when inventory starved). */
 const MIN_SAMPLE_FOR_RAMP = 10;
 const MIN_SAMPLE_FOR_HARD = 20;
+/**
+ * Single bounce/unsub at small volume is noise (1/20 = 5%).
+ * Require ≥2 events, or a larger sample, before hard-pausing forever.
+ */
+const MIN_ABS_FOR_HARD_BOUNCE_OR_UNSUB = 2;
+const MIN_SAMPLE_FOR_SINGLE_EVENT_HARD = 50;
 
 async function ensureControl() {
   return prisma.acquisitionPipelineControl.upsert({
@@ -48,7 +57,16 @@ export async function ratesOverDays(days: number): Promise<SafetyRates> {
   });
   const sent = msgs.length;
   if (sent === 0) {
-    return { sent: 0, bounceRate: 0, complaintRate: 0, unsubRate: 0, sampleOk: false };
+    return {
+      sent: 0,
+      bounced: 0,
+      complained: 0,
+      unsubscribed: 0,
+      bounceRate: 0,
+      complaintRate: 0,
+      unsubRate: 0,
+      sampleOk: false,
+    };
   }
   const bounced = msgs.filter((m) => m.status === "BOUNCED").length;
   const complained = msgs.filter((m) => m.status === "COMPLAINED").length;
@@ -57,6 +75,9 @@ export async function ratesOverDays(days: number): Promise<SafetyRates> {
   });
   return {
     sent,
+    bounced,
+    complained,
+    unsubscribed: unsubs,
     bounceRate: bounced / sent,
     complaintRate: complained / sent,
     unsubRate: unsubs / sent,
@@ -96,7 +117,10 @@ function businessDaysBetween(a: Date, b: Date): number {
 }
 
 export async function hardPauseAcquisition(reason: string): Promise<void> {
-  await ensureControl();
+  const control = await ensureControl();
+  if (control.hardPause && control.pauseReason === reason && control.paused) {
+    return;
+  }
   await prisma.acquisitionPipelineControl.update({
     where: { id: "default" },
     data: { paused: true, pauseReason: reason, hardPause: true },
@@ -106,8 +130,61 @@ export async function hardPauseAcquisition(reason: string): Promise<void> {
   });
   await alertOwnerException(
     `SendFable acquisition HARD PAUSE: ${reason}`,
-    `Acquisition sending was hard-paused.\n\nReason: ${reason}\n\nResume only from /admin/acquisition after you investigate.`
+    `Acquisition sending was hard-paused.\n\nReason: ${reason}\n\nRecoverable bounce/unsub pauses auto-resume when 7-day rates recover. Complaint pauses require review in /admin/acquisition.`
   );
+}
+
+async function autoResumeRecoverablePause(
+  reason: string,
+  rates: SafetyRates
+): Promise<void> {
+  await prisma.acquisitionPipelineControl.update({
+    where: { id: "default" },
+    data: { paused: false, pauseReason: null, hardPause: false },
+  });
+  await prisma.acquisitionEvent.create({
+    data: {
+      type: "pipeline_auto_resumed",
+      meta: {
+        priorReason: reason,
+        sent: rates.sent,
+        bounced: rates.bounced,
+        unsubscribed: rates.unsubscribed,
+        bounceRate: rates.bounceRate,
+        unsubRate: rates.unsubRate,
+      },
+    },
+  });
+}
+
+function isRecoverablePauseReason(reason: string | null | undefined): boolean {
+  if (!reason) return false;
+  return reason.startsWith("bounce_rate_") || reason.startsWith("unsub_rate_");
+}
+
+/** True when bounce/unsub hard pause is no longer justified by absolute counts + rates. */
+export function shouldAutoResumeRecoverablePause(opts: {
+  pauseReason: string | null | undefined;
+  rates: SafetyRates;
+}): boolean {
+  if (!isRecoverablePauseReason(opts.pauseReason)) return false;
+  if (opts.rates.complaintRate >= HARD_COMPLAINT || opts.rates.complained > 0) {
+    return false;
+  }
+  // Still meets hard-pause criteria → stay paused
+  if (
+    shouldHardPause({
+      sent: opts.rates.sent,
+      bounceRate: opts.rates.bounceRate,
+      complaintRate: opts.rates.complaintRate,
+      unsubRate: opts.rates.unsubRate,
+      bounced: opts.rates.bounced,
+      unsubscribed: opts.rates.unsubscribed,
+    }).pause
+  ) {
+    return false;
+  }
+  return true;
 }
 
 export async function reduceStage(reason: string): Promise<number> {
@@ -130,21 +207,52 @@ export async function evaluateSafetyPauseAndBackoff(): Promise<{
   hardPaused: boolean;
   stage: number;
   rates: SafetyRates;
+  autoResumed?: boolean;
 }> {
   const rates7 = await ratesOverDays(7);
   const stage = await getEffectiveRampStage();
+  const control = await ensureControl();
+
+  // Recoverable hard pauses must not stick forever after the window/counts improve.
+  if (
+    control.hardPause &&
+    control.paused &&
+    shouldAutoResumeRecoverablePause({
+      pauseReason: control.pauseReason,
+      rates: rates7,
+    })
+  ) {
+    await autoResumeRecoverablePause(control.pauseReason || "unknown", rates7);
+    return {
+      ok: true,
+      hardPaused: false,
+      stage,
+      rates: rates7,
+      autoResumed: true,
+    };
+  }
+
+  if (control.hardPause && control.paused) {
+    return { ok: false, hardPaused: true, stage, rates: rates7 };
+  }
 
   if (rates7.sent >= MIN_SAMPLE_FOR_HARD) {
-    if (rates7.complaintRate >= HARD_COMPLAINT) {
-      await hardPauseAcquisition(`complaint_rate_${(rates7.complaintRate * 100).toFixed(3)}%`);
-      return { ok: false, hardPaused: true, stage, rates: rates7 };
-    }
-    if (rates7.bounceRate >= HARD_BOUNCE) {
-      await hardPauseAcquisition(`bounce_rate_${(rates7.bounceRate * 100).toFixed(2)}%`);
-      return { ok: false, hardPaused: true, stage, rates: rates7 };
-    }
-    if (rates7.unsubRate >= HARD_UNSUB) {
-      await hardPauseAcquisition(`unsub_rate_${(rates7.unsubRate * 100).toFixed(2)}%`);
+    const decision = shouldHardPause({
+      sent: rates7.sent,
+      bounceRate: rates7.bounceRate,
+      complaintRate: rates7.complaintRate,
+      unsubRate: rates7.unsubRate,
+      bounced: rates7.bounced,
+      unsubscribed: rates7.unsubscribed,
+    });
+    if (decision.pause) {
+      const reason =
+        decision.reason === "complaint"
+          ? `complaint_rate_${(rates7.complaintRate * 100).toFixed(3)}%`
+          : decision.reason === "bounce"
+            ? `bounce_rate_${(rates7.bounceRate * 100).toFixed(2)}%`
+            : `unsub_rate_${(rates7.unsubRate * 100).toFixed(2)}%`;
+      await hardPauseAcquisition(reason);
       return { ok: false, hardPaused: true, stage, rates: rates7 };
     }
     if (rates7.bounceRate > SOFT_BOUNCE || rates7.unsubRate > SOFT_UNSUB) {
@@ -287,11 +395,31 @@ export function shouldHardPause(opts: {
   bounceRate: number;
   complaintRate: number;
   unsubRate: number;
+  bounced?: number;
+  unsubscribed?: number;
 }): { pause: boolean; reason?: string } {
   if (opts.sent < MIN_SAMPLE_FOR_HARD) return { pause: false };
   if (opts.complaintRate >= HARD_COMPLAINT) return { pause: true, reason: "complaint" };
-  if (opts.bounceRate >= HARD_BOUNCE) return { pause: true, reason: "bounce" };
-  if (opts.unsubRate >= HARD_UNSUB) return { pause: true, reason: "unsub" };
+
+  const bounced =
+    typeof opts.bounced === "number"
+      ? opts.bounced
+      : Math.round(opts.bounceRate * opts.sent);
+  const unsubscribed =
+    typeof opts.unsubscribed === "number"
+      ? opts.unsubscribed
+      : Math.round(opts.unsubRate * opts.sent);
+
+  if (opts.bounceRate >= HARD_BOUNCE) {
+    const enoughAbs = bounced >= MIN_ABS_FOR_HARD_BOUNCE_OR_UNSUB;
+    const largeSample = opts.sent >= MIN_SAMPLE_FOR_SINGLE_EVENT_HARD;
+    if (enoughAbs || largeSample) return { pause: true, reason: "bounce" };
+  }
+  if (opts.unsubRate >= HARD_UNSUB) {
+    const enoughAbs = unsubscribed >= MIN_ABS_FOR_HARD_BOUNCE_OR_UNSUB;
+    const largeSample = opts.sent >= MIN_SAMPLE_FOR_SINGLE_EVENT_HARD;
+    if (enoughAbs || largeSample) return { pause: true, reason: "unsub" };
+  }
   return { pause: false };
 }
 

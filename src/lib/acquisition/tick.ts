@@ -99,6 +99,13 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
       actions.push(`auto_approve:${ap.approved}`);
     }
 
+    // Always evaluate safety — recoverable bounce/unsub hard pauses auto-resume here.
+    // (Previously safety only ran when unpaused, so a single-bounce pause stuck forever.)
+    const safety = await evaluateSafetyPauseAndBackoff();
+    actions.push(
+      `safety:${safety.autoResumed ? "auto_resumed" : safety.ok ? "ok" : "paused"}`
+    );
+
     const paused = await isPipelinePaused();
     if (!paused.paused && acquisitionSendingEnabled()) {
       const sender = await verifyAcquisitionSender();
@@ -117,55 +124,51 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
             data: { type: "sender_blocked_alert", meta: { detail: sender.detail } },
           });
         }
-      } else {
-        const safety = await evaluateSafetyPauseAndBackoff();
-        actions.push(`safety:${safety.ok ? "ok" : "paused"}`);
-        if (safety.ok) {
-          const due = await prisma.acquisitionProspect.findMany({
-            where: {
-              nextFollowUpAt: { lte: now },
-              status: { in: ["CONTACTED", "FOLLOW_UP_1"] },
-              contactEmail: { not: null },
-            },
-            take: 15,
-          });
-          for (const p of due) {
-            const step = p.status === "CONTACTED" ? "FOLLOW_UP_1" : "FOLLOW_UP_2";
-            await draftMessageForProspect(p.id, step, { dryRun: false });
-          }
+      } else if (safety.ok) {
+        const due = await prisma.acquisitionProspect.findMany({
+          where: {
+            nextFollowUpAt: { lte: now },
+            status: { in: ["CONTACTED", "FOLLOW_UP_1"] },
+            contactEmail: { not: null },
+          },
+          take: 15,
+        });
+        for (const p of due) {
+          const step = p.status === "CONTACTED" ? "FOLLOW_UP_1" : "FOLLOW_UP_2";
+          await draftMessageForProspect(p.id, step, { dryRun: false });
+        }
 
-          const candidates = await prisma.acquisitionMessage.findMany({
-            where: {
-              dryRun: false,
-              status: { in: ["DRAFT", "SCHEDULED"] },
-            },
-            include: { prospect: true },
-            orderBy: { createdAt: "asc" },
-            take: 30,
-          });
+        const candidates = await prisma.acquisitionMessage.findMany({
+          where: {
+            dryRun: false,
+            status: { in: ["DRAFT", "SCHEDULED"] },
+          },
+          include: { prospect: true },
+          orderBy: { createdAt: "asc" },
+          take: 30,
+        });
 
-          let sent = 0;
-          let failStreak = 0;
-          for (const m of candidates) {
-            const tz = defaultProspectTimeZone(m.prospect.state);
-            if (!isWithinSendWindow(now, tz).ok) continue;
-            const r = await sendAcquisitionMessage(m.id);
-            if (r.ok) {
-              sent++;
-              failStreak = 0;
-              actions.push(`sent:${m.step}`);
-            } else if (r.reason === "send_failed") {
-              failStreak++;
-              if (failStreak >= 5) {
-                const { hardPauseAcquisition } = await import("@/lib/acquisition/ramp");
-                await hardPauseAcquisition("repeated_send_failures");
-                actions.push("hard_pause:send_failures");
-                break;
-              }
+        let sent = 0;
+        let failStreak = 0;
+        for (const m of candidates) {
+          const tz = defaultProspectTimeZone(m.prospect.state);
+          if (!isWithinSendWindow(now, tz).ok) continue;
+          const r = await sendAcquisitionMessage(m.id);
+          if (r.ok) {
+            sent++;
+            failStreak = 0;
+            actions.push(`sent:${m.step}`);
+          } else if (r.reason === "send_failed") {
+            failStreak++;
+            if (failStreak >= 5) {
+              const { hardPauseAcquisition } = await import("@/lib/acquisition/ramp");
+              await hardPauseAcquisition("repeated_send_failures");
+              actions.push("hard_pause:send_failures");
+              break;
             }
           }
-          if (sent === 0) actions.push("send:none");
         }
+        if (sent === 0) actions.push("send:none");
       }
     } else if (!acquisitionSendingEnabled()) {
       actions.push("sending_off");

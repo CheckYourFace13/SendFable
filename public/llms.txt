@@ -23,4 +23,4 @@
 - Canonical source of truth: https://sendfable.com/sitemap.xml and https://sendfable.com/robots.txt
 - Authenticated app routes, tracking pixels, and private campaign data are not for indexing.
 - Competitor pricing on comparison pages includes a last-checked date and may change.
-- Early launch: public signup may be closed; use https://sendfable.com/early-access
+- Public signup is open at https://sendfable.com/signup — start free, no credit card.

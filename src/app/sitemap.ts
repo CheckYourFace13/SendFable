@@ -2,6 +2,10 @@ import type { MetadataRoute } from "next";
 import { appUrl } from "@/lib/utils";
 import { listPublicCompetitors } from "@/data/competitors";
 
+/** Avoid indefinitely serving a stale build-time sitemap snapshot. */
+export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
 /** All public marketing/legal routes (excludes app, auth, and API). */
 export const SITEMAP_PATHS = [
   "/",

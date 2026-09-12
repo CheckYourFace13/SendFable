@@ -423,11 +423,45 @@ describe("acquisition autonomy gates", () => {
       false
     );
     assert.equal(
-      shouldHardPause({ sent: 50, bounceRate: 0.06, complaintRate: 0, unsubRate: 0 }).pause,
+      shouldHardPause({
+        sent: 50,
+        bounceRate: 0.06,
+        complaintRate: 0,
+        unsubRate: 0,
+        bounced: 3,
+      }).pause,
       true
+    );
+    // One bounce at n=20 is 5% mathematically but should NOT hard-pause (noise).
+    assert.equal(
+      shouldHardPause({
+        sent: 20,
+        bounceRate: 0.05,
+        complaintRate: 0,
+        unsubRate: 0,
+        bounced: 1,
+      }).pause,
+      false
     );
     assert.equal(
       shouldReduceStage({ sent: 50, bounceRate: 0.03, unsubRate: 0 }),
+      true
+    );
+    const { shouldAutoResumeRecoverablePause } = await import("@/lib/acquisition/ramp");
+    assert.equal(
+      shouldAutoResumeRecoverablePause({
+        pauseReason: "bounce_rate_5.00%",
+        rates: {
+          sent: 15,
+          bounced: 1,
+          complained: 0,
+          unsubscribed: 0,
+          bounceRate: 1 / 15,
+          complaintRate: 0,
+          unsubRate: 0,
+          sampleOk: false,
+        },
+      }),
       true
     );
   });
