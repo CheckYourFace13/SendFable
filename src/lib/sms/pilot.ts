@@ -1,7 +1,14 @@
 /**
  * Owner-only SMS pilot configuration (SF-019I).
- * Prepared but never enabled until explicit owner approval after Telnyx access.
+ * Env vars OR DB-backed SmsComplianceProfile.internalNotes.ownerPilot.
  */
+
+import { prisma } from "@/lib/prisma";
+import {
+  OWNER_PILOT_DEFAULT_WORKSPACE_ID,
+  parseOwnerPilotMeta,
+  type OwnerPilotMeta,
+} from "@/lib/sms/owner-pilot-meta";
 
 export const OWNER_SMS_PILOT = {
   enabledEnv: "SENDFABLE_SMS_OWNER_PILOT_ENABLED",
@@ -70,4 +77,90 @@ export function assertOwnerPilotSendAllowed(input: {
     return { ok: false, reason: "owner pilot outbound segment cap reached" };
   }
   return { ok: true };
+}
+
+export async function loadOwnerPilotMetaForWorkspace(
+  workspaceId: string
+): Promise<OwnerPilotMeta | null> {
+  const profile = await prisma.smsComplianceProfile.findUnique({
+    where: { workspaceId },
+    select: { internalNotes: true },
+  });
+  if (!profile) return null;
+  const meta = parseOwnerPilotMeta(profile.internalNotes);
+  return meta.enabled ? meta : null;
+}
+
+/**
+ * Env-first, then DB-backed owner pilot (so allowlist/workspace survive without restart).
+ */
+export async function assertOwnerPilotSendAllowedAsync(input: {
+  workspaceId: string;
+  toE164: string;
+  outboundSegmentsSoFar: number;
+  segmentsThisMessage: number;
+}): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (isOwnerSmsPilotKillSwitchOn()) {
+    return { ok: false, reason: "owner pilot kill switch is on" };
+  }
+
+  if (isOwnerSmsPilotEnabled()) {
+    return assertOwnerPilotSendAllowed(input);
+  }
+
+  const meta = await loadOwnerPilotMetaForWorkspace(input.workspaceId);
+  if (!meta?.enabled || !meta.liveSendingUnlocked) {
+    return { ok: false, reason: "owner pilot is not enabled" };
+  }
+  if (meta.workspaceId !== input.workspaceId) {
+    return { ok: false, reason: "workspace is not the owner pilot workspace" };
+  }
+  if (!meta.pilotPhoneE164 || meta.pilotPhoneE164 !== input.toE164) {
+    return { ok: false, reason: "destination not on owner pilot allowlist" };
+  }
+  if (
+    input.outboundSegmentsSoFar + input.segmentsThisMessage >
+    OWNER_SMS_PILOT.maxOutboundSegmentsTotal
+  ) {
+    return { ok: false, reason: "owner pilot outbound segment cap reached" };
+  }
+  return { ok: true };
+}
+
+export async function isOwnerPilotRegistrationAllowed(workspaceId: string): Promise<boolean> {
+  if (isOwnerSmsPilotKillSwitchOn()) return false;
+  const meta = await loadOwnerPilotMetaForWorkspace(workspaceId);
+  return Boolean(meta?.registrationUnlocked && meta.workspaceId === workspaceId);
+}
+
+export async function isOwnerPilotNumberPurchaseAllowed(workspaceId: string): Promise<boolean> {
+  if (isOwnerSmsPilotKillSwitchOn()) return false;
+  const meta = await loadOwnerPilotMetaForWorkspace(workspaceId);
+  return Boolean(meta?.numberPurchaseUnlocked && meta.workspaceId === workspaceId);
+}
+
+export async function isOwnerPilotLiveSendingAllowed(workspaceId: string): Promise<boolean> {
+  if (isOwnerSmsPilotKillSwitchOn()) return false;
+  if (isOwnerSmsPilotEnabled() && ownerPilotWorkspaceId() === workspaceId) return true;
+  const meta = await loadOwnerPilotMetaForWorkspace(workspaceId);
+  return Boolean(meta?.liveSendingUnlocked && meta.workspaceId === workspaceId);
+}
+
+export async function isOwnerPilotWorkspace(workspaceId: string): Promise<boolean> {
+  const meta = await loadOwnerPilotMetaForWorkspace(workspaceId);
+  return Boolean(meta?.enabled && meta.workspaceId === workspaceId);
+}
+
+export async function isAnyOwnerPilotInboundUnlocked(): Promise<boolean> {
+  if (isOwnerSmsPilotKillSwitchOn()) return false;
+  const rows = await prisma.smsComplianceProfile.findMany({
+    where: { internalNotes: { contains: '"inboundUnlocked":true' } },
+    select: { workspaceId: true, internalNotes: true },
+    take: 10,
+  });
+  return rows.some((r) => parseOwnerPilotMeta(r.internalNotes).inboundUnlocked);
+}
+
+export function defaultOwnerPilotWorkspaceId(): string {
+  return ownerPilotWorkspaceId() || OWNER_PILOT_DEFAULT_WORKSPACE_ID;
 }

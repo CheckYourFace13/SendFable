@@ -14,11 +14,16 @@ const schema = z.object({
  * auto-sent. Flag-gated so the feature is invisible until SMS signup opens.
  */
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled()) {
+  if (!isSmsCodeEnabled()) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { isOwnerPilotWorkspace } = await import("@/lib/sms/pilot");
+  const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
+  if (!isSmsAccountSignupEnabled() && !ownerPilot) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });

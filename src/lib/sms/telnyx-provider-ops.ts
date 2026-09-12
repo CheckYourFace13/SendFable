@@ -129,9 +129,19 @@ export class TelnyxSmsProviderOps implements SmsProviderOps {
       `/10dlc/brand/${encodeURIComponent(providerBrandId)}`
     );
     const data = res.data ?? res;
+    const failureReason =
+      (data as any).failureReasons ||
+      (data as any).rejectionReason ||
+      (data as any).statusReason ||
+      null;
     return {
       providerBrandId: String((data as any).brandId || (data as any).id || providerBrandId),
       status: mapBrandStatus((data as any).identityStatus || (data as any).status),
+      failureReason: failureReason
+        ? typeof failureReason === "string"
+          ? failureReason
+          : JSON.stringify(failureReason).slice(0, 2000)
+        : null,
     };
   }
 
@@ -193,11 +203,21 @@ export class TelnyxSmsProviderOps implements SmsProviderOps {
       try {
         const res = await telnyxJson<{ data?: any }>("GET", path);
         const data = res.data ?? res;
+        const failureReason =
+          (data as any).rejectionReason ||
+          (data as any).failureReasons ||
+          (data as any).statusReason ||
+          null;
         return {
           providerCampaignId: String(
             (data as any).campaignId || (data as any).id || providerCampaignId
           ),
           status: mapCampaignStatus((data as any).status || (data as any).campaignStatus),
+          failureReason: failureReason
+            ? typeof failureReason === "string"
+              ? failureReason
+              : JSON.stringify(failureReason).slice(0, 2000)
+            : null,
         };
       } catch (e) {
         lastErr = e instanceof Error ? e : new Error(String(e));

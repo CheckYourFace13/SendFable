@@ -103,7 +103,12 @@ setInterval(async () => {
           await launchCampaign(c.id);
         }
         if (needsSms) {
-          if (!isSmsLiveSendingEnabled()) {
+          let liveOk = isSmsLiveSendingEnabled();
+          if (!liveOk) {
+            const { isOwnerPilotLiveSendingAllowed } = await import("@/lib/sms/pilot");
+            liveOk = await isOwnerPilotLiveSendingAllowed(c.workspaceId);
+          }
+          if (!liveOk) {
             console.warn(
               `[worker] scheduled campaign ${c.id} SMS leg skipped — live SMS sending disabled`
             );
@@ -134,6 +139,22 @@ setInterval(async () => {
     console.error("[worker] schedule poll error", err);
   }
 }, 30_000);
+
+// Poll Telnyx brand/campaign status for pending 10DLC registrations (owner pilot + customers)
+setInterval(async () => {
+  try {
+    const { syncPendingSmsRegistrations } = await import("@/lib/sms/sync-registration");
+    const result = await syncPendingSmsRegistrations();
+    if (result.updated > 0 || result.notifications.length || process.env.WORKER_VERBOSE) {
+      console.log(
+        `[worker] sms registration sync checked=${result.checked} updated=${result.updated}` +
+          (result.notifications.length ? ` notify=${result.notifications.join(",")}` : "")
+      );
+    }
+  } catch (err) {
+    console.error("[worker] sms registration sync error", err);
+  }
+}, 120_000);
 
 // Acquisition pipeline tick (flag-gated; no-ops when SENDFABLE_ACQUISITION_ENABLED=false)
 setInterval(async () => {

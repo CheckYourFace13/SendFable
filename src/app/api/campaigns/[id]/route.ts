@@ -82,7 +82,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     (parsed.data.channel && parsed.data.channel !== "EMAIL") ||
     (parsed.data.smsBody !== undefined && parsed.data.smsBody !== null)
   ) {
-    if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled()) {
+    if (!isSmsCodeEnabled()) {
+      return NextResponse.json({ error: "Text campaigns are not available yet" }, { status: 403 });
+    }
+    const { isOwnerPilotWorkspace } = await import("@/lib/sms/pilot");
+    const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
+    if (!isSmsAccountSignupEnabled() && !ownerPilot) {
       return NextResponse.json({ error: "Text campaigns are not available yet" }, { status: 403 });
     }
   }

@@ -32,6 +32,7 @@ export interface BrandCreateRequest {
 export interface BrandRecord {
   providerBrandId: string;
   status: "submitted" | "pending" | "approved" | "rejected";
+  failureReason?: string | null;
 }
 
 export interface CampaignCreateRequest {
@@ -49,6 +50,7 @@ export interface CampaignCreateRequest {
 export interface CampaignRecord {
   providerCampaignId: string;
   status: "submitted" | "pending" | "approved" | "rejected";
+  failureReason?: string | null;
 }
 
 export interface NumberSearchRequest {

@@ -166,9 +166,14 @@ export async function POST(req: Request) {
   }
 
   if (toStatus === "PROVIDER_SUBMITTED") {
-    // Hard guard: never submit to provider while registration is dark
+    // Hard guard: never submit to provider while registration is dark —
+    // unless this is the unlocked owner pilot workspace.
     const { isSmsRegistrationEnabled } = await import("@/lib/sms/flags");
-    if (!isSmsRegistrationEnabled()) {
+    const { isOwnerPilotRegistrationAllowed } = await import("@/lib/sms/pilot");
+    const allowed =
+      isSmsRegistrationEnabled() ||
+      (await isOwnerPilotRegistrationAllowed(profile.workspaceId));
+    if (!allowed) {
       return NextResponse.json(
         {
           error:

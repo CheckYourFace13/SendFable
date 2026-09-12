@@ -198,7 +198,11 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
-      if (!isSmsNumberPurchaseEnabled()) {
+      const { isOwnerPilotNumberPurchaseAllowed } = await import("@/lib/sms/pilot");
+      const purchaseOk =
+        isSmsNumberPurchaseEnabled() ||
+        (await isOwnerPilotNumberPurchaseAllowed(workspaceId));
+      if (!purchaseOk) {
         return NextResponse.json(
           { error: "SENDFABLE_SMS_NUMBER_PURCHASE_ENABLED=false" },
           { status: 403 }
@@ -232,7 +236,7 @@ export async function POST(req: Request) {
       }
       try {
         const { getSmsProviderOps } = await import("@/lib/sms/provider-ops-registry");
-        const ops = getSmsProviderOps();
+        const ops = getSmsProviderOps({ forceLive: true });
         const brand = await ops.retrieveBrand(profile.brandId);
         const campaign = await ops.retrieveCampaign(profile.campaignId);
         const bothApproved = brand.status === "approved" && campaign.status === "approved";

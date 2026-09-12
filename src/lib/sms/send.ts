@@ -12,7 +12,6 @@
 import { prisma } from "@/lib/prisma";
 import { canSendMarketingSms } from "@/lib/sms/consent";
 import { assertSmsFlag } from "@/lib/sms/flags";
-import { getSmsProvider } from "@/lib/sms/provider-registry";
 import { recordOutboundUsage } from "@/lib/sms/usage";
 import { redactPhone } from "@/lib/sms/phone";
 import type { SmsPlanKey } from "@/lib/sms/pricing";
@@ -132,9 +131,14 @@ interface DispatchInput {
 }
 
 async function dispatchSms(input: DispatchInput): Promise<SendSmsOutcome> {
-  // Owner pilot gate: when enabled, only the allowlisted workspace/recipients may send.
-  const { isOwnerSmsPilotEnabled, assertOwnerPilotSendAllowed } = await import("@/lib/sms/pilot");
-  if (isOwnerSmsPilotEnabled()) {
+  // Owner pilot gate: when enabled (env or DB), only allowlisted recipients may send.
+  const {
+    isOwnerSmsPilotEnabled,
+    assertOwnerPilotSendAllowedAsync,
+    isOwnerPilotLiveSendingAllowed,
+  } = await import("@/lib/sms/pilot");
+  const pilotLive = await isOwnerPilotLiveSendingAllowed(input.workspaceId);
+  if (isOwnerSmsPilotEnabled() || pilotLive) {
     const outboundSoFar = await prisma.smsMessage.count({
       where: {
         workspaceId: input.workspaceId,
@@ -142,7 +146,7 @@ async function dispatchSms(input: DispatchInput): Promise<SendSmsOutcome> {
         status: { in: ["ACCEPTED", "SENT", "DELIVERED"] },
       },
     });
-    const pilot = assertOwnerPilotSendAllowed({
+    const pilot = await assertOwnerPilotSendAllowedAsync({
       workspaceId: input.workspaceId,
       toE164: input.to,
       outboundSegmentsSoFar: outboundSoFar,
@@ -153,7 +157,8 @@ async function dispatchSms(input: DispatchInput): Promise<SendSmsOutcome> {
     }
   }
 
-  const provider = getSmsProvider();
+  const { getSmsProviderForWorkspace } = await import("@/lib/sms/provider-registry");
+  const provider = await getSmsProviderForWorkspace(input.workspaceId);
 
   // Idempotency: if a message for this key already exists, do not resend.
   const priorLedger = await prisma.smsUsageLedger.findUnique({

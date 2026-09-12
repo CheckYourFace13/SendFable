@@ -104,7 +104,13 @@ export class TelnyxSmsProvider implements SmsProvider {
   }
 
   async sendMessage(req: OutboundSmsRequest): Promise<OutboundSmsResult> {
-    assertSmsFlag("SENDFABLE_SMS_LIVE_SENDING_ENABLED");
+    const { isSmsLiveSendingEnabled } = await import("@/lib/sms/flags");
+    const { isOwnerPilotLiveSendingAllowed } = await import("@/lib/sms/pilot");
+    const liveOk =
+      isSmsLiveSendingEnabled() || (await isOwnerPilotLiveSendingAllowed(req.workspaceId));
+    if (!liveOk) {
+      throw new Error("SMS feature is not enabled (SENDFABLE_SMS_LIVE_SENDING_ENABLED=false).");
+    }
     if (!req.to.startsWith("+1")) {
       throw new Error("Phase 1 permits US destinations only");
     }

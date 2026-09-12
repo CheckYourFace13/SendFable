@@ -1,7 +1,7 @@
 /**
- * Resolve SmsProviderOps.
- * Use Telnyx when mock is off AND any live lifecycle flag is on
- * (registration, number purchase, or live sending).
+ * Provider selection for brand/campaign/number ops.
+ * forceLive: use Telnyx even when mock remains the default for customer sends
+ * (owner pilot registration / purchase path).
  */
 
 import {
@@ -15,6 +15,7 @@ import { MockSmsProviderOps, mockSmsProviderOps } from "@/lib/sms/mock-provider-
 import { TelnyxSmsProviderOps } from "@/lib/sms/telnyx-provider-ops";
 
 let cached: SmsProviderOps | null = null;
+let cachedLive: SmsProviderOps | null = null;
 
 function shouldUseLiveTelnyxOps(): boolean {
   if (isSmsMockProviderEnabled()) return false;
@@ -25,7 +26,11 @@ function shouldUseLiveTelnyxOps(): boolean {
   );
 }
 
-export function getSmsProviderOps(): SmsProviderOps {
+export function getSmsProviderOps(opts?: { forceLive?: boolean }): SmsProviderOps {
+  if (opts?.forceLive) {
+    if (!cachedLive) cachedLive = new TelnyxSmsProviderOps();
+    return cachedLive;
+  }
   if (cached) return cached;
   cached = shouldUseLiveTelnyxOps() ? new TelnyxSmsProviderOps() : mockSmsProviderOps;
   return cached;
@@ -33,6 +38,7 @@ export function getSmsProviderOps(): SmsProviderOps {
 
 export function __resetSmsProviderOpsForTests(): void {
   cached = null;
+  cachedLive = null;
   if (mockSmsProviderOps instanceof MockSmsProviderOps) {
     mockSmsProviderOps.reset();
   }

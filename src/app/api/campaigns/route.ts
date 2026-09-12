@@ -58,11 +58,21 @@ export async function POST(req: Request) {
   }
 
   const channel = parsed.data.channel ?? "EMAIL";
-  if (channel !== "EMAIL" && (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled())) {
-    return NextResponse.json(
-      { error: "Text campaigns are not available yet" },
-      { status: 403 }
-    );
+  if (channel !== "EMAIL") {
+    if (!isSmsCodeEnabled()) {
+      return NextResponse.json(
+        { error: "Text campaigns are not available yet" },
+        { status: 403 }
+      );
+    }
+    const { isOwnerPilotWorkspace } = await import("@/lib/sms/pilot");
+    const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
+    if (!isSmsAccountSignupEnabled() && !ownerPilot) {
+      return NextResponse.json(
+        { error: "Text campaigns are not available yet" },
+        { status: 403 }
+      );
+    }
   }
 
   const design = createSimpleDesign({

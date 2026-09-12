@@ -72,6 +72,10 @@ export default function AdminSmsPage() {
       />
 
       <p className="text-sm">
+        <a className="underline" href="/admin/sms/setup">
+          Owner SMS pilot setup
+        </a>
+        {" · "}
         <a className="underline" href="/admin/sms/compliance">
           Compliance review queue
         </a>

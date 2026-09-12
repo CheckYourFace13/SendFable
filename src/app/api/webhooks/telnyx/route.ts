@@ -16,7 +16,17 @@ import { processDeliveryEvent } from "@/lib/sms/send";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!isSmsCodeEnabled() || !isSmsInboundEnabled()) {
+  if (!isSmsCodeEnabled()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const globalInbound = isSmsInboundEnabled();
+  let pilotInbound = false;
+  if (!globalInbound) {
+    const { isAnyOwnerPilotInboundUnlocked } = await import("@/lib/sms/pilot");
+    pilotInbound = await isAnyOwnerPilotInboundUnlocked();
+  }
+  if (!globalInbound && !pilotInbound) {
     // Product is dark: refuse without processing. 404 avoids advertising the
     // endpoint while SMS is unreleased.
     return NextResponse.json({ error: "Not found" }, { status: 404 });

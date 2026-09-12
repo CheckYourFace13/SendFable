@@ -51,7 +51,7 @@ export async function submitComplianceProfileToProvider(profileId: string): Prom
   const phoneNorm = normalizeUsPhone(profile.supportPhone!);
   if (!phoneNorm) throw new Error("supportPhone must be a valid US number in E.164-capable form");
 
-  const ops = getSmsProviderOps();
+  const ops = getSmsProviderOps({ forceLive: true });
   const brand = profile.brandId
     ? await ops.retrieveBrand(profile.brandId)
     : await ops.createBrand({
@@ -198,7 +198,7 @@ export async function provisionWorkspaceNumber(input: {
     };
   }
 
-  const ops = getSmsProviderOps();
+  const ops = getSmsProviderOps({ forceLive: true });
   const found = await ops.searchNumbers({
     numberType: "us-local",
     areaCode: input.areaCode,

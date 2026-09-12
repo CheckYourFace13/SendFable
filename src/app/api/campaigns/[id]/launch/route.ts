@@ -85,7 +85,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   if (needsSms) {
-    if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled()) {
+    if (!isSmsCodeEnabled()) {
+      return NextResponse.json(
+        { error: "Text messaging is not activated for this account." },
+        { status: 403 }
+      );
+    }
+    const { isOwnerPilotWorkspace, isOwnerPilotLiveSendingAllowed } = await import(
+      "@/lib/sms/pilot"
+    );
+    const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
+    if (!isSmsAccountSignupEnabled() && !ownerPilot) {
       return NextResponse.json(
         { error: "Text messaging is not activated for this account." },
         { status: 403 }
@@ -94,7 +104,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (!campaign.smsBody?.trim()) {
       return NextResponse.json({ error: "Text message body is required" }, { status: 400 });
     }
-    if (parsed.data.when === "now" && !isSmsLiveSendingEnabled()) {
+    const liveOk =
+      isSmsLiveSendingEnabled() || (await isOwnerPilotLiveSendingAllowed(ctx.workspace.id));
+    if (parsed.data.when === "now" && !liveOk) {
       return NextResponse.json(
         {
           error:

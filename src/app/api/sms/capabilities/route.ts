@@ -21,25 +21,35 @@ export async function GET() {
 
   const code = isSmsCodeEnabled();
   const account = isSmsAccountSignupEnabled();
+  const { isOwnerPilotWorkspace, isOwnerPilotLiveSendingAllowed } = await import(
+    "@/lib/sms/pilot"
+  );
+  const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
+  const ownerLive = await isOwnerPilotLiveSendingAllowed(ctx.workspace.id);
+  const channelUi = code && (account || ownerPilot);
+  const liveSending = isSmsLiveSendingEnabled() || ownerLive;
   return NextResponse.json({
     codeEnabled: code,
     accountSignupEnabled: account,
     /** Customer may create Text/Both drafts and use convert UI */
-    channelUiEnabled: code && account,
-    liveSendingEnabled: isSmsLiveSendingEnabled(),
+    channelUiEnabled: channelUi,
+    liveSendingEnabled: liveSending,
     numberPurchaseEnabled: isSmsNumberPurchaseEnabled(),
-    registrationEnabled: isSmsRegistrationEnabled(),
-    inboundEnabled: isSmsInboundEnabled(),
+    registrationEnabled: isSmsRegistrationEnabled() || ownerPilot,
+    inboundEnabled: isSmsInboundEnabled() || ownerPilot,
     publicEnabled: isSmsPublicEnabled(),
-    mockProvider: isSmsMockProviderEnabled(),
+    mockProvider: isSmsMockProviderEnabled() && !ownerLive,
+    ownerPilot,
     /** Honest status for customer copy */
-    liveReady: false,
+    liveReady: liveSending,
     statusMessage: !code
       ? "Text messaging is disabled."
-      : !account
+      : !account && !ownerPilot
         ? "Text messaging is not activated for accounts yet."
-        : !isSmsLiveSendingEnabled()
+        : !liveSending
           ? "Text drafts are available; live sending awaits provider approval."
-          : "Text messaging is available.",
+          : ownerPilot
+            ? "Owner SMS pilot is active (public SMS still off)."
+            : "Text messaging is available.",
   });
 }
