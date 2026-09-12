@@ -16,7 +16,7 @@ import { TelnyxSmsProviderOps } from "@/lib/sms/telnyx-provider-ops";
 
 let cached: SmsProviderOps | null = null;
 
-function useLiveTelnyxOps(): boolean {
+function shouldUseLiveTelnyxOps(): boolean {
   if (isSmsMockProviderEnabled()) return false;
   return (
     isSmsLiveSendingEnabled() ||
@@ -27,7 +27,7 @@ function useLiveTelnyxOps(): boolean {
 
 export function getSmsProviderOps(): SmsProviderOps {
   if (cached) return cached;
-  cached = useLiveTelnyxOps() ? new TelnyxSmsProviderOps() : mockSmsProviderOps;
+  cached = shouldUseLiveTelnyxOps() ? new TelnyxSmsProviderOps() : mockSmsProviderOps;
   return cached;
 }
 
