@@ -179,6 +179,60 @@ export async function POST(req: Request) {
     }
   }
 
+  // Live Telnyx brand+campaign submit happens BEFORE we persist PROVIDER_SUBMITTED,
+  // so a provider failure does not leave a false success state.
+  let providerSubmit:
+    | { brandId: string; campaignId: string; brandStatus: string; campaignStatus: string }
+    | undefined;
+  if (toStatus === "PROVIDER_SUBMITTED") {
+    try {
+      const { submitComplianceProfileToProvider } = await import("@/lib/sms/provider-submit");
+      providerSubmit = await submitComplianceProfileToProvider(profile.id);
+      // submitComplianceProfileToProvider advances review to PROVIDER_PENDING
+      const refreshed = await prisma.smsComplianceProfile.findUnique({ where: { id: profile.id } });
+      const { einBrnCiphertext: _e, ...safe } = refreshed!;
+      void _e;
+      await prisma.smsComplianceReviewEvent.create({
+        data: {
+          profileId: profile.id,
+          workspaceId: profile.workspaceId,
+          fromStatus: profile.reviewStatus,
+          toStatus: "PROVIDER_PENDING",
+          actorUserId: ctx.user.id,
+          note: parsed.data.note ?? null,
+          meta: {
+            providerSubmit,
+            restrictedContentOk: parsed.data.restrictedContentOk ?? null,
+            prohibitedUseOk: parsed.data.prohibitedUseOk ?? null,
+            dataCompleteOk: parsed.data.dataCompleteOk ?? null,
+            providerReadyOk: parsed.data.providerReadyOk ?? null,
+          },
+        },
+      });
+      await prisma.auditLog.create({
+        data: {
+          workspaceId: profile.workspaceId,
+          userId: ctx.user.id,
+          action: "admin.sms.compliance.provider_submit",
+          targetType: "SmsComplianceProfile",
+          targetId: profile.id,
+          meta: { from: profile.reviewStatus, to: "PROVIDER_PENDING", providerSubmit },
+        },
+      });
+      return NextResponse.json({
+        profile: { ...safe, einOnFile: Boolean(refreshed!.einBrnCiphertext) },
+        providerSubmit,
+      });
+    } catch (err) {
+      return NextResponse.json(
+        {
+          error: err instanceof Error ? err.message : "Provider submission failed",
+        },
+        { status: 502 }
+      );
+    }
+  }
+
   const fees = estimateRegistrationFeesCents();
   const marginBp = profile.selectedPlan
     ? estimatePlanMarginBasisPoints(profile.selectedPlan as SmsPlanKey, false)

@@ -176,9 +176,30 @@ describe("SF-019 provider abstraction + mock ops", () => {
     assert.ok(fees.numberMonthlyMicros > 0n);
   });
 
-  it("Telnyx ops stub throws without credentials", async () => {
+  it("Telnyx ops require API key", async () => {
+    const prev = process.env.TELNYX_API_KEY;
+    delete process.env.TELNYX_API_KEY;
     const ops = new TelnyxSmsProviderOps();
-    await assert.rejects(() => ops.createBrand({} as never));
+    await assert.rejects(
+      () =>
+        ops.createBrand({
+          workspaceId: "w",
+          legalEntityName: "Acme",
+          displayName: "Acme",
+          entityType: "PRIVATE_PROFIT",
+          website: "https://example.com",
+          email: "a@example.com",
+          phone: "+13125551212",
+          street: "1 Main",
+          city: "Chicago",
+          state: "IL",
+          postalCode: "60601",
+          country: "US",
+          vertical: "TECHNOLOGY",
+        }),
+      /TELNYX_API_KEY/
+    );
+    if (prev !== undefined) process.env.TELNYX_API_KEY = prev;
   });
 });
 

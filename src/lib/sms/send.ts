@@ -132,6 +132,27 @@ interface DispatchInput {
 }
 
 async function dispatchSms(input: DispatchInput): Promise<SendSmsOutcome> {
+  // Owner pilot gate: when enabled, only the allowlisted workspace/recipients may send.
+  const { isOwnerSmsPilotEnabled, assertOwnerPilotSendAllowed } = await import("@/lib/sms/pilot");
+  if (isOwnerSmsPilotEnabled()) {
+    const outboundSoFar = await prisma.smsMessage.count({
+      where: {
+        workspaceId: input.workspaceId,
+        direction: "OUTBOUND",
+        status: { in: ["ACCEPTED", "SENT", "DELIVERED"] },
+      },
+    });
+    const pilot = assertOwnerPilotSendAllowed({
+      workspaceId: input.workspaceId,
+      toE164: input.to,
+      outboundSegmentsSoFar: outboundSoFar,
+      segmentsThisMessage: 1,
+    });
+    if (!pilot.ok) {
+      return { status: "skipped", reason: pilot.reason };
+    }
+  }
+
   const provider = getSmsProvider();
 
   // Idempotency: if a message for this key already exists, do not resend.

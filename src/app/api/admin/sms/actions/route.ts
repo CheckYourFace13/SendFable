@@ -20,6 +20,8 @@ const schema = z.object({
     "create-exceptional-charge",
     "change-plan",
     "release-number",
+    "purchase-assign-number",
+    "sync-campaign-status",
     "reconcile-provider-invoice",
     "kill-switch-on",
     "kill-switch-off",
@@ -35,6 +37,8 @@ const schema = z.object({
   plan: z.enum(["TEXT_ENTRY", "TEXT_ESSENTIALS", "TEXT_ADVANTAGE"]).optional(),
   note: z.string().max(1000).optional(),
   confirmRelease: z.boolean().optional(),
+  confirmPurchase: z.boolean().optional(),
+  areaCode: z.string().max(3).optional(),
   month: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   reconciledCostMicros: z.string().regex(/^\d+$/).optional(),
 });
@@ -166,12 +170,101 @@ export async function POST(req: Request) {
         await audit({ providerCall: false });
         return NextResponse.json({ ok: true, providerCall: false });
       }
+      const active = await prisma.smsNumber.findFirst({
+        where: { workspaceId, status: "ACTIVE" },
+      });
+      if (active?.providerNumberId) {
+        try {
+          const { getSmsProviderOps } = await import("@/lib/sms/provider-ops-registry");
+          await getSmsProviderOps().releaseNumber(active.providerNumberId);
+        } catch (err) {
+          return NextResponse.json(
+            { error: err instanceof Error ? err.message : "Provider release failed" },
+            { status: 502 }
+          );
+        }
+      }
       await prisma.smsNumber.updateMany({
         where: { workspaceId, status: "ACTIVE" },
         data: { status: "RELEASED", releasedAt: new Date() },
       });
       await audit({ providerCall: true });
       return NextResponse.json({ ok: true });
+    }
+    case "purchase-assign-number": {
+      if (!parsed.data.confirmPurchase) {
+        return NextResponse.json(
+          { error: "Explicit confirmPurchase=true is required (incurs Telnyx number cost)" },
+          { status: 400 }
+        );
+      }
+      if (!isSmsNumberPurchaseEnabled()) {
+        return NextResponse.json(
+          { error: "SENDFABLE_SMS_NUMBER_PURCHASE_ENABLED=false" },
+          { status: 403 }
+        );
+      }
+      try {
+        const { provisionWorkspaceNumber } = await import("@/lib/sms/provider-submit");
+        const result = await provisionWorkspaceNumber({
+          workspaceId,
+          areaCode: parsed.data.areaCode,
+          ensureSubscription: true,
+        });
+        await audit({
+          phoneE164: result.phoneE164,
+          providerNumberId: result.providerNumberId,
+        });
+        return NextResponse.json({ ok: true, ...result });
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Number provision failed" },
+          { status: 502 }
+        );
+      }
+    }
+    case "sync-campaign-status": {
+      const profile = await prisma.smsComplianceProfile.findUnique({
+        where: { workspaceId },
+      });
+      if (!profile?.brandId || !profile.campaignId) {
+        return NextResponse.json({ error: "No brand/campaign on profile" }, { status: 404 });
+      }
+      try {
+        const { getSmsProviderOps } = await import("@/lib/sms/provider-ops-registry");
+        const ops = getSmsProviderOps();
+        const brand = await ops.retrieveBrand(profile.brandId);
+        const campaign = await ops.retrieveCampaign(profile.campaignId);
+        const bothApproved = brand.status === "approved" && campaign.status === "approved";
+        const anyRejected = brand.status === "rejected" || campaign.status === "rejected";
+        await prisma.smsComplianceProfile.update({
+          where: { id: profile.id },
+          data: {
+            providerStatus: bothApproved
+              ? "APPROVED"
+              : anyRejected
+                ? "REJECTED"
+                : "PENDING_CARRIER",
+            reviewStatus: bothApproved
+              ? "APPROVED"
+              : anyRejected
+                ? "REJECTED"
+                : "PROVIDER_PENDING",
+            ...(bothApproved ? { approvedAt: new Date() } : {}),
+          },
+        });
+        await audit({ brandStatus: brand.status, campaignStatus: campaign.status });
+        return NextResponse.json({
+          ok: true,
+          brandStatus: brand.status,
+          campaignStatus: campaign.status,
+        });
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Sync failed" },
+          { status: 502 }
+        );
+      }
     }
     case "reconcile-provider-invoice": {
       if (!parsed.data.month || !parsed.data.reconciledCostMicros) {
