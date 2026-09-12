@@ -315,26 +315,34 @@ export class TelnyxSmsProviderOps implements SmsProviderOps {
       customer_reference: workspaceId,
     });
     const data = res.data ?? res;
-    const orderId = String(data.id || "");
-    // Resolve phone number resource id (may need a follow-up list)
-    let providerNumberId = orderId;
+    let providerNumberId = "";
     const phones = data.phone_numbers || data.phoneNumbers || [];
     if (Array.isArray(phones) && phones[0]?.id) {
       providerNumberId = String(phones[0].id);
-    } else {
-      // Look up the number after order
+    }
+
+    // Orders can complete asynchronously — poll for the phone_numbers resource.
+    for (let attempt = 0; attempt < 8 && !providerNumberId; attempt++) {
+      await new Promise((r) => setTimeout(r, 1500));
       const listed = await telnyxJson<{ data?: any[] }>(
         "GET",
         `/phone_numbers?filter[phone_number]=${encodeURIComponent(phoneE164)}`
       );
       const match = (listed.data || [])[0];
-      if (match?.id) providerNumberId = String(match.id);
-      // Ensure messaging profile binding
-      if (profileId && match?.id && match.messaging_profile_id !== profileId) {
-        await telnyxJson("PATCH", `/phone_numbers/${match.id}`, {
-          messaging_profile_id: profileId,
-        });
+      if (match?.id) {
+        providerNumberId = String(match.id);
+        if (profileId && match.messaging_profile_id !== profileId) {
+          await telnyxJson("PATCH", `/phone_numbers/${match.id}`, {
+            messaging_profile_id: profileId,
+          });
+        }
+        break;
       }
+    }
+    if (!providerNumberId) {
+      throw new Error(
+        `Telnyx number order placed but phone resource not found yet for ${phoneE164}`
+      );
     }
     return {
       phoneE164,

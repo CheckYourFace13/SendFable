@@ -559,7 +559,8 @@ export async function provisionWorkspaceNumber(input: {
   if (!found.length) throw new Error("No available SMS numbers for the requested area code");
 
   const bought = await ops.purchaseNumber(found[0]!.phoneE164, input.workspaceId);
-  await ops.assignNumber(bought.providerNumberId, profile.campaignId);
+  // Assign by E.164 — order IDs are not phone_numbers resource IDs.
+  await ops.assignNumber(bought.phoneE164, profile.campaignId);
 
   const row = await prisma.smsNumber.create({
     data: {
