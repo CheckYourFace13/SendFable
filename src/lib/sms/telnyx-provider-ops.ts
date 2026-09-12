@@ -167,8 +167,15 @@ export class TelnyxSmsProviderOps implements SmsProviderOps {
       failureReason?: string | null;
     }>
   > {
-    const res = await telnyxJson<{ data?: any[] }>("GET", "/10dlc/brand?page[size]=50");
-    const rows = Array.isArray(res.data) ? res.data : [];
+    const res = await telnyxJson<{ data?: any[]; records?: any[] }>(
+      "GET",
+      "/10dlc/brand?page[size]=50"
+    );
+    const rows = Array.isArray(res.data)
+      ? res.data
+      : Array.isArray(res.records)
+        ? res.records
+        : [];
     return rows.map((raw) => {
       const d = (raw as any).attributes || raw;
       const failureReason = d.failureReasons || d.rejectionReason || null;
@@ -206,9 +213,9 @@ export class TelnyxSmsProviderOps implements SmsProviderOps {
       messageFlow: req.messageFlow,
       helpMessage: req.helpMessage,
       optoutMessage: req.optoutMessage,
-      optinKeywords: "START, YES, SUBSCRIBE",
-      optoutKeywords: "STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT",
-      helpKeywords: "HELP, INFO",
+      optinKeywords: "START,YES,SUBSCRIBE",
+      optoutKeywords: "STOP,STOPALL,UNSUBSCRIBE,CANCEL,END,QUIT",
+      helpKeywords: "HELP,INFO",
       subscriberOptin: true,
       subscriberOptout: true,
       subscriberHelp: true,
