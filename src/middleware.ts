@@ -77,6 +77,8 @@ const APP_PREFIXES = [
   "/admin",
   "/library",
   "/brand",
+  "/sms",
+  "/inbox",
 ];
 
 function isAppPath(pathname: string): boolean {

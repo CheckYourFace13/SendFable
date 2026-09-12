@@ -81,7 +81,8 @@ describe("SF-017 consent disclosure", () => {
 
   it("builds brand-specific HELP and STOP replies", () => {
     assert.match(buildSmsHelpReply({ brandName: "Acme", supportEmail: "hi@acme.test" }), /Acme/);
-    assert.match(buildSmsStopReply("Acme"), /unsubscribed from Acme/i);
+    assert.match(buildSmsStopReply("Acme"), /unsubscribed/i);
+    assert.match(buildSmsStopReply("Acme"), /Acme/);
   });
 });
 

@@ -30,12 +30,13 @@ import {
 import { defaultOwnerPilotWorkspaceId } from "@/lib/sms/pilot";
 import { MOCK_PROVIDER_COSTS } from "@/lib/sms/mock-provider";
 import {
+  BrandNotVerifiedError,
   deriveLifecyclePhase,
   humanLifecycleMessage,
   primaryActionForPhase,
   type SmsLifecyclePhase,
 } from "@/lib/sms/registration-lifecycle";
-import { BrandNotVerifiedError } from "@/lib/sms/registration-lifecycle";
+import { translateSmsProviderError } from "@/lib/sms/customer-facing";
 
 const saveSchema = z.object({
   action: z.enum([
@@ -670,7 +671,9 @@ export async function POST(req: Request) {
     }
     return NextResponse.json(
       {
-        error: err instanceof Error ? err.message : "Provider submission failed",
+        error: translateSmsProviderError(
+          err instanceof Error ? err.message : "Provider submission failed"
+        ).ownerMessage,
         profile: serializeSafe(profile),
       },
       { status: 502 }

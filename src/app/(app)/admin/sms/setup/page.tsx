@@ -232,9 +232,13 @@ export default function AdminSmsSetupPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <PageHeader
-        title="Owner SMS pilot setup"
-        description="Enter legal registration data securely. EIN is encrypted at rest and never shown in full after save. Public SMS stays OFF."
+        title="Owner SMS diagnostics"
+        description="Protected admin view for provider registration. Customers use Settings → Text messaging instead."
       />
+      <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+        This page is for SendFable operators only. It may show provider IDs and sync controls that
+        must never appear in the normal customer setup.
+      </p>
       <p className="text-sm">
         <Link className="underline" href="/admin/sms">
           ← SMS admin
@@ -600,7 +604,7 @@ export default function AdminSmsSetupPage() {
       {(profile?.lifecyclePhase === "BRAND_PENDING" ||
         profile?.lifecyclePhase === "BRAND_SUBMITTED") && (
         <p className="text-sm text-muted-foreground">
-          Brand verification pending is normal — not an error. The worker polls Telnyx automatically
+          Brand verification pending is normal — not an error. Status polling runs automatically
           and will create the campaign once the brand is verified.
         </p>
       )}
@@ -608,7 +612,7 @@ export default function AdminSmsSetupPage() {
       {(profile?.lifecyclePhase === "CAMPAIGN_PENDING" ||
         profile?.lifecyclePhase === "CAMPAIGN_SUBMITTED") && (
         <p className="text-sm text-muted-foreground">
-          Campaign review is pending with Telnyx/TCR. SendFable will continue automatically.
+          Campaign review is pending with the messaging registry. SendFable will continue automatically.
         </p>
       )}
 

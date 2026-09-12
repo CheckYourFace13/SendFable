@@ -156,13 +156,13 @@ export function buildSmsHelpReply(input: {
     [input.supportEmail?.trim(), input.supportPhone?.trim()].filter(Boolean).join(" or ") ||
     "the business that texted you";
   return (
-    `${brand}: For help, contact ${contact}. Msg&data rates may apply. ` +
-    `Reply STOP to unsubscribe.`
+    `${brand}: For help, contact ${contact}. Msg & data rates may apply. ` +
+    `Reply STOP to opt out.`
   );
 }
 
 /** Standard STOP confirmation — brand must be the end business. */
 export function buildSmsStopReply(brandName: string): string {
   const brand = brandName.trim() || "this business";
-  return `You are unsubscribed from ${brand} texts. No more messages will be sent. Reply HELP for help.`;
+  return `${brand}: You are unsubscribed and will receive no further text messages.`;
 }

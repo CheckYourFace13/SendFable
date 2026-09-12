@@ -28,6 +28,30 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+function TextMessagingSettingsLink() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    void (async () => {
+      const res = await fetch("/api/sms/capabilities");
+      if (!res.ok) return;
+      const json = await res.json();
+      setShow(Boolean(json.channelUiEnabled || json.ownerPilot || json.registrationEnabled));
+    })();
+  }, []);
+  if (!show) return null;
+  return (
+    <div className="mt-6 max-w-2xl rounded-xl border p-4 text-sm">
+      <p className="font-medium">Text messaging</p>
+      <p className="mt-1 text-muted-foreground">
+        Set up approval and your texting number — only needed if you send texts.
+      </p>
+      <Link className="mt-2 inline-block underline" href="/settings/text-messaging">
+        Open text messaging setup
+      </Link>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -126,6 +150,8 @@ export default function SettingsPage() {
   return (
     <div>
       <PageHeader title="Settings" description="Workspace, team, and danger zone." />
+
+      <TextMessagingSettingsLink />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Button asChild variant="outline" size="sm">

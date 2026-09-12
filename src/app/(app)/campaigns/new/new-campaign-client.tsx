@@ -142,6 +142,20 @@ export function NewCampaignClient() {
             </button>
           ))}
         </div>
+        {!textEnabled && (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Email-only accounts stay on email. Text options appear after text messaging is activated
+            for your account.
+          </p>
+        )}
+        {textEnabled && (
+          <p className="mt-4 text-sm">
+            Need approval first?{" "}
+            <Link className="underline" href="/settings/text-messaging">
+              Set up text messaging
+            </Link>
+          </p>
+        )}
         <Button className="mt-6" variant="ghost" asChild>
           <Link href="/library">Browse templates instead</Link>
         </Button>

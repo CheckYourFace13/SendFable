@@ -380,19 +380,39 @@ export async function ensureCampaignSubmitted(profileId: string): Promise<{
     });
   const stop = profile.stopResponse?.trim() || buildSmsStopReply(brandName);
 
-  const campaign = await ops.createCampaign({
-    workspaceId: profile.workspaceId,
-    providerBrandId: brand.providerBrandId,
-    usecase: profile.smsUseCase || "MARKETING",
-    description:
-      profile.optInDescription ||
-      `${brandName} sends marketing and conversational texts to opted-in customers.`,
-    sample1: profile.sampleMessage1!,
-    sample2: profile.sampleMessage2!,
-    messageFlow: profile.optInDescription!,
-    helpMessage: help,
-    optoutMessage: stop,
-  });
+  let campaign;
+  try {
+    campaign = await ops.createCampaign({
+      workspaceId: profile.workspaceId,
+      providerBrandId: brand.providerBrandId,
+      usecase: profile.smsUseCase || "MARKETING",
+      description:
+        profile.optInDescription ||
+        `${brandName} sends marketing and conversational texts to opted-in customers.`,
+      sample1: profile.sampleMessage1!,
+      sample2: profile.sampleMessage2!,
+      messageFlow: profile.optInDescription!,
+      helpMessage: help,
+      optoutMessage: stop,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // Do not recreate Brand. Soft-defer when provider balance blocks campaign registration.
+    if (/20100|insufficient funds|at least \$30/i.test(msg)) {
+      await persistLifecycle(profile.id, profile.internalNotes, "BRAND_VERIFIED");
+      return {
+        campaignId: null,
+        campaignStatus: null,
+        brandStatus: brand.status,
+        created: false,
+        phase: "BRAND_VERIFIED",
+        message:
+          "Text messaging registration is ready, but the provider account needs additional balance before the campaign can be submitted.",
+        skippedReason: "insufficient_funds",
+      };
+    }
+    throw err;
+  }
 
   const phase = campaignPhaseFromStatus(campaign.status);
   await prisma.smsComplianceProfile.update({

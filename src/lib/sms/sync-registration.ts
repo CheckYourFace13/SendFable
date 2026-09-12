@@ -82,9 +82,27 @@ export async function syncPendingSmsRegistrations(): Promise<{
           if (meta.lastNotifyStatus !== "BRAND_VERIFIED" && !profile.campaignId) {
             notifyStatus = "BRAND_VERIFIED";
           }
-          // Auto-create campaign once when brand verifies
+          // Auto-create campaign once when brand verifies (never recreate Brand)
           if (!profile.campaignId && canCreateCampaignForBrandStatus(brand.status)) {
             const camp = await ensureCampaignSubmitted(profile.id);
+            if (camp.skippedReason === "insufficient_funds") {
+              console.warn(
+                `[sms-sync] campaign deferred (provider balance) workspace=${profile.workspaceId}`
+              );
+              phase = "BRAND_VERIFIED";
+              await prisma.smsComplianceProfile.update({
+                where: { id: profile.id },
+                data: {
+                  reviewStatus: "PROVIDER_PENDING",
+                  providerStatus: "SUBMITTED",
+                  internalNotes: writeOwnerPilotMeta(profile.internalNotes, {
+                    lifecyclePhase: "BRAND_VERIFIED",
+                  }),
+                },
+              });
+              updated += 1;
+              continue;
+            }
             if (camp.created) campaignsCreated += 1;
             campaignStatus = camp.campaignStatus;
             phase = camp.phase;

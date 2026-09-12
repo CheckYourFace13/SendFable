@@ -57,13 +57,16 @@ export async function POST(req: Request) {
   const collectPhone =
     parsed.data.collectPhone ?? (preset.collectPhone || fields.some((f) => f.type === "phone"));
 
-  // Server-side gate: phone-collecting forms (Text Signup / Email and Text
-  // Signup) cannot be created while the SMS signup flag is disabled.
+  // Server-side gate: phone-collecting forms cannot be created while SMS
+  // signup is disabled — except the owner pilot workspace.
   if ((collectPhone || requirementMode !== "email-required") && !isSmsAccountSignupEnabled()) {
-    return NextResponse.json(
-      { error: "Text signup forms are not available yet" },
-      { status: 403 }
-    );
+    const { isOwnerPilotWorkspace } = await import("@/lib/sms/pilot");
+    if (!(await isOwnerPilotWorkspace(ctx.workspace.id))) {
+      return NextResponse.json(
+        { error: "Text signup forms are not available yet" },
+        { status: 403 }
+      );
+    }
   }
 
   let hostedSlug = slugify(parsed.data.name) || "form";
