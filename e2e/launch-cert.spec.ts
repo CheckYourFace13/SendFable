@@ -158,6 +158,24 @@ test.describe("MOBILE widths", () => {
   }
 });
 
+test.describe("APP routes", () => {
+  test("campaign create requires auth or shows channel picker", async ({ page }) => {
+    await page.goto(`${BASE}/campaigns/new`);
+    // Unauthenticated users are sent to login — that still proves the route exists.
+    if (page.url().includes("/login")) {
+      await expect(page).toHaveURL(/\/login/);
+      return;
+    }
+    await expect(page.getByRole("heading", { name: /How do you want to send/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Email$/i })).toBeVisible();
+  });
+
+  test("contacts page requires auth", async ({ page }) => {
+    await page.goto(`${BASE}/contacts`);
+    await expect(page).toHaveURL(/\/login/);
+  });
+});
+
 test.describe("SEO crawlability", () => {
   test("robots.txt present", async ({ request }) => {
     const res = await request.get(`${BASE}/robots.txt`);

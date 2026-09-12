@@ -64,25 +64,38 @@ export default function CampaignReportPage() {
 
   const sent = Math.max(1, campaign.sentCount);
   const delivered = campaign.deliveredCount || campaign.sentCount;
+  const channel = campaign.channel || "EMAIL";
   const stats = [
-    { label: "Sent", value: formatNumber(campaign.sentCount) },
-    { label: "Delivered", value: formatNumber(delivered) },
-    { label: "Delivery rate", value: formatPercent(delivered / sent) },
-    {
-      label: "Opens (estimate)",
-      value: formatNumber(campaign.openCount),
-      hint: "Open rates are estimates — many clients block tracking pixels.",
-    },
-    {
-      label: "Open rate (estimate)",
-      value: formatPercent(campaign.openCount / sent),
-      hint: "Approximate only.",
-    },
-    { label: "Clicks", value: formatNumber(campaign.clickCount) },
-    { label: "CTR", value: formatPercent(campaign.clickCount / sent) },
-    { label: "Unsubs", value: formatNumber(campaign.unsubscribeCount) },
-    { label: "Bounces", value: formatNumber(campaign.bounceCount) },
-    { label: "Complaints", value: formatNumber(campaign.complaintCount) },
+    { label: "Channel", value: channel === "BOTH" ? "Email + Text" : channel === "SMS" ? "Text" : "Email" },
+    ...(channel !== "SMS"
+      ? [
+          { label: "Email sent", value: formatNumber(campaign.sentCount) },
+          { label: "Email delivered", value: formatNumber(delivered) },
+          { label: "Delivery rate", value: formatPercent(delivered / sent) },
+          {
+            label: "Opens (estimate)",
+            value: formatNumber(campaign.openCount),
+            hint: "Open rates are estimates — many clients block tracking pixels.",
+          },
+          {
+            label: "Open rate (estimate)",
+            value: formatPercent(campaign.openCount / sent),
+            hint: "Approximate only.",
+          },
+          { label: "Clicks", value: formatNumber(campaign.clickCount) },
+          { label: "CTR", value: formatPercent(campaign.clickCount / sent) },
+          { label: "Unsubs", value: formatNumber(campaign.unsubscribeCount) },
+          { label: "Bounces", value: formatNumber(campaign.bounceCount) },
+          { label: "Complaints", value: formatNumber(campaign.complaintCount) },
+        ]
+      : []),
+    ...(channel !== "EMAIL"
+      ? [
+          { label: "Texts sent", value: formatNumber(campaign.smsSentCount || 0) },
+          { label: "Texts delivered", value: formatNumber(campaign.smsDeliveredCount || 0) },
+          { label: "Texts failed", value: formatNumber(campaign.smsFailedCount || 0) },
+        ]
+      : []),
   ];
 
   async function createFollowUp(

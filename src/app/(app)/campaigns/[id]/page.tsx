@@ -20,6 +20,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailBuilder } from "@/components/email-builder/builder";
 import type { EmailDesign } from "@/lib/email-compiler";
+import { CampaignSmsEditor } from "@/components/campaigns/campaign-sms-editor";
+import { calculateSegments } from "@/lib/sms/segments";
 
 type Identity = { id: string; value: string; displayName: string | null; status: string };
 type Tag = { id: string; name: string };
@@ -41,6 +43,7 @@ export default function CampaignDetailPage() {
   const [confirmWhen, setConfirmWhen] = useState<"now" | "schedule" | null>(null);
   const [launching, setLaunching] = useState(false);
   const [tab, setTab] = useState("setup");
+  const [converting, setConverting] = useState(false);
 
   const load = useCallback(async () => {
     const [cRes, iRes, tRes, sRes, wRes] = await Promise.all([
@@ -160,11 +163,40 @@ export default function CampaignDetailPage() {
   if (!campaign) return <div className="text-sm text-muted-foreground">Loading…</div>;
 
   const editable = ["DRAFT", "SCHEDULED", "PAUSED"].includes(campaign.status);
+  const channel = (campaign.channel as string) || "EMAIL";
+  const showEmail = channel === "EMAIL" || channel === "BOTH";
+  const showSms = channel === "SMS" || channel === "BOTH";
+
+  async function convertFromEmail() {
+    setConverting(true);
+    try {
+      const res = await fetch(`/api/campaigns/${params.id}/convert`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ direction: "email-to-text" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Convert failed");
+      setCampaign({
+        ...campaign,
+        smsBody: data.draft?.body ?? data.smsBody ?? campaign.smsBody,
+      });
+      toast.success("Text draft created from your email — edit before sending.");
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Convert failed");
+    } finally {
+      setConverting(false);
+    }
+  }
 
   return (
     <div>
       <PageHeader title={campaign.name} description={campaign.subject || "No subject yet"}>
         <Badge variant="secondary">{campaign.status}</Badge>
+        <Badge variant="outline">
+          {channel === "BOTH" ? "Email + Text" : channel === "SMS" ? "Text" : "Email"}
+        </Badge>
         <Button variant="outline" size="sm" onClick={() => void duplicate()}>
           Reuse as new draft
         </Button>
@@ -187,7 +219,12 @@ export default function CampaignDetailPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto w-full flex-wrap gap-1">
           <TabsTrigger value="setup" className="min-h-11 flex-1 sm:flex-none">Details</TabsTrigger>
-          <TabsTrigger value="design" className="min-h-11 flex-1 sm:flex-none">Write email</TabsTrigger>
+          {showEmail ? (
+            <TabsTrigger value="design" className="min-h-11 flex-1 sm:flex-none">Write email</TabsTrigger>
+          ) : null}
+          {showSms ? (
+            <TabsTrigger value="sms" className="min-h-11 flex-1 sm:flex-none">Write text</TabsTrigger>
+          ) : null}
           <TabsTrigger value="review" className="min-h-11 flex-1 sm:flex-none">Review &amp; send</TabsTrigger>
         </TabsList>
 
@@ -345,6 +382,26 @@ export default function CampaignDetailPage() {
               </Button>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="sms" className="mt-6 max-w-2xl">
+          <CampaignSmsEditor
+            smsBody={campaign.smsBody || ""}
+            editable={editable}
+            saving={saving}
+            converting={converting}
+            showConvert={showEmail}
+            onConvertFromEmail={() => void convertFromEmail()}
+            onChange={(body) => setCampaign({ ...campaign, smsBody: body })}
+            onSave={() => {
+              const info = calculateSegments(campaign.smsBody || "");
+              void patch({
+                smsBody: campaign.smsBody || "",
+                smsEncoding: info.encoding,
+                smsSegmentsPerMessage: info.segments,
+              });
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="review" className="mt-6 max-w-2xl space-y-4">

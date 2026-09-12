@@ -1,5 +1,6 @@
 import type { AcquisitionProspect } from "@prisma/client";
 import { acquisitionFromAddress, acquisitionMinScore } from "@/lib/acquisition/flags";
+import { ENTERPRISE_DOMAIN_BLOCKLIST } from "@/lib/acquisition/discovery/overpass";
 import {
   isLikelyPersonalConsumerEmail,
   isValidEmailSyntax,
@@ -63,6 +64,10 @@ export async function runQualityGate(
 
   if (TERMINAL_SUPPRESSION_STATUSES.includes(prospect.status as never)) {
     failures.push("terminal_status");
+  }
+  const domain = normalizeDomain(prospect.domain || "");
+  if (domain && ENTERPRISE_DOMAIN_BLOCKLIST.has(domain)) {
+    failures.push("enterprise_chain");
   }
   if (!prospect.contactEmail || !isValidEmailSyntax(prospect.contactEmail)) {
     failures.push("invalid_email");

@@ -31,6 +31,8 @@ export async function GET(req: Request) {
       { email: { contains: q, mode: "insensitive" } },
       { firstName: { contains: q, mode: "insensitive" } },
       { lastName: { contains: q, mode: "insensitive" } },
+      { phoneE164: { contains: q } },
+      { company: { contains: q, mode: "insensitive" } },
     ];
   }
   if (status) where.status = status as Prisma.EnumContactStatusFilter;

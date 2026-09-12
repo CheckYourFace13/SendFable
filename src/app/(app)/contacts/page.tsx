@@ -31,19 +31,30 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
 type Contact = {
   id: string;
-  email: string;
+  email: string | null;
+  phoneE164: string | null;
   firstName: string | null;
   lastName: string | null;
+  company: string | null;
   status: string;
+  smsStatus?: string;
   tags: Array<{ tag: { id: string; name: string; color: string } }>;
 };
 
 type Tag = { id: string; name: string; color: string };
+
+function displayIdentity(c: Contact): string {
+  if (c.email && c.phoneE164) return `${c.email} · ${c.phoneE164}`;
+  if (c.email) return c.email;
+  if (c.phoneE164) return c.phoneE164;
+  return "—";
+}
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -57,8 +68,11 @@ export default function ContactsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [addOpen, setAddOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [company, setCompany] = useState("");
+  const [smsConsent, setSmsConsent] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -100,18 +114,32 @@ export default function ContactsPage() {
   }
 
   async function addContact() {
+    if (!email.trim() && !phone.trim()) {
+      return toast.error("Add an email, a mobile number, or both.");
+    }
     const res = await fetch("/api/contacts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, firstName, lastName }),
+      body: JSON.stringify({
+        email: email.trim() || null,
+        phone: phone.trim() || null,
+        firstName: firstName.trim() || null,
+        lastName: lastName.trim() || null,
+        company: company.trim() || null,
+        smsConsent: phone.trim() ? smsConsent : false,
+        smsConsentSource: phone.trim() && smsConsent ? "manual" : undefined,
+      }),
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.error || "Failed");
     toast.success("Contact added");
     setAddOpen(false);
     setEmail("");
+    setPhone("");
     setFirstName("");
     setLastName("");
+    setCompany("");
+    setSmsConsent(false);
     void load();
   }
 
@@ -146,7 +174,7 @@ export default function ContactsPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search email or name…"
+            placeholder="Search email, phone, or name…"
             value={q}
             onChange={(e) => {
               setPage(1);
@@ -188,7 +216,7 @@ export default function ContactsPage() {
             </SelectContent>
           </Select>
           <Button size="sm" variant="outline" onClick={() => void bulk("unsubscribe")}>
-            Unsubscribe
+            Unsubscribe email
           </Button>
           <Button size="sm" variant="destructive" onClick={() => void bulk("delete")}>
             Delete
@@ -202,7 +230,7 @@ export default function ContactsPage() {
         <EmptyState
           icon={<Tags />}
           title="No contacts yet"
-          description="Add people who asked to hear from you — then you can send your first email."
+          description="Add people by email, mobile, or both — then send your first campaign."
           action={
             <div className="flex flex-col items-center gap-2 sm:flex-row">
               <Button asChild>
@@ -218,7 +246,7 @@ export default function ContactsPage() {
           }
         />
       ) : (
-        <div className="rounded-xl border bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-white">
           <Table>
             <TableHeader>
               <TableRow>
@@ -230,9 +258,10 @@ export default function ContactsPage() {
                     }}
                   />
                 </TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Email status</TableHead>
+                <TableHead>Text status</TableHead>
                 <TableHead>Tags</TableHead>
               </TableRow>
             </TableHeader>
@@ -252,14 +281,21 @@ export default function ContactsPage() {
                   </TableCell>
                   <TableCell className="font-medium">
                     <Link href={`/contacts/${c.id}`} className="text-coral hover:underline">
-                      {c.email}
+                      {displayIdentity(c)}
                     </Link>
                   </TableCell>
                   <TableCell>
                     {[c.firstName, c.lastName].filter(Boolean).join(" ") || "—"}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{c.status}</Badge>
+                    {c.email ? <Badge variant="secondary">{c.status}</Badge> : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
+                  <TableCell>
+                    {c.phoneE164 ? (
+                      <Badge variant="secondary">{c.smsStatus || "NOT_PROVIDED"}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
@@ -296,15 +332,44 @@ export default function ContactsPage() {
       )}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add contact</DialogTitle>
+            <DialogDescription>
+              Email only, mobile only, or both. Text consent is separate from email.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Email</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Label>Email (optional if you add a mobile)</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jane@example.com"
+              />
             </div>
+            <div>
+              <Label>Mobile (optional if you add an email)</Label>
+              <Input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="3125551212"
+              />
+            </div>
+            {phone.trim() ? (
+              <label className="flex items-start gap-2 text-sm">
+                <Checkbox
+                  checked={smsConsent}
+                  onCheckedChange={(v) => setSmsConsent(v === true)}
+                />
+                <span>
+                  This person gave clear permission to receive marketing texts from my business.
+                  Do not check this unless you have that consent.
+                </span>
+              </label>
+            ) : null}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>First name</Label>
@@ -314,6 +379,10 @@ export default function ContactsPage() {
                 <Label>Last name</Label>
                 <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
               </div>
+            </div>
+            <div>
+              <Label>Company</Label>
+              <Input value={company} onChange={(e) => setCompany(e.target.value)} />
             </div>
           </div>
           <DialogFooter>

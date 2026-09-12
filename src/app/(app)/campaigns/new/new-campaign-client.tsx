@@ -7,21 +7,48 @@ import { CAMPAIGN_GOALS } from "@/lib/campaign-goals";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+type Channel = "EMAIL" | "SMS" | "BOTH";
+
+type Caps = {
+  channelUiEnabled: boolean;
+  statusMessage: string;
+};
+
 export function NewCampaignClient() {
   const router = useRouter();
   const search = useSearchParams();
   const presetGoal = search.get("goal");
+  const presetChannel = (search.get("channel") || "").toUpperCase() as Channel | "";
+  const [step, setStep] = useState<"channel" | "goal">(
+    presetChannel === "EMAIL" || presetChannel === "SMS" || presetChannel === "BOTH"
+      ? "goal"
+      : "channel"
+  );
+  const [channel, setChannel] = useState<Channel>(
+    presetChannel === "SMS" || presetChannel === "BOTH" || presetChannel === "EMAIL"
+      ? presetChannel
+      : "EMAIL"
+  );
   const [goal, setGoal] = useState(presetGoal || "");
   const [creating, setCreating] = useState(false);
+  const [caps, setCaps] = useState<Caps | null>(null);
 
   useEffect(() => {
-    if (presetGoal && CAMPAIGN_GOALS.some((g) => g.id === presetGoal)) {
-      void create(presetGoal);
+    void (async () => {
+      const res = await fetch("/api/sms/capabilities");
+      if (res.ok) setCaps(await res.json());
+      else setCaps({ channelUiEnabled: false, statusMessage: "Text messaging is not activated." });
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (presetGoal && CAMPAIGN_GOALS.some((g) => g.id === presetGoal) && step === "goal") {
+      void create(presetGoal, channel);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presetGoal]);
+  }, [presetGoal, step]);
 
-  async function create(selectedGoal: string) {
+  async function create(selectedGoal: string, selectedChannel: Channel) {
     setCreating(true);
     const g = CAMPAIGN_GOALS.find((x) => x.id === selectedGoal);
     try {
@@ -32,6 +59,7 @@ export function NewCampaignClient() {
           name: g ? g.label : "Untitled campaign",
           goal: selectedGoal || "scratch",
           simpleMode: true,
+          channel: selectedChannel,
         }),
       });
       const data = await res.json();
@@ -44,8 +72,9 @@ export function NewCampaignClient() {
           body: JSON.stringify({
             goal: g.id,
             simpleMode: true,
-            subject: g.subjectTips[0] || "",
-            previewText: "Open for a quick update from us",
+            subject: selectedChannel === "SMS" ? null : g.subjectTips[0] || "",
+            previewText:
+              selectedChannel === "SMS" ? null : "Open for a quick update from us",
           }),
         });
       }
@@ -57,15 +86,83 @@ export function NewCampaignClient() {
     }
   }
 
-  if (presetGoal || creating) {
-    return <div className="text-sm text-muted-foreground">Creating your email…</div>;
+  if (creating) {
+    return <div className="text-sm text-muted-foreground">Creating your campaign…</div>;
+  }
+
+  if (step === "channel") {
+    const textEnabled = !!caps?.channelUiEnabled;
+    return (
+      <div className="mx-auto max-w-2xl">
+        <h1 className="text-2xl font-semibold tracking-tight">How do you want to send?</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Choose email, text, or both. You can edit the message before anything goes out.
+        </p>
+        <div className="mt-8 grid gap-3">
+          {(
+            [
+              {
+                id: "EMAIL" as const,
+                label: "Email",
+                description: "Send a campaign to subscribed email contacts.",
+                enabled: true,
+              },
+              {
+                id: "SMS" as const,
+                label: "Text",
+                description: textEnabled
+                  ? "Send a short text to people who opted in to SMS."
+                  : caps?.statusMessage || "Text messaging is not activated yet.",
+                enabled: textEnabled,
+              },
+              {
+                id: "BOTH" as const,
+                label: "Email + Text",
+                description: textEnabled
+                  ? "One campaign with an email version and a text version."
+                  : caps?.statusMessage || "Text messaging is not activated yet.",
+                enabled: textEnabled,
+              },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={!opt.enabled || creating}
+              onClick={() => {
+                setChannel(opt.id);
+                setStep("goal");
+              }}
+              className={`rounded-xl border bg-white p-5 text-left ${
+                opt.enabled ? "hover:border-coral" : "cursor-not-allowed opacity-60"
+              }`}
+            >
+              <div className="font-medium">{opt.label}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{opt.description}</div>
+            </button>
+          ))}
+        </div>
+        <Button className="mt-6" variant="ghost" asChild>
+          <Link href="/library">Browse templates instead</Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-semibold tracking-tight">What is this email for?</h1>
+      <button
+        type="button"
+        className="mb-4 text-sm text-muted-foreground underline-offset-2 hover:underline"
+        onClick={() => setStep("channel")}
+      >
+        ← Change channel ({channel === "BOTH" ? "Email + Text" : channel === "SMS" ? "Text" : "Email"})
+      </button>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {channel === "SMS" ? "What is this text for?" : "What is this email for?"}
+      </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Pick a goal — we&apos;ll suggest a subject and keep the editor simple.
+        Pick a goal — we&apos;ll suggest a starting point and keep the editor simple.
       </p>
       <div className="mt-8 grid gap-3">
         {CAMPAIGN_GOALS.map((g) => (
@@ -75,7 +172,7 @@ export function NewCampaignClient() {
             disabled={creating}
             onClick={() => {
               setGoal(g.id);
-              void create(g.id);
+              void create(g.id, channel);
             }}
             className={`rounded-xl border bg-white p-5 text-left hover:border-coral ${
               goal === g.id ? "border-coral" : ""

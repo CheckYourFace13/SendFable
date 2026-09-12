@@ -106,8 +106,8 @@ export function isLikelyPersonalConsumerEmail(email: string): boolean {
 }
 
 export function preferredBusinessLocalParts(): Set<string> {
+  // Prefer role/brand mailboxes; info@ is accepted but ranked lower in pickBestEmail.
   return new Set([
-    "info",
     "hello",
     "hi",
     "contact",
@@ -121,8 +121,24 @@ export function preferredBusinessLocalParts(): Set<string> {
     "team",
     "office",
     "admin",
+    "reservations",
+    "booking",
+    "info",
     "support",
   ]);
+}
+
+/** Higher = better for outreach. Generic info@ scores below role inboxes. */
+export function businessEmailLocalScore(local: string): number {
+  const l = local.toLowerCase();
+  if (l.includes("noreply") || l.includes("no-reply") || l.includes("donotreply")) return -100;
+  if (["owner", "owners", "manager", "hello", "hi", "contact"].includes(l)) return 40;
+  if (["marketing", "events", "newsletter", "reservations", "booking", "team", "office"].includes(l))
+    return 35;
+  if (["admin", "press"].includes(l)) return 25;
+  if (l === "info") return 10;
+  if (l === "support") return 5;
+  return 15; // named person local-part on business domain
 }
 
 export function emailLocalPart(email: string): string {

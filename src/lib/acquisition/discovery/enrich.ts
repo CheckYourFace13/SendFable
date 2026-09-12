@@ -1,4 +1,5 @@
 import {
+  businessEmailLocalScore,
   emailLocalPart,
   isLikelyPersonalConsumerEmail,
   isValidEmailSyntax,
@@ -66,19 +67,17 @@ function extractEmails(html: string, pageDomain: string): string[] {
 
 function pickBestEmail(emails: string[], pageDomain: string): string | undefined {
   if (emails.length === 0) return undefined;
-  const preferred = preferredBusinessLocalParts();
   const scored = emails.map((e) => {
     let s = 0;
     const local = emailLocalPart(e);
     const ed = e.split("@")[1] || "";
     if (ed === pageDomain || ed.endsWith(`.${pageDomain}`)) s += 50;
-    if (preferred.has(local)) s += 30;
+    s += businessEmailLocalScore(local);
     if (!isLikelyPersonalConsumerEmail(e)) s += 10;
-    if (local.includes("noreply") || local.includes("no-reply")) s -= 100;
     return { e, s };
   });
   scored.sort((a, b) => b.s - a.s);
-  return scored[0]?.s > 0 ? scored[0].e : scored[0]?.e;
+  return scored[0]?.e;
 }
 
 function detectCompetitor(html: string): string | undefined {
