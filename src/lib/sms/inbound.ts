@@ -230,9 +230,9 @@ async function maybeSendComplianceAutoReply(input: {
         });
 
   try {
-    const { getSmsProvider } = await import("@/lib/sms/provider-registry");
+    const { getSmsProviderForWorkspace } = await import("@/lib/sms/provider-registry");
     const { calculateSegments } = await import("@/lib/sms/segments");
-    const provider = getSmsProvider();
+    const provider = await getSmsProviderForWorkspace(input.workspaceId);
     const idempotencyKey = `compliance:${input.kind}:${input.inboundMessageId}`;
     const result = await provider.sendMessage({
       workspaceId: input.workspaceId,
