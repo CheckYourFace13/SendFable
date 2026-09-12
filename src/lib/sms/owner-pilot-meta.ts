@@ -16,6 +16,8 @@ export interface OwnerPilotMeta {
   inboundUnlocked: boolean;
   submittedToProviderAt: string | null;
   lastNotifyStatus: string | null;
+  /** Sequenced 10DLC phase — see registration-lifecycle.ts */
+  lifecyclePhase: string | null;
 }
 
 const DEFAULT_META: OwnerPilotMeta = {
@@ -28,6 +30,7 @@ const DEFAULT_META: OwnerPilotMeta = {
   inboundUnlocked: false,
   submittedToProviderAt: null,
   lastNotifyStatus: null,
+  lifecyclePhase: null,
 };
 
 type NotesEnvelope = {
@@ -61,6 +64,7 @@ export function parseOwnerPilotMeta(internalNotes: string | null | undefined): O
       submittedToProviderAt:
         typeof o.submittedToProviderAt === "string" ? o.submittedToProviderAt : null,
       lastNotifyStatus: typeof o.lastNotifyStatus === "string" ? o.lastNotifyStatus : null,
+      lifecyclePhase: typeof o.lifecyclePhase === "string" ? o.lifecyclePhase : null,
     };
   } catch {
     return { ...DEFAULT_META };

@@ -66,9 +66,21 @@ async function telnyxJson<T>(
 
 function mapBrandStatus(raw: string | null | undefined): BrandRecord["status"] {
   const s = (raw || "").toUpperCase();
-  if (s.includes("FAIL") || s.includes("REJECT") || s === "UNVERIFIED") return "rejected";
-  if (s === "VERIFIED" || s === "APPROVED" || s === "VETTED_VERIFIED") return "approved";
-  if (s === "PENDING" || s === "SELF_DECLARED" || s === "UNVERIFIED" || !s) return "pending";
+  // Pending / under review — NOT failures. Campaign must wait for VERIFIED.
+  if (
+    !s ||
+    s === "PENDING" ||
+    s === "SELF_DECLARED" ||
+    s === "UNVERIFIED" ||
+    s.includes("PENDING") ||
+    s.includes("REVIEW")
+  ) {
+    return "pending";
+  }
+  if (s.includes("FAIL") || s.includes("REJECT")) return "rejected";
+  if (s === "VERIFIED" || s === "APPROVED" || s === "VETTED_VERIFIED" || s === "OK") {
+    return "approved";
+  }
   return "submitted";
 }
 
@@ -145,7 +157,46 @@ export class TelnyxSmsProviderOps implements SmsProviderOps {
     };
   }
 
+  async listBrands(): Promise<
+    Array<{
+      providerBrandId: string;
+      companyName: string | null;
+      displayName: string | null;
+      status: BrandRecord["status"];
+      website: string | null;
+      failureReason?: string | null;
+    }>
+  > {
+    const res = await telnyxJson<{ data?: any[] }>("GET", "/10dlc/brand?page[size]=50");
+    const rows = Array.isArray(res.data) ? res.data : [];
+    return rows.map((raw) => {
+      const d = (raw as any).attributes || raw;
+      const failureReason = d.failureReasons || d.rejectionReason || null;
+      return {
+        providerBrandId: String(d.brandId || d.id || raw.id || ""),
+        companyName: d.companyName ? String(d.companyName) : null,
+        displayName: d.displayName ? String(d.displayName) : null,
+        status: mapBrandStatus(d.identityStatus || d.status),
+        website: d.website ? String(d.website) : null,
+        failureReason: failureReason
+          ? typeof failureReason === "string"
+            ? failureReason
+            : JSON.stringify(failureReason).slice(0, 2000)
+          : null,
+      };
+    });
+  }
+
   async createCampaign(req: CampaignCreateRequest): Promise<CampaignRecord> {
+    // Provider-side guard: never call campaignBuilder while brand is pending/failed.
+    const brand = await this.retrieveBrand(req.providerBrandId);
+    if (brand.status !== "approved") {
+      const { BrandNotVerifiedError } = await import("@/lib/sms/registration-lifecycle");
+      throw new BrandNotVerifiedError(
+        `brand_not_verified (provider status=${brand.status})`
+      );
+    }
+
     const payload = {
       brandId: req.providerBrandId,
       usecase: req.usecase || "MARKETING",

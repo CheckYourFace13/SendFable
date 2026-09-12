@@ -184,16 +184,43 @@ export async function POST(req: Request) {
     }
   }
 
-  // Live Telnyx brand+campaign submit happens BEFORE we persist PROVIDER_SUBMITTED,
-  // so a provider failure does not leave a false success state.
-  let providerSubmit:
-    | { brandId: string; campaignId: string; brandStatus: string; campaignStatus: string }
-    | undefined;
   if (toStatus === "PROVIDER_SUBMITTED") {
     try {
-      const { submitComplianceProfileToProvider } = await import("@/lib/sms/provider-submit");
-      providerSubmit = await submitComplianceProfileToProvider(profile.id);
-      // submitComplianceProfileToProvider advances review to PROVIDER_PENDING
+      const { advanceRegistrationLifecycle } = await import("@/lib/sms/provider-submit");
+      const { BrandNotVerifiedError } = await import("@/lib/sms/registration-lifecycle");
+      let providerSubmit: {
+        brandId: string;
+        campaignId: string | null;
+        brandStatus: string | null;
+        campaignStatus: string | null;
+        phase: string;
+        message: string;
+      };
+      try {
+        const result = await advanceRegistrationLifecycle(profile.id);
+        providerSubmit = {
+          brandId: result.brandId || "",
+          campaignId: result.campaignId,
+          brandStatus: result.brandStatus,
+          campaignStatus: result.campaignStatus,
+          phase: result.phase,
+          message: result.message,
+        };
+      } catch (err) {
+        if (err instanceof BrandNotVerifiedError) {
+          const refreshedPending = await prisma.smsComplianceProfile.findUnique({
+            where: { id: profile.id },
+          });
+          const { einBrnCiphertext: _e, ...safePending } = refreshedPending!;
+          void _e;
+          return NextResponse.json({
+            profile: { ...safePending, einOnFile: Boolean(refreshedPending!.einBrnCiphertext) },
+            providerSubmit: { pending: true, message: err.message },
+          });
+        }
+        throw err;
+      }
+      // advanceRegistrationLifecycle advances review appropriately
       const refreshed = await prisma.smsComplianceProfile.findUnique({ where: { id: profile.id } });
       const { einBrnCiphertext: _e, ...safe } = refreshed!;
       void _e;
@@ -202,7 +229,7 @@ export async function POST(req: Request) {
           profileId: profile.id,
           workspaceId: profile.workspaceId,
           fromStatus: profile.reviewStatus,
-          toStatus: "PROVIDER_PENDING",
+          toStatus: refreshed!.reviewStatus,
           actorUserId: ctx.user.id,
           note: parsed.data.note ?? null,
           meta: {
@@ -221,7 +248,7 @@ export async function POST(req: Request) {
           action: "admin.sms.compliance.provider_submit",
           targetType: "SmsComplianceProfile",
           targetId: profile.id,
-          meta: { from: profile.reviewStatus, to: "PROVIDER_PENDING", providerSubmit },
+          meta: { from: profile.reviewStatus, to: refreshed!.reviewStatus, providerSubmit },
         },
       });
       return NextResponse.json({

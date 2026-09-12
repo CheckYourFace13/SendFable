@@ -41,13 +41,18 @@ type Profile = {
   reviewStatus: string;
   providerStatus: string;
   brandId: string | null;
+  brandIdShort: string | null;
   campaignId: string | null;
+  campaignIdShort: string | null;
   numberId: string | null;
   rejectionReason: string | null;
   pilotPhoneMasked: string | null;
   pilotPhoneOnFile: boolean;
   numberPurchaseUnlocked: boolean;
   liveSendingUnlocked: boolean;
+  lifecyclePhase: string;
+  lifecycleMessage: string;
+  primaryAction: { action: string; label: string; disabled?: boolean };
   encryptionReady: boolean;
 };
 
@@ -216,10 +221,10 @@ export default function AdminSmsSetupPage() {
     );
   }
 
-  const approved = profile?.reviewStatus === "APPROVED";
-  const pending =
-    profile?.reviewStatus === "PROVIDER_PENDING" ||
-    profile?.reviewStatus === "PROVIDER_SUBMITTED";
+  const approved =
+    profile?.reviewStatus === "APPROVED" ||
+    profile?.lifecyclePhase === "NUMBER_READY" ||
+    profile?.lifecyclePhase === "CAMPAIGN_APPROVED";
   const canPurchase = Boolean(
     (approved || profile?.numberPurchaseUnlocked) && !activeNumber
   );
@@ -246,11 +251,14 @@ export default function AdminSmsSetupPage() {
         </p>
         <p>Public SMS: still OFF</p>
         {profile && (
-          <p>
-            Status: <strong>{profile.reviewStatus}</strong>
-            {profile.brandId ? ` · brand ${profile.brandId}` : ""}
-            {profile.campaignId ? ` · campaign ${profile.campaignId}` : ""}
-          </p>
+          <>
+            <p>
+              Lifecycle: <strong>{profile.lifecyclePhase || profile.reviewStatus}</strong>
+              {profile.brandIdShort ? ` · brand ${profile.brandIdShort}` : ""}
+              {profile.campaignIdShort ? ` · campaign ${profile.campaignIdShort}` : ""}
+            </p>
+            <p className="text-muted-foreground">{profile.lifecycleMessage}</p>
+          </>
         )}
         {profile?.einOnFile && (
           <p>EIN on file: {profile.einMasked || "yes (masked)"}</p>
@@ -530,33 +538,77 @@ export default function AdminSmsSetupPage() {
           <button
             type="submit"
             disabled={busy || !encryptionReady}
-            className="rounded bg-foreground px-4 py-2 text-sm text-background disabled:opacity-50"
+            className="rounded border px-4 py-2 text-sm disabled:opacity-50"
           >
             Save & validate
           </button>
-          <button
-            type="button"
-            disabled={busy || !encryptionReady}
-            className="rounded border px-4 py-2 text-sm disabled:opacity-50"
-            onClick={() => void post({ action: "submit-provider", ...formPayload() })}
-          >
-            Submit brand & campaign to Telnyx
-          </button>
+          {profile?.primaryAction?.action === "submit-brand" ||
+          !profile?.lifecyclePhase ||
+          profile.lifecyclePhase === "DRAFT" ? (
+            <button
+              type="button"
+              disabled={busy || !encryptionReady}
+              className="rounded bg-foreground px-4 py-2 text-sm text-background disabled:opacity-50"
+              onClick={() => void post({ action: "submit-brand", ...formPayload() })}
+            >
+              Submit Brand
+            </button>
+          ) : null}
+          {profile?.lifecyclePhase === "BRAND_PENDING" ||
+          profile?.lifecyclePhase === "BRAND_SUBMITTED" ? (
+            <button
+              type="button"
+              disabled={busy}
+              className="rounded bg-foreground px-4 py-2 text-sm text-background disabled:opacity-50"
+              onClick={() => void post({ action: "sync-brand" })}
+            >
+              Sync Brand Status
+            </button>
+          ) : null}
+          {profile?.lifecyclePhase === "BRAND_VERIFIED" ? (
+            <button
+              type="button"
+              disabled={busy}
+              className="rounded bg-foreground px-4 py-2 text-sm text-background disabled:opacity-50"
+              onClick={() => void post({ action: "create-campaign", ...formPayload() })}
+            >
+              Create Campaign
+            </button>
+          ) : null}
+          {profile?.lifecyclePhase === "CAMPAIGN_PENDING" ||
+          profile?.lifecyclePhase === "CAMPAIGN_SUBMITTED" ? (
+            <button
+              type="button"
+              disabled={busy}
+              className="rounded bg-foreground px-4 py-2 text-sm text-background disabled:opacity-50"
+              onClick={() => void post({ action: "sync-campaign" })}
+            >
+              Sync Campaign Status
+            </button>
+          ) : null}
           <button
             type="button"
             disabled={busy}
             className="rounded border px-4 py-2 text-sm disabled:opacity-50"
             onClick={() => void post({ action: "sync-status" })}
           >
-            Sync status now
+            Refresh status
           </button>
         </div>
       </form>
 
-      {pending && (
+      {(profile?.lifecyclePhase === "BRAND_PENDING" ||
+        profile?.lifecyclePhase === "BRAND_SUBMITTED") && (
         <p className="text-sm text-muted-foreground">
-          Registration is pending with Telnyx/TCR. The worker polls automatically — you do not need
-          to watch the Telnyx portal. Use Sync status now if you want an immediate refresh.
+          Brand verification pending is normal — not an error. The worker polls Telnyx automatically
+          and will create the campaign once the brand is verified.
+        </p>
+      )}
+
+      {(profile?.lifecyclePhase === "CAMPAIGN_PENDING" ||
+        profile?.lifecyclePhase === "CAMPAIGN_SUBMITTED") && (
+        <p className="text-sm text-muted-foreground">
+          Campaign review is pending with Telnyx/TCR. SendFable will continue automatically.
         </p>
       )}
 

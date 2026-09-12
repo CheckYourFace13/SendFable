@@ -9,6 +9,7 @@ import type {
   BrandRecord,
   CampaignCreateRequest,
   CampaignRecord,
+  ListedBrand,
   MessagingProfileRequest,
   MessagingProfileRecord,
   NumberSearchRequest,
@@ -16,29 +17,85 @@ import type {
   SmsProviderOps,
 } from "@/lib/sms/provider-ops";
 import { MOCK_PROVIDER_COSTS } from "@/lib/sms/mock-provider";
+import { BrandNotVerifiedError } from "@/lib/sms/registration-lifecycle";
 
 function idFor(prefix: string, seed: string): string {
   return `${prefix}_${createHash("sha256").update(seed).digest("hex").slice(0, 16)}`;
 }
 
-const brands = new Map<string, BrandRecord>();
+const brands = new Map<string, BrandRecord & { companyName?: string; displayName?: string; website?: string }>();
 const campaigns = new Map<string, CampaignRecord>();
 const suspended = new Set<string>();
+/** Default status for newly created brands — tests can override via setDefaultBrandStatus. */
+let defaultBrandStatus: BrandRecord["status"] = "approved";
 
 export class MockSmsProviderOps implements SmsProviderOps {
+  setDefaultBrandStatus(status: BrandRecord["status"]) {
+    defaultBrandStatus = status;
+  }
+
+  setBrandStatus(providerBrandId: string, status: BrandRecord["status"], failureReason?: string | null) {
+    const existing = brands.get(providerBrandId) ?? { providerBrandId, status };
+    brands.set(providerBrandId, { ...existing, status, failureReason: failureReason ?? null });
+  }
+
+  setCampaignStatus(
+    providerCampaignId: string,
+    status: CampaignRecord["status"],
+    failureReason?: string | null
+  ) {
+    const existing = campaigns.get(providerCampaignId) ?? { providerCampaignId, status };
+    campaigns.set(providerCampaignId, {
+      ...existing,
+      status,
+      failureReason: failureReason ?? null,
+    });
+  }
+
   async createBrand(req: BrandCreateRequest): Promise<BrandRecord> {
     const providerBrandId = idFor("brand", `${req.workspaceId}:${req.legalEntityName}`);
-    const rec: BrandRecord = { providerBrandId, status: "approved" };
+    const existing = brands.get(providerBrandId);
+    if (existing) return { providerBrandId, status: existing.status, failureReason: existing.failureReason };
+    const rec: BrandRecord & { companyName?: string; displayName?: string; website?: string } = {
+      providerBrandId,
+      status: defaultBrandStatus,
+      companyName: req.legalEntityName,
+      displayName: req.displayName,
+      website: req.website,
+    };
     brands.set(providerBrandId, rec);
-    return rec;
+    return { providerBrandId, status: rec.status };
   }
 
   async retrieveBrand(providerBrandId: string): Promise<BrandRecord> {
-    return brands.get(providerBrandId) ?? { providerBrandId, status: "pending" };
+    const b = brands.get(providerBrandId);
+    return b
+      ? { providerBrandId, status: b.status, failureReason: b.failureReason }
+      : { providerBrandId, status: "pending" };
+  }
+
+  async listBrands(): Promise<ListedBrand[]> {
+    return [...brands.values()].map((b) => ({
+      providerBrandId: b.providerBrandId,
+      companyName: b.companyName ?? null,
+      displayName: b.displayName ?? null,
+      status: b.status,
+      website: b.website ?? null,
+      failureReason: b.failureReason ?? null,
+    }));
   }
 
   async createCampaign(req: CampaignCreateRequest): Promise<CampaignRecord> {
-    const providerCampaignId = idFor("camp", `${req.workspaceId}:${req.providerBrandId}:${req.usecase}`);
+    const brand = await this.retrieveBrand(req.providerBrandId);
+    if (brand.status !== "approved") {
+      throw new BrandNotVerifiedError(`brand_not_verified (mock status=${brand.status})`);
+    }
+    const providerCampaignId = idFor(
+      "camp",
+      `${req.workspaceId}:${req.providerBrandId}:${req.usecase}`
+    );
+    const existing = campaigns.get(providerCampaignId);
+    if (existing) return existing;
     const rec: CampaignRecord = { providerCampaignId, status: "approved" };
     campaigns.set(providerCampaignId, rec);
     return rec;
@@ -107,6 +164,7 @@ export class MockSmsProviderOps implements SmsProviderOps {
     brands.clear();
     campaigns.clear();
     suspended.clear();
+    defaultBrandStatus = "approved";
   }
 }
 

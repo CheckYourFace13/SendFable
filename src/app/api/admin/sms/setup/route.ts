@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requirePlatformAdmin } from "@/lib/platform-admin";
-import { isSmsAdminEnabled, isSmsCodeEnabled, isSmsRegistrationEnabled } from "@/lib/sms/flags";
+import { isSmsAdminEnabled, isSmsCodeEnabled } from "@/lib/sms/flags";
 import {
   ENTITY_TYPES,
   SMS_USE_CASES,
@@ -29,9 +29,26 @@ import {
 } from "@/lib/sms/owner-pilot-meta";
 import { defaultOwnerPilotWorkspaceId } from "@/lib/sms/pilot";
 import { MOCK_PROVIDER_COSTS } from "@/lib/sms/mock-provider";
+import {
+  deriveLifecyclePhase,
+  humanLifecycleMessage,
+  primaryActionForPhase,
+  type SmsLifecyclePhase,
+} from "@/lib/sms/registration-lifecycle";
+import { BrandNotVerifiedError } from "@/lib/sms/registration-lifecycle";
 
 const saveSchema = z.object({
-  action: z.enum(["save", "submit-provider", "purchase-pilot-number", "sync-status", "enable-live"]),
+  action: z.enum([
+    "save",
+    "submit-brand",
+    "submit-provider", // alias → advance brand (then campaign only if verified)
+    "create-campaign",
+    "sync-brand",
+    "sync-campaign",
+    "sync-status",
+    "purchase-pilot-number",
+    "enable-live",
+  ]),
   legalEntityName: z.string().max(200).optional(),
   dbaBrandName: z.string().max(200).optional(),
   einBrn: z.string().max(40).optional().nullable(),
@@ -103,6 +120,15 @@ function serializeSafe(profile: {
   internalNotes: string | null;
 }) {
   const meta = parseOwnerPilotMeta(profile.internalNotes);
+  const phase =
+    (meta.lifecyclePhase as SmsLifecyclePhase | null) ||
+    deriveLifecyclePhase({
+      brandId: profile.brandId,
+      campaignId: profile.campaignId,
+      numberId: profile.numberId,
+      liveSendingUnlocked: meta.liveSendingUnlocked,
+    });
+  const primary = primaryActionForPhase(phase);
   return {
     id: profile.id,
     workspaceId: profile.workspaceId,
@@ -136,7 +162,9 @@ function serializeSafe(profile: {
     reviewStatus: profile.reviewStatus,
     providerStatus: profile.providerStatus,
     brandId: profile.brandId,
+    brandIdShort: profile.brandId ? `${profile.brandId.slice(0, 8)}…` : null,
     campaignId: profile.campaignId,
+    campaignIdShort: profile.campaignId ? `${profile.campaignId.slice(0, 8)}…` : null,
     numberId: profile.numberId,
     rejectionReason: profile.rejectionReason,
     submittedAt: profile.submittedAt,
@@ -147,6 +175,9 @@ function serializeSafe(profile: {
     numberPurchaseUnlocked: meta.numberPurchaseUnlocked,
     liveSendingUnlocked: meta.liveSendingUnlocked,
     inboundUnlocked: meta.inboundUnlocked,
+    lifecyclePhase: phase,
+    lifecycleMessage: humanLifecycleMessage(phase),
+    primaryAction: primary,
     encryptionReady: canEncryptSmsSensitiveData(),
   };
 }
@@ -202,14 +233,43 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Owner workspace not found" }, { status: 404 });
   }
 
-  if (parsed.data.action === "sync-status") {
+  if (parsed.data.action === "sync-status" || parsed.data.action === "sync-brand" || parsed.data.action === "sync-campaign") {
+    const existing = await prisma.smsComplianceProfile.findUnique({ where: { workspaceId } });
+    if (!existing) {
+      return NextResponse.json({ error: "Save compliance profile first" }, { status: 400 });
+    }
+    // Reconcile orphan brand + advance lifecycle (idempotent)
+    const { advanceRegistrationLifecycle } = await import("@/lib/sms/provider-submit");
     const { syncPendingSmsRegistrations } = await import("@/lib/sms/sync-registration");
-    const result = await syncPendingSmsRegistrations();
+    let advance: Awaited<ReturnType<typeof advanceRegistrationLifecycle>> | null = null;
+    try {
+      advance = await advanceRegistrationLifecycle(existing.id);
+    } catch (err) {
+      if (!(err instanceof BrandNotVerifiedError)) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Sync failed" },
+          { status: 502 }
+        );
+      }
+    }
+    const sync = await syncPendingSmsRegistrations();
     const profile = await prisma.smsComplianceProfile.findUnique({ where: { workspaceId } });
     return NextResponse.json({
       ok: true,
-      sync: result,
+      sync,
+      advance,
       profile: profile ? serializeSafe(profile) : null,
+      publicSms: false,
+      next: profile
+        ? humanLifecycleMessage(
+            (parseOwnerPilotMeta(profile.internalNotes).lifecyclePhase as SmsLifecyclePhase) ||
+              deriveLifecyclePhase({
+                brandId: profile.brandId,
+                campaignId: profile.campaignId,
+                numberId: profile.numberId,
+              })
+          )
+        : "Synced.",
     });
   }
 
@@ -415,7 +475,7 @@ export async function POST(req: Request) {
   if (!nextMetaBase.pilotPhoneE164 && !pilotPhoneE164) {
     errors.pilotPhone = "Owner pilot phone is required";
   }
-  if (Object.keys(errors).length && data.action === "submit-provider") {
+  if (Object.keys(errors).length && (data.action === "submit-provider" || data.action === "submit-brand" || data.action === "create-campaign")) {
     return NextResponse.json({ error: "Validation failed", fields: errors }, { status: 400 });
   }
 
@@ -478,47 +538,101 @@ export async function POST(req: Request) {
       validation: stillInvalid ? errors : {},
       readyForProvider: !stillInvalid,
       publicSms: false,
-      next:
-        stillInvalid
-          ? "Fix validation errors, then Save again or Submit to Telnyx."
-          : "Profile saved. Click Submit brand & campaign to Telnyx when ready.",
+      next: stillInvalid
+        ? "Fix validation errors, then Save again."
+        : "Profile saved. Click Submit Brand when ready.",
     });
   }
 
-  // submit-provider
   if (Object.keys(errors).length) {
     return NextResponse.json({ error: "Validation failed", fields: errors }, { status: 400 });
-  }
-
-  // Advance review queue then live-submit (owner path may bypass global registration flag)
-  if (!isSmsRegistrationEnabled()) {
-    // DB unlock already set; continue
   }
 
   await prisma.smsComplianceProfile.update({
     where: { id: profile.id },
     data: {
-      reviewStatus: "READY_FOR_PROVIDER",
-      submittedAt: new Date(),
+      reviewStatus:
+        profile.reviewStatus === "DRAFT" || profile.reviewStatus === "READY_FOR_PROVIDER"
+          ? "READY_FOR_PROVIDER"
+          : profile.reviewStatus,
+      submittedAt: profile.submittedAt ?? new Date(),
       reviewedAt: new Date(),
       reviewedByUserId: ctx.user.id,
     },
   });
 
   try {
-    const { submitComplianceProfileToProvider } = await import("@/lib/sms/provider-submit");
-    const providerSubmit = await submitComplianceProfileToProvider(profile.id);
-    const refreshed = await prisma.smsComplianceProfile.findUnique({ where: { id: profile.id } });
-    const notes = writeOwnerPilotMeta(refreshed!.internalNotes, {
-      submittedToProviderAt: new Date().toISOString(),
-      registrationUnlocked: true,
-      enabled: true,
-      workspaceId,
-    });
-    const final = await prisma.smsComplianceProfile.update({
-      where: { id: profile.id },
-      data: { internalNotes: notes },
-    });
+    const {
+      ensureBrandSubmitted,
+      ensureCampaignSubmitted,
+      advanceRegistrationLifecycle,
+    } = await import("@/lib/sms/provider-submit");
+
+    if (data.action === "create-campaign") {
+      const camp = await ensureCampaignSubmitted(profile.id);
+      const final = await prisma.smsComplianceProfile.findUnique({ where: { id: profile.id } });
+      await prisma.auditLog.create({
+        data: {
+          workspaceId,
+          userId: ctx.user.id,
+          action: "admin.sms.owner_pilot.create_campaign",
+          targetType: "SmsComplianceProfile",
+          targetId: profile.id,
+          meta: {
+            campaignId: camp.campaignId,
+            campaignStatus: camp.campaignStatus,
+            brandStatus: camp.brandStatus,
+            created: camp.created,
+            phase: camp.phase,
+            skippedReason: camp.skippedReason ?? null,
+          },
+        },
+      });
+      return NextResponse.json({
+        profile: final ? serializeSafe(final) : null,
+        result: camp,
+        publicSms: false,
+        next: camp.message,
+      });
+    }
+
+    // submit-brand / submit-provider: brand first; campaign only if already verified
+    if (data.action === "submit-brand") {
+      const brand = await ensureBrandSubmitted(profile.id);
+      let camp: Awaited<ReturnType<typeof ensureCampaignSubmitted>> | null = null;
+      if (brand.brandStatus === "approved") {
+        camp = await ensureCampaignSubmitted(profile.id);
+      }
+      const final = await prisma.smsComplianceProfile.findUnique({ where: { id: profile.id } });
+      await prisma.auditLog.create({
+        data: {
+          workspaceId,
+          userId: ctx.user.id,
+          action: "admin.sms.owner_pilot.submit_brand",
+          targetType: "SmsComplianceProfile",
+          targetId: profile.id,
+          meta: {
+            brandId: brand.brandId,
+            brandStatus: brand.brandStatus,
+            brandCreated: brand.created,
+            campaignId: camp?.campaignId ?? null,
+            campaignCreated: camp?.created ?? false,
+            phase: camp?.phase ?? brand.phase,
+          },
+        },
+      });
+      return NextResponse.json({
+        profile: final ? serializeSafe(final) : null,
+        brand,
+        campaign: camp,
+        publicSms: false,
+        next: camp?.message ?? brand.message,
+      });
+    }
+
+    // submit-provider alias — full advance (still no premature campaign)
+    const providerSubmit = await advanceRegistrationLifecycle(profile.id);
+    const final = await prisma.smsComplianceProfile.findUnique({ where: { id: profile.id } });
     await prisma.auditLog.create({
       data: {
         workspaceId,
@@ -531,16 +645,29 @@ export async function POST(req: Request) {
           campaignId: providerSubmit.campaignId,
           brandStatus: providerSubmit.brandStatus,
           campaignStatus: providerSubmit.campaignStatus,
+          brandCreated: providerSubmit.brandCreated,
+          campaignCreated: providerSubmit.campaignCreated,
+          phase: providerSubmit.phase,
         },
       },
     });
     return NextResponse.json({
-      profile: serializeSafe(final),
+      profile: final ? serializeSafe(final) : null,
       providerSubmit,
       publicSms: false,
-      next: "Brand/campaign submitted. Worker will poll Telnyx. Return here for Purchase pilot number when APPROVED.",
+      next: providerSubmit.message,
     });
   } catch (err) {
+    if (err instanceof BrandNotVerifiedError) {
+      const refreshed = await prisma.smsComplianceProfile.findUnique({ where: { id: profile.id } });
+      return NextResponse.json({
+        profile: refreshed ? serializeSafe(refreshed) : serializeSafe(profile),
+        publicSms: false,
+        next: err.message.includes("brand_not_verified")
+          ? humanLifecycleMessage("BRAND_PENDING")
+          : err.message,
+      });
+    }
     return NextResponse.json(
       {
         error: err instanceof Error ? err.message : "Provider submission failed",

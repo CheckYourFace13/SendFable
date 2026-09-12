@@ -73,9 +73,20 @@ export interface MessagingProfileRecord {
   providerProfileId: string;
 }
 
+export interface ListedBrand {
+  providerBrandId: string;
+  companyName: string | null;
+  displayName: string | null;
+  status: BrandRecord["status"];
+  website: string | null;
+  failureReason?: string | null;
+}
+
 export interface SmsProviderOps {
   createBrand(req: BrandCreateRequest): Promise<BrandRecord>;
   retrieveBrand(providerBrandId: string): Promise<BrandRecord>;
+  /** Optional: list brands for orphan reconciliation (idempotent submit). */
+  listBrands?(): Promise<ListedBrand[]>;
   createCampaign(req: CampaignCreateRequest): Promise<CampaignRecord>;
   retrieveCampaign(providerCampaignId: string): Promise<CampaignRecord>;
   searchNumbers(req: NumberSearchRequest): Promise<NumberSearchResult[]>;
