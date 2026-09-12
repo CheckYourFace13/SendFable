@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/utils";
+import { buildSmsConsentDisclosure } from "@/lib/sms/consent";
 
 type ContactDetail = {
   id: string;
@@ -243,7 +244,8 @@ export default function ContactDetailPage() {
               className="mt-0.5"
             />
             <span>
-              This person consented to SMS marketing. Email consent never grants SMS consent.
+              {buildSmsConsentDisclosure({ brandName: "my business" })} Email consent never grants
+              SMS consent.
               {contact.smsConsentAt && (
                 <span className="mt-1 block text-xs text-muted-foreground">
                   Last SMS consent: {formatDateTime(contact.smsConsentAt)}

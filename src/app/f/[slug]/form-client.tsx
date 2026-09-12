@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { buildSmsConsentDisclosure } from "@/lib/sms/consent";
 
 type PublicForm = {
   name: string;
@@ -160,22 +161,23 @@ export function HostedFormClient({ slug }: { slug: string }) {
                     />
                     <span className="leading-snug text-slate-700">
                       {form.smsConsentDisclosure ||
-                        `I agree to receive text messages from ${form.brandName || "this business"}. Consent is optional.`}
+                        buildSmsConsentDisclosure({
+                          brandName: form.brandName || "this business",
+                          privacyPolicyUrl: form.privacyPolicyUrl,
+                          smsTermsUrl: form.smsTermsUrl,
+                        })}
                     </span>
                   </label>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Optional. Email signup does not imply SMS consent.{" "}
-                    {form.privacyPolicyUrl && (
-                      <a className="underline" href={form.privacyPolicyUrl} target="_blank" rel="noreferrer">
-                        Privacy Policy
-                      </a>
-                    )}
-                    {form.privacyPolicyUrl && form.smsTermsUrl ? " · " : null}
-                    {form.smsTermsUrl && (
-                      <a className="underline" href={form.smsTermsUrl} target="_blank" rel="noreferrer">
-                        SMS Terms
-                      </a>
-                    )}
+                    Optional — not required to submit. Unchecked by default. Email signup does not
+                    imply SMS consent.{" "}
+                    <a className="underline" href={form.privacyPolicyUrl || "https://sendfable.com/privacy"} target="_blank" rel="noreferrer">
+                      Privacy Policy
+                    </a>
+                    {" · "}
+                    <a className="underline" href={form.smsTermsUrl || "https://sendfable.com/terms"} target="_blank" rel="noreferrer">
+                      Terms
+                    </a>
                   </p>
                 </div>
               )}

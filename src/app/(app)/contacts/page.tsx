@@ -34,6 +34,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { buildSmsConsentDisclosure } from "@/lib/sms/consent";
 
 type Contact = {
   id: string;
@@ -363,10 +364,11 @@ export default function ContactsPage() {
                 <Checkbox
                   checked={smsConsent}
                   onCheckedChange={(v) => setSmsConsent(v === true)}
+                  className="mt-0.5"
                 />
-                <span>
-                  This person gave clear permission to receive marketing texts from my business.
-                  Do not check this unless you have that consent.
+                <span className="leading-snug text-muted-foreground">
+                  {buildSmsConsentDisclosure({ brandName: "my business" })} Email consent does not
+                  grant SMS consent. Leave unchecked unless you have documented opt-in.
                 </span>
               </label>
             ) : null}
