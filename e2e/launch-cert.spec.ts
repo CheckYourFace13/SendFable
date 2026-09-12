@@ -132,7 +132,11 @@ test.describe("AUTH gates", () => {
 test.describe("SMS remains dark", () => {
   test("public /sms is not a customer product page", async ({ page }) => {
     const res = await page.goto(`${BASE}/sms`);
-    expect(res?.status()).toBeGreaterThanOrEqual(400);
+    // App-prefixed /sms/* requires auth (login redirect) or may 404 — never a public SMS storefront.
+    const status = res?.status() ?? 0;
+    const onLogin = /login|signin/i.test(page.url());
+    expect(status >= 400 || onLogin).toBeTruthy();
+    await expect(page.getByRole("heading", { name: /text messaging pricing|buy sms|telnyx/i })).toHaveCount(0);
   });
 
   test("homepage does not sell SMS", async ({ page }) => {
