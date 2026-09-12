@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -28,16 +29,23 @@ import { formatDateTime } from "@/lib/utils";
 
 type ContactDetail = {
   id: string;
-  email: string;
+  email: string | null;
+  phoneE164: string | null;
   firstName: string | null;
   lastName: string | null;
+  company: string | null;
   status: string;
+  smsStatus: string;
+  smsConsentAt: string | null;
+  smsConsentSource: string | null;
+  smsOptedOutAt: string | null;
   source: string | null;
   customFields: Record<string, string>;
   unsubscribedAt: string | null;
   createdAt: string;
   tags: Array<{ tag: { id: string; name: string; color: string } }>;
   suppression?: { reason: string; createdAt: string } | null;
+  smsSuppression?: { reason: string; createdAt: string } | null;
   activity?: Array<{
     campaignId: string;
     campaignName: string;
@@ -50,12 +58,22 @@ type ContactDetail = {
 
 const LOCKED = new Set(["BOUNCED", "COMPLAINED"]);
 
+function displayTitle(c: ContactDetail): string {
+  if (c.email && c.phoneE164) return `${c.email} · ${c.phoneE164}`;
+  if (c.email) return c.email;
+  if (c.phoneE164) return c.phoneE164;
+  return "Contact";
+}
+
 export default function ContactDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [contact, setContact] = useState<ContactDetail | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [company, setCompany] = useState("");
+  const [phone, setPhone] = useState("");
+  const [smsConsent, setSmsConsent] = useState(false);
   const [status, setStatus] = useState("SUBSCRIBED");
   const [customJson, setCustomJson] = useState("{}");
   const [allTags, setAllTags] = useState<Array<{ id: string; name: string }>>([]);
@@ -76,6 +94,9 @@ export default function ContactDetailPage() {
     setContact(c);
     setFirstName(c.firstName || "");
     setLastName(c.lastName || "");
+    setCompany(c.company || "");
+    setPhone(c.phoneE164 || "");
+    setSmsConsent(c.smsStatus === "SUBSCRIBED");
     setStatus(c.status);
     setCustomJson(JSON.stringify(c.customFields || {}, null, 2));
     const tData = await tRes.json();
@@ -93,17 +114,31 @@ export default function ContactDetailPage() {
     } catch {
       return toast.error("Custom fields must be valid JSON");
     }
+    if (!contact?.email && !phone.trim()) {
+      return toast.error("Add an email or a mobile number.");
+    }
     setSaving(true);
     try {
       const res = await fetch(`/api/contacts/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, status, customFields }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          company: company.trim() || null,
+          phone: phone.trim() || null,
+          status,
+          customFields,
+          smsConsent: phone.trim() ? smsConsent : false,
+          smsConsentSource: "manual:detail",
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Save failed");
       toast.success("Contact saved");
       setContact((prev) => (prev ? { ...prev, ...data.contact } : data.contact));
+      setSmsConsent(data.contact.smsStatus === "SUBSCRIBED");
+      setPhone(data.contact.phoneE164 || "");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -137,8 +172,8 @@ export default function ContactDetailPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <PageHeader
-        title={contact.email}
-        description="Edit details, tags, and subscription status. Hard bounces and complaints stay suppressed."
+        title={displayTitle(contact)}
+        description="Edit details, channel consent, and tags. Hard bounces, complaints, and STOP stay suppressed."
       >
         <Button asChild variant="outline">
           <Link href="/contacts">Back to audience</Link>
@@ -148,12 +183,20 @@ export default function ContactDetailPage() {
       <div className="rounded-xl border bg-white p-6 space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{contact.status}</Badge>
+          {contact.phoneE164 && (
+            <Badge variant="outline">SMS: {contact.smsStatus}</Badge>
+          )}
           {contact.source && (
             <span className="text-xs text-muted-foreground">Source: {contact.source}</span>
           )}
           {contact.suppression && (
             <span className="text-xs text-red-700">
-              Suppressed: {contact.suppression.reason}
+              Email suppressed: {contact.suppression.reason}
+            </span>
+          )}
+          {contact.smsSuppression && (
+            <span className="text-xs text-red-700">
+              SMS suppressed: {contact.smsSuppression.reason}
             </span>
           )}
         </div>
@@ -170,16 +213,57 @@ export default function ContactDetailPage() {
         </div>
 
         <div>
-          <Label>Email</Label>
-          <Input className="mt-1" value={contact.email} disabled />
+          <Label>Company (optional)</Label>
+          <Input className="mt-1" value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
 
         <div>
-          <Label>Subscription status</Label>
+          <Label>Email</Label>
+          <Input className="mt-1" value={contact.email || ""} disabled />
+          {!contact.email && (
+            <p className="mt-1 text-xs text-muted-foreground">Phone-only contact — email not set.</p>
+          )}
+        </div>
+
+        <div>
+          <Label>Mobile (US)</Label>
+          <Input
+            className="mt-1"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="3125551212"
+          />
+        </div>
+
+        {phone.trim() ? (
+          <label className="flex items-start gap-2 text-sm">
+            <Checkbox
+              checked={smsConsent}
+              onCheckedChange={(v) => setSmsConsent(v === true)}
+              className="mt-0.5"
+            />
+            <span>
+              This person consented to SMS marketing. Email consent never grants SMS consent.
+              {contact.smsConsentAt && (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Last SMS consent: {formatDateTime(contact.smsConsentAt)}
+                  {contact.smsConsentSource ? ` (${contact.smsConsentSource})` : ""}
+                </span>
+              )}
+            </span>
+          </label>
+        ) : null}
+
+        <div>
+          <Label>Email subscription status</Label>
           {locked ? (
             <p className="mt-2 text-sm text-amber-800">
               This contact is <strong>{contact.status}</strong> and cannot be set back to subscribed.
               Remove them from future sends automatically via suppression.
+            </p>
+          ) : !contact.email ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              No email on file — email subscription status does not apply.
             </p>
           ) : (
             <Select value={status} onValueChange={setStatus}>

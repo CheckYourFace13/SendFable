@@ -36,6 +36,14 @@ test.describe("PUBLIC marketing", () => {
     await expect(page.getByLabel(/email/i).first()).toBeVisible();
   });
 
+  test("signup stays email-first without phone or SMS setup", async ({ page }) => {
+    await page.goto(`${BASE}/signup`);
+    await expect(page.getByLabel(/email/i).first()).toBeVisible();
+    await expect(page.getByLabel(/password/i).first()).toBeVisible();
+    await expect(page.getByLabel(/phone|mobile|sms/i)).toHaveCount(0);
+    await expect(page.getByText(/10DLC|messaging profile|text setup/i)).toHaveCount(0);
+  });
+
   test("password reset page loads", async ({ page }) => {
     await page.goto(`${BASE}/login`);
     const forgot = page.getByRole("link", { name: /forgot|reset/i }).first();

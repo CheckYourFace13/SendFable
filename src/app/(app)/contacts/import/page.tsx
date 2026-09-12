@@ -32,17 +32,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { isValidEmail, normalizeEmail } from "@/lib/utils";
 
-type FieldKey = "email" | "firstName" | "lastName" | "skip" | "tag";
+type FieldKey = "email" | "phone" | "firstName" | "lastName" | "skip" | "tag" | "smsConsent";
+type SmsConsentMode = "none" | "explicit-fields" | "owner-attestation" | "documented-source";
+
+type MappedContact = {
+  email?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  tagNames?: string[];
+  smsConsent?: boolean;
+};
 
 const FIELDS: Array<{ key: FieldKey; label: string }> = [
   { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
   { key: "firstName", label: "First name" },
   { key: "lastName", label: "Last name" },
+  { key: "smsConsent", label: "SMS consent (yes/no)" },
   { key: "tag", label: "Tag" },
   { key: "skip", label: "Skip" },
 ];
+
+function parseConsentCell(raw: string): boolean {
+  const v = raw.trim().toLowerCase();
+  return ["1", "true", "yes", "y", "opted-in", "subscribed", "consent"].includes(v);
+}
 
 export default function ImportContactsPage() {
   const router = useRouter();
@@ -52,6 +70,9 @@ export default function ImportContactsPage() {
   const [loading, setLoading] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
   const [rampLevel, setRampLevel] = useState(1);
+  const [smsConsentMode, setSmsConsentMode] = useState<SmsConsentMode>("none");
+  const [ownerAttestation, setOwnerAttestation] = useState("");
+  const [smsConsentSource, setSmsConsentSource] = useState("");
   const [serverPreview, setServerPreview] = useState<{
     existing?: number;
     suppressed?: number;
@@ -72,6 +93,9 @@ export default function ImportContactsPage() {
         hdrs.forEach((h, i) => {
           const lower = h.toLowerCase();
           if (lower.includes("email") || lower === "e-mail") auto[i] = "email";
+          else if (lower.includes("phone") || lower.includes("mobile") || lower.includes("sms"))
+            auto[i] = "phone";
+          else if (lower.includes("consent") || lower.includes("opt")) auto[i] = "smsConsent";
           else if (lower.includes("first")) auto[i] = "firstName";
           else if (lower.includes("last")) auto[i] = "lastName";
           else if (lower.includes("tag")) auto[i] = "tag";
@@ -85,11 +109,18 @@ export default function ImportContactsPage() {
     });
   }
 
-  async function runDryRun(contacts: Array<{ email: string; firstName?: string; lastName?: string; tagNames?: string[] }>) {
+  async function runDryRun(contacts: MappedContact[]) {
     const res = await fetch("/api/contacts/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contacts, dryRun: true, confirmPurchasedListsPolicy: true }),
+      body: JSON.stringify({
+        contacts,
+        dryRun: true,
+        confirmPurchasedListsPolicy: true,
+        smsConsentMode,
+        ownerAttestation: ownerAttestation || undefined,
+        smsConsentSource: smsConsentSource || undefined,
+      }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -106,35 +137,51 @@ export default function ImportContactsPage() {
 
   const preview = useMemo(() => {
     const emailCol = Object.entries(mapping).find(([, v]) => v === "email")?.[0];
-    if (emailCol === undefined) return { valid: [], invalid: 0, dupes: 0 };
-    const seen = new Set<string>();
+    const phoneCol = Object.entries(mapping).find(([, v]) => v === "phone")?.[0];
+    if (emailCol === undefined && phoneCol === undefined) {
+      return { valid: [] as MappedContact[], invalid: 0, dupes: 0 };
+    }
+    const seenEmails = new Set<string>();
+    const seenPhones = new Set<string>();
     let invalid = 0;
     let dupes = 0;
-    const valid: Array<{
-      email: string;
-      firstName?: string;
-      lastName?: string;
-      tagNames?: string[];
-    }> = [];
+    const valid: MappedContact[] = [];
 
     for (const row of rows) {
-      const email = normalizeEmail(String(row[Number(emailCol)] || ""));
-      if (!isValidEmail(email)) {
+      const emailRaw =
+        emailCol !== undefined ? normalizeEmail(String(row[Number(emailCol)] || "")) : "";
+      const phoneRaw =
+        phoneCol !== undefined ? String(row[Number(phoneCol)] || "").trim() : "";
+      const emailOk = emailRaw ? isValidEmail(emailRaw) : false;
+      if (emailRaw && !emailOk) {
         invalid++;
         continue;
       }
-      if (seen.has(email)) {
+      if (!emailOk && !phoneRaw) {
+        invalid++;
+        continue;
+      }
+      if (emailOk && seenEmails.has(emailRaw)) {
         dupes++;
         continue;
       }
-      seen.add(email);
-      const contact: (typeof valid)[0] = { email };
+      if (phoneRaw && seenPhones.has(phoneRaw)) {
+        dupes++;
+        continue;
+      }
+      if (emailOk) seenEmails.add(emailRaw);
+      if (phoneRaw) seenPhones.add(phoneRaw);
+
+      const contact: MappedContact = {};
+      if (emailOk) contact.email = emailRaw;
+      if (phoneRaw) contact.phone = phoneRaw;
       for (const [col, field] of Object.entries(mapping)) {
         const val = String(row[Number(col)] || "").trim();
         if (!val) continue;
         if (field === "firstName") contact.firstName = val;
         if (field === "lastName") contact.lastName = val;
         if (field === "tag") contact.tagNames = [val];
+        if (field === "smsConsent") contact.smsConsent = parseConsentCell(val);
       }
       valid.push(contact);
     }
@@ -143,10 +190,13 @@ export default function ImportContactsPage() {
 
   async function commit(confirmPolicy = false) {
     if (!preview.valid.length) return toast.error("No valid rows to import");
+    if (smsConsentMode === "owner-attestation" && !ownerAttestation.trim()) {
+      return toast.error("Owner attestation is required for this SMS consent mode");
+    }
+    if (smsConsentMode === "documented-source" && !smsConsentSource.trim()) {
+      return toast.error("Consent source is required for documented SMS consent");
+    }
     if (!confirmPolicy && preview.valid.length > 1000 && rampLevel === 1) {
-      // fetch ramp level
-      const me = await fetch("/api/settings/workspace").catch(() => null);
-      void me;
       setPolicyOpen(true);
       return;
     }
@@ -158,6 +208,9 @@ export default function ImportContactsPage() {
         body: JSON.stringify({
           contacts: preview.valid,
           confirmPurchasedListsPolicy: confirmPolicy || preview.valid.length <= 1000,
+          smsConsentMode,
+          ownerAttestation: ownerAttestation || undefined,
+          smsConsentSource: smsConsentSource || undefined,
         }),
       });
       const data = await res.json();
@@ -184,7 +237,7 @@ export default function ImportContactsPage() {
     <div>
       <PageHeader
         title="Import contacts"
-        description="Upload → map columns → review → import. Only opted-in contacts."
+        description="Upload → map columns → review → import. Email-only, phone-only, or both. SMS consent is never inferred."
       />
 
       <ol className="mb-6 flex flex-wrap gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -213,9 +266,9 @@ export default function ImportContactsPage() {
 
       {headers.length > 0 && (
         <>
-          <div className="mb-6 rounded-xl border bg-white p-6">
+          <div className="mb-6 rounded-xl border bg-white p-6 space-y-4">
             <h3 className="font-semibold">Column mapping</h3>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {headers.map((h, i) => (
                 <div key={i}>
                   <Label className="text-xs text-muted-foreground">{h || `Column ${i + 1}`}</Label>
@@ -223,15 +276,63 @@ export default function ImportContactsPage() {
                     value={mapping[i] || "skip"}
                     onValueChange={(v) => setMapping((m) => ({ ...m, [i]: v as FieldKey }))}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {FIELDS.map((f) => (
-                        <SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>
+                        <SelectItem key={f.key} value={f.key}>
+                          {f.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               ))}
+            </div>
+
+            <div className="border-t pt-4 space-y-3">
+              <h4 className="text-sm font-semibold">SMS marketing consent for this import</h4>
+              <p className="text-xs text-muted-foreground">
+                Phones are stored without SMS permission unless you choose a documented mode.
+                STOP/opt-out always wins over re-import.
+              </p>
+              <Select
+                value={smsConsentMode}
+                onValueChange={(v) => setSmsConsentMode(v as SmsConsentMode)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No SMS consent (store phones only)</SelectItem>
+                  <SelectItem value="explicit-fields">Use SMS consent column per row</SelectItem>
+                  <SelectItem value="owner-attestation">Owner attestation for whole file</SelectItem>
+                  <SelectItem value="documented-source">Documented consent source for whole file</SelectItem>
+                </SelectContent>
+              </Select>
+              {smsConsentMode === "owner-attestation" && (
+                <div>
+                  <Label>Attestation</Label>
+                  <Input
+                    className="mt-1"
+                    value={ownerAttestation}
+                    onChange={(e) => setOwnerAttestation(e.target.value)}
+                    placeholder="I confirm these contacts opted in to SMS from my business"
+                  />
+                </div>
+              )}
+              {smsConsentMode === "documented-source" && (
+                <div>
+                  <Label>Consent source</Label>
+                  <Input
+                    className="mt-1"
+                    value={smsConsentSource}
+                    onChange={(e) => setSmsConsentSource(e.target.value)}
+                    placeholder="e.g. checkout form 2026-03, paper signup sheet"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -259,17 +360,23 @@ export default function ImportContactsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>First name</TableHead>
                   <TableHead>Last name</TableHead>
+                  <TableHead>SMS consent</TableHead>
                   <TableHead>Tags</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {preview.valid.slice(0, 50).map((c) => (
-                  <TableRow key={c.email}>
-                    <TableCell>{c.email}</TableCell>
+                {preview.valid.slice(0, 50).map((c, i) => (
+                  <TableRow key={`${c.email || ""}-${c.phone || ""}-${i}`}>
+                    <TableCell>{c.email || "—"}</TableCell>
+                    <TableCell>{c.phone || "—"}</TableCell>
                     <TableCell>{c.firstName || "—"}</TableCell>
                     <TableCell>{c.lastName || "—"}</TableCell>
+                    <TableCell>
+                      {c.smsConsent === true ? "yes" : c.smsConsent === false ? "no" : "—"}
+                    </TableCell>
                     <TableCell>{c.tagNames?.join(", ") || "—"}</TableCell>
                   </TableRow>
                 ))}

@@ -92,9 +92,34 @@ setInterval(async () => {
     for (const c of due) {
       const { launchCampaign } = await import("@/lib/campaign-send");
       const { CampaignSendDisabledError } = await import("@/lib/campaign-send-gate");
-      console.log(`[worker] launching scheduled campaign ${c.id}`);
+      const { launchSmsCampaign } = await import("@/lib/sms/campaign");
+      const { isSmsLiveSendingEnabled } = await import("@/lib/sms/flags");
+      const channel = c.channel || "EMAIL";
+      const needsEmail = channel === "EMAIL" || channel === "BOTH";
+      const needsSms = channel === "SMS" || channel === "BOTH";
+      console.log(`[worker] launching scheduled campaign ${c.id} channel=${channel}`);
       try {
-        await launchCampaign(c.id);
+        if (needsEmail) {
+          await launchCampaign(c.id);
+        }
+        if (needsSms) {
+          if (!isSmsLiveSendingEnabled()) {
+            console.warn(
+              `[worker] scheduled campaign ${c.id} SMS leg skipped — live SMS sending disabled`
+            );
+            if (!needsEmail) {
+              await prisma.campaign.update({
+                where: { id: c.id },
+                data: {
+                  status: "FAILED",
+                  // Keep schedule marker for audit; email path not applicable
+                },
+              });
+            }
+          } else {
+            await launchSmsCampaign(c.id);
+          }
+        }
       } catch (err) {
         if (err instanceof CampaignSendDisabledError) {
           console.warn(
