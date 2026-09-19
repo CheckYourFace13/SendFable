@@ -79,10 +79,14 @@ describe("SF-017 consent disclosure", () => {
     assert.ok(SMS_CONSENT_DISCLOSURE_VERSION.startsWith("sms-consent-"));
   });
 
-  it("builds brand-specific HELP and STOP replies", () => {
-    assert.match(buildSmsHelpReply({ brandName: "Acme", supportEmail: "hi@acme.test" }), /Acme/);
+  it("builds brand-specific HELP and STOP replies without owner leakage", () => {
+    const help = buildSmsHelpReply({ brandName: "Acme", supportEmail: "hi@acme.test" });
+    assert.match(help, /Acme/);
+    assert.match(help, /hi@acme\.test/);
+    assert.doesNotMatch(help, /iScream|chris@iscreamstudio|Telnyx/i);
     assert.match(buildSmsStopReply("Acme"), /unsubscribed/i);
     assert.match(buildSmsStopReply("Acme"), /Acme/);
+    assert.doesNotMatch(buildSmsStopReply("Acme"), /iScream|chris@iscreamstudio/i);
   });
 });
 

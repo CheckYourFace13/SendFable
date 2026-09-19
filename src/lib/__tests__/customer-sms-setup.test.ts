@@ -54,8 +54,10 @@ describe("customer SMS setup UX helpers", () => {
       supportEmail: "hi@acme.example",
     });
     assert.match(hs.helpResponse, /Acme Bakery/);
+    assert.match(hs.helpResponse, /hi@acme\.example/);
     assert.match(hs.stopResponse, /unsubscribed/i);
-    assert.doesNotMatch(hs.helpResponse, /Telnyx/i);
+    assert.doesNotMatch(hs.helpResponse, /Telnyx|iScream|chris@iscreamstudio/i);
+    assert.doesNotMatch(hs.stopResponse, /iScream|chris@iscreamstudio/i);
     const flow = generateSmsOptInDescription({
       brandName: "Acme Bakery",
       useCaseLabel: "Promotions & offers",
