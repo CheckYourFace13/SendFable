@@ -1,6 +1,11 @@
 import type { MetadataRoute } from "next";
 import { appUrl } from "@/lib/utils";
 import { listPublicCompetitors } from "@/data/competitors";
+import {
+  LIST_SIZE_PAGES,
+  migrateSlugs,
+  pairComparisons,
+} from "@/data/competitors/pricing-matrix";
 
 /** Avoid indefinitely serving a stale build-time sitemap snapshot. */
 export const dynamic = "force-dynamic";
@@ -31,6 +36,7 @@ export const SITEMAP_PATHS = [
   "/changelog",
   "/cheap-email-marketing",
   "/email-marketing-cost",
+  "/email-marketing-pricing-comparison",
   "/email-newsletter-software",
   "/small-business-newsletter-software",
   "/email-marketing-without-gmail",
@@ -78,7 +84,18 @@ export const SITEMAP_PATHS = [
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const comparePaths = listPublicCompetitors().map((c) => `/compare/${c.slug}`);
-  const paths = [...SITEMAP_PATHS, ...comparePaths];
+  const pairPaths = pairComparisons().map((p) => `/compare/${p.slug}`);
+  const migratePaths = migrateSlugs()
+    .filter((s) => s !== "mailchimp")
+    .map((s) => `/migrate/${s}`);
+  const costPaths = LIST_SIZE_PAGES.map((n) => `/email-marketing-cost/${n}-contacts`);
+  const paths = [
+    ...SITEMAP_PATHS,
+    ...comparePaths,
+    ...pairPaths,
+    ...migratePaths,
+    ...costPaths,
+  ];
   return paths.map((path) => ({
     url: appUrl(path),
     lastModified: now,
@@ -91,8 +108,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority:
       path === "/"
         ? 1
-        : path.startsWith("/solutions/") || path.startsWith("/compare/")
-          ? 0.6
-          : 0.7,
+        : path === "/email-marketing-pricing-comparison"
+          ? 0.85
+          : path.startsWith("/solutions/") || path.startsWith("/compare/")
+            ? 0.6
+            : 0.7,
   }));
 }

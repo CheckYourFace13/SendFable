@@ -42,11 +42,23 @@ describe("competitor catalog (SF-002)", () => {
       "beehiiv",
       "benchmark-email",
       "aweber",
+      "constant-contact",
+      "klaviyo",
+      "sender",
+      "flodesk",
+      "campaign-monitor",
     ];
     for (const slug of required) {
-      assert.ok(COMPETITORS[slug], missing(slug));
+      assert.ok(COMPETITORS[slug], `missing ${slug}`);
       assert.equal(COMPETITORS[slug]!.publicComparisonEnabled, true);
     }
+  });
+
+  it("mailchimp free plan reflects official 250-contact cap", () => {
+    const free = COMPETITORS.mailchimp!.tiers.find((t) => t.name === "Free");
+    assert.ok(free);
+    assert.equal(free!.contacts, 250);
+    assert.equal(free!.monthlyPrice, 0);
   });
 
   it("surfaces comparison disclaimer language", () => {

@@ -120,8 +120,49 @@ export default function MigratePage() {
                 </Link>
               </p>
             )}
+            {s.name === "Constant Contact" && (
+              <p className="mt-4 text-sm">
+                <Link href="/migrate/constant-contact" className="font-medium text-coral underline-offset-4 hover:underline">
+                  Constant Contact migration guide
+                </Link>
+              </p>
+            )}
+            {s.name === "Brevo" && (
+              <p className="mt-4 text-sm">
+                <Link href="/migrate/brevo" className="font-medium text-coral underline-offset-4 hover:underline">
+                  Brevo migration guide
+                </Link>
+              </p>
+            )}
+            {s.name === "MailerLite" && (
+              <p className="mt-4 text-sm">
+                <Link href="/migrate/mailerlite" className="font-medium text-coral underline-offset-4 hover:underline">
+                  MailerLite migration guide
+                </Link>
+              </p>
+            )}
+            {s.name === "Kit (ConvertKit)" && (
+              <p className="mt-4 text-sm">
+                <Link href="/migrate" className="font-medium text-coral underline-offset-4 hover:underline">
+                  See also CSV path below
+                </Link>
+              </p>
+            )}
           </div>
         ))}
+        <div className="rounded-2xl border bg-white p-6">
+          <h2 className="text-xl font-semibold">More migration guides</h2>
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <li><Link className="text-coral hover:underline" href="/migrate/klaviyo">Klaviyo</Link></li>
+            <li><Link className="text-coral hover:underline" href="/migrate/activecampaign">ActiveCampaign</Link></li>
+            <li><Link className="text-coral hover:underline" href="/migrate/omnisend">Omnisend</Link></li>
+            <li><Link className="text-coral hover:underline" href="/migrate/getresponse">GetResponse</Link></li>
+            <li><Link className="text-coral hover:underline" href="/migrate/aweber">AWeber</Link></li>
+            <li><Link className="text-coral hover:underline" href="/migrate/campaign-monitor">Campaign Monitor</Link></li>
+            <li><Link className="text-coral hover:underline" href="/migrate/sender">Sender</Link></li>
+            <li><Link className="text-coral hover:underline" href="/email-marketing-pricing-comparison">Pricing comparison hub</Link></li>
+          </ul>
+        </div>
       </section>
 
       <section className="mt-14">

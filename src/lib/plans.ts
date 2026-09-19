@@ -149,18 +149,18 @@ export function maxRampLevel(plan: Plan): number {
 export const BOUNCE_PAUSE_THRESHOLD = 0.05; // 5%
 export const COMPLAINT_PAUSE_THRESHOLD = 0.001; // 0.1%
 
-/** Typical Mailchimp Standard-plan pricing by contact count (as of 2026). */
+/** Approximate Mailchimp Standard-plan pricing by contact count (verified entry floors 2026-09-19; higher tiers approximate). */
 export const MAILCHIMP_PRICE_TABLE: Array<{ contacts: number; price: number }> = [
   { contacts: 500, price: 20 },
-  { contacts: 1_500, price: 30 },
-  { contacts: 2_500, price: 45 },
-  { contacts: 5_000, price: 75 },
-  { contacts: 10_000, price: 105 },
-  { contacts: 15_000, price: 160 },
-  { contacts: 20_000, price: 210 },
-  { contacts: 30_000, price: 285 },
-  { contacts: 40_000, price: 350 },
-  { contacts: 50_000, price: 385 },
+  { contacts: 1_000, price: 30 },
+  { contacts: 2_500, price: 60 },
+  { contacts: 5_000, price: 100 },
+  { contacts: 10_000, price: 135 },
+  { contacts: 15_000, price: 230 },
+  { contacts: 20_000, price: 250 },
+  { contacts: 25_000, price: 310 },
+  { contacts: 40_000, price: 400 },
+  { contacts: 50_000, price: 450 },
 ];
 
 export function mailchimpPriceFor(contacts: number): number {

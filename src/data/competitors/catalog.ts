@@ -1,6 +1,6 @@
 import type { CompetitorRecord } from "./types";
 
-const CHECKED = "2026-08-24";
+const CHECKED = "2026-09-19";
 
 function rec(
   partial: Omit<CompetitorRecord, "pricingLastChecked" | "featuresLastChecked" | "reviewStatus"> & {
@@ -29,12 +29,15 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     publicComparisonEnabled: true,
     sources: ["https://mailchimp.com/pricing/"],
     pricingFreshnessWarning:
-      "Mailchimp Standard pricing scales by contact tier and often shows promotions (e.g. trials, %-off). Approximate only.",
-    freePlanSummary: "Basic Free plan with limited sends; Essentials/Standard unlock fuller features.",
-    paidPlanSummary: "Essentials, Standard, and Premium scale primarily by contact count.",
-    billingBasis: "Contact-based subscription; email send limits tied to plan/contact tier.",
-    contactLimitsSummary: "Paid plans scale from hundreds to hundreds of thousands of contacts.",
-    emailLimitsSummary: "Standard monthly send limit commonly described as about 12× contact count — confirm current terms.",
+      "Mailchimp scales by contact tier and often shows 12-month promotions. Entry floors verified 2026-09-19 from mailchimp.com/pricing: Free = 250 contacts; Essentials from $13; Standard from $20; Premium from $350. Higher tiers approximate — verify the official calculator.",
+    freePlanSummary: "Free plan for up to 250 contacts and max 500 emails/mo (or 250/day).",
+    paidPlanSummary:
+      "Essentials from ~$13/mo, Standard from ~$20/mo, Premium from ~$350/mo — scales by contact tier; promotions common.",
+    billingBasis: "Contact-based subscription; email send limits tied to plan/contact tier (10×–15×).",
+    contactLimitsSummary:
+      "Free: 250 contacts. Paid plans scale from hundreds to 100k+; Premium custom above high volumes.",
+    emailLimitsSummary:
+      "Free: max 500/mo or 250/day. Essentials ~10× contacts, Standard ~12×, Premium ~15×. Overages billed after trial.",
     automation: "strong",
     crm: "suite",
     ecommerce: "strong",
@@ -68,14 +71,53 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     migrationNote:
       "Export contacts as CSV from Mailchimp, clean unsubscribed/bounced rows, and import into SendFable. Rebuild automations rather than expecting a perfect journey import.",
     tiers: [
-      { name: "Free (basic)", contacts: 500, monthlyPrice: 0, notes: "Limited sends; confirm current Free limits" },
-      { name: "Standard ~500 contacts", contacts: 500, monthlyPrice: 20, notes: "Approx. Standard list price after trial; promotions vary" },
-      { name: "Standard ~2,500 contacts", contacts: 2_500, monthlyPrice: 45, notes: "Approximate public list estimate — verify calculator on Mailchimp" },
-      { name: "Standard ~10,000 contacts", contacts: 10_000, monthlyPrice: 105, notes: "Approximate; contact-tier pricing changes" },
-      { name: "Standard ~30,000 contacts", contacts: 30_000, monthlyPrice: 285, notes: "Approximate; promotions may apply" },
+      {
+        name: "Free",
+        contacts: 250,
+        monthlyPrice: 0,
+        notes: "Official: up to 250 contacts; max 500 emails/mo or 250/day (2026-09-19)",
+      },
+      {
+        name: "Essentials entry (~500 contacts)",
+        contacts: 500,
+        monthlyPrice: 13,
+        notes: "Official entry floor from Mailchimp pricing; promotions may differ",
+      },
+      {
+        name: "Standard entry (~500 contacts)",
+        contacts: 500,
+        monthlyPrice: 20,
+        notes: "Official entry floor; 12× send multiple; promotions may differ",
+      },
+      {
+        name: "Standard ~2,500 contacts",
+        contacts: 2_500,
+        monthlyPrice: 60,
+        notes: "Approximate Standard list estimate — verify Mailchimp calculator",
+      },
+      {
+        name: "Standard ~10,000 contacts",
+        contacts: 10_000,
+        monthlyPrice: 135,
+        notes: "Approximate; contact-tier pricing and promos change",
+      },
+      {
+        name: "Premium entry",
+        contacts: 10_000,
+        monthlyPrice: 350,
+        notes: "Official Premium starts ~$350/mo (contact tier applies)",
+      },
     ],
-    relatedSlugs: ["mailerlite", "brevo", "constant-contact", "emailoctopus"],
+    relatedSlugs: ["mailerlite", "brevo", "constant-contact", "klaviyo", "sender"],
     faqs: [
+      {
+        q: "How much does Mailchimp cost?",
+        a: "As of 2026-09-19, Mailchimp Free covers 250 contacts (500 emails/mo). Paid entry is roughly Essentials from $13/mo and Standard from $20/mo at lower contact tiers; Premium starts around $350/mo. Prices scale by contacts and promotions — verify on mailchimp.com/pricing.",
+      },
+      {
+        q: "Is Mailchimp free?",
+        a: "Yes, with a limited Free plan (250 contacts, 500 emails/mo or 250/day). Paid features, higher sends, and SMS require paid plans or add-ons.",
+      },
       {
         q: "Is SendFable always cheaper than Mailchimp?",
         a: "No. At many small-business tiers SendFable’s published price is lower than approximate Mailchimp Standard pricing, but Mailchimp promotions, overages, and plan choices change. Use the dated calculator and verify on Mailchimp’s site.",
@@ -83,6 +125,14 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       {
         q: "Can I keep my Gmail or Outlook From address?",
         a: "SendFable supports everyday From addresses with verification and From-rewrite when providers enforce strict DMARC, while preserving Reply-To.",
+      },
+      {
+        q: "Does Mailchimp charge for unsubscribed contacts?",
+        a: "Mailchimp billing uses their current contact definitions. Confirm whether unsubscribed/non-subscribed contacts count on their help docs — definitions change. SendFable uses published contact caps on your plan.",
+      },
+      {
+        q: "Does SendFable support text messaging?",
+        a: "Text messaging is built but not publicly available yet. Email marketing is live.",
       },
     ],
   }),
@@ -813,6 +863,220 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       },
     ],
   }),
+
+  klaviyo: rec({
+    slug: "klaviyo",
+    name: "Klaviyo",
+    officialUrl: "https://www.klaviyo.com/",
+    pricingUrl: "https://www.klaviyo.com/pricing",
+    publicComparisonEnabled: true,
+    sources: ["https://www.klaviyo.com/pricing"],
+    freePlanSummary: "Free tier roughly 250 active profiles and 500 emails/mo — verify current limits.",
+    paidPlanSummary: "Paid pricing scales by active profiles and channel usage; ecommerce-oriented.",
+    billingBasis: "Active profiles + email/SMS usage.",
+    contactLimitsSummary: "Active profile based (not the same as raw list size).",
+    emailLimitsSummary: "Usage-based; free tier limited — verify calculator.",
+    automation: "suite",
+    crm: "suite",
+    ecommerce: "specialized",
+    sms: "strong",
+    newsletterCreator: "basic",
+    integrationsSummary: "Deep ecommerce and CDP-style integrations.",
+    supportSummary: "In-product + plan-based support.",
+    bestFor: ["Ecommerce brands needing personalization and SMS"],
+    potentialDrawbacks: ["Overkill for simple local newsletters", "Pricing complexity"],
+    sendfableStronger: [
+      "Simpler SMB campaign workflow",
+      "Transparent published caps",
+      "Lower complexity for non-ecommerce",
+    ],
+    competitorStronger: [
+      "Ecommerce CDP depth",
+      "Advanced personalization",
+      "Mature SMS + email journeys for stores",
+    ],
+    shortAnswer:
+      "Choose Klaviyo for serious ecommerce personalization. Choose SendFable when you want simple small-business email without a CDP.",
+    whoSendfableIsFor: "Local and service businesses that need campaigns, forms, and clear pricing.",
+    whoCompetitorIsFor: "Online stores that need Klaviyo’s ecommerce data and automation depth.",
+    deliverabilityNote: "Klaviyo is ecommerce-delivery oriented. SendFable uses managed SES for SMB campaigns.",
+    formsNote: "Both support capture; Klaviyo ties forms tightly to store events.",
+    templatesNote: "Klaviyo excels at product-driven templates; SendFable at practical SMB announcements.",
+    analyticsNote: "Klaviyo revenue attribution is stronger for stores; SendFable focuses on campaign delivery metrics.",
+    migrationNote:
+      "Export consented profiles carefully. Do not import suppressed buyers as active. Rebuild flows — ecommerce events will not map 1:1.",
+    tiers: [
+      { name: "Free", contacts: 250, monthlyPrice: 0, notes: "Approx. 250 active profiles / 500 emails — verify" },
+      { name: "Paid", monthlyPrice: "Varies by profiles", notes: "Use Klaviyo calculator — do not invent" },
+    ],
+    relatedSlugs: ["omnisend", "mailchimp", "hubspot"],
+    faqs: [
+      {
+        q: "Is SendFable a Klaviyo alternative?",
+        a: "Only if you need simpler SMB email. Klaviyo usually wins for ecommerce CDP and SMS depth.",
+      },
+    ],
+  }),
+
+  sender: rec({
+    slug: "sender",
+    name: "Sender",
+    officialUrl: "https://www.sender.net/",
+    pricingUrl: "https://www.sender.net/pricing/",
+    publicComparisonEnabled: true,
+    sources: ["https://www.sender.net/pricing/"],
+    freePlanSummary:
+      "Free Forever: up to 2,500 subscribers and 15,000 emails/mo (stronger free allowance than SendFable Free).",
+    paidPlanSummary:
+      "Standard and Professional with promotional first-year pricing common (e.g. Standard promo ~$6.30/mo) — distinguish promo vs regular.",
+    billingBasis: "Subscriber tiers; promo pricing frequent.",
+    contactLimitsSummary: "Free up to 2,500 subscribers; paid scales higher.",
+    emailLimitsSummary: "Free 15,000/mo; paid often 12×–24× subscribers.",
+    automation: "strong",
+    crm: "basic",
+    ecommerce: "basic",
+    sms: "strong",
+    newsletterCreator: "basic",
+    integrationsSummary: "SMTP/API and common marketing integrations.",
+    supportSummary: "24/7 chat on many plans.",
+    bestFor: ["Senders who want a large free allowance", "Budget promo seekers"],
+    potentialDrawbacks: ["Promo pricing can obscure regular rates", "Less US local-business focus"],
+    sendfableStronger: [
+      "Clear published US SMB plans without promo confusion",
+      "Managed SES narrative and Send Confidence",
+      "Simple Mode campaign UX",
+    ],
+    competitorStronger: [
+      "Larger free contact and send allowance",
+      "Aggressive promotional paid entry",
+      "SMS credits on paid plans",
+    ],
+    shortAnswer:
+      "Sender currently offers a stronger free allowance (2,500 subscribers / 15,000 emails). Choose SendFable for simple US small-business workflow and transparent published caps.",
+    whoSendfableIsFor: "US small businesses that want clear plans and a campaign-first product.",
+    whoCompetitorIsFor: "Users optimizing for free tier size or promotional paid pricing.",
+    deliverabilityNote: "Both require permission-based lists. Compare authentication setup carefully when migrating.",
+    formsNote: "Both offer forms/popups; Sender includes branding on free.",
+    templatesNote: "Sender has broad template sets; SendFable focuses on SMB practicality.",
+    analyticsNote: "Both cover core opens/clicks; Sender adds ecommerce-oriented reports on higher plans.",
+    migrationNote: "Export subscribers as CSV. Preserve suppression. Map tags. Do not import unsubscribed as active.",
+    tiers: [
+      {
+        name: "Free Forever",
+        contacts: 2_500,
+        monthlyPrice: 0,
+        notes: "Official 2026-09-19: 2,500 subscribers / 15,000 emails/mo",
+      },
+      {
+        name: "Standard (promotional display)",
+        contacts: 2_500,
+        monthlyPrice: 6.3,
+        notes: "Promotional first-year pricing observed — not regular list; verify",
+      },
+      {
+        name: "Professional (promotional display)",
+        contacts: 2_500,
+        monthlyPrice: 10.5,
+        notes: "Promotional first-year pricing observed — verify",
+      },
+    ],
+    relatedSlugs: ["mailerlite", "brevo", "mailchimp"],
+    faqs: [
+      {
+        q: "Is Sender’s free plan larger than SendFable’s?",
+        a: "Yes. As of 2026-09-19 Sender Free allows 2,500 subscribers and 15,000 emails/mo vs SendFable Free at 500 contacts and 1,000 emails/mo.",
+      },
+    ],
+  }),
+
+  flodesk: rec({
+    slug: "flodesk",
+    name: "Flodesk",
+    officialUrl: "https://flodesk.com/",
+    pricingUrl: "https://flodesk.com/pricing",
+    publicComparisonEnabled: true,
+    sources: ["https://flodesk.com/pricing"],
+    freePlanSummary: "No free plan — paid flat pricing.",
+    paidPlanSummary: "Approximately $25/mo monthly or ~$19/mo annual-equivalent at entry (~1,000 subscribers), unlimited sends — verify.",
+    billingBasis: "Flat subscriber bands; unlimited sends.",
+    contactLimitsSummary: "Entry around 1,000 active subscribers — verify current bands.",
+    emailLimitsSummary: "Unlimited sends on paid.",
+    automation: "basic",
+    crm: "none",
+    ecommerce: "basic",
+    sms: "none",
+    newsletterCreator: "strong",
+    integrationsSummary: "Design-focused integrations.",
+    supportSummary: "In-product help.",
+    bestFor: ["Brand-forward visual email"],
+    potentialDrawbacks: ["Less CRM/automation depth", "No free tier"],
+    sendfableStronger: ["Free plan", "Clear contact+send caps", "SMB campaign workflow"],
+    competitorStronger: ["Design polish", "Unlimited sends on paid"],
+    shortAnswer:
+      "Flodesk wins on visual brand design. SendFable wins on free tier and transparent SMB plan caps.",
+    whoSendfableIsFor: "Small businesses that need affordable caps and simple sending.",
+    whoCompetitorIsFor: "Brands prioritizing design aesthetics and unlimited sends.",
+    deliverabilityNote: "Both expect consented lists.",
+    formsNote: "Both support capture forms.",
+    templatesNote: "Flodesk is design-first; SendFable is practical SMB.",
+    analyticsNote: "Core metrics on both.",
+    migrationNote: "CSV export/import; rebuild workflows.",
+    tiers: [
+      { name: "Entry (monthly)", contacts: 1_000, monthlyPrice: 25, notes: "Approx. — verify flodesk.com/pricing" },
+      { name: "Entry (annual-equivalent)", contacts: 1_000, monthlyPrice: 19, notes: "Approx. annual-equivalent — verify" },
+    ],
+    relatedSlugs: ["mailerlite", "mailchimp", "beehiiv"],
+    faqs: [
+      {
+        q: "Does Flodesk have unlimited emails?",
+        a: "Paid Flodesk plans are commonly described as unlimited sends within subscriber bands — verify current terms on their pricing page.",
+      },
+    ],
+  }),
+
+  "campaign-monitor": rec({
+    slug: "campaign-monitor",
+    name: "Campaign Monitor",
+    officialUrl: "https://www.campaignmonitor.com/",
+    pricingUrl: "https://www.campaignmonitor.com/pricing/",
+    publicComparisonEnabled: true,
+    sources: ["https://www.campaignmonitor.com/pricing/"],
+    freePlanSummary: "No permanent free plan — verify trials.",
+    paidPlanSummary: "Contact-tier pricing via calculator — exact dollars vary.",
+    billingBasis: "Contact-based.",
+    contactLimitsSummary: "Scales by contacts.",
+    emailLimitsSummary: "Plan-dependent — verify.",
+    automation: "strong",
+    crm: "basic",
+    ecommerce: "basic",
+    sms: "basic",
+    newsletterCreator: "basic",
+    integrationsSummary: "Agency and design ecosystem.",
+    supportSummary: "Plan-based support.",
+    bestFor: ["Agencies and design-led brands"],
+    potentialDrawbacks: ["Can be pricey vs simple SMB tools", "Calculator-only pricing"],
+    sendfableStronger: ["Published transparent SMB pricing", "Simpler solo-operator UX"],
+    competitorStronger: ["Agency tooling", "Design/brand controls"],
+    shortAnswer:
+      "Campaign Monitor fits agencies and design-led brands. SendFable fits small businesses that want simple published pricing.",
+    whoSendfableIsFor: "Owner-operated small businesses.",
+    whoCompetitorIsFor: "Agencies needing client-ready design workflows.",
+    deliverabilityNote: "Both require authentication and list hygiene.",
+    formsNote: "Both support signup forms.",
+    templatesNote: "Campaign Monitor is design-forward for agencies.",
+    analyticsNote: "Campaign and client reporting differ by plan.",
+    migrationNote: "CSV migrate; rebuild journeys.",
+    tiers: [
+      { name: "Paid", monthlyPrice: "Varies", notes: "Use official calculator — do not invent" },
+    ],
+    relatedSlugs: ["mailchimp", "activecampaign", "flodesk"],
+    faqs: [
+      {
+        q: "Can you quote Campaign Monitor exactly?",
+        a: "Not without their live calculator. We show SendFable’s published prices and link to Campaign Monitor’s official pricing.",
+      },
+    ],
+  }),
 };
 
 /** Evaluated but not given thin public pages unless enabled later */
@@ -822,30 +1086,6 @@ export const COMPETITOR_CANDIDATES: {
   reason: string;
   publicComparisonEnabled: boolean;
 }[] = [
-  {
-    slug: "klaviyo",
-    name: "Klaviyo",
-    reason: "High ecommerce search demand; better as a ‘when not to use SendFable’ callout than a thin parity page until we write store-specific content.",
-    publicComparisonEnabled: false,
-  },
-  {
-    slug: "campaign-monitor",
-    name: "Campaign Monitor",
-    reason: "Agency/design-led ESP; enable when we have distinct agency-focused content.",
-    publicComparisonEnabled: false,
-  },
-  {
-    slug: "sender",
-    name: "Sender",
-    reason: "Lower search priority vs required list; revisit quarterly.",
-    publicComparisonEnabled: false,
-  },
-  {
-    slug: "flodesk",
-    name: "Flodesk",
-    reason: "Design-led fixed pricing; enable with a design-focused comparison draft.",
-    publicComparisonEnabled: false,
-  },
   {
     slug: "drip",
     name: "Drip",

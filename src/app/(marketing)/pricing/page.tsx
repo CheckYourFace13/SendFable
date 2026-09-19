@@ -29,8 +29,11 @@ export default function PricingPage() {
             Pricing that stays readable
           </h1>
           <p className="mt-4 text-lg text-charcoal/75">
-            Start free. Upgrade when your list grows. Competitor prices change — dated comparisons
-            live on our compare pages.
+            Start free. Upgrade when your list grows. Competitor prices change — see the dated{" "}
+            <a href="/email-marketing-pricing-comparison" className="text-coral underline-offset-2 hover:underline">
+              email marketing pricing comparison
+            </a>
+            .
           </p>
         </div>
 

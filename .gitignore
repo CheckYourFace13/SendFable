@@ -22,4 +22,5 @@ stripe-live-setup-result.json
 
 test-results/
 playwright-report/
+data/competitor-price-monitor.json
 

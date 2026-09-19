@@ -63,6 +63,11 @@ export default function CompareHubPage() {
         <h2 className="text-2xl font-semibold">Also useful</h2>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-slate-700">
           <li>
+            <Link className="text-coral hover:underline" href="/email-marketing-pricing-comparison">
+              Email marketing pricing comparison
+            </Link>
+          </li>
+          <li>
             <Link className="text-coral hover:underline" href="/best-email-marketing-software">
               Best email marketing software by use case
             </Link>

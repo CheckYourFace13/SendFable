@@ -214,7 +214,11 @@ export async function launchSmsCampaign(campaignId: string): Promise<{ recipient
       where: { id: recipient.id },
       data:
         outcome.status === "sent"
-          ? { status: "SENT", sentAt: new Date(), providerMessageId: outcome.messageId ? undefined : undefined }
+          ? {
+              status: "SENT",
+              sentAt: new Date(),
+              providerMessageId: outcome.messageId ?? undefined,
+            }
           : outcome.status === "failed"
             ? { status: "FAILED", error: outcome.reason ?? "send failed", failedAt: new Date() }
             : { status: "SKIPPED", error: outcome.reason ?? "skipped" },

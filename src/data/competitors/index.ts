@@ -5,6 +5,7 @@ export {
   listPublicCompetitors,
   getCompetitor,
 } from "./catalog";
+export * from "./pricing-matrix";
 
 import { listPublicCompetitors } from "./catalog";
 import { isFeaturesStale, isPricingStale, type CompetitorRecord } from "./types";
