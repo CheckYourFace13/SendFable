@@ -1,12 +1,13 @@
 /**
- * SMS consent state machine + STOP/HELP keyword recognition.
+ * SMS consent state machine + STOP/HELP/START keyword recognition.
  *
  * SMS permission is ALWAYS independent from email permission:
  *  - a phone number on file never implies SMS consent,
  *  - email consent never grants SMS consent,
  *  - STOP suppression survives contact deletion and reimport (SmsSuppression
  *    is keyed by workspace + number, not contact id),
- *  - only a documented new opt-in may restore permission after an opt-out.
+ *  - only a documented new opt-in (including carrier START) may restore
+ *    permission after an opt-out.
  */
 
 import type { SmsConsentStatus } from "@prisma/client";
@@ -25,6 +26,9 @@ export const SMS_STOP_KEYWORDS = [
 
 export const SMS_HELP_KEYWORDS = ["HELP", "INFO"] as const;
 
+/** Carrier re-subscribe keywords (10DLC / Telnyx opt-in keywords). */
+export const SMS_START_KEYWORDS = ["START", "YES", "UNSTOP", "SUBSCRIBE"] as const;
+
 function normalizeKeywordBody(body: string): string {
   // Trim whitespace and trailing punctuation; carriers commonly deliver
   // "Stop", "STOP.", " stop " etc.
@@ -37,6 +41,10 @@ export function isStopMessage(body: string): boolean {
 
 export function isHelpMessage(body: string): boolean {
   return (SMS_HELP_KEYWORDS as readonly string[]).includes(normalizeKeywordBody(body));
+}
+
+export function isStartMessage(body: string): boolean {
+  return (SMS_START_KEYWORDS as readonly string[]).includes(normalizeKeywordBody(body));
 }
 
 // ─── Consent transitions ──────────────────────────────────────────────────────

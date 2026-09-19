@@ -11,7 +11,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { applyOptOut, isHelpMessage, isStopMessage } from "@/lib/sms/consent";
+import { applyOptIn, applyOptOut, isHelpMessage, isStartMessage, isStopMessage, SMS_CONSENT_DISCLOSURE_VERSION } from "@/lib/sms/consent";
 import { redactPhone } from "@/lib/sms/phone";
 import { billingPeriodFor, recordInboundUsage } from "@/lib/sms/usage";
 import type { InboundMessageEvent } from "@/lib/sms/provider";
@@ -78,6 +78,7 @@ export async function processInboundSms(
 
   const stop = isStopMessage(event.body);
   const help = isHelpMessage(event.body);
+  const start = !stop && !help && isStartMessage(event.body);
 
   // 4. Store the inbox message
   const message = await prisma.smsMessage.create({
@@ -125,6 +126,50 @@ export async function processInboundSms(
         evidence: { keyword: event.body.trim().toUpperCase().slice(0, 20) },
       },
     });
+  }
+
+  // 5b. START: documented carrier re-subscribe (clears STOP when accepted)
+  if (start) {
+    const suppressed = !!(await prisma.smsSuppression.findUnique({
+      where: { workspaceId_phoneE164: { workspaceId, phoneE164: event.from } },
+    }));
+    const optIn = applyOptIn({
+      currentStatus: contact?.smsStatus ?? (suppressed ? "OPTED_OUT" : "NOT_PROVIDED"),
+      source: "provider:start",
+      disclosureVersion: SMS_CONSENT_DISCLOSURE_VERSION,
+      suppressed,
+      documentedNewOptIn: true,
+    });
+    if (optIn.accepted) {
+      if (contact) {
+        await prisma.contact.update({
+          where: { id: contact.id },
+          data: {
+            smsStatus: optIn.nextStatus,
+            smsConsentAt: new Date(),
+            smsConsentSource: "provider:start",
+            smsConsentDisclosureVersion: SMS_CONSENT_DISCLOSURE_VERSION,
+            smsOptedOutAt: null,
+          },
+        });
+      }
+      if (optIn.clearSuppression) {
+        await prisma.smsSuppression.deleteMany({
+          where: { workspaceId, phoneE164: event.from },
+        });
+      }
+      await prisma.smsConsentEvent.create({
+        data: {
+          workspaceId,
+          contactId: contact?.id ?? null,
+          phoneE164: event.from,
+          action: "RE_OPT_IN",
+          source: "provider:start",
+          providerEventRef: event.eventId,
+          evidence: { keyword: event.body.trim().toUpperCase().slice(0, 20) },
+        },
+      });
+    }
   }
 
   // 6. Usage accounting (counts STOP/HELP too; splits included vs. overage)
@@ -175,8 +220,8 @@ export async function processInboundSms(
     });
   }
 
-  // 8. Email notification for ordinary replies (not STOP/HELP keywords)
-  if (!stop && !help) {
+  // 8. Email notification for ordinary replies (not STOP/HELP/START keywords)
+  if (!stop && !help && !start) {
     try {
       await sendSmsInboundNotification({
         workspaceId,

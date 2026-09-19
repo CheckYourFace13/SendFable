@@ -5,6 +5,7 @@ import {
   applyOptOut,
   canSendMarketingSms,
   isHelpMessage,
+  isStartMessage,
   isStopMessage,
 } from "../sms/consent";
 import { normalizeUsPhone, redactPhone, isPhoneHeader } from "../sms/phone";
@@ -26,9 +27,15 @@ describe("SMS STOP / HELP keywords", () => {
       assert.equal(isHelpMessage(kw), true);
     });
   }
-  it("does not treat ordinary replies as STOP/HELP", () => {
+  for (const kw of ["START", "start", "YES", "UNSTOP", "subscribe"]) {
+    it(`recognizes start keyword: ${JSON.stringify(kw)}`, () => {
+      assert.equal(isStartMessage(kw), true);
+    });
+  }
+  it("does not treat ordinary replies as STOP/HELP/START", () => {
     assert.equal(isStopMessage("please stop by tomorrow"), false);
     assert.equal(isHelpMessage("can you help me with my order"), false);
+    assert.equal(isStartMessage("please start tomorrow"), false);
   });
 });
 
