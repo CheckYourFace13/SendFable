@@ -8,7 +8,7 @@ import { alertOwnerException } from "@/lib/acquisition/notify";
 const DELIVERY_GRACE_MS = 4 * 60 * 60 * 1000;
 
 /**
- * Only watch acquisition sends after the SES attribution fix (97766b1) / Sep 4 2026 window.
+ * Only watch Casey sends after the SES attribution fix (97766b1) / Sep 4 2026 window.
  * Historical SENT rows from before tagging/normalization are ignored.
  */
 const ATTRIBUTION_WATCH_FROM = new Date("2026-09-04T14:00:00.000Z"); // Fri 9am America/Chicago
@@ -45,7 +45,7 @@ export async function checkAcquisitionDeliveryAttribution(
 
   await alertOwnerException(
     "SendFable acquisition: SES Delivery events not attributing",
-    `${stuck.length} acquisition message(s) remain SENT >4h with no Delivery/Bounce/Complaint.\n\nExact AWS check (one place):\nSES → Configuration sets → sendfable-events → Event destinations → confirm Event types include Delivery (and Bounce, Complaint) → SNS topic → https://sendfable.com/api/webhooks/ses\n\nAfter enabling Delivery, new acquisition sends should move SENT → DELIVERED automatically.`
+    `${stuck.length} acquisition message(s) remain SENT >4h with no Delivery/Bounce/Complaint.\n\nExact AWS check (one place):\nSES → Configuration sets → sendfable-events → Event destinations → confirm Event types include Delivery (and Bounce, Complaint) → SNS topic → https://sendfable.com/api/webhooks/ses\n\nAfter enabling Delivery, new Casey sends should move SENT → DELIVERED automatically.`
   );
   await prisma.acquisitionEvent.create({
     data: {

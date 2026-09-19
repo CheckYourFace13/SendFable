@@ -1,6 +1,6 @@
 /**
- * Controlled acquisition copy versions — small A/B only, no wild rewrites.
- * Signed as SendFable Team (no fictional personal identity).
+ * Controlled Casey copy versions — small A/B only, no wild rewrites.
+ * Casey is the intentional SendFable outreach persona.
  */
 
 import { PLANS } from "@/lib/plans";
@@ -48,23 +48,26 @@ function freePlanLine(): string {
 function variantBits(
   version: CopyVersionId,
   businessName: string
-): { subject: string; ask: string } {
+): { subject: string; ask: string; helpLine: string } {
   switch (version) {
     case "v1b":
       return {
         subject: `A simpler email tool for ${businessName}?`,
         ask: "Worth a quick look?",
+        helpLine: "If useful, I can help you get a first campaign out quickly.",
       };
     case "v2a":
       return {
         subject: `Quick question about ${businessName}`,
         ask: "Would a simpler free plan be useful?",
+        helpLine: "Happy to help you send a first campaign if you want a hand.",
       };
     case "v1a":
     default:
       return {
         subject: `Quick question about ${businessName}`,
-        ask: "Worth a look?",
+        ask: "Would you be open to taking a look?",
+        helpLine: "If useful, I can help you get a first campaign out quickly.",
       };
   }
 }
@@ -97,23 +100,26 @@ export function buildInitialEmail(
   const path = opts.landingPath || "/email-marketing-for-small-business";
   const cta =
     opts.ctaUrl ||
-    `${site}${path.startsWith("/") ? path : `/${path}`}?utm_source=acquisition&utm_medium=email&utm_campaign=acquisition&utm_content=${version}`;
+    `${site}${path.startsWith("/") ? path : `/${path}`}?utm_source=casey&utm_medium=email&utm_campaign=acquisition&utm_content=${version}`;
 
   const body = [
     greeting(input.firstName),
     "",
     opener,
     "",
-    "We built SendFable for small businesses that want a simpler way to email customers without paying for a large marketing suite.",
+    "I'm with SendFable — we built it for small businesses that want email marketing without the complexity and pricing creep of the bigger platforms.",
     "",
     freePlanLine(),
     "",
+    bits.helpLine,
+    "",
     bits.ask,
     "",
-    "SendFable Team",
+    "Casey",
+    "SendFable",
     cta,
     "",
-    `If you'd rather not hear from us again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
+    `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");
 
   return { subject: bits.subject, bodyText: body, opener };
@@ -128,13 +134,13 @@ export function buildFollowUp1(
     "",
     "Just following up in case this got buried.",
     "",
-    "SendFable is free to try for small businesses that want a simpler way to email customers.",
+    "SendFable is free to try, and I'd be happy to help get your first campaign set up.",
     "",
     `Would it be useful for ${input.businessName}?`,
     "",
-    "SendFable Team",
+    "Casey",
     "",
-    `If you'd rather not hear from us again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
+    `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");
   return {
     subject: `Re: Quick question about ${input.businessName}`,
@@ -151,14 +157,14 @@ export function buildFollowUp2(
   const body = [
     greeting(input.firstName),
     "",
-    "Last note from us.",
+    "Last note from me.",
     "",
     `If you ever want a simpler way to email customers, SendFable is at ${site.replace(/^https?:\/\//, "")}.`,
     "",
     "Thanks,",
-    "SendFable Team",
+    "Casey",
     "",
-    `If you'd rather not hear from us again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
+    `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");
   return {
     subject: "Last note — SendFable",
@@ -206,20 +212,20 @@ export function claimFromEvidence(ev: {
   if (ev.newsletterPresent) {
     return {
       claim:
-        "We noticed you already have a newsletter signup on your site, so you're clearly thinking about staying in touch with customers.",
+        "I noticed you already have a newsletter signup on your site, so you're clearly thinking about staying in touch with customers.",
       evidence: snippet || "newsletter signup form detected on public website",
     };
   }
   if (ev.eventsPromotionsPresent) {
     return {
       claim:
-        "We saw you promote events or specials on your site, and email is often the easiest way to remind regulars.",
+        "I saw you promote events or specials on your site, and email is often the easiest way to remind regulars.",
       evidence: snippet || "events/promotions language detected on public website",
     };
   }
   if (ev.competitorPlatform) {
     return {
-      claim: `We noticed your site links out to an email signup powered by ${ev.competitorPlatform}, which made us think a simpler tool might be useful.`,
+      claim: `I noticed your site links out to an email signup powered by ${ev.competitorPlatform}, which made me think a simpler tool might be useful.`,
       evidence: snippet || `${ev.competitorPlatform} signup widget detected`,
     };
   }
@@ -227,7 +233,7 @@ export function claimFromEvidence(ev: {
     return {
       claim: snippet
         ? "Your site highlights releases or events — a short email is often how taprooms fill the room."
-        : "We came across your brewery site and thought a simple email tool might help you stay in touch with regulars.",
+        : "I came across your brewery site and thought a simple email tool might help you stay in touch with regulars.",
       evidence: snippet || "public brewery/taproom website with published contact path",
     };
   }
@@ -239,7 +245,7 @@ export function claimFromEvidence(ev: {
     return {
       claim: snippet
         ? "Your site highlights specials or what's happening — email is a simple way to remind locals."
-        : "We came across your restaurant site and thought a simple email tool might help you stay in touch with regulars.",
+        : "I came across your restaurant site and thought a simple email tool might help you stay in touch with regulars.",
       evidence: snippet || "public restaurant/cafe website with published contact path",
     };
   }
@@ -257,8 +263,8 @@ export function claimFromEvidence(ev: {
   ) {
     return {
       claim: snippet
-        ? "We came across your site and thought staying in touch with customers by email might be useful."
-        : "We came across your business site and thought a simple email tool might help you stay in touch with customers.",
+        ? "I came across your site and thought staying in touch with customers by email might be useful."
+        : "I came across your business site and thought a simple email tool might help you stay in touch with customers.",
       evidence: snippet || "public local-business website with published contact path",
     };
   }

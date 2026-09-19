@@ -118,7 +118,7 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
         if (!recent) {
           await alertOwnerException(
             "SendFable acquisition cannot send — sender not SES-verified",
-            `Preferred From: ${sender.from}\nDetail: ${sender.detail}\n\nVerify support@sendfable.com (or domain sendfable.com) in AWS SES (us-east-1). Fallback envelope SendFable Team <casey@sendfable.com> is used when support@ is unavailable.`
+            `Preferred From: ${sender.from}\nDetail: ${sender.detail}\n\nVerify casey@sendfable.com in AWS SES (us-east-1), then sending can resume automatically.`
           );
           await prisma.acquisitionEvent.create({
             data: { type: "sender_blocked_alert", meta: { detail: sender.detail } },

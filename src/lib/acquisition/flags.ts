@@ -24,15 +24,13 @@ export const ACQUISITION_RAMP_STAGES: Record<number, { newPerDay: number; totalP
 export const ACQUISITION_MAX_STAGE = 4;
 export const ACQUISITION_MIN_BUSINESS_DAYS_PER_STAGE = 3;
 /**
- * Prefer truthful team identity. Envelope may still be casey@ when that address
- * (or the sendfable.com domain) is the SES-verified sender — never invent a person.
+ * Prefer Casey at SendFable as the intentional acquisition persona.
+ * Envelope is casey@ (SES-verified); Reply-To may be support@.
  */
-export const ACQUISITION_PREFERRED_FROM = "SendFable Team <support@sendfable.com>";
-/** Technical outbound address historically used for acquisition (alias → support@). */
+export const ACQUISITION_PREFERRED_FROM = "Casey at SendFable <casey@sendfable.com>";
+/** Outbound address used for acquisition (alias may deliver into support@). */
 export const ACQUISITION_SENDER_EMAIL = "casey@sendfable.com";
-/** Preferred public From address when SES-verified. */
-export const ACQUISITION_PUBLIC_SENDER_EMAIL = "support@sendfable.com";
-/** IMAP mailbox that receives acquisition replies (Hostinger). */
+/** IMAP mailbox that receives Casey replies (Hostinger alias target). */
 export const ACQUISITION_IMAP_MAILBOX_HINT = "support@sendfable.com";
 
 function truthy(raw: string | undefined): boolean {
@@ -108,11 +106,6 @@ export function acquisitionFromAddress(): string {
   return raw || ACQUISITION_PREFERRED_FROM;
 }
 
-/** Fallback From if support@ is not SES-verified but casey@/domain is. */
-export function acquisitionFallbackFromAddress(): string {
-  return `SendFable Team <${ACQUISITION_SENDER_EMAIL}>`;
-}
-
 export function parseFromEmail(fromHeader: string): string | null {
   const m = fromHeader.match(/<([^>]+)>/);
   const email = (m ? m[1] : fromHeader).trim().toLowerCase();
@@ -122,7 +115,7 @@ export function parseFromEmail(fromHeader: string): string | null {
 export function acquisitionReplyTo(): string {
   return (
     (process.env.SENDFABLE_ACQUISITION_REPLY_TO || "").trim() ||
-    ACQUISITION_PUBLIC_SENDER_EMAIL
+    ACQUISITION_SENDER_EMAIL
   );
 }
 

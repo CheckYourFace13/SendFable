@@ -140,9 +140,8 @@ describe("acquisition personalization + compliance", () => {
     assert.match(built.bodyText, new RegExp(String(PLANS.FREE.contactCap)));
     assert.match(built.bodyText, /unsubscribe|no thanks/i);
     assert.match(built.bodyText, /email-marketing-for-small-business/);
-    assert.match(built.bodyText, /simpler way to email customers/);
-    assert.match(built.bodyText, /SendFable Team/);
-    assert.doesNotMatch(built.bodyText, /\bCasey\b/);
+    assert.match(built.bodyText, /I'm with SendFable/);
+    assert.match(built.bodyText, /\bCasey\b/);
     assert.doesNotMatch(built.bodyText, /I built SendFable/);
     assert.ok(bodyHasUnsubscribe(built.bodyText));
     assert.ok(!openerLooksFabricated(built.opener));
@@ -317,10 +316,10 @@ describe("acquisition continuous discovery (OSM)", () => {
       { unsubUrl: "https://sendfable.com/u", copyVersion: "v1b" }
     );
     assert.notEqual(a.subject, b.subject);
-    assert.match(a.bodyText, /Worth a look\?/);
+    assert.match(a.bodyText, /taking a look/);
     assert.match(b.bodyText, /Worth a quick look/);
-    assert.match(a.bodyText, /SendFable Team/);
-    assert.doesNotMatch(a.bodyText, /\bCasey\b/);
+    assert.match(a.bodyText, /\bCasey\b/);
+    assert.doesNotMatch(a.bodyText, /I built SendFable/);
     assert.equal(DEFAULT_COPY_VERSION, "v1a");
     assert.equal(nextCopyVersion("v1a"), "v1b");
   });

@@ -226,7 +226,7 @@ export async function pollAcquisitionReplies(): Promise<{
         if (replyClass === "POSITIVE" || replyClass === "QUESTION") {
           await alertOwnerException(
             `SendFable acquisition reply: ${replyClass} — ${prospect.businessName}`,
-            `Prospect: ${prospect.businessName}\nDomain: ${prospect.domain}\nClass: ${replyClass}\nFrom: ${fromAddr}\n\nReview: /admin/acquisition/${prospect.id}\n\nDo not auto-reply — respond personally as SendFable Team.`
+            `Prospect: ${prospect.businessName}\nDomain: ${prospect.domain}\nClass: ${replyClass}\nFrom: ${fromAddr}\n\nReview: /admin/acquisition/${prospect.id}\n\nDo not auto-reply — respond personally as Casey.`
           );
         }
 
