@@ -1,9 +1,9 @@
 /**
  * Automatic reply detection via IMAP.
  *
- * Casey (casey@sendfable.com) is an alias into support@sendfable.com.
+ * Historical casey@sendfable.com is an alias into support@sendfable.com.
  * We poll the support mailbox and recognize acquisition replies by:
- * - To/Cc/Delivered-To/X-Original-To including casey@sendfable.com
+ * - To/Cc/Delivered-To/X-Original-To including casey@ or support@ acquisition paths
  * - Subject matching acquisition threads
  * - Matching From to a contacted prospect
  *
@@ -16,7 +16,6 @@ import {
   ACQUISITION_SENDER_EMAIL,
   acquisitionImapConfigured,
   acquisitionImapSecure,
-  acquisitionReplyTo,
 } from "@/lib/acquisition/flags";
 import { recordAcquisitionReply, type ReplyClass } from "@/lib/acquisition/lifecycle";
 import { normalizeEmail } from "@/lib/utils";
@@ -71,10 +70,10 @@ export function extractRecipientEmails(rawSource: string): string[] {
 }
 
 /**
- * True when this inbox message is a reply to Casey acquisition mail
- * (even though IMAP login is support@).
+ * True when this inbox message is a reply to acquisition outreach
+ * (IMAP login is typically support@).
  */
-export function isCaseyAcquisitionInbound(opts: {
+export function isAcquisitionInbound(opts: {
   toRecipients: string[];
   subject: string;
   fromEmail: string;
@@ -83,15 +82,21 @@ export function isCaseyAcquisitionInbound(opts: {
   if (!from || PLATFORM_IGNORE_SENDERS.has(from)) return false;
   if (from.endsWith("@send.sendfable.com")) return false;
 
+  // Only treat historical casey@ envelope as acquisition-addressed.
+  // support@ receives general mail — do not classify all support inbox as acquisition.
   const casey = normalizeEmail(ACQUISITION_SENDER_EMAIL);
-  const addressedToCasey = opts.toRecipients.some((r) => r === casey);
+  const addressedToAcquisition = opts.toRecipients.some((r) => r === casey);
   const acquisitionSubject =
     /quick question about/i.test(opts.subject) ||
+    /a simpler email tool for/i.test(opts.subject) ||
     /last note\s*[—\-–]\s*sendfable/i.test(opts.subject) ||
     (/^re:\s*/i.test(opts.subject) && /sendfable/i.test(opts.subject));
 
-  return addressedToCasey || acquisitionSubject;
+  return addressedToAcquisition || acquisitionSubject;
 }
+
+/** @deprecated Use isAcquisitionInbound */
+export const isCaseyAcquisitionInbound = isAcquisitionInbound;
 
 async function matchProspectFromReply(fromEmail: string, subject: string, body: string) {
   const email = normalizeEmail(fromEmail);
@@ -192,7 +197,7 @@ export async function pollAcquisitionReplies(): Promise<{
         }
 
         if (
-          !isCaseyAcquisitionInbound({
+          !isAcquisitionInbound({
             toRecipients: [...new Set(recipients)],
             subject,
             fromEmail: fromAddr,
@@ -220,7 +225,7 @@ export async function pollAcquisitionReplies(): Promise<{
         if (replyClass === "POSITIVE" || replyClass === "QUESTION") {
           await alertOwnerException(
             `SendFable acquisition reply: ${replyClass} — ${prospect.businessName}`,
-            `Prospect: ${prospect.businessName}\nDomain: ${prospect.domain}\nClass: ${replyClass}\nFrom: ${fromAddr}\n\nReview: /admin/acquisition/${prospect.id}\n\nDo not auto-reply — respond personally as Casey.`
+            `Prospect: ${prospect.businessName}\nDomain: ${prospect.domain}\nClass: ${replyClass}\nFrom: ${fromAddr}\n\nReview: /admin/acquisition/${prospect.id}\n\nDo not auto-reply — respond personally as SendFable Team.`
           );
         }
 
