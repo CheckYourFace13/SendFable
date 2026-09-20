@@ -5,7 +5,7 @@ const PRIMARY = [
   },
   {
     title: "Email",
-    body: "Write with blocks or Simple Mode — your brand, your words.",
+    body: "Write with blocks or Simple Mode. Your brand, your words.",
   },
   {
     title: "Send",
@@ -32,10 +32,10 @@ export function Simplicity() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-display-md text-ink text-balance">
-            Everything you need. Nothing buried.
+            The everyday path stays clear
           </h2>
           <p className="mt-3 text-charcoal/75">
-            The everyday path stays front and center. Advanced tools are one click away — not a maze.
+            People, email, send, results up front. Segments and domain tools stay one click away.
           </p>
         </div>
 

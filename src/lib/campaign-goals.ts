@@ -54,7 +54,7 @@ export const CAMPAIGN_GOALS: GoalConfig[] = [
     description: "Say hello and set expectations after someone joins your list.",
     subjectTips: ["Welcome aboard", "Thanks for joining", "Here's what to expect"],
     ctaLabels: ["Get started", "Meet us", "See popular picks"],
-    templateCategories: ["welcome", "newsletter"],
+    templateCategories: ["salon", "newsletter"],
   },
   {
     id: "scratch",
@@ -68,4 +68,30 @@ export const CAMPAIGN_GOALS: GoalConfig[] = [
 
 export function getGoal(id: string | null | undefined): GoalConfig | undefined {
   return CAMPAIGN_GOALS.find((g) => g.id === id);
+}
+
+/** Recommend a channel for a goal. SMS/Both only when public SMS is live. */
+export function recommendChannelForGoal(
+  goalId: string | null | undefined,
+  opts: { smsAvailable: boolean }
+): "EMAIL" | "SMS" | "BOTH" {
+  if (!opts.smsAvailable) return "EMAIL";
+  if (goalId === "sale" || goalId === "announce") return "BOTH";
+  if (goalId === "winback") return "SMS";
+  return "EMAIL";
+}
+
+export function suggestSmsCopy(goalId: string | null | undefined): string {
+  switch (goalId) {
+    case "sale":
+      return "Quick note from {{brand}}: this weekend only. Reply STOP to opt out.";
+    case "announce":
+      return "{{brand}}: something new just dropped. Details in our email — or reply STOP to opt out.";
+    case "winback":
+      return "We miss you at {{brand}}. Stop by soon? Reply STOP to opt out.";
+    case "welcome":
+      return "Welcome to {{brand}}! Glad you're here. Reply STOP to opt out, HELP for help.";
+    default:
+      return "{{brand}}: a short update for you. Reply STOP to opt out.";
+  }
 }

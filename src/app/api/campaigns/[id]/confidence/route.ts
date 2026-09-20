@@ -16,11 +16,42 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (!campaign) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const owner = await getWorkspaceOwner(ctx.workspace.id);
-  const audienceSize = await countAudience(ctx.workspace.id, {
-    audienceType: campaign.audienceType as "all" | "tags" | "segment",
-    audienceTagIds: (campaign.audienceTagIds as string[]) ?? [],
-    audienceSegmentId: campaign.audienceSegmentId,
-  });
+  const channel = campaign.channel || "EMAIL";
+  const needsEmail = channel === "EMAIL" || channel === "BOTH";
+  const needsSms = channel === "SMS" || channel === "BOTH";
+
+  const audienceSize = needsEmail
+    ? await countAudience(ctx.workspace.id, {
+        audienceType: campaign.audienceType as "all" | "tags" | "segment",
+        audienceTagIds: (campaign.audienceTagIds as string[]) ?? [],
+        audienceSegmentId: campaign.audienceSegmentId,
+      })
+    : 0;
+
+  let smsAudienceSize: number | undefined;
+  let hasActiveSmsNumber: boolean | undefined;
+  let hasActiveSmsSubscription: boolean | undefined;
+  if (needsSms) {
+    const { resolveSmsAudienceContacts } = await import("@/lib/sms/campaign");
+    const smsAudience = await resolveSmsAudienceContacts(ctx.workspace.id, {
+      audienceType: campaign.audienceType as "all" | "tags" | "segment",
+      audienceTagIds: (campaign.audienceTagIds as string[]) ?? [],
+      audienceSegmentId: campaign.audienceSegmentId,
+    });
+    smsAudienceSize = smsAudience.length;
+    const [num, sub] = await Promise.all([
+      prisma.smsNumber.findFirst({
+        where: { workspaceId: ctx.workspace.id, status: "ACTIVE" },
+        select: { id: true },
+      }),
+      prisma.smsSubscription.findUnique({
+        where: { workspaceId: ctx.workspace.id },
+        select: { status: true },
+      }),
+    ]);
+    hasActiveSmsNumber = Boolean(num);
+    hasActiveSmsSubscription = sub?.status === "ACTIVE";
+  }
 
   // Approximate suppressed among subscribed
   const subscribed = await prisma.contact.findMany({
@@ -51,6 +82,9 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     suppressedCount: local + global,
     recentBounceRate: (completed._sum.bounceCount ?? 0) / sent,
     recentComplaintRate: (completed._sum.complaintCount ?? 0) / sent,
+    smsAudienceSize,
+    hasActiveSmsNumber,
+    hasActiveSmsSubscription,
   });
 
   return NextResponse.json(result);

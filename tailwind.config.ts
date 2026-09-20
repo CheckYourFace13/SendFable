@@ -49,22 +49,29 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
         ink: {
-          DEFAULT: "#17213B",
-          soft: "#2A3554",
+          DEFAULT: "#0F1B2D",
+          soft: "#243449",
         },
         coral: {
-          DEFAULT: "#F26A4F", // brand accent / large text
+          DEFAULT: "#E85A3C",
           solid: "#C44732", // interactive fills — AA contrast with white
           hover: "#A83B2A",
         },
         teal: {
-          DEFAULT: "#1E8179",
-          soft: "#2A9A91",
+          DEFAULT: "#0F7A72",
+          soft: "#1A948A",
         },
-        parchment: "#F7F1E7",
-        lavender: "#DCD8F9",
-        page: "#FFFDF8",
-        charcoal: "#25262B",
+        sky: {
+          DEFAULT: "#2B6CB0",
+          soft: "#3B82C4",
+        },
+        parchment: "#EEF6F5",
+        lavender: "#EEF6F5",
+        page: "#FAFBFC",
+        surface: "#FFFFFF",
+        charcoal: "#162033",
+        success: "#1B7F4E",
+        warning: "#B45309",
       },
       borderRadius: {
         lg: "var(--radius)",

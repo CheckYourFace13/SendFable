@@ -13,6 +13,7 @@ import {
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 import { PLANS } from "@/lib/plans";
 import { MailchimpCostCalculator } from "@/components/marketing/mailchimp-cost-calculator";
+import { CompetitorPageTracker } from "@/components/marketing/competitor-page-tracker";
 
 function money(n: number | string): string {
   return typeof n === "number" ? `$${n}/mo` : n;
@@ -57,6 +58,7 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+      <CompetitorPageTracker slug={competitor.slug} />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Home", path: "/" },
@@ -87,15 +89,23 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
-          <Link href="/signup">Start writing free</Link>
+          <Link href="/signup">Start free</Link>
         </Button>
         <Button asChild variant="outline" className="border-ink/15 text-ink hover:bg-parchment">
           <Link href="/pricing">View pricing</Link>
         </Button>
         <Button asChild variant="outline" className="border-ink/15 text-ink hover:bg-parchment">
-          <Link href="/features">See how it works</Link>
+          <Link href="/email-marketing-pricing-comparison">Full pricing table</Link>
         </Button>
       </div>
+
+      <section className="mt-12">
+        <h2 className="font-display text-2xl font-bold text-ink">Pricing snapshot</h2>
+        <p className="mt-2 text-sm text-ink/65">
+          SendFable prices are exact from our plans. {competitor.name} figures are dated public
+          snapshots — not a live quote.
+        </p>
+      </section>
 
       <section className="mt-12 grid gap-8 sm:grid-cols-2">
         <div>
@@ -140,6 +150,19 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="mt-12 rounded-xl border border-ink/10 bg-surface p-5">
+        <h2 className="text-xl font-semibold text-ink">Text messaging (SMS)</h2>
+        <p className="mt-2 text-sm text-ink/75">
+          <strong>SendFable:</strong>{" "}
+          {SENDFABLE_FACTS.smsStatus.publiclyAvailable
+            ? "Email, Text, or Both in one campaign with consent tooling."
+            : "Email is live. Text/Both are pilot-proven and not publicly marketed until customer provisioning gates pass."}
+        </p>
+        <p className="mt-2 text-sm text-ink/75">
+          <strong>{competitor.name}:</strong> {capabilityLabel(competitor.sms)}
+        </p>
       </section>
 
       <section className="mt-12 space-y-4">

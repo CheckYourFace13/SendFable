@@ -12,6 +12,8 @@ const base = {
     senderIdentityId: "s1",
     testSentAt: new Date(),
     audienceType: "all",
+    channel: "EMAIL" as const,
+    smsBody: null as string | null,
   },
   sender: {
     status: "VERIFIED" as const,

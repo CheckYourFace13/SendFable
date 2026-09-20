@@ -76,7 +76,7 @@ function PairPage({ slug }: { slug: string }) {
           <strong>SendFable:</strong> Published Free–Pro Plus plans (Free {PLANS.FREE.contactCap}{" "}
           contacts / {PLANS.FREE.emailsPerMonth.toLocaleString()} emails/mo; Starter $
           {PLANS.STARTER.monthlyPrice}/mo). Best when you want contacts → campaign → send without a
-          CRM maze.
+          full CRM suite.
         </li>
       </ul>
       <h2 className="mt-10 text-xl font-semibold">Who each tool is for</h2>

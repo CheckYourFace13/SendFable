@@ -23,6 +23,27 @@ function SignupForm() {
     () => searchParams.get("ref")?.trim() || undefined,
     [searchParams]
   );
+  const resumeTemplate = useMemo(
+    () => searchParams.get("template")?.trim() || undefined,
+    [searchParams]
+  );
+  const resumeGoal = useMemo(
+    () => searchParams.get("goal")?.trim() || undefined,
+    [searchParams]
+  );
+  const loginHref = useMemo(() => {
+    if (resumeTemplate) {
+      const q = new URLSearchParams();
+      q.set(
+        "callbackUrl",
+        `/campaigns/new?template=${encodeURIComponent(resumeTemplate)}${
+          resumeGoal ? `&goal=${encodeURIComponent(resumeGoal)}` : ""
+        }`
+      );
+      return `/login?${q.toString()}`;
+    }
+    return "/login";
+  }, [resumeTemplate, resumeGoal]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,6 +77,16 @@ function SignupForm() {
         toast.error(data.error ?? "Something went wrong.");
         return;
       }
+      if (resumeTemplate) {
+        try {
+          localStorage.setItem(
+            "sf_resume_template",
+            JSON.stringify({ slug: resumeTemplate, goal: resumeGoal || "scratch", at: Date.now() })
+          );
+        } catch {
+          /* ignore */
+        }
+      }
       setDone(true);
     } finally {
       setLoading(false);
@@ -77,7 +108,7 @@ function SignupForm() {
         </CardHeader>
         <CardContent className="text-center">
           <Button asChild className={cn("w-full", ctaClass)}>
-            <Link href="/login">Continue to sign in</Link>
+            <Link href={loginHref}>Continue to sign in</Link>
           </Button>
         </CardContent>
       </Card>
@@ -149,7 +180,7 @@ function SignupForm() {
         </form>
         <p className="mt-6 text-center text-sm text-ink/60">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-coral hover:underline">Sign in</Link>
+          <Link href={loginHref} className="font-medium text-coral hover:underline">Sign in</Link>
         </p>
       </CardContent>
     </Card>

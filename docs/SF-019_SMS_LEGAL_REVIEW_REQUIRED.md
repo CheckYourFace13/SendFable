@@ -91,4 +91,16 @@ Message metadata and bodies retained for delivery, compliance, and support subje
 
 ---
 
+## Publish checklist (Phase B / pre–public SMS)
+
+Customer-facing AUP and Billing pages now include Text Messaging sections aligned with the stubs above.
+
+- [x] AUP: consent, purchased lists, STOP persistence, brand identity, suspension posture
+- [x] Billing: activation fees, segments, inbound overage, number release
+- [ ] Attorney sign-off recorded (name / date): ________________
+- [ ] Terms of Service cross-reference updated if counsel requires a dedicated SMS Terms exhibit
+- [ ] Owner approval to treat SMS sections as final before `SENDFABLE_SMS_PUBLIC_ENABLED=true`
+
+Until attorney sign-off and owner approval, keep public SMS marketing gated.
+
 *Generated for SF-019 readiness. Update after counsel review.*

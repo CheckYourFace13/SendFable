@@ -66,7 +66,7 @@ export function TemplateGallery() {
             Templates that look like finished emails
           </h2>
           <p className="mt-3 text-charcoal/75">
-            Scroll the gallery — CSS previews of common small-business sends. Start from any of them
+            Browse real layouts for common small-business sends. Start from any of them
             after signup.
           </p>
         </div>

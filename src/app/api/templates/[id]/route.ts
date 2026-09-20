@@ -15,7 +15,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const template = await prisma.template.findFirst({
-    where: { id: params.id, workspaceId: ctx.workspace.id },
+    where: {
+      id: params.id,
+      OR: [{ workspaceId: ctx.workspace.id }, { isPlatform: true, workspaceId: null }],
+    },
   });
   if (!template) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ template });

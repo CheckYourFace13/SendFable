@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PLANS, PLAN_ORDER } from "@/lib/plans";
 import { getCompetitor } from "@/data/competitors";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { trackClientEvent } from "@/components/marketing/marketing-analytics";
 
 function pickSendfablePlan(contacts: number, monthlySends: number) {
   for (const key of PLAN_ORDER) {
@@ -40,6 +41,15 @@ export function MailchimpCostCalculator() {
   const [contacts, setContacts] = useState(2_500);
   const [sends, setSends] = useState(10_000);
   const [annual, setAnnual] = useState(false);
+  const tracked = useRef(false);
+
+  useEffect(() => {
+    if (!tracked.current) {
+      tracked.current = true;
+      return;
+    }
+    trackClientEvent("mailchimp_calculator_use", { contacts });
+  }, [contacts]);
 
   const planKey = pickSendfablePlan(contacts, sends);
   const plan = PLANS[planKey];

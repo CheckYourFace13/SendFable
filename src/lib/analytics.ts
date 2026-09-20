@@ -59,6 +59,7 @@ export const ANALYTICS_EVENTS = [
   "pricing_from_app_viewed",
   "checkout_started",
   "checkout_completed",
+  "promo_applied",
   "subscription_started",
   "plan_upgraded",
   "plan_downgraded",

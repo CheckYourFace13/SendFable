@@ -1,50 +1,52 @@
 import { Faq } from "@/components/marketing/faq";
 import { PLANS } from "@/lib/plans";
-
-const HOME_FAQS = [
-  {
-    q: "Do I need Gmail or Outlook?",
-    a: "No. Sign up with any email address and a password — or a magic link. Sendfable never requires Google or Microsoft OAuth.",
-  },
-  {
-    q: "Does Sendfable send the emails for me?",
-    a: "Yes. Campaigns are delivered through Sendfable’s own Amazon SES infrastructure. You design and launch; we handle the send path.",
-  },
-  {
-    q: "Can I bring my contacts from another service?",
-    a: "Yes. Import a CSV (or use the migration center for common exports). Only import addresses you have permission to email — purchased lists are not allowed.",
-  },
-  {
-    q: "Can I use my own From address?",
-    a: "Yes. Verify the address you send as. On Growth and Pro you can authenticate your own domain. Some providers with strict DMARC policies may use a Sendfable From with Reply-To set to your real address.",
-  },
-  {
-    q: "What happens when someone unsubscribes?",
-    a: "They are suppressed automatically and won’t receive future campaigns from your workspace. Unsubscribe links are required and injected when needed.",
-  },
-  {
-    q: "Do I need to understand Amazon SES?",
-    a: "No. Sendfable manages the delivery infrastructure for you. Normal customers do not configure AWS accounts, SES credentials, or SMTP keys.",
-  },
-  {
-    q: "Is there a free plan?",
-    a: `Yes. Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and up to ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails per month, with a “Sent with Sendfable” badge. No credit card required to start.`,
-  },
-  {
-    q: "Can Sendfable help me design the email?",
-    a: "Yes. Start from a goal or template, use Simple Mode or the drag-and-drop builder, import brand colors from your site, and preview on mobile and desktop before you send.",
-  },
-];
+import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
 export function HomeFaq() {
+  const smsPublic = isSmsPublicEnabled();
+  const items = [
+    {
+      q: "Is there a free plan?",
+      a: `Yes. Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and up to ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails per month. Starter is $${PLANS.STARTER.monthlyPrice}/month when you need more. No credit card to start.`,
+    },
+    {
+      q: "Do I need Gmail or Outlook?",
+      a: "No. Sign up with any email and a password, or a magic link. SendFable never requires Google or Microsoft OAuth.",
+    },
+    {
+      q: "Does SendFable send the emails for me?",
+      a: "Yes. Campaigns go through SendFable’s Amazon SES path. You design and launch; we handle delivery.",
+    },
+    {
+      q: "Can I bring contacts from another service?",
+      a: "Yes. Import a CSV or use the migration center. Only import people you have permission to email. Purchased lists are not allowed.",
+    },
+    {
+      q: "What happens when someone unsubscribes?",
+      a: "They are suppressed and will not get future campaigns from your workspace. Unsubscribe links are required.",
+    },
+    ...(smsPublic
+      ? [
+          {
+            q: "Can I send text messages too?",
+            a: "Yes. Choose Email, Text, or Both in one campaign after Text Messaging is set up on your account. Consent, STOP, and HELP are built into the flow.",
+          },
+        ]
+      : []),
+    {
+      q: "Can SendFable help me design the email?",
+      a: "Yes. Start from a goal or template, use Simple Mode or the drag-and-drop builder, and preview on mobile and desktop before you send.",
+    },
+  ];
+
   return (
-    <section className="border-b border-ink/10 bg-page py-20 sm:py-24">
+    <section className="section-surface border-b border-ink/10 py-20 sm:py-24">
       <div className="mx-auto max-w-2xl px-4 sm:px-6">
         <h2 className="text-center font-display text-display-md text-ink">
           Questions before you start
         </h2>
         <div className="mt-10">
-          <Faq items={HOME_FAQS} />
+          <Faq items={items} />
         </div>
       </div>
     </section>

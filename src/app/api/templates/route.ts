@@ -11,15 +11,38 @@ const createSchema = z.object({
   designJson: z.any().optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const templates = await prisma.template.findMany({
+  const url = new URL(req.url);
+  const includePlatform = url.searchParams.get("platform") !== "0";
+  const category = url.searchParams.get("category")?.trim() || undefined;
+  const goal = url.searchParams.get("goal")?.trim() || undefined;
+
+  const workspaceTemplates = await prisma.template.findMany({
     where: { workspaceId: ctx.workspace.id },
     orderBy: { updatedAt: "desc" },
   });
-  return NextResponse.json({ templates });
+
+  let platformTemplates: typeof workspaceTemplates = [];
+  if (includePlatform) {
+    platformTemplates = await prisma.template.findMany({
+      where: {
+        isPlatform: true,
+        workspaceId: null,
+        ...(category ? { category } : {}),
+        ...(goal ? { goal } : {}),
+      },
+      orderBy: [{ category: "asc" }, { name: "asc" }],
+    });
+  }
+
+  return NextResponse.json({
+    templates: [...platformTemplates, ...workspaceTemplates],
+    platform: platformTemplates,
+    workspace: workspaceTemplates,
+  });
 }
 
 export async function POST(req: Request) {

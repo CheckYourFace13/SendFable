@@ -6,6 +6,7 @@ import {
   migrateSlugs,
   pairComparisons,
 } from "@/data/competitors/pricing-matrix";
+import { PLATFORM_TEMPLATES } from "@/lib/platform-templates";
 
 /** Avoid indefinitely serving a stale build-time sitemap snapshot. */
 export const dynamic = "force-dynamic";
@@ -89,12 +90,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .filter((s) => s !== "mailchimp")
     .map((s) => `/migrate/${s}`);
   const costPaths = LIST_SIZE_PAGES.map((n) => `/email-marketing-cost/${n}-contacts`);
+  const templatePaths = PLATFORM_TEMPLATES.map((t) => `/templates/${t.shareSlug}`);
   const paths = [
     ...SITEMAP_PATHS,
     ...comparePaths,
     ...pairPaths,
     ...migratePaths,
     ...costPaths,
+    ...templatePaths,
   ];
   return paths.map((path) => ({
     url: appUrl(path),

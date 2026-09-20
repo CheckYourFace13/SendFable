@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { PricingComparisonCalculator } from "@/components/marketing/pricing-comparison-calculator";
+import { PricingMatrixTable } from "@/components/marketing/pricing-matrix-table";
 import {
   marketingPageMeta,
   JsonLd,
@@ -65,91 +66,30 @@ export default function EmailMarketingPricingComparisonPage() {
         Pricing hub
       </p>
       <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-        Email Marketing Pricing Comparison
+        Email marketing pricing comparison
       </h1>
       <p className="mt-4 max-w-3xl text-lg text-ink/75">
-        Compare SendFable, Mailchimp, Constant Contact, Brevo, MailerLite, Klaviyo and other
-        popular email marketing tools. Figures checked {PRICING_MATRIX_VERIFIED} — verify on each
-        vendor’s site before buying.
+        One money page: free caps, entry paid plans, SMS class, and honest “varies” where we cannot
+        verify. Figures checked {PRICING_MATRIX_VERIFIED}. Confirm on each vendor’s site before you
+        buy.
       </p>
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href="/signup"
-          className="inline-flex rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+          className="inline-flex rounded-lg bg-coral-solid px-5 py-2.5 text-sm font-semibold text-white hover:bg-coral-hover"
         >
-          Start free
+          Start free — {PLANS.FREE.contactCap} contacts
         </Link>
-        <p className="self-center text-sm text-ink/60">
-          {PLANS.FREE.contactCap} contacts · {PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month ·
-          No credit card
-        </p>
+        <Link
+          href="/pricing"
+          className="inline-flex rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-semibold text-ink hover:bg-parchment"
+        >
+          SendFable pricing
+        </Link>
       </div>
 
-      <div className="mt-12 overflow-x-auto rounded-xl border border-ink/10">
-        <table className="w-full min-w-[1100px] text-left text-sm">
-          <thead className="bg-parchment text-ink/70">
-            <tr>
-              {[
-                "Provider",
-                "Free plan",
-                "Free contacts",
-                "Free sends",
-                "Entry paid",
-                "Included contacts",
-                "Included sends",
-                "SMS",
-                "Automations",
-                "Brand removal",
-                "Pricing model",
-                "Best for",
-                "Last verified",
-              ].map((h) => (
-                <th key={h} className="whitespace-nowrap px-3 py-3 font-medium">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-ink/5 align-top">
-                <td className="px-3 py-3 font-semibold text-ink">
-                  {r.compareHref ? (
-                    <Link href={r.compareHref} className="text-coral hover:underline">
-                      {r.name}
-                    </Link>
-                  ) : (
-                    r.name
-                  )}
-                  <div>
-                    <a
-                      href={r.pricingUrl}
-                      className="text-xs font-normal text-ink/50 underline"
-                      rel="nofollow noopener"
-                      target="_blank"
-                    >
-                      Official pricing
-                    </a>
-                  </div>
-                </td>
-                <td className="px-3 py-3">{r.freePlan}</td>
-                <td className="px-3 py-3">{r.freeContacts}</td>
-                <td className="px-3 py-3">{r.freeSends}</td>
-                <td className="px-3 py-3">{r.entryPaid}</td>
-                <td className="px-3 py-3">{r.includedContacts}</td>
-                <td className="px-3 py-3">{r.includedSends}</td>
-                <td className="px-3 py-3">{r.sms}</td>
-                <td className="px-3 py-3">{r.automations}</td>
-                <td className="px-3 py-3">{r.brandRemoval}</td>
-                <td className="px-3 py-3">{r.pricingModel}</td>
-                <td className="px-3 py-3">{r.bestFor}</td>
-                <td className="px-3 py-3 whitespace-nowrap">{r.lastVerified}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <PricingMatrixTable rows={rows} />
 
       <p className="mt-4 text-xs text-ink/55">{matrixDisclaimer()}</p>
 

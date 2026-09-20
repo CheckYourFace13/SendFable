@@ -1,4 +1,5 @@
 import { Hero } from "@/components/marketing/home/hero";
+import { ChannelTrio } from "@/components/marketing/home/channel-trio";
 import { ThreeSteps } from "@/components/marketing/home/three-steps";
 import { GoalPicker } from "@/components/marketing/home/goal-picker";
 import { BuilderShowcase } from "@/components/marketing/home/builder-showcase";
@@ -14,8 +15,8 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { PLANS } from "@/lib/plans";
 
 export const metadata = marketingPageMeta({
-  title: "Sendfable — Simple Email Marketing for Small Businesses",
-  description: `Create and send email campaigns without the complexity. Free plan includes ${PLANS.FREE.contactCap} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month — no credit card.`,
+  title: "SendFable — Email and text marketing without the headache",
+  description: `Email marketing for small businesses. Free ${PLANS.FREE.contactCap} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month. Starter $${PLANS.STARTER.monthlyPrice}/mo. No credit card.`,
   path: "/",
 });
 
@@ -23,6 +24,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <ChannelTrio />
       <ThreeSteps />
       <GoalPicker />
       <BuilderShowcase />

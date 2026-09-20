@@ -11,7 +11,7 @@ test.describe("PUBLIC marketing", () => {
   test("homepage communicates product and CTA", async ({ page }) => {
     await page.goto(`${BASE}/`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Start writing free/i }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /Start free|Start writing free/i }).first()).toBeVisible();
     await expect(page.getByText(/500 contacts/i).first()).toBeVisible();
     await expect(page.getByText(/early access|join the waitlist|launching soon/i)).toHaveCount(0);
   });
@@ -150,7 +150,7 @@ test.describe("MOBILE widths", () => {
     test(`homepage CTA visible at ${width}`, async ({ page }) => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(`${BASE}/`);
-      await expect(page.getByRole("link", { name: /Start writing free/i }).first()).toBeVisible();
+      await expect(page.getByRole("link", { name: /Start free|Start writing free/i }).first()).toBeVisible();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
       expect(overflow).toBeFalsy();
     });

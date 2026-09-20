@@ -4,15 +4,16 @@
 
 @layer base {
   :root {
-    /* Brand palette (HSL channels for shadcn compatibility) */
-    --story-ink: 222 44% 16%; /* #17213B */
-    --ember-coral: 10 86% 63%; /* #F26A4F */
-    --ember-coral-hover: 10 78% 55%;
-    --bookcloth: 175 62% 31%; /* #1E8179 */
-    --parchment: 36 47% 94%; /* #F7F1E7 */
-    --lavender-note: 246 68% 91%; /* #DCD8F9 */
-    --fresh-page: 45 100% 99%; /* #FFFDF8 */
-    --charcoal: 228 6% 16%; /* #25262B */
+    /* Warm confidence — cool page, punchy coral CTA, teal + sky accents */
+    --story-ink: 216 50% 12%; /* #0F1B2D */
+    --ember-coral: 11 80% 57%; /* #E85A3C */
+    --ember-coral-hover: 11 72% 48%;
+    --bookcloth: 175 78% 27%; /* #0F7A72 */
+    --parchment: 168 33% 95%; /* teal mist wash #EEF6F5 */
+    --lavender-note: 168 33% 95%; /* mist — avoid purple decoration */
+    --fresh-page: 210 20% 99%; /* #FAFBFC */
+    --charcoal: 216 40% 14%;
+    --brand-sky: 214 61% 43%; /* #2B6CB0 */
 
     --background: var(--fresh-page);
     --foreground: var(--charcoal);
@@ -24,24 +25,28 @@
     --primary-foreground: 0 0% 100%;
     --secondary: var(--parchment);
     --secondary-foreground: var(--story-ink);
-    --muted: 36 30% 92%;
-    --muted-foreground: 222 18% 38%;
-    --accent: var(--lavender-note);
+    --muted: 210 16% 94%;
+    --muted-foreground: 216 18% 36%;
+    --accent: var(--parchment);
     --accent-foreground: var(--story-ink);
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 36 20% 84%;
-    --input: 36 20% 84%;
+    --border: 210 14% 88%;
+    --input: 210 14% 88%;
     --ring: var(--ember-coral);
     --radius: 0.625rem;
 
-    --brand-ink: #17213b;
-    --brand-coral: #f26a4f;
-    --brand-teal: #1e8179;
-    --brand-parchment: #f7f1e7;
-    --brand-lavender: #dcd8f9;
-    --brand-page: #fffdf8;
-    --brand-charcoal: #25262b;
+    --brand-ink: #0f1b2d;
+    --brand-coral: #e85a3c;
+    --brand-teal: #0f7a72;
+    --brand-sky: #2b6cb0;
+    --brand-parchment: #eef6f5;
+    --brand-lavender: #eef6f5;
+    --brand-page: #fafbfc;
+    --brand-surface: #ffffff;
+    --brand-charcoal: #162033;
+    --brand-success: #1b7f4e;
+    --brand-warning: #b45309;
   }
 }
 
@@ -68,16 +73,20 @@
   .editorial-bg {
     background-color: var(--brand-page);
     background-image:
-      linear-gradient(90deg, rgba(23, 33, 59, 0.035) 1px, transparent 1px),
-      linear-gradient(rgba(23, 33, 59, 0.02) 1px, transparent 1px);
-    background-size: 48px 48px, 100% 32px;
-    background-position: 0 0, 0 0;
+      radial-gradient(ellipse 80% 50% at 100% 0%, rgba(15, 122, 114, 0.08), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 0% 100%, rgba(232, 90, 60, 0.06), transparent 50%);
+  }
+  .section-mist {
+    background-color: var(--brand-parchment);
+  }
+  .section-surface {
+    background-color: var(--brand-surface);
   }
   .paper-panel {
-    background: linear-gradient(180deg, #fffdf8 0%, #f7f1e7 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
     box-shadow:
-      0 1px 0 rgba(23, 33, 59, 0.06),
-      0 18px 40px -24px rgba(23, 33, 59, 0.35);
+      0 1px 0 rgba(15, 27, 45, 0.06),
+      0 18px 40px -24px rgba(15, 27, 45, 0.28);
   }
   .page-lift {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -86,8 +95,8 @@
     .page-lift:hover {
       transform: translateY(-3px);
       box-shadow:
-        0 1px 0 rgba(23, 33, 59, 0.06),
-        0 22px 44px -20px rgba(23, 33, 59, 0.4);
+        0 1px 0 rgba(15, 27, 45, 0.06),
+        0 22px 44px -20px rgba(15, 27, 45, 0.35);
     }
     .motion-page-travel {
       animation: page-travel 4.5s ease-in-out infinite;

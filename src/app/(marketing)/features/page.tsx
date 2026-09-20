@@ -55,7 +55,7 @@ export default function FeaturesPage() {
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
       <h1 className="font-display text-4xl font-bold tracking-tight text-ink">Features</h1>
       <p className="mt-3 text-lg text-ink/65">
-        Everything you need to grow a list and send campaigns that feel personal.
+        Tools to grow a list and send campaigns that feel personal.
       </p>
       <div className="mt-12 grid gap-8 sm:grid-cols-2">
         {SECTIONS.map((s) => (

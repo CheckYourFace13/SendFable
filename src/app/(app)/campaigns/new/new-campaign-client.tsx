@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { CAMPAIGN_GOALS } from "@/lib/campaign-goals";
+import {
+  CAMPAIGN_GOALS,
+  recommendChannelForGoal,
+  suggestSmsCopy,
+} from "@/lib/campaign-goals";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -19,6 +23,7 @@ export function NewCampaignClient() {
   const search = useSearchParams();
   const presetGoal = search.get("goal");
   const presetChannel = (search.get("channel") || "").toUpperCase() as Channel | "";
+  const presetTemplate = search.get("template");
   const [step, setStep] = useState<"channel" | "goal">(
     presetChannel === "EMAIL" || presetChannel === "SMS" || presetChannel === "BOTH"
       ? "goal"
@@ -42,15 +47,30 @@ export function NewCampaignClient() {
   }, []);
 
   useEffect(() => {
-    if (presetGoal && CAMPAIGN_GOALS.some((g) => g.id === presetGoal) && step === "goal") {
+    if (!caps?.channelUiEnabled || presetChannel) return;
+    if (!presetGoal) return;
+    const rec = recommendChannelForGoal(presetGoal, { smsAvailable: true });
+    setChannel(rec);
+  }, [caps, presetGoal, presetChannel]);
+
+  useEffect(() => {
+    // Deep-link: /campaigns/new?template=… creates immediately with that template
+    if (presetTemplate) {
+      void create(presetGoal || "scratch", channel || "EMAIL", presetTemplate);
+    } else if (presetGoal && CAMPAIGN_GOALS.some((g) => g.id === presetGoal) && step === "goal") {
       void create(presetGoal, channel);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presetGoal, step]);
+  }, [presetGoal, presetTemplate, step]);
 
-  async function create(selectedGoal: string, selectedChannel: Channel) {
+  async function create(
+    selectedGoal: string,
+    selectedChannel: Channel,
+    templateRef?: string | null
+  ) {
     setCreating(true);
     const g = CAMPAIGN_GOALS.find((x) => x.id === selectedGoal);
+    const isSlug = Boolean(templateRef && (templateRef.includes("-") || templateRef.startsWith("platform")));
     try {
       const res = await fetch("/api/campaigns", {
         method: "POST",
@@ -60,21 +80,28 @@ export function NewCampaignClient() {
           goal: selectedGoal || "scratch",
           simpleMode: true,
           channel: selectedChannel,
+          ...(templateRef
+            ? isSlug
+              ? { templateSlug: templateRef }
+              : { templateId: templateRef }
+            : {}),
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
 
-      if (g) {
+      if (g && !templateRef) {
         await fetch(`/api/campaigns/${data.campaign.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             goal: g.id,
             simpleMode: true,
-            subject: selectedChannel === "SMS" ? null : g.subjectTips[0] || "",
+            subject: selectedChannel === "SMS" ? null : data.campaign.subject || g.subjectTips[0] || "",
             previewText:
-              selectedChannel === "SMS" ? null : "Open for a quick update from us",
+              selectedChannel === "SMS"
+                ? null
+                : data.campaign.previewText || "Open for a quick update from us",
           }),
         });
       }
@@ -176,8 +203,14 @@ export function NewCampaignClient() {
         {channel === "SMS" ? "What is this text for?" : "What is this email for?"}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Pick a goal — we&apos;ll suggest a starting point and keep the editor simple.
+        Pick a goal — we attach a matching template, subject tips, and Send Confidence before you
+        send.
       </p>
+      {channel !== "EMAIL" && (
+        <p className="mt-3 rounded-lg border border-sky/20 bg-sky/5 px-3 py-2 text-xs text-ink/80">
+          Suggested text starter: {suggestSmsCopy(goal || presetGoal || "announce")}
+        </p>
+      )}
       <div className="mt-8 grid gap-3">
         {CAMPAIGN_GOALS.map((g) => (
           <button
@@ -194,6 +227,15 @@ export function NewCampaignClient() {
           >
             <div className="font-medium">{g.label}</div>
             <div className="mt-1 text-sm text-muted-foreground">{g.description}</div>
+            {caps?.channelUiEnabled && (
+              <div className="mt-2 text-xs text-teal">
+                Suggested channel:{" "}
+                {recommendChannelForGoal(g.id, { smsAvailable: true })
+                  .replace("BOTH", "Email + Text")
+                  .replace("SMS", "Text")
+                  .replace("EMAIL", "Email")}
+              </div>
+            )}
           </button>
         ))}
       </div>

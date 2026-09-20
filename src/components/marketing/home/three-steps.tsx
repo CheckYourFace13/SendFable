@@ -145,7 +145,7 @@ export function ThreeSteps() {
             Add your readers. Write your email. Send your story.
           </h2>
           <p className="mt-3 text-charcoal/75">
-            Three clear steps — no marketing-ops maze between you and your first send.
+            Three clear steps. No marketing-ops detour between you and your first send.
           </p>
         </div>
 

@@ -14,6 +14,8 @@ import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 const schema = z.object({
   plan: z.enum(["STARTER", "GROWTH", "PRO", "PRO_PLUS"]),
   interval: z.enum(["month", "year"]),
+  /** Optional Stripe promotion code id (promo_…) — dark TEXT20 etc. */
+  promotionCode: z.string().max(64).optional(),
 });
 
 export async function POST(req: Request) {
@@ -93,13 +95,20 @@ export async function POST(req: Request) {
     }
   }
 
+  const allowPromoCodes =
+    process.env.SENDFABLE_CHECKOUT_ALLOW_PROMOTION_CODES === "true" ||
+    process.env.SENDFABLE_CHECKOUT_ALLOW_PROMOTION_CODES === "1";
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: appUrl("/billing?success=1"),
     cancel_url: appUrl("/billing?canceled=1"),
-    allow_promotion_codes: false,
+    allow_promotion_codes: allowPromoCodes && !parsed.data.promotionCode,
+    ...(parsed.data.promotionCode
+      ? { discounts: [{ promotion_code: parsed.data.promotionCode }] }
+      : {}),
     client_reference_id: ctx.user.id,
     consent_collection: {
       terms_of_service: "required",
@@ -117,6 +126,7 @@ export async function POST(req: Request) {
         userId: ctx.user.id,
         workspaceId: ctx.workspace.id,
         plan: parsed.data.plan,
+        ...(parsed.data.promotionCode ? { promotionCode: parsed.data.promotionCode } : {}),
       },
     },
     metadata: {
@@ -125,8 +135,17 @@ export async function POST(req: Request) {
       userId: ctx.user.id,
       workspaceId: ctx.workspace.id,
       plan: parsed.data.plan,
+      ...(parsed.data.promotionCode ? { promotionCode: parsed.data.promotionCode } : {}),
     },
   });
+
+  if (parsed.data.promotionCode) {
+    void ensureAnalyticsPersistence();
+    void trackEvent("promo_applied", {
+      plan: parsed.data.plan,
+      interval: parsed.data.interval,
+    });
+  }
 
   try {
     ensureAnalyticsPersistence();

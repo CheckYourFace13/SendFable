@@ -52,6 +52,25 @@ const nextConfig = {
         destination: "/solutions/professional-services",
         permanent: true,
       },
+      // Mailchimp SEO cluster → canonical trio + alternative hub
+      { source: "/vs/mailchimp", destination: "/compare/mailchimp", permanent: true },
+      { source: "/alternatives/mailchimp", destination: "/mailchimp-alternative", permanent: true },
+      { source: "/switch-from-mailchimp", destination: "/migrate/mailchimp", permanent: true },
+      {
+        source: "/guides/how-to-switch-from-mailchimp",
+        destination: "/migrate/mailchimp",
+        permanent: true,
+      },
+      {
+        source: "/guides/mailchimp-vs-sendfable-pricing",
+        destination: "/mailchimp-pricing-alternative",
+        permanent: true,
+      },
+      {
+        source: "/guides/best-mailchimp-alternative-for-small-businesses",
+        destination: "/mailchimp-alternative",
+        permanent: true,
+      },
     ];
   },
 };

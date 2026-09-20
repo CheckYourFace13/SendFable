@@ -178,7 +178,36 @@ export default function RefundPolicyPage() {
         refunds). Include workspace name and approximate charge date — never send full card numbers.
       </p>
 
-      <LegalH2>7. Data after cancellation</LegalH2>
+      <LegalH2>7. Text messaging fees (when Text Messaging is enabled)</LegalH2>
+      <p>
+        Text Messaging plans and usage are separate from email plan fees when Text Messaging is
+        offered on your account. Public pricing cards appear only when Text Messaging is publicly
+        available; until then, any SMS fees shown in-app apply only to authorized accounts.
+      </p>
+      <LegalUl>
+        <li>
+          Monthly Text plan fees plus metered outbound segments and inbound overage beyond the
+          included allowance bill as disclosed at purchase.
+        </li>
+        <li>
+          One-time activation / registration fees may be nonrefundable after carrier or registry
+          submission begins, except where legally required or we expressly agree otherwise.
+        </li>
+        <li>
+          Additional fees for rejected or resubmitted registrations may apply only after clear
+          disclosure and your approval.
+        </li>
+        <li>
+          Message costs are per segment; Unicode or emoji can increase segment count. Business-sent
+          replies are outbound billable segments.
+        </li>
+        <li>
+          Dedicated numbers may be released after cancellation, suspension, or nonpayment.
+          Portability is not guaranteed unless we expressly support and complete a port.
+        </li>
+      </LegalUl>
+
+      <LegalH2>8. Data after cancellation</LegalH2>
       <p>
         Canceling a paid plan does not delete your Workspace. Export contacts before deletion if you
         need a copy. Workspace deletion is available to OWNER in settings. Suppression, billing,
@@ -186,7 +215,7 @@ export default function RefundPolicyPage() {
         <LegalA href={POLICY_PATHS.privacy}>Privacy Policy</LegalA>.
       </p>
 
-      <LegalH2>8. Questions</LegalH2>
+      <LegalH2>9. Questions</LegalH2>
       <p>
         Billing questions:{" "}
         <LegalA href={`mailto:${PUBLIC_MAILBOXES.support}`}>{PUBLIC_MAILBOXES.support}</LegalA>.

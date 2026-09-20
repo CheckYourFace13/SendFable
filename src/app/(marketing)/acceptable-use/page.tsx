@@ -107,13 +107,44 @@ export default function AcceptableUsePage() {
         see the <LegalA href={POLICY_PATHS.refund}>Billing &amp; Refund Policy</LegalA>.
       </p>
 
-      <LegalH2>6. Reporting abuse</LegalH2>
+      <LegalH2>6. Text messaging (SMS) when enabled on your account</LegalH2>
       <p>
-        Report unwanted email sent through SendFable to{" "}
+        When Text Messaging is available and enabled for your Workspace, these rules apply in
+        addition to the email rules above. Carrier and registry rules may change; we may require
+        updates to stay compliant.
+      </p>
+      <LegalUl>
+        <li>
+          Obtain and document affirmative, lawful consent before sending marketing or other
+          commercial texts. Consent checkboxes must never be pre-checked. Consent is not a condition
+          of purchase where applicable law requires that.
+        </li>
+        <li>
+          Purchased, rented, scraped, or harvested phone lists are prohibited. Do not text numbers
+          imported without provable permission.
+        </li>
+        <li>
+          Honor STOP, HELP, and other required keywords promptly. STOP suppression persists across
+          contact delete and reimport where the product maintains suppression records.
+        </li>
+        <li>
+          Identify your business accurately in registration and message content. You are the end
+          brand responsible for consent; SendFable provides the tooling and may suspend noncompliant
+          messaging or numbers.
+        </li>
+        <li>
+          Do not send illegal, harassing, deceptive, or prohibited content; do not attempt to bypass
+          carrier, registry, or SendFable safeguards.
+        </li>
+      </LegalUl>
+
+      <LegalH2>7. Reporting abuse</LegalH2>
+      <p>
+        Report unwanted email or text messaging sent through SendFable to{" "}
         <LegalA href={`mailto:${PUBLIC_MAILBOXES.abuse}`}>{PUBLIC_MAILBOXES.abuse}</LegalA> or via
         the <LegalA href={POLICY_PATHS.contact}>contact form</LegalA> (topic: Report abuse or spam).
-        Include the sender address and, if possible, full email headers. Reports are reviewed with
-        priority.
+        Include the sender address or number and, if possible, full email headers or message
+        details. Reports are reviewed with priority.
       </p>
     </LegalDoc>
   );

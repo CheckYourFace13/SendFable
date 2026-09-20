@@ -21,7 +21,7 @@ describe("legal policy constants", () => {
   });
 
   it("keeps policy bundle versions aligned", () => {
-    assert.equal(CURRENT_POLICY_BUNDLE, "2026-07-26");
+    assert.equal(CURRENT_POLICY_BUNDLE, "2026-09-20");
     for (const v of Object.values(POLICY_VERSIONS)) {
       assert.equal(v, CURRENT_POLICY_BUNDLE);
     }

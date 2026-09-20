@@ -1,95 +1,72 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { CAMPAIGN_GOALS, type CampaignGoal } from "@/lib/campaign-goals";
 
-type GoalId = "announce" | "event" | "offer" | "winback" | "newsletter" | "welcome";
-
-const GOALS: Array<{
-  id: GoalId;
-  label: string;
-  template: string;
-  audience: string;
-  subject: string;
-  cta: string;
-  features: string[];
-  accent: string;
-}> = [
-  {
-    id: "announce",
-    label: "Announce something",
+const PREVIEWS: Record<
+  Exclude<CampaignGoal, "scratch">,
+  { template: string; audience: string; subject: string; cta: string; features: string[]; accent: string }
+> = {
+  announce: {
     template: "Grand opening",
-    audience: "Full list + locals tag",
-    subject: "We’re open — come say hello",
-    cta: "See what’s new",
+    audience: "Full list",
+    subject: "We're open — come say hello",
+    cta: "See what's new",
     features: ["Announcement template", "Send Confidence", "Reply-to your address"],
     accent: "bg-coral",
   },
-  {
-    id: "event",
-    label: "Promote an event",
-    template: "Event invite",
-    audience: "Events segment",
-    subject: "You’re invited this Saturday",
-    cta: "Reserve a spot",
-    features: ["Date & location blocks", "RSVP-friendly CTA", "Reminder follow-up"],
+  sale: {
+    template: "Weekend sale / event",
+    audience: "Engaged in 90 days",
+    subject: "This weekend only",
+    cta: "Shop the sale",
+    features: ["Offer callout", "Clear end date", "Click tracking"],
     accent: "bg-teal",
   },
-  {
-    id: "offer",
-    label: "Share an offer",
-    template: "Limited offer",
-    audience: "Engaged in 90 days",
-    subject: "This weekend only — for you",
-    cta: "Claim the offer",
-    features: ["Offer callout block", "Clear end date", "Click tracking"],
-    accent: "bg-ink",
-  },
-  {
-    id: "winback",
-    label: "Bring customers back",
+  winback: {
     template: "Win-back",
     audience: "Quiet 60+ days",
-    subject: "We miss you — here’s a little something",
+    subject: "We miss you",
     cta: "Come back",
-    features: ["Quiet-audience segment", "Gentle tone templates", "Suppression-safe sends"],
+    features: ["Quiet-audience segment", "Gentle tone", "Suppression-safe"],
     accent: "bg-coral",
   },
-  {
-    id: "newsletter",
-    label: "Send a newsletter",
-    template: "Weekly digest",
+  news: {
+    template: "Monthly newsletter",
     audience: "Newsletter subscribers",
-    subject: "What’s happening this week",
+    subject: "What's happening this week",
     cta: "Read more",
-    features: ["Multi-story layout", "Recurring schedule", "Link performance"],
+    features: ["Multi-story layout", "Mobile preview", "Link performance"],
     accent: "bg-teal",
   },
-  {
-    id: "welcome",
-    label: "Welcome new subscribers",
-    template: "Welcome series",
+  welcome: {
+    template: "Welcome",
     audience: "Joined in last 7 days",
-    subject: "Welcome — here’s what to expect",
+    subject: "Welcome — here's what to expect",
     cta: "Get started",
-    features: ["Welcome template", "Expectation-setting copy", "Brand color import"],
+    features: ["Welcome template", "Expectation-setting", "Brand color import"],
     accent: "bg-ink",
   },
-];
+};
 
 export function GoalPicker() {
-  const [active, setActive] = useState<GoalId>("announce");
-  const goal = GOALS.find((g) => g.id === active)!;
+  const goals = CAMPAIGN_GOALS.filter((g) => g.id !== "scratch");
+  const [active, setActive] = useState<Exclude<CampaignGoal, "scratch">>("announce");
+  const meta = goals.find((g) => g.id === active)!;
+  const goal = PREVIEWS[active];
 
   return (
-    <section className="border-b border-ink/10 bg-parchment py-20 sm:py-24">
+    <section className="section-mist border-b border-ink/10 py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-display-md text-ink text-balance">
-            What are you trying to share?
+            Not sure what to write?
           </h2>
           <p className="mt-3 text-charcoal/75">
-            Pick a goal and see a ready-made starting point — template, audience, subject, and CTA.
+            Pick a goal. We suggest a template, subject, and next step, then you finish in your
+            account.
           </p>
         </div>
 
@@ -98,18 +75,18 @@ export function GoalPicker() {
           role="tablist"
           aria-label="Campaign goals"
         >
-          {GOALS.map((g) => (
+          {goals.map((g) => (
             <button
               key={g.id}
               type="button"
               role="tab"
               aria-selected={active === g.id}
-              onClick={() => setActive(g.id)}
+              onClick={() => setActive(g.id as Exclude<CampaignGoal, "scratch">)}
               className={cn(
                 "min-h-11 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral",
                 active === g.id
                   ? "border-ink bg-ink text-page"
-                  : "border-ink/15 bg-page text-ink hover:border-ink/30"
+                  : "border-ink/15 bg-surface text-ink hover:border-ink/30"
               )}
             >
               {g.label}
@@ -120,17 +97,17 @@ export function GoalPicker() {
         <div
           className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]"
           role="tabpanel"
-          aria-label={`${goal.label} preview`}
+          aria-label={`${meta.label} preview`}
         >
-          <div className="overflow-hidden rounded-xl border-2 border-ink/10 bg-page shadow-lg">
-            <div className="border-b border-ink/10 bg-page px-4 py-3">
+          <div className="overflow-hidden rounded-xl border border-ink/10 bg-surface shadow-sm">
+            <div className="border-b border-ink/10 px-4 py-3">
               <p className="text-xs text-ink/70">Subject</p>
               <p className="font-medium text-ink">{goal.subject}</p>
             </div>
-            <div className="space-y-3 bg-parchment/40 p-6">
+            <div className="space-y-3 bg-parchment/50 p-6">
               <div className={cn("h-2 w-20 rounded", goal.accent)} />
               <p className="font-display text-xl text-ink">{goal.template}</p>
-              <div className="h-28 rounded-lg bg-lavender/60" />
+              <div className="h-28 rounded-lg bg-parchment" />
               <div className="space-y-2">
                 <div className="h-2 w-full rounded bg-ink/10" />
                 <div className="h-2 w-5/6 rounded bg-ink/10" />
@@ -143,21 +120,19 @@ export function GoalPicker() {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-xl border-2 border-ink/10 bg-page p-5">
+            <div className="rounded-xl border border-ink/10 bg-surface p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-ink/70">
                 Suggested audience
               </p>
               <p className="mt-1 text-lg text-ink">{goal.audience}</p>
             </div>
-            <div className="rounded-xl border-2 border-ink/10 bg-page p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-ink/70">
-                Recommended CTA
-              </p>
-              <p className="mt-1 text-lg text-ink">{goal.cta}</p>
+            <div className="rounded-xl border border-ink/10 bg-surface p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-ink/70">Goal</p>
+              <p className="mt-1 text-sm text-charcoal/80">{meta.description}</p>
             </div>
-            <div className="rounded-xl border-2 border-ink/10 bg-ink p-5 text-page">
+            <div className="rounded-xl border border-ink/10 bg-ink p-5 text-page">
               <p className="text-xs font-semibold uppercase tracking-wider text-page/50">
-                Helpful features
+                Included when you start
               </p>
               <ul className="mt-3 space-y-2 text-sm">
                 {goal.features.map((f) => (
@@ -167,6 +142,12 @@ export function GoalPicker() {
                   </li>
                 ))}
               </ul>
+              <Link
+                href={`/signup?goal=${active}`}
+                className="mt-5 inline-flex min-h-11 items-center rounded-md bg-coral-solid px-4 text-sm font-semibold text-white hover:bg-coral-hover"
+              >
+                Start with this goal
+              </Link>
             </div>
           </div>
         </div>

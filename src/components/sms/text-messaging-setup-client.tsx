@@ -58,6 +58,7 @@ export function TextMessagingSetupClient() {
   const [smsUseCase, setSmsUseCase] = useState("MARKETING");
   const [disclosureAccepted, setDisclosureAccepted] = useState(false);
   const [einOnFile, setEinOnFile] = useState(false);
+  const [areaCode, setAreaCode] = useState("");
 
   const applyPrefill = useCallback((p: Prefill, view: ProfileView | null) => {
     setLegalEntityName(p.legalEntityName || "");
@@ -157,6 +158,38 @@ export function TextMessagingSetupClient() {
       setInfo(json.next || "Saved.");
       setEinBrn("");
       if (action === "submit") setStep(3);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function claimNumber() {
+    setBusy(true);
+    setError("");
+    setInfo("");
+    try {
+      const res = await fetch("/api/sms/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "claim_number",
+          ...(areaCode.length === 3 ? { areaCode } : {}),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error || "Could not assign a number yet");
+        return;
+      }
+      if (json.profile) setProfile(json.profile);
+      setInfo(
+        json.phoneMasked
+          ? `Your texting number is ready (${json.phoneMasked}).`
+          : json.next || "Your texting number is ready."
+      );
+      void load();
+    } catch {
+      setError("Network error — try again.");
     } finally {
       setBusy(false);
     }
@@ -437,8 +470,36 @@ export function TextMessagingSetupClient() {
         <section className="space-y-3 rounded-xl border p-4 text-sm">
           <p>{profile?.statusMessage}</p>
           {profile?.status === "choose_number" && (
-            <p className="text-muted-foreground">
-              Number selection will appear here once registration is fully ready.
+            <div className="space-y-3 rounded-lg border border-dashed p-3">
+              <p className="font-medium">Choose your texting number</p>
+              <p className="text-muted-foreground">
+                We will assign a local US number for your business. Optionally prefer an area
+                code.
+              </p>
+              <label className="block text-xs font-medium">
+                Preferred area code (optional)
+                <input
+                  className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                  inputMode="numeric"
+                  maxLength={3}
+                  placeholder="e.g. 312"
+                  value={areaCode}
+                  onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                />
+              </label>
+              <button
+                type="button"
+                disabled={busy || (areaCode.length > 0 && areaCode.length !== 3)}
+                className="rounded bg-foreground px-4 py-2 text-sm text-background disabled:opacity-50"
+                onClick={() => void claimNumber()}
+              >
+                {busy ? "Assigning…" : "Get my texting number"}
+              </button>
+            </div>
+          )}
+          {profile?.status === "active" && (
+            <p className="text-sm text-muted-foreground">
+              Text messaging is ready. You can create Email, Text, or Both campaigns.
             </p>
           )}
           <button

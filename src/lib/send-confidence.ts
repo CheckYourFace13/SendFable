@@ -34,6 +34,8 @@ export interface ConfidenceInput {
     | "senderIdentityId"
     | "testSentAt"
     | "audienceType"
+    | "channel"
+    | "smsBody"
   >;
   sender: Pick<SenderIdentity, "status" | "type" | "rewriteRequired" | "value"> | null;
   workspace: Pick<Workspace, "mailingAddress" | "name">;
@@ -42,6 +44,10 @@ export interface ConfidenceInput {
   suppressedCount: number;
   recentBounceRate: number;
   recentComplaintRate: number;
+  /** SMS-eligible audience after consent filters (when channel needs SMS). */
+  smsAudienceSize?: number;
+  hasActiveSmsNumber?: boolean;
+  hasActiveSmsSubscription?: boolean;
 }
 
 function hasUnsubscribe(html: string): boolean {
@@ -82,9 +88,13 @@ function mergeTagsWithoutFallback(html: string): string[] {
  */
 export function computeSendConfidence(input: ConfidenceInput): ConfidenceResult {
   const checks: ConfidenceCheck[] = [];
+  const channel = (input.campaign as { channel?: string }).channel || "EMAIL";
+  const needsEmail = channel === "EMAIL" || channel === "BOTH";
+  const needsSms = channel === "SMS" || channel === "BOTH";
   const html = input.campaign.compiledHtml || "";
   const subject = (input.campaign.subject || "").trim();
   const plan = PLANS[input.owner.plan];
+  const smsBody = ((input.campaign as { smsBody?: string | null }).smsBody || "").trim();
 
   if (!input.owner.emailVerified) {
     checks.push({
@@ -104,6 +114,99 @@ export function computeSendConfidence(input: ConfidenceInput): ConfidenceResult 
       detail: "This account cannot launch campaigns until the hold is cleared.",
       blocksSend: true,
     });
+  }
+
+  if (needsSms) {
+    if (!smsBody) {
+      checks.push({
+        id: "sms-body",
+        level: "error",
+        label: "Text message is empty",
+        detail: "Add the text you want to send before launching.",
+        blocksSend: true,
+      });
+    } else if (smsBody.length > 1600) {
+      checks.push({
+        id: "sms-body",
+        level: "error",
+        label: "Text message is too long",
+        detail: "Keep the message under 1,600 characters.",
+        blocksSend: true,
+      });
+    } else {
+      checks.push({
+        id: "sms-body",
+        level: "ok",
+        label: "Text message ready",
+        detail: `${smsBody.length} characters`,
+        blocksSend: false,
+      });
+    }
+
+    if (input.hasActiveSmsNumber === false) {
+      checks.push({
+        id: "sms-number",
+        level: "error",
+        label: "No active text number",
+        detail: "Finish text messaging setup so a number can send for this workspace.",
+        fixHref: "/settings/text-messaging",
+        blocksSend: true,
+      });
+    } else if (input.hasActiveSmsNumber) {
+      checks.push({
+        id: "sms-number",
+        level: "ok",
+        label: "Text number ready",
+        detail: "An active number is assigned to this workspace.",
+        blocksSend: false,
+      });
+    }
+
+    if (input.hasActiveSmsSubscription === false) {
+      checks.push({
+        id: "sms-subscription",
+        level: "error",
+        label: "Text plan not active",
+        detail: "An active text messaging plan is required to send texts.",
+        fixHref: "/billing/sms",
+        blocksSend: true,
+      });
+    }
+
+    if (typeof input.smsAudienceSize === "number" && input.smsAudienceSize <= 0) {
+      checks.push({
+        id: "sms-audience",
+        level: "error",
+        label: "No SMS-eligible contacts",
+        detail: "Add contacts with phone numbers and SMS consent, or clear suppressions.",
+        fixHref: "/contacts",
+        blocksSend: true,
+      });
+    } else if (typeof input.smsAudienceSize === "number") {
+      checks.push({
+        id: "sms-audience",
+        level: "ok",
+        label: "SMS audience ready",
+        detail: `${input.smsAudienceSize} opted-in contact(s)`,
+        blocksSend: false,
+      });
+    }
+  }
+
+  // Email-leg checks — skip hard email content requirements for SMS-only
+  if (!needsEmail) {
+    const errors = checks.filter((c) => c.level === "error").length;
+    const warnings = checks.filter((c) => c.level === "warning").length;
+    const oks = checks.filter((c) => c.level === "ok").length;
+    let score = 100 - errors * 25 - warnings * 8;
+    score = Math.max(0, Math.min(100, score + Math.min(10, oks)));
+    return {
+      score,
+      checks,
+      canSend: checks.every((c) => !c.blocksSend),
+      disclaimer:
+        "This is a readiness checklist, not a carrier guarantee. Delivery depends on consent, number quality, and carrier rules.",
+    };
   }
 
   if (!input.sender || input.sender.status !== "VERIFIED") {
@@ -426,6 +529,21 @@ const FIX_MAP: Record<string, { why: string; fixHref?: string }> = {
   },
   test: {
     why: "A test catch typos and broken links before customers see them.",
+  },
+  "sms-body": {
+    why: "Carriers and customers need a clear text body before anything can send.",
+  },
+  "sms-number": {
+    why: "Texts must send from your workspace number.",
+    fixHref: "/settings/text-messaging",
+  },
+  "sms-subscription": {
+    why: "An active text plan covers carrier and usage costs.",
+    fixHref: "/billing/sms",
+  },
+  "sms-audience": {
+    why: "Only contacts with SMS consent can receive marketing texts.",
+    fixHref: "/contacts",
   },
 };
 

@@ -39,7 +39,7 @@ async function assertCustomerSmsSetupAccess(workspaceId: string): Promise<NextRe
 }
 
 const saveSchema = z.object({
-  action: z.enum(["save", "submit"]),
+  action: z.enum(["save", "submit", "claim_number"]),
   legalEntityName: z.string().max(200).optional(),
   dbaBrandName: z.string().max(200).optional(),
   einBrn: z.string().max(40).optional().nullable(),
@@ -57,6 +57,11 @@ const saveSchema = z.object({
     .enum(["MARKETING", "MIXED", "CUSTOMER_CARE", "ACCOUNT_NOTIFICATION", "DELIVERY_NOTIFICATION", "LOW_VOLUME_MIXED"])
     .optional(),
   disclosureAccepted: z.boolean().optional(),
+  /** Optional US area code preference when claiming a number (e.g. "312"). */
+  areaCode: z
+    .string()
+    .regex(/^\d{3}$/)
+    .optional(),
 });
 
 function customerSerialize(profile: {
@@ -171,6 +176,75 @@ export async function POST(req: Request) {
       { error: parsed.error.issues[0]?.message ?? "Invalid input" },
       { status: 400 }
     );
+  }
+
+  // Customer claims a texting number after approval (no provider jargon in responses).
+  if (parsed.data.action === "claim_number") {
+    const { isSmsNumberPurchaseEnabled } = await import("@/lib/sms/flags");
+    const { provisionWorkspaceNumber } = await import("@/lib/sms/provider-submit");
+    const { parseOwnerPilotMeta } = await import("@/lib/sms/owner-pilot-meta");
+    const profile = await prisma.smsComplianceProfile.findUnique({
+      where: { workspaceId: ctx.workspace.id },
+    });
+    if (!profile) {
+      return NextResponse.json({ error: "Complete text messaging setup first." }, { status: 400 });
+    }
+    const meta = parseOwnerPilotMeta(profile.internalNotes);
+    const status = mapLifecycleToCustomerStatus({
+      phase: meta.lifecyclePhase,
+      reviewStatus: profile.reviewStatus,
+      hasNumber: Boolean(profile.numberId),
+      liveReady: meta.liveSendingUnlocked,
+    });
+    if (status !== "choose_number" && status !== "approved" && status !== "active") {
+      return NextResponse.json(
+        { error: "Your texting number is not ready to claim yet." },
+        { status: 409 }
+      );
+    }
+    const existingNum = await prisma.smsNumber.findFirst({
+      where: { workspaceId: ctx.workspace.id, status: "ACTIVE" },
+    });
+    if (existingNum) {
+      return NextResponse.json({
+        ok: true,
+        alreadyHadNumber: true,
+        phoneMasked:
+          existingNum.phoneE164.slice(0, 2) + "***" + existingNum.phoneE164.slice(-4),
+        profile: customerSerialize({ ...profile, numberId: existingNum.id }),
+      });
+    }
+    if (!isSmsNumberPurchaseEnabled() && !meta.numberPurchaseUnlocked) {
+      return NextResponse.json(
+        {
+          error:
+            "Number assignment is finishing on our side. Refresh this page in a few minutes, or contact support.",
+        },
+        { status: 503 }
+      );
+    }
+    try {
+      const bought = await provisionWorkspaceNumber({
+        workspaceId: ctx.workspace.id,
+        areaCode: parsed.data.areaCode,
+        ensureSubscription: true,
+      });
+      const refreshed = await prisma.smsComplianceProfile.findUnique({
+        where: { workspaceId: ctx.workspace.id },
+      });
+      return NextResponse.json({
+        ok: true,
+        phoneMasked: bought.phoneE164.slice(0, 2) + "***" + bought.phoneE164.slice(-4),
+        profile: refreshed
+          ? customerSerialize({ ...refreshed, numberId: refreshed.numberId })
+          : null,
+      });
+    } catch (e) {
+      const translated = translateSmsProviderError(
+        e instanceof Error ? e.message : "number claim failed"
+      );
+      return NextResponse.json({ error: translated.customerMessage }, { status: 400 });
+    }
   }
 
   const existing = await prisma.smsComplianceProfile.findUnique({
