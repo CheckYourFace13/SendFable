@@ -19,9 +19,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { isOwnerPilotWorkspace } = await import("@/lib/sms/pilot");
-  const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
-  if (!isSmsAccountSignupEnabled() && !ownerPilot) {
+  const { isSmsControlledAccessWorkspace } = await import("@/lib/sms/pilot");
+  const controlled = await isSmsControlledAccessWorkspace(ctx.workspace.id);
+  if (!isSmsAccountSignupEnabled() && !controlled) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

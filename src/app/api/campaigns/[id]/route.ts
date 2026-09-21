@@ -85,9 +85,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (!isSmsCodeEnabled()) {
       return NextResponse.json({ error: "Text campaigns are not available yet" }, { status: 403 });
     }
-    const { isOwnerPilotWorkspace } = await import("@/lib/sms/pilot");
-    const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
-    if (!isSmsAccountSignupEnabled() && !ownerPilot) {
+    const { isSmsControlledAccessWorkspace } = await import("@/lib/sms/pilot");
+    const controlled = await isSmsControlledAccessWorkspace(ctx.workspace.id);
+    if (!isSmsAccountSignupEnabled() && !controlled) {
       return NextResponse.json({ error: "Text campaigns are not available yet" }, { status: 403 });
     }
   }

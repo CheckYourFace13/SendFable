@@ -91,11 +91,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         { status: 403 }
       );
     }
-    const { isOwnerPilotWorkspace, isOwnerPilotLiveSendingAllowed } = await import(
+    const { isSmsControlledAccessWorkspace, isOwnerPilotLiveSendingAllowed } = await import(
       "@/lib/sms/pilot"
     );
-    const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
-    if (!isSmsAccountSignupEnabled() && !ownerPilot) {
+    const controlled = await isSmsControlledAccessWorkspace(ctx.workspace.id);
+    if (!isSmsAccountSignupEnabled() && !controlled) {
       return NextResponse.json(
         { error: "Text messaging is not activated for this account." },
         { status: 403 }

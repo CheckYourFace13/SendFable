@@ -13,9 +13,11 @@ import { InboxList } from "@/components/sms/inbox-list";
 export const dynamic = "force-dynamic";
 
 export default async function InboxPage() {
-  if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled()) notFound();
-
+  if (!isSmsCodeEnabled()) notFound();
   const ctx = await requireWorkspaceContext();
+  const { isSmsControlledAccessWorkspace } = await import("@/lib/sms/pilot");
+  const controlled = await isSmsControlledAccessWorkspace(ctx.workspace.id);
+  if (!isSmsAccountSignupEnabled() && !controlled) notFound();
   const messages = await prisma.smsMessage.findMany({
     where: { workspaceId: ctx.workspace.id, direction: "INBOUND" },
     orderBy: { createdAt: "desc" },

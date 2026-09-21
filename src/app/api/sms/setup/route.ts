@@ -8,7 +8,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { isSmsAccountSignupEnabled, isSmsCodeEnabled } from "@/lib/sms/flags";
-import { isOwnerPilotWorkspace } from "@/lib/sms/pilot";
+import { isSmsControlledAccessWorkspace } from "@/lib/sms/pilot";
 import { canEncryptSmsSensitiveData, encryptSmsSensitive } from "@/lib/sms/sensitive";
 import { normalizeUsPhone } from "@/lib/sms/phone";
 import { SMS_CONSENT_DISCLOSURE_VERSION } from "@/lib/sms/consent";
@@ -34,7 +34,7 @@ async function assertCustomerSmsSetupAccess(workspaceId: string): Promise<NextRe
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   if (isSmsAccountSignupEnabled()) return null;
-  if (await isOwnerPilotWorkspace(workspaceId)) return null;
+  if (await isSmsControlledAccessWorkspace(workspaceId)) return null;
   return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
 

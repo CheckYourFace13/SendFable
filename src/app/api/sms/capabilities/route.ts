@@ -10,6 +10,7 @@ import {
   isSmsPublicEnabled,
   isSmsRegistrationEnabled,
 } from "@/lib/sms/flags";
+import { isSmsCertWorkspace } from "@/lib/sms/cert-access";
 
 /**
  * Authenticated SMS capability snapshot for UI gating.
@@ -21,12 +22,16 @@ export async function GET() {
 
   const code = isSmsCodeEnabled();
   const account = isSmsAccountSignupEnabled();
-  const { isOwnerPilotWorkspace, isOwnerPilotLiveSendingAllowed } = await import(
-    "@/lib/sms/pilot"
-  );
+  const {
+    isOwnerPilotWorkspace,
+    isOwnerPilotLiveSendingAllowed,
+    isSmsControlledAccessWorkspace,
+  } = await import("@/lib/sms/pilot");
   const ownerPilot = await isOwnerPilotWorkspace(ctx.workspace.id);
+  const controlled = await isSmsControlledAccessWorkspace(ctx.workspace.id);
+  const certWs = isSmsCertWorkspace(ctx.workspace.id);
   const ownerLive = await isOwnerPilotLiveSendingAllowed(ctx.workspace.id);
-  const channelUi = code && (account || ownerPilot);
+  const channelUi = code && (account || controlled);
   const liveSending = isSmsLiveSendingEnabled() || ownerLive;
   return NextResponse.json({
     codeEnabled: code,
@@ -35,21 +40,24 @@ export async function GET() {
     channelUiEnabled: channelUi,
     liveSendingEnabled: liveSending,
     numberPurchaseEnabled: isSmsNumberPurchaseEnabled(),
-    registrationEnabled: isSmsRegistrationEnabled() || ownerPilot,
-    inboundEnabled: isSmsInboundEnabled() || ownerPilot,
+    registrationEnabled: isSmsRegistrationEnabled() || controlled,
+    inboundEnabled: isSmsInboundEnabled() || controlled,
     publicEnabled: isSmsPublicEnabled(),
-    mockProvider: isSmsMockProviderEnabled() && !ownerLive,
+    mockProvider: isSmsMockProviderEnabled() && !ownerLive && !certWs,
     ownerPilot,
+    certWorkspace: certWs,
     /** Honest status for customer copy */
     liveReady: liveSending,
     statusMessage: !code
       ? "Text messaging is disabled."
-      : !account && !ownerPilot
+      : !account && !controlled
         ? "Text messaging is not activated for accounts yet."
         : !liveSending
           ? "Text drafts are available; live sending awaits provider approval."
           : ownerPilot
             ? "Owner SMS pilot is active (public SMS still off)."
-            : "Text messaging is available.",
+            : certWs
+              ? "Controlled certification workspace (public SMS still off)."
+              : "Text messaging is available.",
   });
 }

@@ -151,6 +151,17 @@ export async function isOwnerPilotWorkspace(workspaceId: string): Promise<boolea
   return Boolean(meta?.enabled && meta.workspaceId === workspaceId);
 }
 
+/**
+ * Customer SMS setup / channel UI access when ACCOUNT_SIGNUP is false:
+ * owner pilot workspace OR explicit cert allowlist (SENDFABLE_SMS_CERT_WORKSPACE_IDS).
+ * Never implies PUBLIC SMS.
+ */
+export async function isSmsControlledAccessWorkspace(workspaceId: string): Promise<boolean> {
+  if (await isOwnerPilotWorkspace(workspaceId)) return true;
+  const { isSmsCertWorkspace } = await import("@/lib/sms/cert-access");
+  return isSmsCertWorkspace(workspaceId);
+}
+
 export async function isAnyOwnerPilotInboundUnlocked(): Promise<boolean> {
   if (isOwnerSmsPilotKillSwitchOn()) return false;
   const rows = await prisma.smsComplianceProfile.findMany({

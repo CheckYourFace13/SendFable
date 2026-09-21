@@ -60,8 +60,8 @@ export async function POST(req: Request) {
   // Server-side gate: phone-collecting forms cannot be created while SMS
   // signup is disabled — except the owner pilot workspace.
   if ((collectPhone || requirementMode !== "email-required") && !isSmsAccountSignupEnabled()) {
-    const { isOwnerPilotWorkspace } = await import("@/lib/sms/pilot");
-    if (!(await isOwnerPilotWorkspace(ctx.workspace.id))) {
+    const { isSmsControlledAccessWorkspace } = await import("@/lib/sms/pilot");
+    if (!(await isSmsControlledAccessWorkspace(ctx.workspace.id))) {
       return NextResponse.json(
         { error: "Text signup forms are not available yet" },
         { status: 403 }

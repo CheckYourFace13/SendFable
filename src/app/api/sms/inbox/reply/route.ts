@@ -20,11 +20,18 @@ const schema = z.object({
  * flag; each reply is an outbound message billed at the plan outbound rate.
  */
 export async function POST(req: Request) {
-  if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled() || !isSmsReplyEnabled()) {
+  if (!isSmsCodeEnabled() || !isSmsReplyEnabled()) {
     return NextResponse.json({ error: "Replies are not available yet" }, { status: 403 });
   }
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { isSmsControlledAccessWorkspace } = await import("@/lib/sms/pilot");
+  if (
+    !isSmsAccountSignupEnabled() &&
+    !(await isSmsControlledAccessWorkspace(ctx.workspace.id))
+  ) {
+    return NextResponse.json({ error: "Replies are not available yet" }, { status: 403 });
+  }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

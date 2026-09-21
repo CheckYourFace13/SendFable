@@ -21,9 +21,16 @@ import { PageHeader } from "@/components/app/page-header";
 export const dynamic = "force-dynamic";
 
 export default async function SmsBillingPage() {
-  if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled()) notFound();
-
+  if (!isSmsCodeEnabled()) notFound();
   const ctx = await requireWorkspaceContext();
+  const { isSmsControlledAccessWorkspace } = await import("@/lib/sms/pilot");
+  if (
+    !isSmsAccountSignupEnabled() &&
+    !(await isSmsControlledAccessWorkspace(ctx.workspace.id))
+  ) {
+    notFound();
+  }
+
   const workspaceId = ctx.workspace.id;
   const month = billingPeriodFor();
 

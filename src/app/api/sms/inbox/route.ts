@@ -8,12 +8,18 @@ const patchSchema = z.object({ id: z.string().min(1) });
 
 /** Mark an inbox message read. Server-side flag gated. */
 export async function PATCH(req: Request) {
-  if (!isSmsCodeEnabled() || !isSmsAccountSignupEnabled()) {
+  if (!isSmsCodeEnabled()) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+  const { isSmsControlledAccessWorkspace } = await import("@/lib/sms/pilot");
+  if (
+    !isSmsAccountSignupEnabled() &&
+    !(await isSmsControlledAccessWorkspace(ctx.workspace.id))
+  ) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
