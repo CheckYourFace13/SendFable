@@ -222,7 +222,9 @@ export async function handleAcquisitionSesEvent(opts: {
     }
   }
 
-  // Fallback: recipient email + recent SENT acquisition message
+  // Fallback: recipient email + recent SENT-only acquisition message.
+  // Never match already-terminal rows (prevents cross-attributing unrelated SES
+  // deliveries to the same owner inbox, e.g. controlled tests).
   if (!msg && opts.emails?.length) {
     const emails = opts.emails.map((e) => e.toLowerCase());
     const since = new Date(Date.now() - 14 * 24 * 3600_000);
@@ -230,26 +232,49 @@ export async function handleAcquisitionSesEvent(opts: {
       where: {
         dryRun: false,
         sentAt: { gte: since },
-        status: { in: ["SENT", "DELIVERED"] },
+        status: "SENT",
+        deliveredAt: null,
+        bounceAt: null,
+        complaintAt: null,
         prospect: { contactEmail: { in: emails, mode: "insensitive" } },
       },
       orderBy: { sentAt: "desc" },
       take: 5,
     });
-    msg = candidates[0] || null;
+    // Prefer exact MessageId; otherwise only a single unambiguous SENT candidate
+    // whose stored id is missing or already matches.
+    msg =
+      candidates.find((c) => c.sesMessageId === normalizedId) ||
+      candidates.find(
+        (c) =>
+          !c.sesMessageId ||
+          c.sesMessageId === normalizedId ||
+          c.sesMessageId === `<${normalizedId}>`
+      ) ||
+      (candidates.length === 1 ? candidates[0] : null);
   }
 
   if (!msg) return false;
 
-  // Backfill canonical MessageId if we matched via fallback
-  if (msg.sesMessageId !== normalizedId && normalizedId) {
+  // Backfill canonical MessageId only when missing — never overwrite a different id
+  // (overwrites caused false re-attribution across same-recipient sends).
+  if (normalizedId && !msg.sesMessageId) {
     await prisma.acquisitionMessage.update({
       where: { id: msg.id },
       data: { sesMessageId: normalizedId },
     });
+  } else if (
+    msg.sesMessageId &&
+    normalizedId &&
+    msg.sesMessageId.replace(/^<|>$/g, "") !== normalizedId
+  ) {
+    // Matched via a fallback but MessageIds disagree — refuse to mutate.
+    return false;
   }
 
   if (opts.eventType === "Delivery") {
+    // Idempotent: already delivered
+    if (msg.status === "DELIVERED" && msg.deliveredAt) return true;
     await prisma.acquisitionMessage.update({
       where: { id: msg.id },
       data: { status: "DELIVERED", deliveredAt: new Date() },
