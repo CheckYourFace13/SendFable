@@ -66,6 +66,10 @@ export default function PrivacyPage() {
       <LegalH3>Customer Content</LegalH3>
       <LegalUl>
         <li>Contact-list information you upload or collect (email, name, tags, segments, custom fields, status)</li>
+        <li>
+          Mobile numbers and Text Messaging consent records when Text Messaging is enabled for a
+          Workspace (see Section 5a)
+        </li>
         <li>Campaign content, templates, sender identities, domain verification information</li>
         <li>Signup-form and subscriber submissions</li>
         <li>Uploaded images and files used in campaigns or branding</li>
@@ -86,6 +90,7 @@ export default function PrivacyPage() {
         <li>Recipients interacting with campaigns or forms</li>
         <li>Stripe</li>
         <li>Amazon SES / AWS (delivery and feedback events)</li>
+        <li>Messaging provider / carriers (when Text Messaging is enabled)</li>
         <li>Hosting and infrastructure providers</li>
         <li>Support communications</li>
         <li>Automated technical collection (logs, cookies, tracking pixels/links where enabled)</li>
@@ -112,12 +117,71 @@ export default function PrivacyPage() {
         with service providers / subprocessors as needed to run the Service, or when required by
         law, to protect rights and safety, or with your direction.
       </p>
+      <p>
+        <strong>Mobile / SMS opt-in data.</strong> Mobile numbers and Text Messaging opt-in or
+        consent information collected for a Customer&apos;s text program are{" "}
+        <strong>not sold</strong> and are{" "}
+        <strong>
+          not shared with third parties or affiliates for those third parties&apos; unrelated
+          promotional or marketing purposes
+        </strong>
+        . Messaging providers and wireless carriers may process that information only as needed to
+        deliver, route, and support the text messages you or Recipients send through the Service.
+      </p>
+
+      <LegalH2>5a. Text Messaging (SMS) when enabled</LegalH2>
+      <p>
+        When Text Messaging is available and enabled for a Workspace, the following applies in
+        addition to the rest of this Policy.
+      </p>
+      <LegalUl>
+        <li>
+          <strong>What we collect:</strong> mobile numbers (typically US E.164), SMS consent status,
+          consent source (for example hosted form slug, import batch, or carrier keyword), consent
+          timestamp, disclosure version, STOP/HELP/START keyword events, suppression records, and
+          message metadata needed to deliver and account for texts (and message body content you or
+          Recipients send).
+        </li>
+        <li>
+          <strong>Why:</strong> to operate the Customer&apos;s text program, honor opt-ins and
+          opt-outs, meet carrier and registry registration requirements, provide inbox/reply tools,
+          meter usage for billing, prevent abuse, and support compliance requests.
+        </li>
+        <li>
+          <strong>Roles:</strong> for Recipient mobile data and campaign texts, we generally act as
+          a service provider / processor for the Customer (the end business / brand). The Customer
+          decides who is texted and is responsible for lawful consent and notices to Recipients.
+        </li>
+        <li>
+          <strong>Vendors:</strong> when live Text Messaging is enabled, messages are transmitted
+          through our messaging provider (currently Telnyx) and wireless carriers. Registry / brand
+          and campaign registration data you submit may be shared with that provider and industry
+          registries as required to enable 10DLC or similar sending.
+        </li>
+        <li>
+          <strong>STOP / revocation:</strong> when a Recipient texts STOP (or equivalent keywords we
+          recognize), we record an opt-out and suppress further marketing texts to that number for
+          the Workspace. Suppression is retained so STOP continues to be honored after contact
+          delete or reimport unless a documented new opt-in occurs.
+        </li>
+        <li>
+          <strong>Retention / security:</strong> consent events, suppressions, and message records
+          are retained as needed to operate the Service, honor opt-outs, bill accurately, and meet
+          legal or carrier obligations, consistent with Section 9 and our Security page. Sensitive
+          registration identifiers (for example EIN) are stored with additional encryption controls
+          when configured.
+        </li>
+      </LegalUl>
 
       <LegalH2>6. Categories of service providers / subprocessors</LegalH2>
       <LegalUl>
         <li>
           <strong>Amazon Web Services / Amazon SES</strong> — email delivery and related feedback
           (typically United States regions we configure)
+        </li>
+        <li>
+          <strong>Telnyx</strong> — Text Messaging delivery, inbound webhooks, phone numbers, and
+          related 10DLC / carrier registration when Text Messaging is enabled
         </li>
         <li>
           <strong>Stripe</strong> — payments, invoices, Customer Portal, subscription state

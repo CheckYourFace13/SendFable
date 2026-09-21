@@ -174,3 +174,20 @@ export function buildSmsStopReply(brandName: string): string {
   const brand = brandName.trim() || "this business";
   return `${brand}: You are unsubscribed and will receive no further text messages.`;
 }
+
+/**
+ * Opt-in confirmation / welcome template for recurring programs.
+ * Used as TCR sample message 1 and as the preferred first outbound after
+ * a new web or carrier opt-in. Brand must be the end business.
+ */
+export function buildSmsOptInConfirmation(input: {
+  brandName: string;
+  useCaseLabel?: string;
+}): string {
+  const brand = input.brandName.trim() || "this business";
+  const topic = (input.useCaseLabel || "offers and updates").trim();
+  return (
+    `${brand}: Thanks for joining our text updates. You'll get ${topic}. ` +
+    `Msg frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help.`
+  );
+}

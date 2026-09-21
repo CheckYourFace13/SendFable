@@ -1,106 +1,46 @@
-# SF-019 — SMS legal review required
+# SF-019 — SMS legal / compliance posture
 
-**Status:** Draft policies for internal readiness only. **Not published** as customer-facing legal terms until attorney review.
+**Updated:** 2026-09-21
 
-These drafts describe intended product behavior. They are **not** legal advice and must not be treated as final Terms of Service.
+## Gate change (important)
 
----
+Public SMS launch is **not** blocked on paid outside counsel.
 
-## Documents to finalize (hidden drafts)
+| Gate | Role |
+|------|------|
+| **SMS COMPLIANCE SELF-CERTIFICATION** | **REQUIRED** — see `docs/SMS_COMPLIANCE_SELF_CERTIFICATION.md` |
+| **Outside counsel review** | **OPTIONAL / RECOMMENDED** for additional risk assurance |
+| Attorney checkbox as procedural blocker | **REMOVED** |
 
-1. SMS Terms  
-2. SMS Acceptable Use Policy  
-3. SMS Consent Requirements  
-4. SMS Registration Requirements  
-5. SMS Billing Terms  
-6. SMS Number Policy  
-7. SMS Suspension Policy  
-8. SMS Data Retention Policy  
+No federal statute, CTIA principle, Telnyx rule, or TCR rule we rely on states that an attorney must approve SendFable before SMS launch. CTIA materials explicitly disclaim legal advice and recommend consulting counsel as guidance — that is not a launch permit.
 
-Existing related product docs: `docs/SMS_CONSENT_AND_COMPLIANCE.md`, pricing/billing docs. Align final legal copy with product flags and TCR/ISV rules.
+This document is **not legal advice** and does **not** claim legal approval.
 
 ---
 
-## Required explanations (product intent)
+## Customer-facing SMS policy surfaces (live)
 
-| Topic | Intent |
-|-------|--------|
-| Lawful consent | Customer (end business) is responsible for obtaining and documenting lawful consent |
-| Purchased lists | Purchased / rented / scraped lists are prohibited |
-| Suspension | SendFable may suspend noncompliant messaging and numbers |
-| Registration fees | Registration / activation fees may be nonrefundable |
-| Rejected / resubmitted | Additional fees for rejected or resubmitted registrations may be charged after disclosure and approval |
-| Numbers after cancel | Dedicated numbers may be released after cancellation; portability not guaranteed unless supported |
-| STOP | STOP suppression persists across contact delete / reimport |
-| Carrier rules | Carrier and registry rules may change; SendFable may require updates |
-| Segments | Message costs are per segment; Unicode/emoji can increase segment count |
-| Incoming | Incoming allowances apply per billing month; overages billed at disclosed rates |
-| Business replies | Business-sent replies are outbound billable segments |
-| Data retention | Message bodies and registration data retained per policy / legal holds |
-| Registration info | Customer registration information is used for carrier/registry compliance |
+| Surface | Status |
+|---------|--------|
+| Privacy Policy §5 / §5a Text Messaging | Present (bundle `2026-09-21`) |
+| Terms of Service §7a Text Messaging | Present (bundle `2026-09-21`) |
+| Acceptable Use §6 Text messaging | Present |
+| Billing & Refund §7 Text messaging fees | Present |
+| Hosted opt-in disclosure | `buildSmsConsentDisclosure` |
+
+Optional deep-dive packet for counsel if engaged: `docs/SMS_COUNSEL_REVIEW_PACKET.md`.
 
 ---
 
-## ATTORNEY REVIEW REQUIRED
+## Publish checklist (pre–public SMS)
 
-Flag these items for counsel before public publish or customer contracts:
+- [x] AUP SMS section
+- [x] Billing SMS section
+- [x] Privacy SMS section
+- [x] Terms SMS section
+- [x] Compliance self-certification checklist authored
+- [ ] Owner completes self-certification signature block in `SMS_COMPLIANCE_SELF_CERTIFICATION.md`
+- [ ] Telnyx funding / auto-recharge (owner ops)
+- [ ] Owner approval to flip public SMS flags
 
-1. **Nonrefundable activation / registration fee language** — consumer protection and refund statutes.  
-2. **Pass-through / exceptional carrier fees** — clear consent to charge after approval.  
-3. **Indemnification** for customer consent failures and AUP violations.  
-4. **TCPA / state mini-TCPA / CTIA / carrier handbook** alignment of disclosure and consent checkbox rules.  
-5. **10DLC / toll-free** registration representations (accuracy warranties).  
-6. **Number release and non-portability** after cancel or suspension.  
-7. **STOP persistence** and suppression across imports — privacy / consumer expectation.  
-8. **Data retention and deletion** for message bodies, phone numbers, EIN/BRN (encrypted at rest).  
-9. **ISV / CSP relationship disclosures** (SendFable vs end brand).  
-10. **International / non-US** expansion (currently US-first) — do not claim global coverage.  
-11. **“Approval not guaranteed”** carrier timing language.  
-12. **Kill switch / emergency suspension** without prior notice for abuse.  
-
-Do **not** claim:
-
-- Guaranteed carrier approval or delivery rates  
-- That SendFable is the message “sender” instead of the end brand where TCR requires end-brand identity  
-- That imported numbers imply consent  
-- That SMS is available publicly while flags are false  
-
----
-
-## Draft policy stubs (non-binding)
-
-### SMS Consent Requirements (stub)
-
-Customers must collect affirmative, documented opt-in. SMS consent checkboxes must never be pre-checked. Consent is not a condition of purchase where applicable. Purchased lists are prohibited. STOP must always be honored.
-
-### SMS Billing Terms (stub)
-
-Plans bill monthly fixed fees plus metered outbound segments and inbound overage beyond included allowance. Activation fee is one-time. Bundle discounts apply only to fixed monthly fees for eligible plans with qualifying email subscriptions. Business replies are outbound billable.
-
-### SMS Number Policy (stub)
-
-One dedicated number per registered workspace campaign path. Numbers may be released after cancellation, suspension, or nonpayment. Portability is not guaranteed.
-
-### SMS Suspension Policy (stub)
-
-SendFable may pause sending, suspend registration, or release numbers for AUP violations, unpaid balances, failed registration, or provider/carrier direction.
-
-### SMS Data Retention Policy (stub)
-
-Message metadata and bodies retained for delivery, compliance, and support subject to retention schedules. EIN/BRN stored encrypted; never shown in general admin lists. Suppression records retained to honor STOP.
-
----
-
-## Publish checklist (Phase B / pre–public SMS)
-
-Customer-facing AUP and Billing pages now include Text Messaging sections aligned with the stubs above.
-
-- [x] AUP: consent, purchased lists, STOP persistence, brand identity, suspension posture
-- [x] Billing: activation fees, segments, inbound overage, number release
-- [ ] Attorney sign-off recorded (name / date): ________________
-- [ ] Terms of Service cross-reference updated if counsel requires a dedicated SMS Terms exhibit
-- [ ] Owner approval to treat SMS sections as final before `SENDFABLE_SMS_PUBLIC_ENABLED=true`
-
-Until attorney sign-off and owner approval, keep public SMS marketing gated.
-
-*Generated for SF-019 readiness. Update after counsel review.*
+Until self-certification is signed **PASS** and funding/owner approval are done, keep `SENDFABLE_SMS_PUBLIC_ENABLED=false`.

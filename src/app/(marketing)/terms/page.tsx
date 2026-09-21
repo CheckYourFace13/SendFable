@@ -150,10 +150,67 @@ export default function TermsPage() {
       <p>
         <strong>Feature gates.</strong> Campaign sending, public billing checkout, public signup,
         and controlled delivery tests may be disabled by configuration flags even when the UI
-        exists. Delivery depends on Amazon SES and related infrastructure capacity, reputation, and
+        exists.         Delivery depends on Amazon SES and related infrastructure capacity, reputation, and
         recipient providers. We do not guarantee inbox placement, open rates, click rates,
         deliverability, uptime, or revenue outcomes.
       </p>
+
+      <LegalH2>7a. Text Messaging (SMS) when enabled</LegalH2>
+      <p>
+        When Text Messaging is available and enabled for your Workspace, these additional terms
+        apply. Email-only Workspaces are unaffected.
+      </p>
+      <LegalUl>
+        <li>
+          <strong>Consent.</strong> You must obtain and document valid Recipient consent before
+          sending marketing or other commercial texts. SMS consent is separate from email consent.
+          Purchased, rented, scraped, or harvested phone lists are prohibited. We may request proof
+          of consent and may pause or refuse sending if evidence is missing or inadequate.
+        </li>
+        <li>
+          <strong>Program disclosures.</strong> Message frequency may vary. Message and data rates
+          may apply. Recipients may reply STOP to opt out and HELP for help. Your hosted opt-in and
+          registration materials must identify your business (the end brand), not only the SendFable
+          platform name.
+        </li>
+        <li>
+          <strong>Delivery.</strong> Texts are transmitted through our messaging provider and
+          wireless carriers. Carrier filtering, registry review, handset status, and network
+          conditions can delay or block delivery. We do not guarantee delivery, timing, or carrier
+          approval of brands, campaigns, or numbers.
+        </li>
+        <li>
+          <strong>Registration and numbers.</strong> US 10DLC (or other) brand/campaign registration
+          and a dedicated sending number are typically required before live marketing texts. You
+          must provide accurate business information. Numbers may be released after cancellation,
+          suspension, or nonpayment; number portability is not guaranteed unless we expressly
+          support and complete a port.
+        </li>
+        <li>
+          <strong>Content and abuse.</strong> You are responsible for lawful lists and message
+          content. Do not send spam, phishing, illegal, harassing, or other prohibited content.
+          Honor STOP promptly. We may suspend Text Messaging, registrations, or numbers for
+          Acceptable Use violations, unpaid balances, failed registration, or provider/carrier
+          direction.
+        </li>
+        <li>
+          <strong>Fees.</strong> Text Messaging activation fees, monthly Text plans, metered
+          segments, inbound overage, and approved exceptional charges are separate from email plan
+          fees and are disclosed at purchase and in the{" "}
+          <LegalA href={POLICY_PATHS.refund}>Billing &amp; Refund Policy</LegalA>.
+        </li>
+        <li>
+          <strong>Cancellation.</strong> Canceling Text Messaging does not delete your Workspace or
+          email data. Dedicated numbers and provider registrations may be released. Consent and
+          suppression records may be retained as described in the Privacy Policy so opt-outs
+          continue to be honored.
+        </li>
+        <li>
+          <strong>Provider dependence.</strong> Text Messaging depends on our messaging provider
+          (currently Telnyx), industry registries, and wireless carriers. Their outages, fee
+          changes, or enforcement actions can affect availability.
+        </li>
+      </LegalUl>
 
       <LegalH2>8. Monitoring, abuse, suspension, and termination</LegalH2>
       <p>
@@ -182,10 +239,10 @@ export default function TermsPage() {
       <LegalH2>10. Third-party services and provider dependency</LegalH2>
       <p>
         The Service depends on third parties, including Amazon Web Services / Amazon SES (email
-        delivery), Stripe (payments and Customer Portal), hosting infrastructure (application,
-        PostgreSQL, Redis), and mailbox providers for support addresses. Their outages, policy
-        enforcement, or account status can affect the Service. Payment-card details are handled by
-        Stripe; we do not store full card numbers.
+        delivery), Telnyx (Text Messaging when enabled), Stripe (payments and Customer Portal),
+        hosting infrastructure (application, PostgreSQL, Redis), and mailbox providers for support
+        addresses. Their outages, policy enforcement, or account status can affect the Service.
+        Payment-card details are handled by Stripe; we do not store full card numbers.
       </p>
 
       <LegalH2>11. Intellectual property</LegalH2>

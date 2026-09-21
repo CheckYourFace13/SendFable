@@ -1,6 +1,6 @@
 # SMS consent and compliance
 
-**DRAFT — requires owner and legal review before publication. Not attorney-approved.**
+**Implementation reference.** Authoritative launch gate: `docs/SMS_COMPLIANCE_SELF_CERTIFICATION.md`. Not attorney-approved; outside counsel optional/recommended.
 
 ## Independent channels
 
@@ -41,7 +41,7 @@ Compliance responses are never blocked by consent state or inbound-allowance ove
 
 ## Topics the published legal updates must cover (drafts)
 
-Prepare (do **not** publish until owner/legal review):
+Published customer surfaces (Privacy §5a, Terms §7a, AUP §6, Billing §7) cover:
 
 - Separate SMS consent; customer responsibility for permission
 - No purchased or scraped phone lists

@@ -6,6 +6,7 @@
 import {
   buildSmsConsentDisclosure,
   buildSmsHelpReply,
+  buildSmsOptInConfirmation,
   buildSmsStopReply,
 } from "@/lib/sms/consent";
 import type { SmsLifecyclePhase } from "@/lib/sms/registration-lifecycle";
@@ -199,7 +200,10 @@ export function generateSmsSampleMessages(input: {
   }
   // MARKETING / MIXED default
   return {
-    sampleMessage1: `${brand}: Thanks for joining our text updates. Get offers and news from us. Msg frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help.`,
+    sampleMessage1: buildSmsOptInConfirmation({
+      brandName: brand,
+      useCaseLabel: "offers and news from us",
+    }),
     sampleMessage2: `${brand}: This week's offer is now available. Msg & data rates may apply. Reply STOP to unsubscribe.`,
   };
 }

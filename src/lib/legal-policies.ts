@@ -19,18 +19,18 @@ export const LEGAL_OPERATOR_STATEMENT =
   "SendFable is a service operated by iScream Studio INC";
 
 export const POLICY_EFFECTIVE_DATE = "July 25, 2026";
-export const POLICY_LAST_UPDATED = "September 20, 2026";
+export const POLICY_LAST_UPDATED = "September 21, 2026";
 
 /** ISO date string used in acceptance records and UI checks. */
-export const CURRENT_POLICY_BUNDLE = "2026-09-20";
+export const CURRENT_POLICY_BUNDLE = "2026-09-21";
 
 export const POLICY_VERSIONS = {
-  terms: "2026-09-20",
-  privacy: "2026-09-20",
-  acceptableUse: "2026-09-20",
-  refund: "2026-09-20",
-  security: "2026-09-20",
-  cookies: "2026-09-20",
+  terms: "2026-09-21",
+  privacy: "2026-09-21",
+  acceptableUse: "2026-09-21",
+  refund: "2026-09-21",
+  security: "2026-09-21",
+  cookies: "2026-09-21",
 } as const;
 
 /**

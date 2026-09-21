@@ -13,7 +13,7 @@
 | Customer readiness (public SMS) | ~70% dark / ~95% only after Phase N | Number claim UI + legal sections + ladder docs; PUBLIC not flipped |
 | Sales / design conversion | ~90% | Warm-confidence tokens; hero answers WHAT/WHY/COST/FREE; ChannelTrio gated |
 | Search / growth | ~88% | Pricing hub + matrix mobile; Mailchimp 301s; compare analytics |
-| “100% done” claim | **No** | Needs Phase M green matrix on CI/VPS, attorney SMS sign-off, owner SMS public approval, HEAD sync deploy |
+| “100% done” claim | **No** | Needs Phase M green matrix on CI/VPS, SMS self-certification PASS, owner SMS public approval, HEAD sync deploy |
 
 ## Phase completion
 

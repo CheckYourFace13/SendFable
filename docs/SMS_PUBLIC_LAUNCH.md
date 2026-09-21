@@ -1,6 +1,16 @@
 # Phase N — Controlled then public SMS launch
 
-**Do not flip production flags from this doc alone.** Requires owner approval + Phase M green.
+**Do not flip production flags from this doc alone.** Requires owner approval + compliance self-certification PASS.
+
+## Gates (required vs optional)
+
+| Gate | Role |
+|------|------|
+| SMS technical certification (pilot + second tenant) | REQUIRED |
+| **SMS COMPLIANCE SELF-CERTIFICATION** (`docs/SMS_COMPLIANCE_SELF_CERTIFICATION.md`) | **REQUIRED** |
+| Telnyx funding (balance + recommended auto-recharge) | REQUIRED (ops) |
+| Owner approval to flip flags | REQUIRED |
+| Outside counsel review | **OPTIONAL / RECOMMENDED** — not a blocker |
 
 ## Controlled cohort (PUBLIC still false)
 
@@ -12,14 +22,15 @@
 
 ## Public flip (owner approval required)
 
-Owner sign-off: ________________ date: ________________
+Owner sign-off: ________________ date: ________________  
+Self-certification: PASS / FAIL (attach checklist)
 
 Then set deliberately (see `SMS_PUBLIC_FLAG_LADDER.md` + `SMS_OWNER_ACTIONS.md`):
 
 - `SENDFABLE_SMS_PUBLIC_ENABLED=true`
 - Account signup, billing, activation, registration, number, live, inbound, reply as authorized
 - `SENDFABLE_SMS_MOCK_PROVIDER_ENABLED=false` only when live sending is intentional
-- Optionally `SENDFABLE_PROMO_TEXT20_PUBLIC=true` after Stripe TEXT20 exists
+- Keep `SENDFABLE_PROMO_TEXT20_PUBLIC` dark until separate TEXT20 rule is met
 - Optionally `SENDFABLE_CHECKOUT_ALLOW_PROMOTION_CODES=true`
 
 ## After flip

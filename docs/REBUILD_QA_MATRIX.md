@@ -31,7 +31,7 @@ Run locally or on CI after Phases A–L. Record date/operator and unexplained fa
 
 - [ ] Second-tenant checklist `docs/SMS_SECOND_TENANT_E2E.md`
 - [ ] Flag ladder `docs/SMS_PUBLIC_FLAG_LADDER.md` reviewed
-- [ ] Legal publish checklist attorney box still open until signed
+- [ ] SMS compliance self-certification signed PASS (`docs/SMS_COMPLIANCE_SELF_CERTIFICATION.md`); outside counsel optional
 
 ## Stripe
 
