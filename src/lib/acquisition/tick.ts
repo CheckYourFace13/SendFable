@@ -29,6 +29,7 @@ import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { alertOwnerException } from "@/lib/acquisition/notify";
 import { checkAcquisitionDeliveryAttribution } from "@/lib/acquisition/delivery-health";
 import { evaluateConversionCohort } from "@/lib/acquisition/conversion-optimize";
+import { sendDailyAcquisitionReportIfDue } from "@/lib/acquisition/report";
 
 /**
  * Autonomous acquisition tick — discovery autofill, approve, send, replies, ramp.
@@ -45,6 +46,8 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
   const lock = await withAcquisitionLock("tick", 55, async () => {
     const actions: string[] = [];
     await ensurePipelineControl();
+    const daily = await sendDailyAcquisitionReportIfDue();
+    if (daily.sent) actions.push("daily_report");
     await prisma.acquisitionPipelineControl.update({
       where: { id: "default" },
       data: { lastTickAt: now },

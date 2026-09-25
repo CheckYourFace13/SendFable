@@ -141,7 +141,15 @@ export async function POST(req: Request) {
 
   if (parsed.data.promotionCode) {
     void ensureAnalyticsPersistence();
-    void trackEvent("promo_applied", {
+    trackEvent("promo_applied", {
+      plan: parsed.data.plan,
+      interval: parsed.data.interval,
+    });
+    void trackEvent("promo_apply", {
+      plan: parsed.data.plan,
+      interval: parsed.data.interval,
+    });
+    void trackEvent("promo_checkout", {
       plan: parsed.data.plan,
       interval: parsed.data.interval,
     });

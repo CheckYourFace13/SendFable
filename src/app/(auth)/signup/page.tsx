@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { freePlanPromise } from "@/lib/plans";
+import { trackClientEvent } from "@/components/marketing/marketing-analytics";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
@@ -31,6 +32,9 @@ function SignupForm() {
     () => searchParams.get("goal")?.trim() || undefined,
     [searchParams]
   );
+  useEffect(() => {
+    trackClientEvent("signup_start");
+  }, []);
   const loginHref = useMemo(() => {
     if (resumeTemplate) {
       const q = new URLSearchParams();

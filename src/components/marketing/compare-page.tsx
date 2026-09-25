@@ -12,6 +12,7 @@ import {
 } from "@/data/competitors";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 import { isSmsPublicEnabled } from "@/lib/sms/flags";
+import { Text20Hint } from "@/components/marketing/text20-hint";
 import { PLANS } from "@/lib/plans";
 import { MailchimpCostCalculator } from "@/components/marketing/mailchimp-cost-calculator";
 import { CompetitorPageTracker } from "@/components/marketing/competitor-page-tracker";
@@ -168,6 +169,7 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
         <p className="mt-2 text-sm text-ink/75">
           <strong>{competitor.name}:</strong> {capabilityLabel(competitor.sms)}
         </p>
+        <Text20Hint />
       </section>
 
       <section className="mt-12 space-y-4">

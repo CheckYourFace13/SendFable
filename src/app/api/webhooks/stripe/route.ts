@@ -213,6 +213,12 @@ async function applySubscription(sub: Stripe.Subscription, userIdHint?: string |
       interval: mapped.interval,
     });
     if (wasFree) trackEvent("subscription_started", { plan: mapped.plan });
+    const promoUsed =
+      Boolean(sub.metadata?.promotionCode) ||
+      (sub.discount != null);
+    if (promoUsed) {
+      trackEvent("promo_paid", { plan: mapped.plan });
+    }
     if (wasFree) {
       try {
         const { markAcquisitionPaidForUser } = await import(

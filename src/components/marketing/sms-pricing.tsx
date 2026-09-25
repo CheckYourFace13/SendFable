@@ -9,6 +9,7 @@
  */
 
 import { isSmsCodeEnabled, isSmsPublicEnabled } from "@/lib/sms/flags";
+import { Text20Hint } from "@/components/marketing/text20-hint";
 import { SMS_PLANS, SMS_PLAN_ORDER, formatCentsUsd, formatMicrosUsd } from "@/lib/sms/pricing";
 
 export function SmsPricingSection() {
@@ -47,9 +48,12 @@ export function SmsPricingSection() {
         })}
       </div>
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        Longer messages may use multiple segments. Full pricing details, the one-time activation
-        fee and carrier-registration requirements are shown before you purchase.
+        Longer messages may use multiple segments. A one-time $99 activation fee, the monthly plan,
+        included incoming texts, and extra usage pricing are shown before you purchase.
       </p>
+      <div className="mt-4 text-center">
+        <Text20Hint />
+      </div>
     </section>
   );
 }

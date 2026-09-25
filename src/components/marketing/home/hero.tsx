@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { HeroProductComposition } from "./hero-composition";
 import { PLANS } from "@/lib/plans";
 import { isSmsPublicEnabled } from "@/lib/sms/flags";
+import { Text20Hint } from "@/components/marketing/text20-hint";
 
 export function Hero() {
   const smsPublic = isSmsPublicEnabled();
@@ -38,6 +39,7 @@ export function Hero() {
             </Button>
           </div>
           <p className="mt-4 text-sm text-ink/70">No credit card · Cancel anytime</p>
+          <Text20Hint />
           <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink/60">
             <li>Transparent limits</li>
             <li>Easy unsubscribe</li>
