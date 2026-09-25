@@ -6,9 +6,10 @@ import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/components/marketin
 import { MarketingAnalytics } from "@/components/marketing/marketing-analytics";
 
 /**
- * Evergreen marketing pages are statically cacheable. The announcement bar is
- * static product copy (not env-gated). Auth/personalization lives under (app).
+ * Marketing chrome. Pages render per request so SMS public flags are read from
+ * runtime env (rollback is an env change, not a rebuild).
  */
+export const dynamic = "force-dynamic";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (

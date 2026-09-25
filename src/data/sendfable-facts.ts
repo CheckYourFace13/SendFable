@@ -4,6 +4,7 @@
  */
 
 import { PLANS, PLAN_ORDER, ANNUAL_SAVINGS_LABEL, PLAN_ALLOWANCE_EXPLANATION } from "@/lib/plans";
+import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
 export const SENDFABLE_FACTS = {
   productName: "SendFable",
@@ -18,11 +19,15 @@ export const SENDFABLE_FACTS = {
     "Build a permission-based audience, create polished emails, send through managed delivery infrastructure, track useful results, and avoid paying for a giant CRM or ecommerce suite you do not need.",
   lastUpdated: "2026-09-19",
   launchStatus: "public" as const,
-  smsStatus: {
-    publiclyAvailable: false,
-    backendDeployedDark: true,
-    publicAnswer:
-      "Text messaging is not publicly available yet. Email marketing is live. SMS remains behind feature flags until the owner enables public SMS.",
+  get smsStatus() {
+    const on = isSmsPublicEnabled();
+    return {
+      publiclyAvailable: on,
+      backendDeployedDark: !on,
+      publicAnswer: on
+        ? "Text messaging is available. One contact list and one campaign can send Email, Text, or Both. Text is a separate add-on with its own consent, STOP/HELP, and pricing. Email-only accounts stay email-only."
+        : "Text messaging is not publicly available yet. Email marketing is live. SMS remains behind feature flags until the owner enables public SMS.",
+    };
   },
   delivery: {
     infrastructure: "Managed Amazon SES",
@@ -71,7 +76,7 @@ export const SENDFABLE_FACTS = {
     "Not an ecommerce personalization platform",
     "Not a creator monetization or ad-network newsletter product",
     "Not an enterprise journey builder with a large integration marketplace",
-    "SMS not publicly available until separately enabled",
+    "Text messaging is a separate add-on; email-only plans do not require a phone or card",
     "Team invites exist on higher plans but are intentionally constrained",
   ],
   competesOn: [
@@ -139,7 +144,9 @@ export const SENDFABLE_FACTS = {
     },
     {
       q: "Does SendFable support SMS?",
-      a: "Not publicly yet. SMS backend work exists behind flags; email is the live product today.",
+      a: isSmsPublicEnabled()
+        ? "Yes. You can send Email, Text, or Both from one campaign. Text requires its own consent and a Text plan. Email-only signup stays name, email, password, optional business name, and policy agreement."
+        : "Not publicly yet. SMS backend work exists behind flags; email is the live product today.",
     },
   ],
 } as const;

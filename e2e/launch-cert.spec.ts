@@ -129,19 +129,19 @@ test.describe("AUTH gates", () => {
   });
 });
 
-test.describe("SMS remains dark", () => {
+test.describe("Public SMS marketing", () => {
   test("public /sms is not a customer product page", async ({ page }) => {
     const res = await page.goto(`${BASE}/sms`);
-    // App-prefixed /sms/* requires auth (login redirect) or may 404 — never a public SMS storefront.
     const status = res?.status() ?? 0;
     const onLogin = /login|signin/i.test(page.url());
     expect(status >= 400 || onLogin).toBeTruthy();
-    await expect(page.getByRole("heading", { name: /text messaging pricing|buy sms|telnyx/i })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: /telnyx|tcr|campaign id/i })).toHaveCount(0);
   });
 
-  test("homepage does not sell SMS", async ({ page }) => {
+  test("homepage sells Email, Text, or Both", async ({ page }) => {
     await page.goto(`${BASE}/`);
-    await expect(page.getByText(/\bSMS\b|text messaging/i)).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: /Pick Email, Text, or Both/i })).toBeVisible();
+    await expect(page.getByText(/Telnyx|TCR|Brand ID|Campaign ID/i)).toHaveCount(0);
   });
 });
 

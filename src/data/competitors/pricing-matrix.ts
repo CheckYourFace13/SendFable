@@ -5,6 +5,7 @@
  */
 
 import { PLANS } from "@/lib/plans";
+import { isSmsPublicEnabled } from "@/lib/sms/flags";
 import { COMPETITORS, getCompetitor } from "./catalog";
 import { COMPARISON_DISCLAIMER } from "./types";
 
@@ -38,7 +39,7 @@ export type PricingMatrixRow = {
 };
 
 /** SendFable is always exact from PLANS. */
-export function sendfableMatrixRow(): PricingMatrixRow {
+export function sendfableMatrixRow(smsPublic = isSmsPublicEnabled()): PricingMatrixRow {
   return {
     id: "sendfable",
     name: "SendFable",
@@ -49,7 +50,7 @@ export function sendfableMatrixRow(): PricingMatrixRow {
     entryPaid: `$${PLANS.STARTER.monthlyPrice}/mo`,
     includedContacts: String(PLANS.STARTER.contactCap.toLocaleString()),
     includedSends: `${PLANS.STARTER.emailsPerMonth.toLocaleString()}/mo`,
-    sms: "Not publicly available yet",
+    sms: smsPublic ? "Email, Text, or Both" : "Not publicly available yet",
     automations: "Campaigns, tags, segments, forms",
     brandRemoval: "Paid plans",
     pricingModel: "Published contact + monthly email caps",
@@ -487,8 +488,8 @@ export const COMPETITOR_MATRIX: PricingMatrixRow[] = [
 
 export const LIST_SIZE_PAGES = [500, 1_000, 2_500, 5_000, 10_000, 20_000, 40_000] as const;
 
-export function allMatrixRows(): PricingMatrixRow[] {
-  return [sendfableMatrixRow(), ...COMPETITOR_MATRIX];
+export function allMatrixRows(opts?: { smsPublic?: boolean }): PricingMatrixRow[] {
+  return [sendfableMatrixRow(opts?.smsPublic), ...COMPETITOR_MATRIX];
 }
 
 export function matrixDisclaimer(): string {

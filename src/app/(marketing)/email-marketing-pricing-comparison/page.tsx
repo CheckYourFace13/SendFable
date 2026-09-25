@@ -16,6 +16,7 @@ import {
   LIST_SIZE_PAGES,
 } from "@/data/competitors/pricing-matrix";
 import { PLANS } from "@/lib/plans";
+import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
 const year = new Date().getFullYear();
 
@@ -94,7 +95,7 @@ export default function EmailMarketingPricingComparisonPage() {
       <p className="mt-4 text-xs text-ink/55">{matrixDisclaimer()}</p>
 
       <div className="mt-14">
-        <PricingComparisonCalculator />
+        <PricingComparisonCalculator smsPublic={isSmsPublicEnabled()} />
       </div>
 
       <section className="mt-14">

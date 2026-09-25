@@ -15,7 +15,7 @@ const CONTACT_OPTIONS = [250, 500, 1_000, 2_500, 5_000, 10_000, 20_000, 40_000] 
 
 type Needs = "simple" | "automation" | "ecommerce" | "creator" | "crm";
 
-export function PricingComparisonCalculator() {
+export function PricingComparisonCalculator({ smsPublic = false }: { smsPublic?: boolean }) {
   const [contacts, setContacts] = useState<number>(2_500);
   const [emails, setEmails] = useState(10_000);
   const [sms, setSms] = useState<"yes" | "no">("no");
@@ -37,7 +37,7 @@ export function PricingComparisonCalculator() {
     });
   }, [contacts, emails, sms, billing, needs]);
 
-  const rows = useMemo(() => allMatrixRows(), []);
+  const rows = useMemo(() => allMatrixRows({ smsPublic }), [smsPublic]);
   const sf = sendfablePlanFor(contacts);
   const sfMonthly = sf.price;
   const sfDisplay =
@@ -147,7 +147,11 @@ export function PricingComparisonCalculator() {
           {emails > PLANS[sf.plan].emailsPerMonth
             ? ` — your ${emails.toLocaleString()} emails/mo may need a higher plan or reduced volume`
             : ""}
-          {sms === "yes" ? " · SMS not publicly available on SendFable yet" : ""}
+          {sms === "yes"
+            ? smsPublic
+              ? " · Text is a separate add-on (Email, Text, or Both)"
+              : " · SMS not publicly available on SendFable yet"
+            : ""}
         </p>
         <Link
           href="/signup"

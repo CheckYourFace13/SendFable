@@ -132,7 +132,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       },
       {
         q: "Does SendFable support text messaging?",
-        a: "Text messaging is built but not publicly available yet. Email marketing is live.",
+        a: "SendFable can send Email, Text, or Both from one campaign when Text Messaging is enabled on the account. Text uses separate consent and pricing. Competitors listed here keep their own SMS capabilities.",
       },
     ],
   }),

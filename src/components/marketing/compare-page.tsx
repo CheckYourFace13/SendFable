@@ -11,6 +11,7 @@ import {
   type CompetitorRecord,
 } from "@/data/competitors";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
+import { isSmsPublicEnabled } from "@/lib/sms/flags";
 import { PLANS } from "@/lib/plans";
 import { MailchimpCostCalculator } from "@/components/marketing/mailchimp-cost-calculator";
 import { CompetitorPageTracker } from "@/components/marketing/competitor-page-tracker";
@@ -36,7 +37,11 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
     ["Automation", "Campaigns, segments, forms", capabilityLabel(competitor.automation)],
     ["CRM", "Not a CRM suite", capabilityLabel(competitor.crm)],
     ["Ecommerce", "Not ecommerce-specialized", capabilityLabel(competitor.ecommerce)],
-    ["SMS", SENDFABLE_FACTS.smsStatus.publiclyAvailable ? "Available" : "Not publicly available yet", capabilityLabel(competitor.sms)],
+    [
+      "SMS",
+      SENDFABLE_FACTS.smsStatus.publiclyAvailable ? "Email, Text, or Both" : "Not publicly available yet",
+      capabilityLabel(competitor.sms),
+    ],
     ["Creator / newsletter monetization", "Not the focus", capabilityLabel(competitor.newsletterCreator)],
     ["Integrations", "Focused SMB workflow", competitor.integrationsSummary],
     ["Support", "In-app + contact form / email", competitor.supportSummary],

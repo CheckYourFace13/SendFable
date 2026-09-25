@@ -5,6 +5,7 @@ import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { JsonLd, breadcrumbJsonLd, faqJsonLd, marketingPageMeta } from "@/components/marketing/json-ld";
 import { SOLUTION_RELATED_LINKS } from "@/data/solution-related-links";
+import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing by industry",
@@ -68,7 +69,9 @@ const FAQS = [
   },
   {
     q: "Is SMS included for any industry?",
-    a: "No. Email is the live product today. SMS is not publicly available.",
+    a: isSmsPublicEnabled()
+      ? "Text is a separate add-on, not included in email plans. When you choose Text or Both, setup covers consent, a dedicated number, and its own pricing."
+      : "No. Email is the live product today. SMS is not publicly available.",
   },
   {
     q: "Can I start on the Free plan?",
