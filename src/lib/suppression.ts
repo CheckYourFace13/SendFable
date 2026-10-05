@@ -64,6 +64,44 @@ export async function handleHardBounceOrComplaint(
   ]);
 }
 
+/**
+ * Notify first-party apps (e.g. BoatingChicago) so local subscriber status
+ * stays in sync. Never logs the email. Failures are swallowed.
+ */
+export async function notifyIntegrationUnsubscribe(
+  workspaceId: string,
+  email: string,
+  reason: string
+): Promise<void> {
+  const integrationWorkspaceId = process.env.INTEGRATION_WORKSPACE_ID?.trim();
+  const webhookUrl = process.env.INTEGRATION_UNSUBSCRIBE_WEBHOOK_URL?.trim();
+  const secret =
+    process.env.INTEGRATION_UNSUBSCRIBE_WEBHOOK_SECRET?.trim() ||
+    process.env.INTEGRATION_API_SECRET?.trim();
+
+  if (!webhookUrl || !secret) return;
+  if (integrationWorkspaceId && workspaceId !== integrationWorkspaceId) return;
+
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: normalizeEmail(email),
+        reason,
+        workspaceId,
+        at: new Date().toISOString(),
+      }),
+      signal: AbortSignal.timeout(8_000),
+    });
+  } catch {
+    console.error("[suppression] unsubscribe webhook failed");
+  }
+}
+
 export async function unsubscribeContact(
   workspaceId: string,
   email: string,
@@ -81,4 +119,5 @@ export async function unsubscribeContact(
       update: { reason: "UNSUBSCRIBED", note },
     }),
   ]);
+  void notifyIntegrationUnsubscribe(workspaceId, e, note || "unsubscribe");
 }

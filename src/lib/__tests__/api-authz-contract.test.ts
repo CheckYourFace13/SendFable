@@ -39,7 +39,12 @@ const PUBLIC_BY_DESIGN = new Set([
   "partners/apply", // public partner application; honeypot + rate limit
 ]);
 
-const AUTH_MARKERS = [/getApiContext\s*\(/, /requirePlatformAdmin\s*\(/, /\bauth\s*\(\)/];
+const AUTH_MARKERS = [
+  /getApiContext\s*\(/,
+  /requirePlatformAdmin\s*\(/,
+  /\bauth\s*\(\)/,
+  /requireIntegrationAuth\s*\(/,
+];
 
 function findRoutes(dir: string): string[] {
   const out: string[] = [];
