@@ -219,6 +219,10 @@ async function applySubscription(sub: Stripe.Subscription, userIdHint?: string |
     if (promoUsed) {
       trackEvent("promo_paid", { plan: mapped.plan });
     }
+    const utmCampaign = String(sub.metadata?.utm_campaign || sub.metadata?.utmCampaign || "").toLowerCase();
+    if (utmCampaign.includes("autopilot")) {
+      trackEvent("autopilot_paid", { plan: mapped.plan });
+    }
     if (wasFree) {
       try {
         const { markAcquisitionPaidForUser } = await import(

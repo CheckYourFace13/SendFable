@@ -127,6 +127,7 @@ export function MarketingAnalytics() {
     let event = "guide_view";
     if (pathname === "/") event = "homepage_view";
     else if (pathname === "/pricing") event = "pricing_view";
+    else if (pathname === "/automated-email-marketing") event = "autopilot_page_view";
     else if (pathname.startsWith("/compare")) event = "comparison_view";
     else if (pathname.startsWith("/solutions") || pathname.startsWith("/email-marketing-for")) {
       event = "industry_page_view";

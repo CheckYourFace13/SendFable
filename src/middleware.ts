@@ -52,6 +52,9 @@ const PUBLIC_PREFIXES = [
   "/invite/",
   "/api/",
   "/uploads/",
+  "/cert/",
+  "/autopilot/",
+  "/automated-email-marketing",
 ];
 
 function isPublicPath(pathname: string): boolean {

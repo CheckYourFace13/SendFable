@@ -106,19 +106,37 @@ export default function AutomatedEmailMarketingPage() {
         </p>
       </div>
 
-      <figure className="mt-10 overflow-hidden rounded-2xl border border-ink/10 bg-parchment/40">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/product/autopilot-flow.svg"
-          alt="Marketing Autopilot flow: website page change, email draft, owner approval buttons, then customers"
-          className="h-auto w-full"
-          width={1200}
-          height={420}
-        />
-        <figcaption className="border-t border-ink/10 px-4 py-3 text-xs text-ink/55">
-          Product story — controlled SendFable UI narrative (no stock photos, no fake testimonials).
-        </figcaption>
-      </figure>
+      <div className="mt-10 grid gap-3 sm:grid-cols-2">
+        {[
+          { src: "/product/autopilot-setup.webp", alt: "Marketing Autopilot setup" },
+          { src: "/product/autopilot-detected.webp", alt: "Website change detected" },
+          { src: "/product/autopilot-draft.webp", alt: "Generated campaign draft" },
+          { src: "/product/autopilot-approval-email.webp", alt: "Owner approval email" },
+          { src: "/product/autopilot-approval-confirm.webp", alt: "Approval confirmation page" },
+          { src: "/product/autopilot-campaign-result.webp", alt: "Campaign result" },
+        ].map((img) => (
+          <figure
+            key={img.alt}
+            className="overflow-hidden rounded-xl border border-ink/10 bg-parchment/40"
+          >
+            <picture>
+              <source srcSet={img.src} type="image/webp" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/product/autopilot-flow.svg"
+                alt={img.alt}
+                className="h-auto w-full"
+                width={640}
+                height={420}
+              />
+            </picture>
+          </figure>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-ink/55">
+        Real SendFable UI from controlled demo data — no stock photos, no fake testimonials, no
+        customer PII.
+      </p>
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
@@ -134,24 +152,24 @@ export default function AutomatedEmailMarketingPage() {
         <ol className="mt-6 space-y-5">
           {[
             {
-              t: "Grow your list",
+              t: "Collect",
               b: "SendFable hosted or embedded forms collect email (optional name/phone and separate SMS consent).",
             },
             {
-              t: "Watch your marketing page",
+              t: "Watch",
               b: "Point Autopilot at specials, events, products, or news. We check on a simple schedule.",
             },
             {
-              t: "Draft automatically",
+              t: "Draft",
               b: "Meaningful changes create a real SendFable campaign draft from an existing template — not a plain text dump.",
             },
             {
-              t: "Approve in seconds",
-              b: "You get a preview email with Approve & send, Edit, or Don't send. Confirmation is required before send.",
+              t: "Approve",
+              b: "You get a preview email with Approve & send, Edit, or Don't send. Confirmation is required before send. Edit before sending opens the exact draft. No response always means no send.",
             },
             {
-              t: "Reach your customers",
-              b: "After approval, the campaign sends through the normal SendFable email pipeline.",
+              t: "Send",
+              b: "After explicit approval, the campaign sends through the normal SendFable email pipeline.",
             },
           ].map((s, i) => (
             <li key={s.t} className="flex gap-4">

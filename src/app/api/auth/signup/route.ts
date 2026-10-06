@@ -18,6 +18,9 @@ const signupSchema = z.object({
   password: z.string().min(8).max(128),
   workspaceName: z.string().trim().min(1).max(80).optional(),
   referralCode: z.string().trim().min(3).max(32).optional(),
+  utmSource: z.string().trim().max(80).optional(),
+  utmMedium: z.string().trim().max(80).optional(),
+  utmCampaign: z.string().trim().max(120).optional(),
   acceptedPolicies: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the Terms, Acceptable Use, and Privacy Policy." }),
   }),
@@ -118,6 +121,11 @@ export async function POST(req: Request) {
     ensureAnalyticsPersistence();
     trackEvent("signup_complete");
     trackEvent("workspace_created");
+    const campaign = (parsed.data.utmCampaign || "").toLowerCase();
+    const source = (parsed.data.utmSource || "").toLowerCase();
+    if (campaign.includes("autopilot") || source.includes("autopilot")) {
+      trackEvent("autopilot_signup");
+    }
   } catch {
     /* fail open */
   }

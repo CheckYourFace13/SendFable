@@ -35,7 +35,11 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
   const rows: [string, string, string][] = [
     ["Best for", "Small businesses needing simple campaigns", competitor.bestFor[0] ?? competitor.name],
     ["Billing basis", "Contact + monthly email caps", competitor.billingBasis],
-    ["Automation", "Campaigns, segments, forms", capabilityLabel(competitor.automation)],
+    [
+      "Automation",
+      "Marketing Autopilot: watch a promotions page → draft → you approve (plus campaigns, segments, forms)",
+      capabilityLabel(competitor.automation),
+    ],
     ["CRM", "Not a CRM suite", capabilityLabel(competitor.crm)],
     ["Ecommerce", "Not ecommerce-specialized", capabilityLabel(competitor.ecommerce)],
     [

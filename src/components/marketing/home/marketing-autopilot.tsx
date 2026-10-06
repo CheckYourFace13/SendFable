@@ -2,30 +2,28 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const STEPS = [
+  { n: "1", title: "Collect", body: "Customer joins your list." },
+  { n: "2", title: "Watch", body: "SendFable watches your marketing page." },
+  { n: "3", title: "Draft", body: "A ready-to-send campaign is created." },
+  { n: "4", title: "Approve", body: "You approve, edit, or skip it." },
+  { n: "5", title: "Send", body: "Nothing goes out until you say so." },
+];
+
+const SHOTS = [
   {
-    n: "1",
-    title: "Collect",
-    body: "Customer joins your list.",
+    webp: "/product/autopilot-detected.webp",
+    alt: "Website change detected: New Fall Special",
+    label: "1 · Detected",
   },
   {
-    n: "2",
-    title: "Watch",
-    body: "SendFable watches your marketing page.",
+    webp: "/product/autopilot-draft.webp",
+    alt: "Generated campaign draft ready to review",
+    label: "2 · Drafted",
   },
   {
-    n: "3",
-    title: "Draft",
-    body: "A ready-to-send campaign is created.",
-  },
-  {
-    n: "4",
-    title: "Approve",
-    body: "You approve, edit, or skip it.",
-  },
-  {
-    n: "5",
-    title: "Send",
-    body: "Nothing goes out until you say so.",
+    webp: "/product/autopilot-approval-confirm.webp",
+    alt: "Owner confirmation page before send",
+    label: "3 · You approve",
   },
 ];
 
@@ -49,37 +47,41 @@ export function MarketingAutopilotHome() {
             Your website changes.
             <br />
             SendFable turns it into a campaign.
+            <br />
+            You approve it.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-charcoal/75 sm:text-lg">
-            Point SendFable at the page where you post specials, events, products, or news. When
-            something worth sharing changes, SendFable drafts the campaign and sends it to you for
-            approval.
+            Collect customers with SendFable forms, point SendFable at the page where you post
+            specials, events, products or news, and get a ready-to-send campaign when something
+            worth sharing changes.
+          </p>
+          <p className="mt-4 text-sm font-bold uppercase tracking-wider text-coral">
+            No approval. No send.
           </p>
         </div>
 
-        {/* Visual story */}
-        <div className="mx-auto mt-12 max-w-4xl">
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-stretch">
-            <VisualCard
-              label="Website page"
-              body="New Fall Special — $12 lunch plate, all week"
-            />
-            <Arrow />
-            <VisualCard
-              label="Email draft"
-              body="Subject: New Fall Special this week"
-              accent
-            />
-            <Arrow />
-            <VisualCard
-              label="You approve"
-              body="Approve & send · Edit · Don't send"
-              approve
-            />
-          </div>
-          <p className="mt-4 text-center text-sm font-medium text-ink/70">
-            New Fall Special detected → campaign ready → customers only after you approve
-          </p>
+        <div className="mx-auto mt-12 grid max-w-5xl gap-4 md:grid-cols-3">
+          {SHOTS.map((s) => (
+            <figure
+              key={s.label}
+              className="overflow-hidden rounded-xl border border-ink/10 bg-white shadow-sm"
+            >
+              <div className="border-b border-ink/8 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-ink/50">
+                {s.label}
+              </div>
+              <picture>
+                <source srcSet={s.webp} type="image/webp" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/product/autopilot-flow.svg"
+                  alt={s.alt}
+                  width={640}
+                  height={420}
+                  className="h-auto w-full object-cover object-top"
+                />
+              </picture>
+            </figure>
+          ))}
         </div>
 
         <ol className="mx-auto mt-14 grid max-w-4xl gap-4 sm:grid-cols-5">
@@ -99,65 +101,10 @@ export function MarketingAutopilotHome() {
             <Link href="/signup">Start free</Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="border-ink/15">
-            <Link href="/automated-email-marketing">See how Marketing Autopilot works</Link>
+            <Link href="/automated-email-marketing">See Marketing Autopilot</Link>
           </Button>
         </div>
-
-        <p className="mt-6 text-center text-xs font-semibold uppercase tracking-wider text-ink/45">
-          No approval. No send.
-        </p>
       </div>
     </section>
-  );
-}
-
-function Arrow() {
-  return (
-    <div
-      className="hidden items-center justify-center text-2xl text-ink/30 sm:flex"
-      aria-hidden
-    >
-      →
-    </div>
-  );
-}
-
-function VisualCard({
-  label,
-  body,
-  accent,
-  approve,
-}: {
-  label: string;
-  body: string;
-  accent?: boolean;
-  approve?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-xl border p-4 shadow-sm ${
-        accent
-          ? "border-coral/30 bg-white"
-          : approve
-            ? "border-emerald-200 bg-emerald-50/50"
-            : "border-ink/10 bg-white/90"
-      }`}
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-ink/50">{label}</p>
-      <p className="mt-2 text-sm font-medium text-ink">{body}</p>
-      {approve && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className="rounded bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-            Approve & send
-          </span>
-          <span className="rounded bg-indigo-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-            Edit
-          </span>
-          <span className="rounded bg-slate-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-            Don&apos;t send
-          </span>
-        </div>
-      )}
-    </div>
   );
 }
