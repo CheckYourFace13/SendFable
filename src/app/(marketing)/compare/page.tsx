@@ -35,7 +35,11 @@ export default function CompareHubPage() {
       </h1>
       <p className="mt-4 text-lg text-ink/70">
         {SENDFABLE_FACTS.positioning} We say where competitors are stronger — and where SendFable may
-        be the better fit.
+        be the better fit. Differentiator:{" "}
+        <Link className="text-coral hover:underline" href="/automated-email-marketing">
+          Marketing Autopilot
+        </Link>{" "}
+        turns website updates into approval-gated campaigns.
       </p>
       <p className="mt-3 text-sm text-ink/55">{COMPARISON_DISCLAIMER}</p>
 

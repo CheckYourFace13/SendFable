@@ -60,6 +60,10 @@ export default function MailchimpAlternativePage() {
             {mc.sendfableStronger.map((s) => (
               <li key={s}>{s}</li>
             ))}
+            <li>
+              Marketing Autopilot — your website changes, SendFable drafts the campaign, you approve
+              it (no approval, no send)
+            </li>
             <li>Any-email signup and sender verification</li>
             <li>From-rewrite for strict DMARC providers with Reply-To preserved</li>
             <li>Send Confidence checks, suppression, and one-click unsubscribe</li>
@@ -88,7 +92,15 @@ export default function MailchimpAlternativePage() {
         </div>
       </section>
 
-      <ul className="mt-10 list-disc space-y-2 pl-5 text-sm text-slate-700">
+      <p className="mt-10 text-sm text-slate-700">
+        Want marketing that mostly writes itself?{" "}
+        <Link className="text-coral hover:underline" href="/automated-email-marketing">
+          See Marketing Autopilot
+        </Link>{" "}
+        — website changes become a campaign draft you approve before anything sends.
+      </p>
+
+      <ul className="mt-6 list-disc space-y-2 pl-5 text-sm text-slate-700">
         <li>
           <Link className="text-coral hover:underline" href="/mailchimp-pricing-alternative">
             Mailchimp pricing alternative
