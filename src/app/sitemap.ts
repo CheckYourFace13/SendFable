@@ -62,6 +62,7 @@ export const SITEMAP_PATHS = [
   "/alternatives/mailchimp",
   "/vs/mailchimp",
   "/compare",
+  "/automated-email-marketing",
   "/solutions/restaurants",
   "/solutions/breweries",
   "/solutions/real-estate",

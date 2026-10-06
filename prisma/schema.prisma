@@ -66,6 +66,24 @@ enum SuppressionReason {
   MANUAL
 }
 
+/// Marketing Autopilot — website page watch → draft → owner approval → send
+enum AutopilotCheckFrequency {
+  DAILY
+  TWICE_DAILY
+  WEEKLY
+}
+
+enum AutopilotDraftStatus {
+  DETECTED
+  DRAFTED
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
+  EDITING
+  SENT
+  EXPIRED
+}
+
 // ─── SMS enums (Text Messaging product — flag-gated, not publicly launched) ──
 
 enum CampaignChannel {
@@ -315,6 +333,10 @@ model Workspace {
   smsSuppressions       SmsSuppression[]
   smsConsentEvents      SmsConsentEvent[]
   smsImportBatches      ContactImportBatch[]
+
+  /// Marketing Autopilot (website → campaign draft → owner approval)
+  marketingAutopilotConfig MarketingAutopilotConfig?
+  marketingAutopilotDrafts MarketingAutopilotDraft[]
 }
 
 model Membership {
@@ -573,6 +595,7 @@ model Campaign {
   links          CampaignLink[]
   smsRecipients  SmsRecipient[]
   smsMessages    SmsMessage[]
+  autopilotDraft MarketingAutopilotDraft?
 
   @@index([workspaceId, status])
 }
@@ -1416,6 +1439,89 @@ model AcquisitionSuppression {
 
   @@index([domain])
   @@index([reason, createdAt])
+}
+
+// ─── Marketing Autopilot ────────────────────────────────────────────────────
+
+/// Per-workspace page watcher config (one watched page in v1).
+model MarketingAutopilotConfig {
+  id          String                  @id @default(cuid())
+  workspaceId String                  @unique
+  enabled     Boolean                 @default(false)
+  pageUrl     String
+  /// "all" | "tags" | "segment"
+  audienceType      String  @default("all")
+  audienceTagIds    Json    @default("[]")
+  audienceSegmentId String?
+  checkFrequency    AutopilotCheckFrequency @default(DAILY)
+  remindersEnabled  Boolean @default(true)
+  /// EMAIL only in v1; TEXT/BOTH require explicit future enable
+  channel           String  @default("EMAIL")
+
+  lastFetchedAt       DateTime?
+  lastContentHash     String?
+  lastContentText     String?   @db.Text
+  lastMeaningfulHash  String?
+
+  fetchCount              Int    @default(0)
+  meaningfulChangeCount   Int    @default(0)
+  generationCount         Int    @default(0)
+  estimatedCostMicros     BigInt @default(0)
+
+  pausedAt  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  drafts    MarketingAutopilotDraft[]
+
+  @@index([enabled, pausedAt, lastFetchedAt])
+}
+
+/// Draft generated from a watched-page change; send only after owner approval.
+model MarketingAutopilotDraft {
+  id          String               @id @default(cuid())
+  workspaceId String
+  configId    String
+  campaignId  String?              @unique
+
+  status AutopilotDraftStatus @default(DETECTED)
+
+  sourceUrl         String
+  changeFingerprint String
+  changeSummary     String  @db.Text
+  changedContent    String? @db.Text
+  detectedAt        DateTime @default(now())
+
+  subject      String?
+  preheader    String?
+  ctaLabel     String?
+  ctaHref      String?
+  goal         String?
+  templateSlug String?
+  explanation  String? @db.Text
+
+  approvalTokenVersion Int       @default(1)
+  approvalEmailSentAt  DateTime?
+  reminderSentAt       DateTime?
+  expiresAt            DateTime?
+  decidedAt            DateTime?
+  decidedAction        String?
+
+  generationCostMicros BigInt  @default(0)
+  generationModel      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  config    MarketingAutopilotConfig  @relation(fields: [configId], references: [id], onDelete: Cascade)
+  campaign  Campaign?                 @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, changeFingerprint])
+  @@index([workspaceId, status])
+  @@index([status, expiresAt])
+  @@index([configId, status])
 }
 
 /// Singleton pipeline control row (id = "default").

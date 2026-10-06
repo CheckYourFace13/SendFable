@@ -1,6 +1,7 @@
 import { Hero } from "@/components/marketing/home/hero";
 import { ChannelTrio } from "@/components/marketing/home/channel-trio";
 import { ThreeSteps } from "@/components/marketing/home/three-steps";
+import { MarketingAutopilotHome } from "@/components/marketing/home/marketing-autopilot";
 import { GoalPicker } from "@/components/marketing/home/goal-picker";
 import { BuilderShowcase } from "@/components/marketing/home/builder-showcase";
 import { Simplicity } from "@/components/marketing/home/simplicity";
@@ -26,6 +27,7 @@ export default function HomePage() {
       <Hero />
       <ChannelTrio />
       <ThreeSteps />
+      <MarketingAutopilotHome />
       <GoalPicker />
       <BuilderShowcase />
       <Simplicity />

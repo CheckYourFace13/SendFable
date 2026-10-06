@@ -41,6 +41,11 @@ const PRODUCT_LINKS: NavLink[] = [
     description: "Hosted signup forms with double opt-in.",
   },
   {
+    href: "/automated-email-marketing",
+    label: "Marketing Autopilot",
+    description: "Website changes become campaign drafts you approve.",
+  },
+  {
     href: "/features#analytics",
     label: "Analytics",
     description: "Opens, clicks, bounces, and list health.",

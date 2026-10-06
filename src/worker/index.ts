@@ -186,3 +186,26 @@ setInterval(async () => {
     console.error("[worker] acquisition tick error", err);
   }
 }, 60_000);
+
+// Marketing Autopilot tick — page watch → draft → approval email (never auto-sends)
+setInterval(async () => {
+  try {
+    const { runAutopilotTick } = await import("@/lib/autopilot/tick");
+    const result = await runAutopilotTick();
+    if (!result.ran) return;
+    const interesting = result.actions.some(
+      (a) =>
+        a.startsWith("drafted:") ||
+        a.startsWith("change:") ||
+        a.startsWith("approval_email") ||
+        a.startsWith("expired:") ||
+        a.startsWith("reminders:") ||
+        a.startsWith("err:")
+    );
+    if (interesting || process.env.WORKER_VERBOSE) {
+      console.log("[worker] autopilot tick", result.actions.join(",") || "ok");
+    }
+  } catch (err) {
+    console.error("[worker] autopilot tick error", err);
+  }
+}, 60_000);

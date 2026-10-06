@@ -7,6 +7,7 @@ import { PLANS } from "@/lib/plans";
 import { ensureSendCountReset } from "@/lib/quota";
 import { formatNumber } from "@/lib/utils";
 import { DashboardCharts } from "./dashboard-charts";
+import { AutopilotDashboardCard } from "./autopilot-card";
 import { UsageUpgradeBanner } from "@/components/app/usage-upgrade-banner";
 import { FirstSendFeedback } from "@/components/app/first-send-feedback";
 
@@ -166,6 +167,7 @@ export default async function DashboardPage() {
         surface="dashboard"
       />
       <FirstSendFeedback show={completedCount === 1} />
+      <AutopilotDashboardCard workspaceId={workspace.id} />
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Home</h1>

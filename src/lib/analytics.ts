@@ -74,6 +74,21 @@ export const ANALYTICS_EVENTS = [
   "referral_attributed",
   "referral_badge_click",
   "feedback_submitted",
+  // Marketing Autopilot
+  "autopilot_page_view",
+  "autopilot_setup_start",
+  "autopilot_enabled",
+  "autopilot_page_checked",
+  "autopilot_change_detected",
+  "autopilot_draft_created",
+  "autopilot_approval_email_sent",
+  "autopilot_approved",
+  "autopilot_rejected",
+  "autopilot_edit_clicked",
+  "autopilot_campaign_sent",
+  "autopilot_campaign_result",
+  "autopilot_signup",
+  "autopilot_paid",
 ] as const;
 
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];

@@ -52,6 +52,21 @@ function TextMessagingSettingsLink() {
   );
 }
 
+function MarketingAutopilotSettingsLink() {
+  return (
+    <div className="mt-6 max-w-2xl rounded-xl border p-4 text-sm">
+      <p className="font-medium">Marketing Autopilot</p>
+      <p className="mt-1 text-muted-foreground">
+        Watch a marketing page. When it changes, SendFable drafts a campaign — you approve before
+        anything sends.
+      </p>
+      <Link className="mt-2 inline-block underline" href="/settings/marketing-autopilot">
+        Set up Marketing Autopilot
+      </Link>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -152,6 +167,7 @@ export default function SettingsPage() {
       <PageHeader title="Settings" description="Workspace, team, and danger zone." />
 
       <TextMessagingSettingsLink />
+      <MarketingAutopilotSettingsLink />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Button asChild variant="outline" size="sm">

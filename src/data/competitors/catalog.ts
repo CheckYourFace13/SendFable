@@ -51,6 +51,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Simpler small-business workflow",
       "Transparent lower list pricing at many practical tiers",
       "Managed SES delivery without suite lock-in",
+      "Marketing Autopilot: watch a promotions page → draft a campaign → you approve before send (no complex journey builder required)",
     ],
     competitorStronger: [
       "Integration marketplace",
@@ -58,7 +59,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Ecommerce and agency familiarity",
     ],
     shortAnswer:
-      "Choose SendFable when you want simple campaigns and clear pricing. Choose Mailchimp when you need a broad marketing suite, deep automations, or a large integration ecosystem.",
+      "Choose SendFable when you want simple campaigns, clear pricing, and website-to-campaign drafts you approve. Choose Mailchimp when you need a broad marketing suite, deep automations, or a large integration ecosystem.",
     whoSendfableIsFor:
       "Local and small businesses that need contacts, polished campaigns, forms, and managed delivery without buying a CRM/ecommerce suite.",
     whoCompetitorIsFor:
@@ -158,10 +159,15 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     supportSummary: "Help center and email support; higher plans improve response priority.",
     bestFor: ["Budget-conscious marketers who still want polished builders"],
     potentialDrawbacks: ["Less CRM depth than suites", "Feature set still broader than ultra-simple tools"],
-    sendfableStronger: ["Managed SES positioning", "Very clear small-business Free→Pro Plus ladder", "Any-email signup focus"],
+    sendfableStronger: [
+      "Managed SES positioning",
+      "Very clear small-business Free→Pro Plus ladder",
+      "Any-email signup focus",
+      "Marketing Autopilot: page changes → campaign draft → owner approval (simpler than journey builders)",
+    ],
     competitorStronger: ["Established builder polish", "Automation depth for the price", "Larger existing user community"],
     shortAnswer:
-      "MailerLite is a strong affordable established option. SendFable may fit when you want a simpler campaign-first product with managed SES delivery and transparent US-dollar plan caps.",
+      "MailerLite is a strong affordable established option. SendFable may fit when you want a simpler campaign-first product with managed SES delivery, transparent US-dollar plan caps, and website-to-campaign drafts you approve.",
     whoSendfableIsFor: "Owners who want a minimal campaign workflow and clear contact/email caps.",
     whoCompetitorIsFor: "Marketers who want MailerLite’s builder and automations at competitive subscriber pricing.",
     deliverabilityNote: "Both emphasize permission-based sending. SendFable documents SES-based delivery and sender handling explicitly.",
@@ -204,10 +210,15 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     supportSummary: "Help center; paid plans improve support.",
     bestFor: ["High-volume senders optimizing cost by emails/month", "Teams needing email + SMS in one vendor"],
     potentialDrawbacks: ["Send-based pricing can surprise burst campaigns", "Interface can feel denser than simple tools"],
-    sendfableStronger: ["Predictable contact-tier pricing", "Simpler small-business UX", "Campaign-first focus"],
+    sendfableStronger: [
+      "Predictable contact-tier pricing",
+      "Simpler small-business UX",
+      "Campaign-first focus",
+      "Marketing Autopilot watches your promotions page and prepares campaigns for approval",
+    ],
     competitorStronger: ["Volume-based pricing", "SMS + multi-channel in-product", "Transactional email heritage"],
     shortAnswer:
-      "Brevo often wins on send-volume economics and multi-channel. SendFable may win when you prefer simple contact-tier pricing and a lighter campaign product.",
+      "Brevo often wins on send-volume economics and multi-channel. SendFable may win when you prefer simple contact-tier pricing, a lighter campaign product, and approval-gated website-to-email drafts.",
     whoSendfableIsFor: "Businesses that think in contacts and monthly campaign volume with clear caps.",
     whoCompetitorIsFor: "Teams sending high email volume or wanting Brevo’s SMS/multi-channel stack.",
     deliverabilityNote: "Brevo operates its own delivery stack. SendFable uses managed SES.",
@@ -250,10 +261,14 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     supportSummary: "Ecommerce-oriented support and docs.",
     bestFor: ["Online stores needing email + SMS ecommerce automation"],
     potentialDrawbacks: ["Overkill for non-ecommerce local businesses"],
-    sendfableStronger: ["Simpler non-store workflows", "Clear pricing without ecommerce suite assumptions"],
+    sendfableStronger: [
+      "Simpler non-store workflows",
+      "Clear pricing without ecommerce suite assumptions",
+      "Marketing Autopilot prepares campaigns from website updates with mandatory owner approval",
+    ],
     competitorStronger: ["Ecommerce automations", "Product/catalog sync", "SMS for stores"],
     shortAnswer:
-      "Omnisend is usually better for ecommerce. SendFable is usually better for local and service businesses that do not need a store marketing suite.",
+      "Omnisend is usually better for ecommerce. SendFable is usually better for local and service businesses that do not need a store marketing suite, plus simple website-to-campaign drafts you approve.",
     whoSendfableIsFor: "Restaurants, services, nonprofits, and local shops without a full ecommerce stack.",
     whoCompetitorIsFor: "Shopify/WooCommerce merchants optimizing abandoned cart and product flows.",
     deliverabilityNote: "Omnisend specializes in ecommerce deliverability practices; SendFable emphasizes SES + list hygiene for general SMB campaigns.",
@@ -386,10 +401,14 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     supportSummary: "Strong docs; higher plans improve support SLAs.",
     bestFor: ["Advanced automation and CRM-style pipelines"],
     potentialDrawbacks: ["Steeper learning curve and cost for simple newsletters"],
-    sendfableStronger: ["Ease of use", "Lower complexity and price for basic campaigns"],
+    sendfableStronger: [
+      "Ease of use",
+      "Lower complexity and price for basic campaigns",
+      "Marketing Autopilot: website updates become drafts you approve — not a multi-step journey builder",
+    ],
     competitorStronger: ["Automation", "CRM", "Conditional journeys"],
     shortAnswer:
-      "ActiveCampaign is usually better for advanced automation/CRM. SendFable is usually better when you only need straightforward email marketing.",
+      "ActiveCampaign is usually better for advanced automation/CRM. SendFable is usually better when you only need straightforward email marketing plus simple website-to-campaign drafts with owner approval.",
     whoSendfableIsFor: "Small businesses sending campaigns without building complex pipelines.",
     whoCompetitorIsFor: "Teams running multi-step automations and CRM processes.",
     deliverabilityNote: "ActiveCampaign is a mature ESP/CRM; SendFable emphasizes managed SES for SMB campaigns.",
@@ -566,10 +585,13 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     supportSummary: "Strong on paid hubs.",
     bestFor: ["Companies building around CRM + inbound suite"],
     potentialDrawbacks: ["Cost and complexity for simple newsletters"],
-    sendfableStronger: ["Price and simplicity for email-only needs"],
+    sendfableStronger: [
+      "Price and simplicity for email-only needs",
+      "Marketing Autopilot turns marketing-page updates into approval-gated campaign drafts",
+    ],
     competitorStronger: ["CRM", "Attribution", "Enterprise marketing ops"],
     shortAnswer:
-      "HubSpot is the better CRM/marketing suite. SendFable is the better fit when you only need affordable email campaigns.",
+      "HubSpot is the better CRM/marketing suite. SendFable is the better fit when you only need affordable email campaigns and simple website-to-email drafts you control.",
     whoSendfableIsFor: "Small businesses that do not need HubSpot’s CRM suite.",
     whoCompetitorIsFor: "Teams standardizing on HubSpot CRM and inbound.",
     deliverabilityNote: "HubSpot is a full marketing platform; SendFable is SES-backed email marketing.",
@@ -839,10 +861,14 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     supportSummary: "Phone support reputation for SMB.",
     bestFor: ["Local businesses wanting phone-assisted ESP"],
     potentialDrawbacks: ["Can be pricier than lean tools"],
-    sendfableStronger: ["Lower simple pricing at many tiers", "Modern self-serve simplicity"],
+    sendfableStronger: [
+      "Lower simple pricing at many tiers",
+      "Modern self-serve simplicity",
+      "Marketing Autopilot: watch specials/events pages → draft → you approve before send",
+    ],
     competitorStronger: ["Phone support familiarity", "Event tools add-ons"],
     shortAnswer:
-      "Constant Contact is familiar to many local businesses and offers assisted support. SendFable may fit when you want clearer DIY pricing and a lighter product.",
+      "Constant Contact is familiar to many local businesses and offers assisted support. SendFable may fit when you want clearer DIY pricing, a lighter product, and approval-gated website-to-campaign drafts.",
     whoSendfableIsFor: "Self-serve small businesses comfortable online.",
     whoCompetitorIsFor: "Owners who value Constant Contact’s support and brand familiarity.",
     deliverabilityNote: "Both require permission-based lists.",
@@ -889,6 +915,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Simpler SMB campaign workflow",
       "Transparent published caps",
       "Lower complexity for non-ecommerce",
+      "Marketing Autopilot: promotions-page watch → draft → owner approval (not a full CDP journey suite)",
     ],
     competitorStronger: [
       "Ecommerce CDP depth",
