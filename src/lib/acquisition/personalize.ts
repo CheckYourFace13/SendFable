@@ -38,7 +38,7 @@ export function nextCopyVersion(current: string): CopyVersionId {
   return COPY_VERSIONS[Math.min(idx + 1, COPY_VERSIONS.length - 1)]!;
 }
 
-function greeting(firstName?: string | null, businessName?: string): string {
+function greeting(firstName?: string | null, businessName?: string | null): string {
   const n = (firstName || "").trim();
   if (n && /^[A-Za-z][A-Za-z.'-]{0,39}$/.test(n)) return `Hi ${n},`;
   const biz = (businessName || "").trim();
