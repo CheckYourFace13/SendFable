@@ -59,8 +59,8 @@ test.describe("Marketing Autopilot certification surfaces", () => {
 
   test("approval review GET does not imply send (missing token)", async ({ page }) => {
     await page.goto("/autopilot/review");
-    await expect(page.getByText(/Link missing|Unable to continue|Open the button/i)).toBeVisible();
-    await expect(page.getByText(/does not send/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Link missing/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Approve|send now/i })).toHaveCount(0);
   });
 
   test("capture product screenshots", async ({ page }) => {
