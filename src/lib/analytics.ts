@@ -73,6 +73,11 @@ export const ANALYTICS_EVENTS = [
   "subscription_cancelled",
   "referral_attributed",
   "referral_badge_click",
+  "free_footer_impression",
+  "free_footer_click",
+  "free_footer_signup",
+  "free_footer_verified_signup",
+  "free_footer_paid",
   "feedback_submitted",
   // Marketing Autopilot
   "autopilot_page_view",

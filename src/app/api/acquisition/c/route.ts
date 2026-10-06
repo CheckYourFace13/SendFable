@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("t");
-  const fallback = appUrl("/email-marketing-for-small-business?utm_source=casey&utm_medium=email&utm_campaign=acquisition");
+  const fallback = appUrl("/automated-email-marketing?utm_source=casey&utm_medium=email&utm_campaign=acquisition");
 
   if (!token) return NextResponse.redirect(fallback, 302);
 
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     (payload.path && payload.path.startsWith("/") ? payload.path : null) ||
     msg?.ctaPath ||
     msg?.prospect.landingPagePath ||
-    "/email-marketing-for-small-business";
+    "/automated-email-marketing";
 
   const version = payload.v || msg?.copyVersion || "v1a";
   const targetRaw = appUrl(

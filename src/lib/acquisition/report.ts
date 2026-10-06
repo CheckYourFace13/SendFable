@@ -17,12 +17,95 @@ import {
 import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { prisma } from "@/lib/prisma";
 
-function startOfUtcDay(d = new Date()): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+const REPORT_TZ = "America/Chicago";
+/** Send the daily report after the Chicago send window has had time to run. */
+const REPORT_AFTER_HOUR_CHICAGO = 16;
+
+function chicagoParts(d: Date): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  dateKey: string;
+} {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: REPORT_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = Object.fromEntries(
+    fmt.formatToParts(d).filter((p) => p.type !== "literal").map((p) => [p.type, p.value])
+  ) as Record<string, string>;
+  const year = Number(parts.year);
+  const month = Number(parts.month);
+  const day = Number(parts.day);
+  let hour = Number(parts.hour);
+  if (hour === 24) hour = 0;
+  const minute = Number(parts.minute);
+  return {
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    dateKey: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+  };
+}
+
+/** Start of the America/Chicago calendar day containing `d`, as a UTC Date. */
+export function startOfChicagoDay(d = new Date()): Date {
+  const target = chicagoParts(d).dateKey;
+  // Chicago is UTC−5/−6 — search a 36h window around the nominal UTC date.
+  const [y, m, day] = target.split("-").map(Number) as [number, number, number];
+  let lo = Date.UTC(y, m - 1, day) - 18 * 3600_000;
+  let hi = Date.UTC(y, m - 1, day) + 18 * 3600_000;
+  while (hi - lo > 30_000) {
+    const mid = Math.floor((lo + hi) / 2);
+    const p = chicagoParts(new Date(mid));
+    if (p.dateKey < target || (p.dateKey === target && (p.hour > 0 || p.minute > 0))) {
+      // mid is still on/after the target day's first minute — go earlier if past midnight
+      if (p.dateKey > target) hi = mid;
+      else if (p.dateKey < target) lo = mid;
+      else hi = mid; // same day but past 00:00
+    } else if (p.dateKey === target && p.hour === 0 && p.minute === 0) {
+      // Found midnight region — tighten to earliest
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  // Advance to first instant of the Chicago day
+  let t = lo;
+  while (chicagoParts(new Date(t)).dateKey < target) t += 30_000;
+  // Snap back to exact :00 if we overshot into minutes
+  while (
+    chicagoParts(new Date(t)).dateKey === target &&
+    (chicagoParts(new Date(t)).hour > 0 || chicagoParts(new Date(t)).minute > 0)
+  ) {
+    t -= 30_000;
+  }
+  while (chicagoParts(new Date(t)).dateKey < target) t += 1000;
+  const out = new Date(t);
+  out.setUTCMilliseconds(0);
+  return out;
+}
+
+function chicagoDateKey(d: Date): string {
+  return chicagoParts(d).dateKey;
+}
+
+export function isPastChicagoReportHour(now = new Date()): boolean {
+  return chicagoParts(now).hour >= REPORT_AFTER_HOUR_CHICAGO;
 }
 
 export async function buildDailyAcquisitionReport(now = new Date()): Promise<string> {
-  const since = startOfUtcDay(now);
+  const since = startOfChicagoDay(now);
+  const dayKey = chicagoDateKey(now);
 
   const discovered = await prisma.acquisitionEvent.count({
     where: { type: "discovered", createdAt: { gte: since } },
@@ -49,6 +132,9 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
   const delivered = await prisma.acquisitionMessage.count({
     where: { dryRun: false, deliveredAt: { gte: since } },
   });
+  const clicks = await prisma.acquisitionMessage.count({
+    where: { dryRun: false, clickedAt: { gte: since } },
+  });
   const replies = await prisma.acquisitionEvent.count({
     where: { type: "reply", createdAt: { gte: since } },
   });
@@ -74,6 +160,21 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
   const paid = await prisma.acquisitionProspect.count({
     where: { paidAt: { gte: since } },
   });
+  const autopilotEventRows = await prisma.acquisitionEvent.findMany({
+    where: {
+      type: { in: ["clicked", "site_visit"] },
+      createdAt: { gte: since },
+    },
+    select: { meta: true },
+    take: 500,
+  });
+  const autopilotClicks = autopilotEventRows.filter((e) => {
+    const m = e.meta as { path?: string; ctaPath?: string } | null;
+    return (
+      m?.path === "/automated-email-marketing" ||
+      m?.ctaPath === "/automated-email-marketing"
+    );
+  }).length;
 
   const paused = await isPipelinePaused();
   const top = await prisma.acquisitionProspect.findFirst({
@@ -82,20 +183,35 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     select: { businessName: true, city: true, score: true },
   });
 
+  const stageCaps = await getStageCaps();
+  const { getInventoryHealth } = await import("@/lib/acquisition/discovery/inventory");
+  const inventory = await getInventoryHealth();
+  const { getConversionOptimizationSnapshot } = await import(
+    "@/lib/acquisition/conversion-optimize"
+  );
+  const conversion = await getConversionOptimizationSnapshot().catch(() => null);
+  const abWinner =
+    (conversion as { activeCopyVersion?: string; abTest?: { enabled?: boolean } } | null)
+      ?.activeCopyVersion || "v1a/v1b Autopilot A/B";
+
   const dateLabel = now.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
+    year: "numeric",
+    timeZone: REPORT_TZ,
   });
 
   return [
-    `SendFable Acquisition — ${dateLabel}`,
+    `SendFable Acquisition — ${dateLabel} (America/Chicago day)`,
+    `Reporting period: ${dayKey} 00:00 → report time, America/Chicago`,
     "",
     `Discovered: ${discovered}`,
     `Qualified: ${qualified}`,
     `New outreach: ${sentNew}`,
     `Follow-ups: ${followUps}`,
+    `Sent (new+fu): ${sentNew + followUps}`,
     `Delivered: ${delivered}`,
+    `Clicks: ${clicks}`,
     `Replies: ${replies}`,
     `Positive: ${positive}`,
     `Unsubscribed: ${unsubs}`,
@@ -103,7 +219,13 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     `Signups: ${signups}`,
     `First sends: ${firstSends}`,
     `Paid: ${paid}`,
+    `Autopilot CTA results (clicks/visits): ${autopilotClicks}`,
     "",
+    `Current A/B: ${abWinner}`,
+    `Current stage: ${stageCaps.stage}`,
+    `Daily new cap: ${stageCaps.newPerDay}`,
+    `Daily total cap: ${stageCaps.totalPerDay}`,
+    `Inventory (sendable): ${inventory.sendableInventory}`,
     `Pipeline paused: ${paused.paused ? `YES (${paused.reason || "—"})` : "NO"}`,
     top
       ? `Top prospect: ${top.businessName}${top.city ? ` (${top.city})` : ""} · score ${top.score}`
@@ -117,13 +239,15 @@ export async function sendDailyAcquisitionReportIfDue(): Promise<{
 }> {
   const control = await ensurePipelineControl();
   const now = new Date();
+
+  if (!isPastChicagoReportHour(now)) {
+    return { sent: false, reason: "before_chicago_16h" };
+  }
+
+  const todayKey = chicagoDateKey(now);
   if (control.lastDailyReportAt) {
-    const last = control.lastDailyReportAt;
-    if (
-      last.getUTCFullYear() === now.getUTCFullYear() &&
-      last.getUTCMonth() === now.getUTCMonth() &&
-      last.getUTCDate() === now.getUTCDate()
-    ) {
+    const lastKey = chicagoDateKey(control.lastDailyReportAt);
+    if (lastKey === todayKey) {
       return { sent: false, reason: "already_sent_today" };
     }
   }
@@ -135,7 +259,7 @@ export async function sendDailyAcquisitionReportIfDue(): Promise<{
   await sendEmail({
     from: platformFrom("SendFable Acquisition"),
     to,
-    subject: `SendFable Acquisition — ${now.toISOString().slice(0, 10)}`,
+    subject: `SendFable Acquisition — ${todayKey} (Chicago day)`,
     text: body,
     html: `<pre style="font-family:monospace;font-size:13px;">${body.replace(/</g, "&lt;")}</pre>`,
     tags: { kind: "acquisition_report" },
@@ -150,7 +274,7 @@ export async function sendDailyAcquisitionReportIfDue(): Promise<{
 }
 
 export async function getAcquisitionDashboard() {
-  const since = startOfUtcDay();
+  const since = startOfChicagoDay();
   const flags = reportAcquisitionFlags();
   const paused = await isPipelinePaused();
 

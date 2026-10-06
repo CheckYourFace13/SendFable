@@ -123,8 +123,12 @@ export async function POST(req: Request) {
     trackEvent("workspace_created");
     const campaign = (parsed.data.utmCampaign || "").toLowerCase();
     const source = (parsed.data.utmSource || "").toLowerCase();
+    const medium = (parsed.data.utmMedium || "").toLowerCase();
     if (campaign.includes("autopilot") || source.includes("autopilot")) {
       trackEvent("autopilot_signup");
+    }
+    if (medium === "footer_badge" || campaign === "free_plan") {
+      trackEvent("free_footer_signup");
     }
   } catch {
     /* fail open */

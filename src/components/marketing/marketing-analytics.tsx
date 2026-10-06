@@ -123,6 +123,7 @@ export function MarketingAnalytics() {
       isReferralBadgeLanding(params)
     ) {
       trackClientEvent("referral_badge_click");
+      trackClientEvent("free_footer_click");
     }
     let event = "guide_view";
     if (pathname === "/") event = "homepage_view";

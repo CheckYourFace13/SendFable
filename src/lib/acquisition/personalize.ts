@@ -1,5 +1,5 @@
 /**
- * Controlled Casey copy versions — small A/B only, no wild rewrites.
+ * Controlled Casey copy versions — Autopilot pitch is primary.
  * Casey is the intentional SendFable outreach persona.
  */
 
@@ -19,11 +19,14 @@ export type BuiltOutreach = {
   opener: string;
 };
 
-/** Stable controlled variants. Only advance via cohort eval. */
+/** Stable controlled variants. v1a/v1b = Marketing Autopilot A/B. */
 export const COPY_VERSIONS = ["v1a", "v1b", "v2a"] as const;
 export type CopyVersionId = (typeof COPY_VERSIONS)[number];
 
 export const DEFAULT_COPY_VERSION: CopyVersionId = "v1a";
+
+/** Primary Casey landing for Autopilot acquisition. */
+export const ACQUISITION_AUTOPILOT_LANDING = "/automated-email-marketing";
 
 export function isCopyVersionId(v: string | null | undefined): v is CopyVersionId {
   return Boolean(v && (COPY_VERSIONS as readonly string[]).includes(v));
@@ -35,9 +38,11 @@ export function nextCopyVersion(current: string): CopyVersionId {
   return COPY_VERSIONS[Math.min(idx + 1, COPY_VERSIONS.length - 1)]!;
 }
 
-function greeting(firstName?: string | null): string {
+function greeting(firstName?: string | null, businessName?: string): string {
   const n = (firstName || "").trim();
   if (n && /^[A-Za-z][A-Za-z.'-]{0,39}$/.test(n)) return `Hi ${n},`;
+  const biz = (businessName || "").trim();
+  if (biz) return `Hi ${biz},`;
   return "Hi there,";
 }
 
@@ -45,36 +50,10 @@ function freePlanLine(): string {
   return `It's free for up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month — no credit card.`;
 }
 
-function variantBits(
-  version: CopyVersionId,
-  businessName: string
-): { subject: string; ask: string; helpLine: string } {
-  switch (version) {
-    case "v1b":
-      return {
-        subject: `A simpler email tool for ${businessName}?`,
-        ask: "Worth a quick look?",
-        helpLine: "If useful, I can help you get a first campaign out quickly.",
-      };
-    case "v2a":
-      return {
-        subject: `Quick question about ${businessName}`,
-        ask: "Would a simpler free plan be useful?",
-        helpLine: "Happy to help you send a first campaign if you want a hand.",
-      };
-    case "v1a":
-    default:
-      return {
-        subject: `Quick question about ${businessName}`,
-        ask: "Would you be open to taking a look?",
-        helpLine: "If useful, I can help you get a first campaign out quickly.",
-      };
-  }
-}
-
 /**
- * Build initial outreach. Claim/evidence/sourceUrl must be truthful and stored.
- * Does not invent owner names, providers, or metrics.
+ * Build initial outreach around Marketing Autopilot.
+ * Claim/evidence/sourceUrl remain stored for truthfulness / quality gate;
+ * the lead body is the Autopilot pitch (not the old SMB-tool angle).
  */
 export function buildInitialEmail(
   input: PersonalizationInput,
@@ -87,79 +66,127 @@ export function buildInitialEmail(
     landingPath?: string;
   }
 ): BuiltOutreach {
-  const opener = input.claim.trim();
-  if (!opener) throw new Error("personalization_claim_required");
+  if (!input.claim.trim()) throw new Error("personalization_claim_required");
   if (!input.evidence.trim()) throw new Error("personalization_evidence_required");
   if (!input.sourceUrl.trim()) throw new Error("personalization_source_required");
 
   const version = isCopyVersionId(opts.copyVersion)
     ? opts.copyVersion
     : DEFAULT_COPY_VERSION;
-  const bits = variantBits(version, input.businessName);
   const site = opts.siteUrl || "https://sendfable.com";
-  const path = opts.landingPath || "/email-marketing-for-small-business";
+  const path = opts.landingPath || ACQUISITION_AUTOPILOT_LANDING;
   const cta =
     opts.ctaUrl ||
     `${site}${path.startsWith("/") ? path : `/${path}`}?utm_source=casey&utm_medium=email&utm_campaign=acquisition&utm_content=${version}`;
 
+  const biz = input.businessName.trim() || "your business";
+  const opener = input.claim.trim();
+
+  if (version === "v1b") {
+    const subject = `What if ${biz}'s marketing mostly wrote itself?`;
+    const body = [
+      greeting(input.firstName, biz),
+      "",
+      "Website changes",
+      "→ campaign created",
+      "→ you approve it",
+      "→ customers get it",
+      "",
+      `That's Marketing Autopilot from SendFable. Point it at the page where ${biz} posts specials, events, products, or news. When something worth sharing changes, we draft the email and send it to you — send, edit, or skip. Nothing goes out unless you approve.`,
+      "",
+      "It also collects customers from your site and supports Email, Text, or Both.",
+      "",
+      "See how it works:",
+      cta,
+      "",
+      "— Casey",
+      "SendFable",
+      "",
+      freePlanLine(),
+      "",
+      `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
+    ].join("\n");
+    return { subject, bodyText: body, opener };
+  }
+
+  // v1a (default) and v2a — Autopilot conversational pitch
+  const subject =
+    version === "v2a"
+      ? `Could ${biz}'s website write your next email?`
+      : "Could your website write your marketing emails?";
+
   const body = [
-    greeting(input.firstName),
+    greeting(input.firstName, biz),
     "",
-    opener,
+    `I'm with SendFable. We just launched something I thought could be useful for ${biz}.`,
     "",
-    "I'm with SendFable — we built it for small businesses that want email marketing without the complexity and pricing creep of the bigger platforms.",
+    "Point SendFable at the page where you post specials, events, products, or news. When something worth sharing changes, SendFable creates the marketing email and sends it to you for approval.",
+    "",
+    "You can send it, edit it, or skip it. Nothing goes out unless you approve it.",
+    "",
+    "It can also collect customers from your website and handle Email, Text, or Both.",
+    "",
+    "See how it works:",
+    cta,
+    "",
+    "— Casey",
+    "SendFable",
     "",
     freePlanLine(),
-    "",
-    bits.helpLine,
-    "",
-    bits.ask,
-    "",
-    "Casey",
-    "SendFable",
-    cta,
     "",
     `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");
 
-  return { subject: bits.subject, bodyText: body, opener };
+  return { subject, bodyText: body, opener };
 }
 
 export function buildFollowUp1(
   input: { businessName: string; firstName?: string | null },
-  opts: { unsubUrl: string }
+  opts: {
+    unsubUrl: string;
+    siteUrl?: string;
+    ctaUrl?: string;
+    landingPath?: string;
+    copyVersion?: string;
+  }
 ): BuiltOutreach {
+  const site = opts.siteUrl || "https://sendfable.com";
+  const path = opts.landingPath || ACQUISITION_AUTOPILOT_LANDING;
+  const version = opts.copyVersion || DEFAULT_COPY_VERSION;
+  const cta =
+    opts.ctaUrl ||
+    `${site}${path.startsWith("/") ? path : `/${path}`}?utm_source=casey&utm_medium=email&utm_campaign=acquisition_fu1&utm_content=${version}`;
+
   const body = [
-    greeting(input.firstName),
+    greeting(input.firstName, input.businessName),
     "",
-    "Just following up in case this got buried.",
+    "Just wanted to make sure you saw this — SendFable can watch the page where you already post specials or updates and prepare the customer email for you. You still approve every send.",
     "",
-    "SendFable is free to try, and I'd be happy to help get your first campaign set up.",
+    "Quick look:",
+    cta,
     "",
-    `Would it be useful for ${input.businessName}?`,
-    "",
-    "Casey",
+    "— Casey",
     "",
     `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");
   return {
-    subject: `Re: Quick question about ${input.businessName}`,
+    subject: `Re: Could your website write your marketing emails?`,
     bodyText: body,
     opener: "follow_up_1",
   };
 }
 
 export function buildFollowUp2(
-  input: { firstName?: string | null },
+  input: { firstName?: string | null; businessName?: string | null },
   opts: { unsubUrl: string; siteUrl?: string }
 ): BuiltOutreach {
   const site = opts.siteUrl || "https://sendfable.com";
   const body = [
-    greeting(input.firstName),
+    greeting(input.firstName, input.businessName),
     "",
     "Last note from me.",
     "",
-    `If you ever want a simpler way to email customers, SendFable is at ${site.replace(/^https?:\/\//, "")}.`,
+    `If you ever want marketing that drafts itself from your website — and never sends without your approval — SendFable is at ${site.replace(/^https?:\/\//, "")}${ACQUISITION_AUTOPILOT_LANDING}.`,
     "",
     "Thanks,",
     "Casey",
@@ -167,7 +194,7 @@ export function buildFollowUp2(
     `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
   ].join("\n");
   return {
-    subject: "Last note — SendFable",
+    subject: "Last note — Marketing Autopilot",
     bodyText: body,
     opener: "follow_up_2",
   };

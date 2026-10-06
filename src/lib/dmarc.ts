@@ -4,6 +4,10 @@
  * infrastructure fails DMARC alignment and lands in spam — so Sendfable
  * rewrites the From to localpart@PLATFORM_SEND_DOMAIN and sets Reply-To to
  * the user's real, verified address.
+ *
+ * Custom domains that are NOT SES-verified for the workspace also fail DMARC
+ * when SES signs as the platform — those are rewritten at send time via
+ * `mustRewriteForSend` (see identities.ts).
  */
 export const STRICT_DMARC_PROVIDERS = new Set([
   "gmail.com",

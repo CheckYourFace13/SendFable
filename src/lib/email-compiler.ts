@@ -3,7 +3,7 @@
  * No external paid services — pure string compilation.
  */
 
-import { REFERRAL_BADGE_URL, REFERRAL_BADGE_LABEL_HTML } from "@/lib/referral-badge";
+import { REFERRAL_BADGE_URL, referralBadgeLabelHtml } from "@/lib/referral-badge";
 
 export type BlockType =
   | "heading"
@@ -38,6 +38,11 @@ export interface CompileOptions {
   businessName?: string | null;
   /** Physical mailing address from the sending workspace only. */
   mailingAddress?: string | null;
+  /**
+   * When the legal entity differs from the trade name, a restrained compliance
+   * line: "{businessName} is operated by {legalOperatorName}".
+   */
+  legalOperatorName?: string | null;
   unsubscribeUrl?: string;
   showSendfableBadge?: boolean;
   previewText?: string | null;
@@ -141,8 +146,15 @@ function blockFooter(props: Record<string, unknown>, opts: CompileOptions): stri
   const businessName = String(props.businessName ?? opts.businessName ?? "").trim();
   const address = String(props.mailingAddress ?? opts.mailingAddress ?? "").trim();
   const unsub = opts.unsubscribeUrl ?? "{{unsubscribe_url}}";
+  const legalOp = String(opts.legalOperatorName ?? "").trim();
+  const legalLine =
+    legalOp &&
+    businessName &&
+    legalOp.toLowerCase() !== businessName.toLowerCase()
+      ? `<div style="margin:8px 0;font-size:11px;color:#9ca3af;">${esc(businessName)} is operated by ${esc(legalOp)}</div>`
+      : "";
   const badge = opts.showSendfableBadge
-    ? `<div style="margin-top:12px;"><a href="${attr(REFERRAL_BADGE_URL)}" style="font-size:11px;color:#9ca3af;text-decoration:none;">${REFERRAL_BADGE_LABEL_HTML}</a></div>`
+    ? `<div style="margin-top:12px;"><a href="${attr(REFERRAL_BADGE_URL)}" style="font-size:11px;color:#9ca3af;text-decoration:none;">${referralBadgeLabelHtml()}</a></div>`
     : "";
   const identityLines = [
     businessName ? `<div style="margin-bottom:4px;font-weight:600;color:#6b7280;">${esc(businessName)}</div>` : "",
@@ -152,6 +164,7 @@ function blockFooter(props: Record<string, unknown>, opts: CompileOptions): stri
   ].join("");
   return `<tr><td style="padding:24px 32px;text-align:center;font-size:12px;line-height:1.5;color:#9ca3af;border-top:1px solid #e5e7eb;">
     ${identityLines}
+    ${legalLine}
     <div><a href="${attr(unsub)}" style="color:#6b7280;text-decoration:underline;">Unsubscribe</a></div>
     ${badge}
   </td></tr>`;

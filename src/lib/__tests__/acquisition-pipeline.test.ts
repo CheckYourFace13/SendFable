@@ -126,7 +126,7 @@ describe("acquisition scoring", () => {
 });
 
 describe("acquisition personalization + compliance", () => {
-  it("builds initial email with free plan from PLANS and unsubscribe", () => {
+  it("builds initial Autopilot email with free plan and unsubscribe", () => {
     const built = buildInitialEmail(
       {
         businessName: "Test Brewery",
@@ -136,11 +136,13 @@ describe("acquisition personalization + compliance", () => {
       },
       { unsubUrl: "https://sendfable.com/api/acquisition/unsubscribe?token=x" }
     );
-    assert.match(built.subject, /Test Brewery/);
+    assert.match(built.subject, /website write your marketing emails/i);
     assert.match(built.bodyText, new RegExp(String(PLANS.FREE.contactCap)));
     assert.match(built.bodyText, /unsubscribe|no thanks/i);
-    assert.match(built.bodyText, /email-marketing-for-small-business/);
+    assert.match(built.bodyText, /automated-email-marketing/);
     assert.match(built.bodyText, /I'm with SendFable/);
+    assert.match(built.bodyText, /Nothing goes out unless you approve/i);
+    assert.match(built.bodyText, /Email, Text, or Both/i);
     assert.match(built.bodyText, /\bCasey\b/);
     assert.doesNotMatch(built.bodyText, /I built SendFable/);
     assert.ok(bodyHasUnsubscribe(built.bodyText));
@@ -316,8 +318,10 @@ describe("acquisition continuous discovery (OSM)", () => {
       { unsubUrl: "https://sendfable.com/u", copyVersion: "v1b" }
     );
     assert.notEqual(a.subject, b.subject);
-    assert.match(a.bodyText, /taking a look/);
-    assert.match(b.bodyText, /Worth a quick look/);
+    assert.match(a.subject, /website write your marketing emails/i);
+    assert.match(b.subject, /marketing mostly wrote itself/i);
+    assert.match(a.bodyText, /Nothing goes out unless you approve/i);
+    assert.match(b.bodyText, /Website changes/);
     assert.match(a.bodyText, /\bCasey\b/);
     assert.doesNotMatch(a.bodyText, /I built SendFable/);
     assert.equal(DEFAULT_COPY_VERSION, "v1a");

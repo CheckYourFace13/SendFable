@@ -102,9 +102,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       compiledHtml = sanitizeEmailHtml(parsed.data.compiledHtml);
     }
   } else if (designJson) {
+    const smsProfile = await prisma.smsComplianceProfile.findUnique({
+      where: { workspaceId: ctx.workspace.id },
+      select: { legalEntityName: true, dbaBrandName: true },
+    });
+    const tradeName = smsProfile?.dbaBrandName?.trim() || ctx.workspace.name;
     compiledHtml = compileEmailHtml(designJson as EmailDesign, {
-      businessName: ctx.workspace.name,
+      businessName: tradeName,
       mailingAddress: ctx.workspace.mailingAddress,
+      legalOperatorName: smsProfile?.legalEntityName?.trim() || null,
       showSendfableBadge: PLANS[owner.plan].badge,
       previewText: parsed.data.previewText ?? existing.previewText,
     });

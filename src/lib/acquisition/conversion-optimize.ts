@@ -275,7 +275,7 @@ function nextActionText(
     return `Hold all copy/targeting/ramp changes until ${COHORT_SIZE} delivered INITIAL (now ${rates.delivered}).`;
   }
   if (bottleneck === "A") {
-    return `A/B test v1b (subject/CTA only) against ${copyVersion || "v1a"} — 50/50 on new INITIAL drafts.`;
+    return `A/B test Autopilot v1b (subject/lead) against ${copyVersion || "v1a"} — 50/50 on new INITIAL drafts.`;
   }
   if (bottleneck === "B") {
     return "Enable landing→signup UTM preservation fix (single friction).";
@@ -303,11 +303,12 @@ async function readOptState(): Promise<{
 
 export async function getActiveCopyVersion(): Promise<CopyVersionId> {
   const { copyVersion, state } = await readOptState();
-  if (state.abTest?.enabled) {
-    // Stable-enough 50/50 without depending on prospect id at draft time
-    return Math.random() < 0.5 ? state.abTest.control : state.abTest.variant;
+  // Autopilot pitch A/B (v1a vs v1b) is on by default. Only pin a single
+  // version when optimization explicitly disables the test.
+  if (state.abTest?.enabled === false) {
+    return isCopyVersionId(copyVersion) ? copyVersion : DEFAULT_COPY_VERSION;
   }
-  return isCopyVersionId(copyVersion) ? copyVersion : DEFAULT_COPY_VERSION;
+  return Math.random() < 0.5 ? "v1a" : "v1b";
 }
 
 export async function getPreferredDiscoveryBias(): Promise<{
@@ -475,7 +476,7 @@ export async function evaluateConversionCohort(now = new Date()): Promise<{
   if (bottleneck === "A") {
     state.abTest = { control: "v1a", variant: "v1b", enabled: true };
     action = "copy_ab";
-    reason = "A/B v1b subject/CTA vs v1a (50/50 new INITIAL drafts)";
+    reason = "A/B Autopilot v1b vs v1a (50/50 new INITIAL drafts)";
   } else if (bottleneck === "B") {
     state.fixLandingUtm = true;
     action = "landing_fix";

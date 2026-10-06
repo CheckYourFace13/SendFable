@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail, isTransientSesError } from "@/lib/mailer";
-import { resolveFromHeaders } from "@/lib/identities";
+import { resolveCampaignFromHeaders } from "@/lib/identities";
 import {
   applyLinkIds,
   compileEmailHtml,
@@ -151,11 +151,20 @@ export async function sendOneRecipient(recipientId: string): Promise<void> {
   const owner = await getWorkspaceOwner(campaign.workspaceId);
   const showBadge = PLANS[owner.plan].badge;
 
+  const smsProfile = await prisma.smsComplianceProfile.findUnique({
+    where: { workspaceId: campaign.workspaceId },
+    select: { legalEntityName: true, dbaBrandName: true },
+  });
+  const tradeName =
+    smsProfile?.dbaBrandName?.trim() || campaign.workspace.name;
+  const legalOp = smsProfile?.legalEntityName?.trim() || null;
+
   let html = campaign.compiledHtml ?? "";
   if (!html && campaign.designJson) {
     html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
-      businessName: campaign.workspace.name,
+      businessName: tradeName,
       mailingAddress: campaign.workspace.mailingAddress,
+      legalOperatorName: legalOp,
       showSendfableBadge: showBadge,
       previewText: campaign.previewText,
     });
@@ -206,7 +215,11 @@ export async function sendOneRecipient(recipientId: string): Promise<void> {
   }
 
   const finalHtml = applyLinkIds(trackedHtml, linkIds);
-  const { from, replyTo } = resolveFromHeaders(identity);
+  const { from, replyTo } = await resolveCampaignFromHeaders(
+    campaign.workspaceId,
+    identity,
+    { businessDisplayName: tradeName }
+  );
 
   try {
     // Conservative global ceiling (default 5/s) — below AWS account MaxSendRate.

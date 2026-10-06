@@ -81,7 +81,7 @@ export async function draftMessageForProspect(
   const unsub = await unsubUrlFor(p.id, p.contactEmail);
   const copyVersion = step === "INITIAL" ? await getActiveCopyVersion() : null;
   const openerType = openerTypeFromProspect(p);
-  const ctaPath = p.landingPagePath || "/email-marketing-for-small-business";
+  const ctaPath = p.landingPagePath || "/automated-email-marketing";
 
   let built;
   if (step === "INITIAL") {
@@ -107,10 +107,18 @@ export async function draftMessageForProspect(
   } else if (step === "FOLLOW_UP_1") {
     built = buildFollowUp1(
       { businessName: p.businessName, firstName: p.firstName },
-      { unsubUrl: unsub }
+      {
+        unsubUrl: unsub,
+        landingPath: ctaPath,
+        copyVersion: copyVersion || "v1a",
+        ctaUrl: "ACQ_CTA_PLACEHOLDER",
+      }
     );
   } else {
-    built = buildFollowUp2({ firstName: p.firstName }, { unsubUrl: unsub });
+    built = buildFollowUp2(
+      { firstName: p.firstName, businessName: p.businessName },
+      { unsubUrl: unsub }
+    );
   }
 
   if (!bodyHasUnsubscribe(built.bodyText)) {
@@ -124,7 +132,7 @@ export async function draftMessageForProspect(
     dryRun: opts?.dryRun ?? false,
     copyVersion: copyVersion || null,
     openerType: step === "INITIAL" ? openerType : null,
-    ctaPath: step === "INITIAL" ? ctaPath : null,
+    ctaPath: step === "INITIAL" || step === "FOLLOW_UP_1" ? ctaPath : null,
   };
 
   let messageId: string;
@@ -145,12 +153,15 @@ export async function draftMessageForProspect(
     messageId = msg.id;
   }
 
-  if (step === "INITIAL" && built.bodyText.includes("ACQ_CTA_PLACEHOLDER")) {
+  if (
+    (step === "INITIAL" || step === "FOLLOW_UP_1") &&
+    built.bodyText.includes("ACQ_CTA_PLACEHOLDER")
+  ) {
     const cta = await clickUrlFor(messageId, ctaPath, copyVersion || "v1a");
     const bodyText = built.bodyText.replace(/ACQ_CTA_PLACEHOLDER/g, cta);
     await prisma.acquisitionMessage.update({
       where: { id: messageId },
-      data: { bodyText },
+      data: { bodyText, ctaPath },
     });
   }
 

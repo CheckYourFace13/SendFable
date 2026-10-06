@@ -138,9 +138,15 @@ export async function POST(req: Request) {
     }
   }
 
+  const smsProfile = await prisma.smsComplianceProfile.findUnique({
+    where: { workspaceId: ctx.workspace.id },
+    select: { legalEntityName: true, dbaBrandName: true },
+  });
+  const tradeName = smsProfile?.dbaBrandName?.trim() || ctx.workspace.name;
   const compiledHtml = compileEmailHtml(design, {
-    businessName: ctx.workspace.name,
+    businessName: tradeName,
     mailingAddress: ctx.workspace.mailingAddress,
+    legalOperatorName: smsProfile?.legalEntityName?.trim() || null,
     showSendfableBadge: true,
   });
 

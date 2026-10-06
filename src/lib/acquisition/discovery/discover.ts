@@ -97,7 +97,7 @@ function landingForCategory(category: string): string {
   if (category === "contractor") return "/solutions/contractors";
   if (category === "events") return "/solutions/local-events";
   if (category === "professional") return "/solutions/professional-services";
-  return "/email-marketing-for-small-business";
+  return "/automated-email-marketing";
 }
 
 async function upsertCandidate(

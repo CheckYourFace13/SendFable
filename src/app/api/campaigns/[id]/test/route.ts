@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
-import { resolveFromHeaders } from "@/lib/identities";
+import { resolveCampaignFromHeaders } from "@/lib/identities";
 import { sendEmail } from "@/lib/mailer";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { renderMergeTags } from "@/lib/merge";
@@ -75,7 +75,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   };
   html = renderMergeTags(html.replaceAll("{{unsubscribe_url}}", mergeData.unsubscribe_url), mergeData);
   const subject = `[TEST] ${renderMergeTags(campaign.subject || "Untitled", mergeData)}`;
-  const { from, replyTo } = resolveFromHeaders(identity);
+  const { from, replyTo } = await resolveCampaignFromHeaders(
+    ctx.workspace.id,
+    identity,
+    { businessDisplayName: ctx.workspace.name }
+  );
 
   await sendEmail({
     from,

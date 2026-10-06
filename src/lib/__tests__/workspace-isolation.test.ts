@@ -31,24 +31,45 @@ describe("workspace isolation contract", () => {
       businessName: "Acme Bakery",
       mailingAddress: "100 Main St\nSpringfield, IL 62701",
       unsubscribeUrl: "https://sendfable.com/unsubscribe/a",
+      showSendfableBadge: true,
     });
     const htmlB = compileEmailHtml(design, {
-      businessName: "iScream Studio INC",
+      businessName: "BoatingChicago",
       mailingAddress: "1364 Patriot Blvd\nGlenview, IL 60026",
+      legalOperatorName: "iScream Studio INC",
       unsubscribeUrl: "https://sendfable.com/unsubscribe/b",
+      showSendfableBadge: true,
     });
 
     assert.match(htmlA, /Acme Bakery/);
     assert.match(htmlA, /100 Main St/);
+    assert.match(htmlA, /Sent with/);
+    assert.match(htmlA, /SendFable/);
     assert.doesNotMatch(htmlA, /iScream Studio INC/);
     assert.doesNotMatch(htmlA, /1364 Patriot Blvd/);
     assert.doesNotMatch(htmlA, /Glenview/);
+    assert.doesNotMatch(htmlA, /Simple email marketing by iScream/i);
 
-    assert.match(htmlB, /iScream Studio INC/);
+    assert.match(htmlB, /BoatingChicago/);
+    assert.match(htmlB, /BoatingChicago is operated by iScream Studio INC/);
     assert.match(htmlB, /1364 Patriot Blvd/);
     assert.match(htmlB, /Glenview, IL 60026/);
     assert.doesNotMatch(htmlB, /Acme Bakery/);
     assert.doesNotMatch(htmlB, /100 Main St/);
+    // Legal line only — not prominent marketing brand
+    assert.doesNotMatch(htmlB, /Simple email marketing by iScream/i);
+  });
+
+  it("omits SendFable badge on paid (showSendfableBadge false)", () => {
+    const html = compileEmailHtml(createEmptyDesign(), {
+      businessName: "Paid Co",
+      mailingAddress: "1 Paid St",
+      showSendfableBadge: false,
+      unsubscribeUrl: "https://sendfable.com/unsubscribe/p",
+    });
+    assert.match(html, /Paid Co/);
+    assert.doesNotMatch(html, /Sent with/);
+    assert.doesNotMatch(html, /footer_badge/);
   });
 
   it("does not inject a global platform mailing address when workspace address is missing", () => {
