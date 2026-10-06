@@ -23,7 +23,7 @@ import {
   acquisitionEnabled,
   ACQUISITION_PREFERRED_FROM,
 } from "../src/lib/acquisition/flags";
-import { execSync } from "node:child_process";
+import { SESv2Client, GetEmailIdentityCommand } from "@aws-sdk/client-sesv2";
 
 const prisma = new PrismaClient();
 const stamp = Date.now().toString(36);
@@ -35,33 +35,29 @@ function record(name: string, status: Step["status"], detail?: string) {
   console.error(`${status} ${name}${detail ? ` — ${detail}` : ""}`);
 }
 
-function digShort(q: string): string {
-  try {
-    return execSync(`dig +short ${q} @8.8.8.8`, { encoding: "utf8" }).trim();
-  } catch {
-    return "";
-  }
-}
-
 async function main() {
   if (process.env.FULL_EMAIL_CERT !== "1") throw new Error("Set FULL_EMAIL_CERT=1");
   const certTo = process.env.CERT_TO?.trim() || `chris+fullcert-${stamp}@iscreamstudio.com`;
   const platform = process.env.PLATFORM_SEND_DOMAIN || "send.sendfable.com";
   const report: Record<string, unknown> = { certTo, platform, stamp };
 
-  // DNS / SES alignment for platform domain
-  const dkim1 = digShort(`CNAME vsrydngybzg7lkobabdxe4ylhgqlsqwc._domainkey.${platform}`);
-  const bounceSpf = digShort(`TXT bounce.${platform}`);
-  const dmarcRoot = digShort("TXT _dmarc.sendfable.com");
-  const dnsOk =
-    dkim1.includes("dkim.amazonses.com") &&
-    /amazonses\.com/i.test(bounceSpf) &&
-    /v=DMARC1/i.test(dmarcRoot);
-  record(
-    "PLATFORM_DNS_ALIGNMENT",
-    dnsOk ? "PASS" : "FAIL",
-    `dkim=${dkim1.slice(0, 60)} bounceSpf=${bounceSpf.slice(0, 80)} dmarcRoot=${dmarcRoot.slice(0, 80)}`
-  );
+  // SES identity readiness for platform domain (DKIM + custom MAIL FROM)
+  const ses = new SESv2Client({ region: process.env.AWS_REGION || "us-east-1" });
+  let dnsOk = false;
+  try {
+    const id = await ses.send(new GetEmailIdentityCommand({ EmailIdentity: platform }));
+    dnsOk =
+      id.VerifiedForSendingStatus === true &&
+      id.DkimAttributes?.Status === "SUCCESS" &&
+      id.MailFromAttributes?.MailFromDomainStatus === "SUCCESS";
+    record(
+      "PLATFORM_DNS_ALIGNMENT",
+      dnsOk ? "PASS" : "FAIL",
+      `verified=${id.VerifiedForSendingStatus} dkim=${id.DkimAttributes?.Status} mailFrom=${id.MailFromAttributes?.MailFromDomain}=${id.MailFromAttributes?.MailFromDomainStatus}`
+    );
+  } catch (e) {
+    record("PLATFORM_DNS_ALIGNMENT", "FAIL", String(e));
+  }
 
   // Acquisition engine
   const paused = await isPipelinePaused();
