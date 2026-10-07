@@ -90,6 +90,10 @@ export function PricingPreview({
 
       {embedded && (
         <div className="mb-8 flex flex-col items-center gap-2">
+          <p className="max-w-2xl text-center text-sm text-charcoal/75">
+            Marketing Autopilot is included: Free checks weekly (2 drafts a month), Starter checks
+            daily, and Growth and above can check twice a day.
+          </p>
           {toggle}
           {annual && <p className="text-sm text-teal">{ANNUAL_SAVINGS_LABEL}</p>}
         </div>
