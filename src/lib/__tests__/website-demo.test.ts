@@ -80,7 +80,27 @@ describe("website demo extraction", () => {
     assert.equal(facts?.imageUrl, "https://northshore.example/pumpkin.jpg");
     assert.equal(facts?.ctaLabel, "Order now");
     assert.equal(campaignSubjectFromHeadline(facts!.headline), "Pumpkin Latte Weekend is here");
-    assert.equal(facts?.description?.includes("$4.95"), true);
+    assert.match(facts?.description || "", /pumpkin latte/);
+  });
+
+  it("does not mix a price from a different section into the chosen event", () => {
+    const html = `<main>
+      <h2>Tickets on Sale Now</h2>
+      <p>Home About Contact Events Menu</p>
+      <p>Lobby rental from $20.</p>
+      <h2>PopUpPlay Halloween Party at Cherry Street Pier</h2>
+      <p>Get ready for some not-so-spooky fun at Cherry Street Pier on Oct. 31 from 11 am to 1 pm!</p>
+    </main>`;
+    const facts = extractMarketingFacts(html, "https://pier.example/events", "Cherry Street Pier");
+    assert.equal(facts?.headline, "PopUpPlay Halloween Party at Cherry Street Pier");
+    assert.equal(facts?.dateText, "Oct. 31");
+    assert.equal(facts?.priceText, null);
+    assert.match(facts?.description || "", /not-so-spooky fun/);
+  });
+
+  it("rejects a navigation dump with no real offer", () => {
+    const html = `<main><h2>Upcoming Events</h2><p>Tosca Figaro Season Packages Past Seasons Events Education About People Board Jobs History</p></main>`;
+    assert.equal(extractMarketingFacts(html, "https://opera.example/", "Opera"), null);
   });
 
   it("does not invent a price or a demo when the page has no offer", () => {

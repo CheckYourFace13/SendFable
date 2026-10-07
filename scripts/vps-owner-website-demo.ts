@@ -72,7 +72,7 @@ async function main() {
     });
 
     const subject = `[OWNER PERSONALIZED DEMO] ${mail.subject}`;
-    const banner = `<p style="margin:0 0 16px;padding:10px 12px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-family:Georgia,serif;font-size:14px;">Owner preview only. This was not sent to ${p.businessName}. The unsubscribe link is inert.</p>`;
+    const banner = `<p style="margin:0 0 16px;padding:10px 12px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-family:Georgia,serif;font-size:14px;">Corrected owner preview. Review this version. It was not sent to ${p.businessName}. The unsubscribe link is inert.</p>`;
     const html = mail.html.replace(/<body[^>]*>/, (open) => `${open}${banner}`);
 
     const result = await sendEmail({

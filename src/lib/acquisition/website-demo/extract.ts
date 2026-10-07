@@ -6,15 +6,16 @@
 const MONTH =
   "Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?";
 const DATE_RE = new RegExp(
-  `\\b(?:${MONTH})\\s+\\d{1,2}(?:\\s*[–-]\\s*(?:(?:${MONTH})\\s+)?\\d{1,2})?(?:,\\s*\\d{4})?`,
+  `\\b(?:${MONTH})\\.?\\s+\\d{1,2}(?:\\s*[–-]\\s*(?:(?:${MONTH})\\.?\\s+)?\\d{1,2})?(?:,\\s*\\d{4})?`,
   "i"
 );
 const PRICE_RE = /\$\d{1,4}(?:\.\d{2})?/;
-const TIME_RE = /\b\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)\b/i;
+const TIME_RE =
+  /\b\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)(?:\s*(?:to|–|-)\s*\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))?\b/i;
 const MARKETING_RE =
   /\b(special|specials|sale|promo|promotion|offer|event|events|class|classes|menu|ticket|tickets|season|seasonal|release|available|book|reserve|workshop|tasting|tour)\b/i;
 const GENERIC_HEADING =
-  /^(home|welcome|menu|contact|about|blog|news|shop|services|our story|hello)$/i;
+  /^(home|welcome|menu|contact|about|blog|news|shop|services|our story|hello|upcoming events|latest news|tickets on sale now|open year-round|the space|events|what's on|whats on|see more|learn more|news & events)$/i;
 
 const BAD_IMAGE =
   /(pixel|spacer|tracking|beacon|analytics|doubleclick|googlesyndication|facebook|twitter|instagram|tiktok|logo|icon|sprite|badge|avatar|emoji)/i;
@@ -45,26 +46,69 @@ function stripTags(s: string): string {
     .trim();
 }
 
-function headings(html: string): string[] {
-  const out: string[] = [];
-  const re = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(html))) {
-    const text = stripTags(m[2]);
-    if (text.length >= 8 && text.length <= 90 && !GENERIC_HEADING.test(text)) out.push(text);
-  }
-  return out;
+export function isNavDump(text: string): boolean {
+  const t = text.trim();
+  if (!/[.!?]/.test(t)) return true;
+  const words = t.split(/\s+/).filter(Boolean);
+  const navWords = words.filter((w) =>
+    /^(home|about|contact|events|menu|news|faqs|blog|shop|services|space|artists|concessions)$/i.test(
+      w.replace(/[^a-z]/gi, "")
+    )
+  );
+  return words.length >= 8 && navWords.length / words.length > 0.34;
 }
 
-function paragraphs(html: string): string[] {
-  const out: string[] = [];
-  const re = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(html))) {
-    const text = stripTags(m[1]);
-    if (text.length >= 40) out.push(text);
+function protectAbbreviations(text: string): string {
+  return text.replace(
+    /\b(Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept?|Oct|Nov|Dec|Mr|Mrs|Ms|Dr|St|a|p)\./gi,
+    (m) => m.replace(".", "∯")
+  );
+}
+
+function restoreAbbreviations(text: string): string {
+  return text.replace(/∯/g, ".");
+}
+
+export function firstProseSentence(text: string): string | null {
+  const parts = protectAbbreviations(text.replace(/\s+/g, " "))
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => restoreAbbreviations(s.trim()))
+    .filter(Boolean);
+  const kept: string[] = [];
+  for (const sentence of parts) {
+    if (sentence.length < 40 || !/[.!?]$/.test(sentence) || isNavDump(sentence)) continue;
+    kept.push(sentence);
+    if (kept.length === 2) break;
   }
-  return out;
+  if (!kept.length) return null;
+  const joined = kept.join(" ");
+  return joined.length > 320 ? joined.slice(0, 317).replace(/\s+\S*$/, "") + "." : joined;
+}
+
+type Section = { heading: string; body: string; slice: string };
+
+function sectionsFrom(html: string): Section[] {
+  const region = contentHtml(html);
+  const re = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  const matches = [...region.matchAll(re)];
+  const sections: Section[] = [];
+  for (let i = 0; i < matches.length; i++) {
+    const heading = stripTags(matches[i][2] || "");
+    const start = (matches[i].index ?? 0) + matches[i][0].length;
+    const end = i + 1 < matches.length ? (matches[i + 1].index ?? region.length) : region.length;
+    const slice = region.slice(start, end);
+    sections.push({ heading, body: stripTags(slice), slice });
+  }
+  return sections;
+}
+
+function headingScore(heading: string): number {
+  if (!heading || GENERIC_HEADING.test(heading) || /^welcome to\b/i.test(heading)) return -20;
+  if (heading.length < 4 || heading.length > 90) return -20;
+  let score = Math.min(heading.length, 70) / 12;
+  if (heading.split(/\s+/).length >= 3) score += 2;
+  if (MARKETING_RE.test(heading)) score += 1;
+  return score;
 }
 
 export type ImageCandidate = {
@@ -125,7 +169,12 @@ export function sameSiteImage(src: string, pageUrl: string): boolean {
   }
 }
 
-export function pickImage(candidates: ImageCandidate[], headline: string, pageUrl: string): ImageCandidate | null {
+export function pickImage(
+  candidates: ImageCandidate[],
+  headline: string,
+  pageUrl: string,
+  minScore = 5
+): ImageCandidate | null {
   const words = headline
     .toLowerCase()
     .split(/[^a-z0-9]+/)
@@ -139,7 +188,8 @@ export function pickImage(candidates: ImageCandidate[], headline: string, pageUr
     if (words.some((w) => blob.includes(w))) score += 5;
     if (!best || score > best.score) best = { img, score };
   }
-  return best?.img ?? null;
+  if (!best || best.score < minScore) return null;
+  return best.img;
 }
 
 const CTA_PREFER =
@@ -170,42 +220,50 @@ export function extractMarketingFacts(
   pageUrl: string,
   businessName?: string | null
 ): MarketingFacts | null {
-  const heads = headings(html).filter((h) => {
-    if (!businessName) return true;
-    return h.trim().toLowerCase() !== businessName.trim().toLowerCase();
-  });
-  const paras = paragraphs(html);
-  const visible = `${heads.join("\n")}\n${paras.join("\n")}\n${stripTags(contentHtml(html))}`;
+  const biz = (businessName || "").trim().toLowerCase();
+  let best: { section: Section; score: number; sentence: string | null } | null = null;
+  for (const section of sectionsFrom(html)) {
+    if (biz && section.heading.trim().toLowerCase() === biz) continue;
+    const hScore = headingScore(section.heading);
+    if (hScore < 1) continue;
+    const sentence = firstProseSentence(section.body);
+    const dateText = section.body.match(DATE_RE)?.[0] ?? null;
+    const priceText = section.body.match(PRICE_RE)?.[0] ?? null;
+    const offerish = Boolean(
+      dateText || priceText || MARKETING_RE.test(`${section.heading} ${sentence || ""}`)
+    );
+    if (!sentence || !offerish) continue;
+    const score = hScore + (sentence ? 3 : 0) + (dateText ? 2 : 0) + (priceText ? 2 : 0);
+    if (!best || score > best.score) best = { section, score, sentence };
+  }
+  if (!best) return null;
 
-  const headline =
-    heads.find((h) => MARKETING_RE.test(h)) ||
-    heads.find((h) => h.length >= 12) ||
-    null;
-  if (!headline) return null;
-  if (!visible.toLowerCase().includes(headline.toLowerCase())) return null;
+  const { section, sentence } = best;
+  const dateText = section.body.match(DATE_RE)?.[0] ?? null;
+  const priceText = section.body.match(PRICE_RE)?.[0] ?? null;
+  const timeText = section.body.match(TIME_RE)?.[0] ?? null;
+  if (!sentence && !dateText && !priceText) return null;
 
-  const dateText = visible.match(DATE_RE)?.[0] ?? null;
-  const priceText = visible.match(PRICE_RE)?.[0] ?? null;
-  const timeText = visible.match(TIME_RE)?.[0] ?? null;
-  const description =
-    paras.find((p) => DATE_RE.test(p) || PRICE_RE.test(p) || MARKETING_RE.test(p)) || null;
-
-  const useful =
-    Boolean(dateText || priceText) ||
-    Boolean(description && description.length >= 40 && MARKETING_RE.test(`${headline} ${description}`));
-  if (!useful) return null;
-
-  const image = pickImage(imageCandidates(html, pageUrl), headline, pageUrl);
-  const cta = pickCta(html, pageUrl);
+  const inSection = imageCandidates(section.slice, pageUrl).filter((img) =>
+    sameSiteImage(img.src, pageUrl)
+  );
+  const image =
+    inSection[0] ||
+    pickImage(imageCandidates(html, pageUrl), section.heading, pageUrl);
+  const linked = pickCta(section.slice, pageUrl);
+  const cta =
+    linked.href !== pageUrl || linked.label !== "See the details"
+      ? linked
+      : pickCta(html, pageUrl);
 
   return {
-    headline,
-    description: description ? description.slice(0, 320) : null,
+    headline: section.heading,
+    description: sentence,
     dateText,
     timeText,
     priceText,
     imageUrl: image?.src ?? null,
-    imageAlt: image?.alt || headline,
+    imageAlt: image?.alt || section.heading,
     ctaLabel: cta.label,
     ctaHref: cta.href,
     pageUrl,
