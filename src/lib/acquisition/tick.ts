@@ -12,6 +12,7 @@ import {
   draftMessageForProspect,
   sendAcquisitionMessage,
 } from "@/lib/acquisition/send";
+import { loadSendCandidates, reconcileStaleInitialDrafts } from "@/lib/acquisition/queue";
 import {
   ensurePipelineControl,
   isPipelinePaused,
@@ -128,6 +129,13 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
           });
         }
       } else if (safety.ok) {
+        const queue = await reconcileStaleInitialDrafts();
+        if (queue.regenerated || queue.retired || queue.cancelled) {
+          actions.push(
+            `queue:regen${queue.regenerated}/retire${queue.retired}/cancel${queue.cancelled}`
+          );
+        }
+
         const due = await prisma.acquisitionProspect.findMany({
           where: {
             nextFollowUpAt: { lte: now },
@@ -141,26 +149,22 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
           await draftMessageForProspect(p.id, step, { dryRun: false });
         }
 
-        const candidates = await prisma.acquisitionMessage.findMany({
-          where: {
-            dryRun: false,
-            status: { in: ["DRAFT", "SCHEDULED"] },
-          },
-          include: { prospect: true },
-          orderBy: { createdAt: "asc" },
-          take: 30,
-        });
+        const candidates = await loadSendCandidates(30);
 
         let sent = 0;
         let failStreak = 0;
+        let initialCapHit = false;
         for (const m of candidates) {
+          if (m.step === "INITIAL" && initialCapHit) continue;
           const tz = defaultProspectTimeZone(m.prospect.state);
           if (!isWithinSendWindow(now, tz).ok) continue;
           const r = await sendAcquisitionMessage(m.id);
           if (r.ok) {
             sent++;
             failStreak = 0;
-            actions.push(`sent:${m.step}`);
+            actions.push(`sent:${m.step}:${m.copyVersion || "fu"}`);
+          } else if (r.reason === "daily_new_cap") {
+            initialCapHit = true;
           } else if (r.reason === "send_failed") {
             failStreak++;
             if (failStreak >= 5) {

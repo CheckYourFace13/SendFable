@@ -46,6 +46,8 @@ export interface CompileOptions {
   unsubscribeUrl?: string;
   showSendfableBadge?: boolean;
   previewText?: string | null;
+  /** Embedded previews must not invent a compliance footer. */
+  omitComplianceFooter?: boolean;
 }
 
 function esc(s: string): string {
@@ -236,14 +238,9 @@ export function createEmptyDesign(): EmailDesign {
   };
 }
 
-export function compileEmailHtml(design: EmailDesign, opts: CompileOptions = {}): string {
-  const settings = design.settings ?? {};
-  const bg = settings.backgroundColor ?? "#f8fafc";
-  const width = settings.contentWidth ?? 600;
-  const font = settings.fontFamily ?? "Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-
+function blocksForCompile(design: EmailDesign, opts: CompileOptions): DesignBlock[] {
   const blocks = [...design.blocks];
-  if (!hasFooter(blocks)) {
+  if (!opts.omitComplianceFooter && !hasFooter(blocks)) {
     blocks.push({
       id: "auto-footer",
       type: "footer",
@@ -253,8 +250,29 @@ export function compileEmailHtml(design: EmailDesign, opts: CompileOptions = {})
       },
     });
   }
+  return blocks;
+}
 
-  const body = blocks.map((b) => compileBlock(b, opts)).join("\n");
+/** Inner campaign card for embedding in another email. No document wrapper, no invented footer. */
+export function compileEmailFragment(design: EmailDesign, opts: CompileOptions = {}): string {
+  const settings = design.settings ?? {};
+  const width = settings.contentWidth ?? 600;
+  const font = settings.fontFamily ?? "Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+  const body = blocksForCompile(design, { ...opts, omitComplianceFooter: true })
+    .map((b) => compileBlock(b, opts))
+    .join("\n");
+  return `<table role="presentation" class="email-container" width="${width}" cellpadding="0" cellspacing="0" style="max-width:${width}px;width:100%;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;font-family:${attr(font)};">
+${body}
+</table>`;
+}
+
+export function compileEmailHtml(design: EmailDesign, opts: CompileOptions = {}): string {
+  const settings = design.settings ?? {};
+  const bg = settings.backgroundColor ?? "#f8fafc";
+  const width = settings.contentWidth ?? 600;
+  const font = settings.fontFamily ?? "Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
+  const body = blocksForCompile(design, opts).map((b) => compileBlock(b, opts)).join("\n");
   const preview = opts.previewText
     ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${esc(opts.previewText)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>`
     : "";

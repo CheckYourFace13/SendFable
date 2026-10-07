@@ -16,6 +16,7 @@ import {
 } from "@/lib/acquisition/ramp";
 import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { prisma } from "@/lib/prisma";
+import { trackComparisonLines } from "@/lib/acquisition/website-demo/metrics";
 
 const REPORT_TZ = "America/Chicago";
 /** Send the daily report after the Chicago send window has had time to run. */
@@ -220,6 +221,7 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     `First sends: ${firstSends}`,
     `Paid: ${paid}`,
     `Autopilot CTA results (clicks/visits): ${autopilotClicks}`,
+    ...(await trackComparisonLines()),
     "",
     `Current A/B: ${abWinner}`,
     `Current stage: ${stageCaps.stage}`,

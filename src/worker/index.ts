@@ -168,6 +168,7 @@ setInterval(async () => {
         a.startsWith("discover:") ||
         a.startsWith("autofill:") ||
         a.startsWith("sent:") ||
+        a.startsWith("queue:") ||
         a.startsWith("send:") ||
         a.startsWith("auto_approve:") ||
         a.startsWith("ramp:") ||

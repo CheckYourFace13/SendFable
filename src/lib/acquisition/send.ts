@@ -8,6 +8,7 @@ import {
   buildFollowUp1,
   buildFollowUp2,
   buildInitialEmail,
+  isCopyVersionId,
   openerTypeFromProspect,
 } from "@/lib/acquisition/personalize";
 import { getActiveCopyVersion } from "@/lib/acquisition/conversion-optimize";
@@ -66,7 +67,7 @@ function plainToHtml(text: string): string {
 export async function draftMessageForProspect(
   prospectId: string,
   step: AcquisitionMessageStep,
-  opts?: { dryRun?: boolean }
+  opts?: { dryRun?: boolean; copyVersion?: string; landingPath?: string; allowScheduledRewrite?: boolean }
 ): Promise<{ ok: boolean; messageId?: string; reason?: string }> {
   const p = await prisma.acquisitionProspect.findUnique({ where: { id: prospectId } });
   if (!p || !p.contactEmail) return { ok: false, reason: "missing_prospect_or_email" };
@@ -74,14 +75,24 @@ export async function draftMessageForProspect(
   const existing = await prisma.acquisitionMessage.findFirst({
     where: { prospectId, step, status: { not: "CANCELLED" } },
   });
-  if (existing && existing.status !== "DRAFT") {
+  const rewritable =
+    !existing ||
+    existing.status === "DRAFT" ||
+    (existing.status === "SCHEDULED" && opts?.allowScheduledRewrite);
+  if (existing && !rewritable) {
     return { ok: false, reason: "step_already_exists" };
   }
 
   const unsub = await unsubUrlFor(p.id, p.contactEmail);
-  const copyVersion = step === "INITIAL" ? await getActiveCopyVersion() : null;
+  const requested = opts?.copyVersion;
+  const copyVersion =
+    requested && isCopyVersionId(requested)
+      ? requested
+      : step === "INITIAL"
+        ? await getActiveCopyVersion()
+        : null;
   const openerType = openerTypeFromProspect(p);
-  const ctaPath = p.landingPagePath || "/automated-email-marketing";
+  const ctaPath = opts?.landingPath || p.landingPagePath || "/automated-email-marketing";
 
   let built;
   if (step === "INITIAL") {
@@ -197,6 +208,25 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
 
   const paused = await isPipelinePaused();
   if (paused.paused) return { ok: false, reason: `pipeline_paused:${paused.reason}` };
+
+  if (msg.step === "INITIAL") {
+    const priorInitial = await prisma.acquisitionMessage.findFirst({
+      where: {
+        prospectId: p.id,
+        step: "INITIAL",
+        id: { not: msg.id },
+        status: { in: ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] },
+      },
+      select: { id: true },
+    });
+    if (priorInitial) {
+      await prisma.acquisitionMessage.update({
+        where: { id: msg.id },
+        data: { status: "CANCELLED", error: "duplicate_initial" },
+      });
+      return { ok: false, reason: "duplicate_initial" };
+    }
+  }
 
   const safety = await checkOutreachSafetyAndMaybePause();
   if (!safety.ok) return { ok: false, reason: "safety_pause" };
