@@ -78,7 +78,8 @@ export function PricingPreview({
           </h2>
           <p className="mt-3 text-charcoal/75">
             Limits you can read. Upgrade when your list grows — no mystery add-ons on this page.
-            Marketing Autopilot is included: Free (weekly), Starter (daily), Growth+ (twice daily).
+            Marketing Autopilot is included: Free checks weekly (2 drafts a month), Starter checks
+            daily, and Growth and above can check twice a day.
           </p>
           <div className="mt-8 flex flex-col items-center gap-2">
             {toggle}

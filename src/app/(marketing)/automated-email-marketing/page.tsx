@@ -4,6 +4,8 @@ import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { marketingPageMeta, JsonLd } from "@/components/marketing/json-ld";
+import { WebsiteToEmailProof } from "@/components/marketing/website-to-email-proof";
+import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { PLANS } from "@/lib/plans";
 
 export const metadata = marketingPageMeta({
@@ -63,7 +65,7 @@ const FAQS = [
   },
   {
     q: "Which plans include Marketing Autopilot?",
-    a: `Free can enable a weekly demo. Starter ($${PLANS.STARTER.monthlyPrice}/mo) includes daily checks. Growth+ can check twice daily. Operating cost stays tiny because we only generate when a meaningful change is detected.`,
+    a: `Free includes weekly checks and ${autopilotMaxDraftsPerMonth("FREE")} drafts a month. Starter ($${PLANS.STARTER.monthlyPrice}/mo) checks daily, up to ${autopilotMaxDraftsPerMonth("STARTER")} drafts a month. Growth and above can check twice a day, up to ${autopilotMaxDraftsPerMonth("GROWTH")} drafts a month. A draft is created only when the page actually changes.`,
   },
   {
     q: "Does Autopilot send texts too?",
@@ -99,6 +101,10 @@ export default function AutomatedEmailMarketingPage() {
         only when you say so.
       </p>
 
+      <div className="mt-8">
+        <WebsiteToEmailProof />
+      </div>
+
       <div className="mt-6 rounded-xl border-2 border-coral/40 bg-coral/5 px-5 py-4">
         <p className="text-sm font-bold uppercase tracking-wider text-coral">No approval. No send.</p>
         <p className="mt-1 text-sm text-ink/70">
@@ -125,9 +131,11 @@ export default function AutomatedEmailMarketingPage() {
               <img
                 src="/product/autopilot-flow.svg"
                 alt={img.alt}
-                className="h-auto w-full"
+                className="h-auto w-full bg-[#f7f3eb] object-contain"
                 width={640}
                 height={420}
+                loading="lazy"
+                decoding="async"
               />
             </picture>
           </figure>
@@ -218,12 +226,16 @@ export default function AutomatedEmailMarketingPage() {
       <section className="mt-16">
         <h2 className="text-2xl font-semibold text-ink">Availability</h2>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-ink/70">
-          <li>Free — weekly checks, limited drafts (try it)</li>
           <li>
-            Starter (${PLANS.STARTER.monthlyPrice}/mo) — daily Marketing Autopilot
+            Free — weekly checks, {autopilotMaxDraftsPerMonth("FREE")} drafts a month
           </li>
           <li>
-            Growth+ (${PLANS.GROWTH.monthlyPrice}/mo and up) — twice-daily checks
+            Starter (${PLANS.STARTER.monthlyPrice}/mo) — daily checks,{" "}
+            {autopilotMaxDraftsPerMonth("STARTER")} drafts a month
+          </li>
+          <li>
+            Growth and above (${PLANS.GROWTH.monthlyPrice}/mo and up) — twice-daily checks,{" "}
+            {autopilotMaxDraftsPerMonth("GROWTH")} drafts a month
           </li>
         </ul>
       </section>

@@ -21,12 +21,14 @@ export default function AutopilotUiFixturesPage({
         <p className="mb-4 text-center text-xs font-semibold uppercase tracking-wider text-[#0f766e]">
           SendFable · Marketing Autopilot (controlled demo data)
         </p>
-        {view === "setup" && <SetupView />}
-        {view === "detected" && <DetectedView />}
-        {view === "draft" && <DraftView />}
-        {view === "email" && <EmailView />}
-        {view === "confirm" && <ConfirmView />}
-        {view === "result" && <ResultView />}
+        <div id="autopilot-shot">
+          {view === "setup" && <SetupView />}
+          {view === "detected" && <DetectedView />}
+          {view === "draft" && <DraftView />}
+          {view === "email" && <EmailView />}
+          {view === "confirm" && <ConfirmView />}
+          {view === "result" && <ResultView />}
+        </div>
         <nav className="mt-8 flex flex-wrap justify-center gap-2 text-xs text-[#6b7280]">
           {["setup", "detected", "draft", "email", "confirm", "result"].map((v) => (
             <Link key={v} className="underline" href={`/cert/autopilot-ui?view=${v}`}>
@@ -199,7 +201,7 @@ function ResultView() {
         <li>Opens: —</li>
         <li>Status: Completed</li>
       </ul>
-      <p className="mt-4 text-xs text-black/45">Controlled cert result — no customer PII shown.</p>
+      <p className="mt-4 text-xs text-black/45">Demo numbers only. No customer details.</p>
     </Card>
   );
 }

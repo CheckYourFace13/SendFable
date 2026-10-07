@@ -6,11 +6,16 @@ import { execFileSync } from "node:child_process";
 const OUT = join(process.cwd(), "docs", "screenshots", "marketing-autopilot");
 const PUBLIC = join(process.cwd(), "public", "product");
 
-async function shot(page: import("@playwright/test").Page, name: string) {
+async function shot(
+  page: import("@playwright/test").Page,
+  name: string,
+  target?: import("@playwright/test").Locator
+) {
   mkdirSync(OUT, { recursive: true });
   mkdirSync(PUBLIC, { recursive: true });
   const pngPath = join(OUT, `${name}.png`);
-  await page.screenshot({ path: pngPath, type: "png", fullPage: false });
+  if (target) await target.screenshot({ path: pngPath, type: "png" });
+  else await page.screenshot({ path: pngPath, type: "png", fullPage: false });
   // Convert to WebP via sharp if available; else keep PNG and copy as fallback
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -78,7 +83,7 @@ test.describe("Marketing Autopilot certification surfaces", () => {
       await page.setViewportSize({ width: 1200, height: 800 });
       await page.goto(`/cert/autopilot-ui?view=${view}`);
       await expect(page.getByText(/Marketing Autopilot|Campaign|Fall Special|sent/i).first()).toBeVisible();
-      await shot(page, name);
+      await shot(page, name, page.locator("#autopilot-shot"));
     }
 
     await page.goto("/");

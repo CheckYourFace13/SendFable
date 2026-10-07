@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { WebsiteToEmailProof } from "@/components/marketing/website-to-email-proof";
 
 const STEPS = [
   { n: "1", title: "Collect", body: "Customer joins your list." },
@@ -31,7 +32,7 @@ export function MarketingAutopilotHome() {
   return (
     <section
       id="marketing-autopilot"
-      className="relative overflow-hidden border-b border-ink/10 bg-gradient-to-b from-parchment via-page to-teal/5 py-20 sm:py-28"
+      className="relative scroll-mt-24 overflow-hidden border-b border-ink/10 bg-gradient-to-b from-parchment via-page to-teal/5 py-20 sm:py-28"
     >
       <div className="pointer-events-none absolute inset-0 opacity-[0.07]" aria-hidden>
         <div className="absolute -left-20 top-10 h-64 w-64 rounded-full bg-coral blur-3xl" />
@@ -51,13 +52,16 @@ export function MarketingAutopilotHome() {
             You approve it.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-charcoal/75 sm:text-lg">
-            Collect customers with SendFable forms, point SendFable at the page where you post
-            specials, events, products or news, and get a ready-to-send campaign when something
-            worth sharing changes.
+            Post a special, event, product, or update on your website. SendFable can turn it into a
+            ready-to-send campaign and wait for your approval.
           </p>
           <p className="mt-4 text-sm font-bold uppercase tracking-wider text-coral">
             No approval. No send.
           </p>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-5xl">
+          <WebsiteToEmailProof />
         </div>
 
         <div className="mx-auto mt-12 grid max-w-5xl gap-4 md:grid-cols-3">
@@ -77,7 +81,9 @@ export function MarketingAutopilotHome() {
                   alt={s.alt}
                   width={640}
                   height={420}
-                  className="h-auto w-full object-cover object-top"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-auto w-full bg-[#f7f3eb] object-contain object-top"
                 />
               </picture>
             </figure>

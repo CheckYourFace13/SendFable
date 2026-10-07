@@ -63,6 +63,10 @@ export default function MailchimpAlternativePage() {
           <li>You want Starter at ${PLANS.STARTER.monthlyPrice}/mo instead of Mailchimp Standard rates near ${mc.tiers.find((t) => t.contacts === 2_500)?.monthlyPrice}/mo at ~2.5k contacts (as of {PRICING_LAST_CHECKED})</li>
           <li>You refuse to require Google login for your team</li>
           <li>You are fine rebuilding automations instead of importing complex journeys</li>
+          <li>
+            You want Marketing Autopilot: SendFable watches the page where you already post
+            promotions or events and prepares the email. Nothing sends until you approve it.
+          </li>
         </ul>
       </section>
 

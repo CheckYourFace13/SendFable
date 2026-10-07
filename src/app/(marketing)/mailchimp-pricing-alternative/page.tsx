@@ -48,6 +48,16 @@ export default function MailchimpPricingAlternativePage() {
         <li>Pro Plus — ${PLANS.PRO_PLUS.monthlyPrice}/mo · {PLANS.PRO_PLUS.contactCap.toLocaleString()} contacts</li>
       </ul>
 
+      <p className="mt-6 text-sm text-ink/75">
+        Marketing Autopilot is included on those plans. SendFable can watch the page where you
+        already post promotions or events and prepare the customer email for you. Nothing sends
+        until you approve it.{" "}
+        <Link className="text-coral hover:underline" href="/automated-email-marketing">
+          See how it works
+        </Link>
+        .
+      </p>
+
       <h2 className="mt-10 text-xl font-semibold">Approximate Mailchimp snapshot</h2>
       <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
         {mc.tiers.map((t) => (

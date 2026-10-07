@@ -132,6 +132,10 @@ export default function EmailMarketingPricingComparisonPage() {
             contacts · {PLANS.STARTER.emailsPerMonth.toLocaleString()} emails/mo
           </li>
           <li>Campaign-first UI, Simple Mode, Send Confidence, CSV import, hosted forms</li>
+          <li>
+            Email, Text, or Both. Marketing Autopilot is included: a website change becomes a
+            campaign, and nothing sends until you approve it.
+          </li>
         </ul>
         <h3 className="mt-8 text-lg font-semibold text-ink">Where others may win</h3>
         <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink/75">
