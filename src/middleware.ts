@@ -11,6 +11,8 @@ const PUBLIC_EXACT = new Set([
   "/signup",
   "/pricing",
   "/features",
+  "/faq",
+  "/guides",
   "/deliverability",
   "/templates",
   "/migrate",
@@ -23,11 +25,15 @@ const PUBLIC_EXACT = new Set([
   "/changelog",
   "/cheap-email-marketing",
   "/email-marketing-without-gmail",
+  "/about",
+  "/partners",
+  "/how-sendfable-works",
+  "/contact",
   "/terms",
   "/privacy",
+  "/cookies",
   "/acceptable-use",
   "/refund-policy",
-  "/contact",
   "/link-unavailable",
   "/robots.txt",
   "/sitemap.xml",
@@ -46,6 +52,7 @@ const PUBLIC_PREFIXES = [
   "/solutions/",
   "/alternatives/",
   "/migrate/",
+  "/guides/",
   "/f/",
   "/a/",
   "/unsubscribe/",
@@ -55,6 +62,16 @@ const PUBLIC_PREFIXES = [
   "/cert/",
   "/autopilot/",
   "/automated-email-marketing",
+  "/promo/",
+  "/mailchimp-",
+  "/mailerlite-",
+  "/constant-contact-",
+  "/email-marketing-",
+  "/best-",
+  "/simple-",
+  "/cheap-",
+  "/small-business-",
+  "/indexnow/",
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -92,6 +109,16 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   // NextAuth may attach a truthy empty auth object — require a user id.
   const isLoggedIn = Boolean(req.auth?.user?.id || req.auth?.user?.email);
+
+  // IndexNow root key file: https://{host}/{INDEXNOW_KEY}.txt
+  // Must NOT use a catch-all app/[keyFile] route — that hijacked every
+  // unknown single-segment URL and returned plain-text "Not found".
+  if (/^\/[A-Za-z0-9_-]+\.txt$/.test(pathname)) {
+    const key = process.env.INDEXNOW_KEY?.trim();
+    if (key && pathname === `/${key}.txt`) {
+      return NextResponse.rewrite(new URL("/indexnow/key.txt", req.nextUrl.origin));
+    }
+  }
 
   const earlyLaunch =
     process.env.EARLY_LAUNCH !== "false" &&

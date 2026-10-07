@@ -11,9 +11,9 @@ import {
 } from "@/components/marketing/json-ld";
 
 export const metadata = marketingPageMeta({
-  title: "Migrate from Mailchimp to Sendfable",
+  title: "Migrate from Mailchimp to SendFable",
   description:
-    "Step-by-step guide to leave Mailchimp: export contacts, map fields, suppress unsubscribes, import into Sendfable, and send your first campaign without buying lists.",
+    "Step-by-step guide to leave Mailchimp: export contacts, map fields, suppress unsubscribes, import into SendFable, and send your first campaign without buying lists.",
   path: "/migrate/mailchimp",
 });
 
@@ -24,10 +24,10 @@ const STEPS = [
   },
   {
     name: "Clean before you import",
-    text: "Remove obvious typos, role accounts you should not mail, and anyone who already unsubscribed or complained. Purchased or scraped lists are not allowed on Sendfable.",
+    text: "Remove obvious typos, role accounts you should not mail, and anyone who already unsubscribed or complained. Purchased or scraped lists are not allowed on SendFable.",
   },
   {
-    name: "Import into Sendfable",
+    name: "Import into SendFable",
     text: "Use Contacts → Import (or the migration center). Map columns, review valid/invalid/duplicate/suppressed counts, then commit. Existing suppressed addresses stay suppressed.",
   },
   {
@@ -51,10 +51,10 @@ const FAQS = [
   },
   {
     q: "Do I need to cancel Mailchimp the same day?",
-    a: "No. Migrate contacts, send a test from Sendfable, then cancel Mailchimp when you are confident. Avoid sending the same campaign from both tools.",
+    a: "No. Migrate contacts, send a test from SendFable, then cancel Mailchimp when you are confident. Avoid sending the same campaign from both tools.",
   },
   {
-    q: "Is Sendfable a Mailchimp alternative for small businesses?",
+    q: "Is SendFable a Mailchimp alternative for small businesses?",
     a: "Yes for teams that want a simpler workflow. Compare features on our Mailchimp comparison page, then migrate with this guide when you are ready.",
   },
 ];
@@ -64,7 +64,7 @@ export default function MigrateFromMailchimpPage() {
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <JsonLd
         data={articleJsonLd({
-          title: "Migrate from Mailchimp to Sendfable",
+          title: "Migrate from Mailchimp to SendFable",
           description:
             "A practical CSV-first migration from Mailchimp without purchased lists or lost suppressions.",
           path: "/migrate/mailchimp",
@@ -74,7 +74,7 @@ export default function MigrateFromMailchimpPage() {
       />
       <JsonLd
         data={howToJsonLd({
-          name: "How to migrate from Mailchimp to Sendfable",
+          name: "How to migrate from Mailchimp to SendFable",
           description: "Export, clean, import, verify sender, and send a test.",
           path: "/migrate/mailchimp",
           steps: STEPS,
@@ -90,7 +90,7 @@ export default function MigrateFromMailchimpPage() {
       />
 
       <h1 className="font-display text-4xl font-bold tracking-tight text-ink">
-        Migrate from Mailchimp to Sendfable
+        Migrate from Mailchimp to SendFable
       </h1>
       <AnswerLead
         question="Moving from Mailchimp?"
@@ -131,7 +131,7 @@ export default function MigrateFromMailchimpPage() {
           </li>
           <li>
             <Link href="/compare/mailchimp" className="font-medium text-coral underline">
-              Sendfable vs Mailchimp
+              SendFable vs Mailchimp
             </Link>
           </li>
           <li>

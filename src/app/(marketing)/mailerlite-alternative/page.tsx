@@ -55,6 +55,32 @@ export default function MailerLiteAlternativePage() {
       </p>
       <p className="mt-2 text-sm text-ink/55">Competitor pricing last checked {ml.pricingLastChecked}.</p>
 
+      <section className="mt-10 grid gap-6 text-sm sm:grid-cols-2">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">SendFable advantages</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-700">
+            {ml.sendfableStronger.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+          <p className="mt-4 text-slate-700">
+            Want website changes to become campaign drafts?{" "}
+            <Link className="text-coral hover:underline" href="/automated-email-marketing">
+              See Marketing Autopilot
+            </Link>
+            .
+          </p>
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-ink">MailerLite advantages</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-700">
+            {ml.competitorStronger.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <section className="mt-10 space-y-4 text-sm text-slate-700">
         <h2 className="text-xl font-semibold text-ink">Practical differences</h2>
         <p>

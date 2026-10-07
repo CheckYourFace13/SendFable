@@ -65,6 +65,13 @@ export function UsageUpgradeBanner({
     } catch {
       /* private mode */
     }
+    if (pick.threshold >= 100) {
+      track("limit_hit", {
+        surface,
+        metric: pick.metric,
+        threshold: pick.threshold,
+      });
+    }
     track("upgrade_prompt_viewed", {
       surface,
       metric: pick.metric,
@@ -96,20 +103,38 @@ export function UsageUpgradeBanner({
           <p className="font-medium">{pick.copy.title}</p>
           <p className="mt-0.5 opacity-90">{pick.copy.body}</p>
         </div>
-        <Button asChild size="sm" className="shrink-0 bg-coral-solid text-white hover:bg-coral-hover">
-          <Link
-            href="/billing"
-            onClick={() =>
-              track("upgrade_prompt_clicked", {
-                surface,
-                metric: pick.metric,
-                threshold: pick.threshold,
-              })
-            }
-          >
-            {cta}
-          </Link>
-        </Button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link
+              href="/pricing"
+              onClick={() =>
+                track("upgrade_prompt_clicked", {
+                  surface,
+                  metric: pick.metric,
+                  threshold: pick.threshold,
+                  cta: "view_plans",
+                })
+              }
+            >
+              View plans
+            </Link>
+          </Button>
+          <Button asChild size="sm" className="bg-coral-solid text-white hover:bg-coral-hover">
+            <Link
+              href="/billing"
+              onClick={() =>
+                track("upgrade_prompt_clicked", {
+                  surface,
+                  metric: pick.metric,
+                  threshold: pick.threshold,
+                  cta: "upgrade",
+                })
+              }
+            >
+              {pick.copy.tone === "blocking" ? "Upgrade" : cta}
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

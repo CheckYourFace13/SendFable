@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/session";
 import { assertSafePublicUrl } from "@/lib/ssrf";
 import {
   autopilotAllowedFrequencies,
+  autopilotMaxDraftsPerMonth,
   clampAutopilotFrequency,
 } from "@/lib/autopilot/plans";
 import { getWorkspaceOwner } from "@/lib/workspace-owner";
@@ -45,12 +46,23 @@ export async function GET() {
     select: { decidedAt: true, subject: true },
   });
 
+  const monthStart = new Date(
+    Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)
+  );
+  const draftsUsedThisMonth = await prisma.marketingAutopilotDraft.count({
+    where: { workspaceId: ctx.workspace.id, createdAt: { gte: monthStart } },
+  });
+  const draftsCap = autopilotMaxDraftsPerMonth(owner.plan);
+
   return NextResponse.json({
     config,
     waitingDrafts: waiting,
     lastCampaign: lastSent,
     allowedFrequencies: autopilotAllowedFrequencies(owner.plan),
     plan: owner.plan,
+    draftsUsedThisMonth,
+    draftsCap,
+    draftsLimitReached: draftsUsedThisMonth >= draftsCap,
   });
 }
 

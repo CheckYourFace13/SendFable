@@ -91,7 +91,8 @@ describe("sendfable facts (SF-004)", () => {
     assert.equal(SENDFABLE_FACTS.plans.find((p) => p.key === "PRO_PLUS")?.monthlyPrice, PLANS.PRO_PLUS.monthlyPrice);
   });
 
-  it("states SMS is not publicly available", () => {
+  it("reflects SMS public flag for AEO facts", () => {
+    // Default test env leaves SENDFABLE_SMS_PUBLIC_ENABLED unset/false.
     assert.equal(SENDFABLE_FACTS.smsStatus.publiclyAvailable, false);
     assert.match(SENDFABLE_FACTS.smsStatus.publicAnswer, /not publicly available/i);
   });

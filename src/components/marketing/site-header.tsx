@@ -21,19 +21,19 @@ type NavItem =
 
 const PRODUCT_LINKS: NavLink[] = [
   {
-    href: "/features#campaigns",
+    href: "/features#email",
     label: "Email campaigns",
     description: "Plan, schedule, and send stories that feel personal.",
+  },
+  {
+    href: "/features#both",
+    label: "Email, Text, or Both",
+    description: "One campaign, the channel that fits the message.",
   },
   {
     href: "/features#audience",
     label: "Audience",
     description: "Lists, tags, segments, and clean imports.",
-  },
-  {
-    href: "/features#builder",
-    label: "Email builder",
-    description: "Drag-and-drop blocks that survive every inbox.",
   },
   {
     href: "/features#forms",
@@ -46,8 +46,8 @@ const PRODUCT_LINKS: NavLink[] = [
     description: "Website changes become campaign drafts you approve.",
   },
   {
-    href: "/features#analytics",
-    label: "Analytics",
+    href: "/features#reports",
+    label: "Reports",
     description: "Opens, clicks, bounces, and list health.",
   },
   {
@@ -67,6 +67,8 @@ const SOLUTION_LINKS: NavLink[] = [
 ];
 
 const RESOURCE_LINKS: NavLink[] = [
+  { href: "/faq", label: "FAQ" },
+  { href: "/guides", label: "Guides" },
   { href: "/email-marketing-guide", label: "Email marketing guide" },
   { href: "/deliverability", label: "Deliverability" },
   { href: "/migrate", label: "Migrate to Sendfable" },

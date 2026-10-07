@@ -41,7 +41,8 @@ export default function CheapEmailMarketingPage() {
       <h1 className="text-4xl font-bold tracking-tight">Cheap email marketing</h1>
       <p className="mt-3 text-lg text-muted-foreground">
         Affordable should mean predictable plans and fewer surprise add-ons — not purchased lists or
-        tools that cut corners on unsubscribe and authentication.
+        tools that cut corners on unsubscribe and authentication. “Best affordable” is not the same
+        as “cheapest possible”: include the cost of complexity and domain reputation.
       </p>
 
       <div className="mt-8 flex flex-wrap gap-3">

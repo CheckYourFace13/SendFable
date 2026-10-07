@@ -1,6 +1,13 @@
 import type { CompetitorRecord } from "./types";
+import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
 const CHECKED = "2026-09-19";
+
+function sendfableSmsFaqAnswer(): string {
+  return isSmsPublicEnabled()
+    ? "Yes. SendFable can send Email, Text, or Both from one campaign when Text Messaging is set up. Text uses separate consent and pricing. Competitors listed here keep their own SMS capabilities."
+    : "Text messaging is not publicly available yet. Email marketing is live. SMS remains behind feature flags until public Text Messaging is enabled.";
+}
 
 function rec(
   partial: Omit<CompetitorRecord, "pricingLastChecked" | "featuresLastChecked" | "reviewStatus"> & {
@@ -133,7 +140,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       },
       {
         q: "Does SendFable support text messaging?",
-        a: "SendFable can send Email, Text, or Both from one campaign when Text Messaging is enabled on the account. Text uses separate consent and pricing. Competitors listed here keep their own SMS capabilities.",
+        a: sendfableSmsFaqAnswer(),
       },
     ],
   }),

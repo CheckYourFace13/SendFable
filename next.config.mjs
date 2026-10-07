@@ -71,6 +71,17 @@ const nextConfig = {
         destination: "/mailchimp-alternative",
         permanent: true,
       },
+      // Keyword consolidation — same commercial intent as retained canonicals
+      {
+        source: "/best-affordable-email-marketing",
+        destination: "/cheap-email-marketing",
+        permanent: true,
+      },
+      {
+        source: "/small-business-newsletter-software",
+        destination: "/email-newsletter-software",
+        permanent: true,
+      },
     ];
   },
 };

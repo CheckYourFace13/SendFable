@@ -60,10 +60,6 @@ export default function MailchimpAlternativePage() {
             {mc.sendfableStronger.map((s) => (
               <li key={s}>{s}</li>
             ))}
-            <li>
-              Marketing Autopilot — your website changes, SendFable drafts the campaign, you approve
-              it (no approval, no send)
-            </li>
             <li>Any-email signup and sender verification</li>
             <li>From-rewrite for strict DMARC providers with Reply-To preserved</li>
             <li>Send Confidence checks, suppression, and one-click unsubscribe</li>

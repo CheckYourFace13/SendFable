@@ -168,7 +168,7 @@ export const COMPETITOR_MATRIX: PricingMatrixRow[] = [
     entryPaid: "Growing Business from ~$12/mo",
     includedContacts: "Scales by subscribers",
     includedSends: "Plan-dependent",
-    sms: "Limited / varies",
+    sms: "Not a focus (MailerSend separate)",
     automations: "Strong builder",
     brandRemoval: "Paid",
     pricingModel: "Subscriber-based",

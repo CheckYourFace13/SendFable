@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AutopilotUpgradeBanner } from "@/components/app/autopilot-upgrade-banner";
 
 type Freq = "DAILY" | "TWICE_DAILY" | "WEEKLY";
 
@@ -27,6 +28,9 @@ export default function MarketingAutopilotSettingsPage() {
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [plan, setPlan] = useState("FREE");
+  const [draftsUsed, setDraftsUsed] = useState(0);
+  const [draftsCap, setDraftsCap] = useState(2);
   const [drafts, setDrafts] = useState<
     { id: string; status: string; subject: string | null; campaignId: string | null }[]
   >([]);
@@ -47,6 +51,9 @@ export default function MarketingAutopilotSettingsPage() {
         setLastChecked(j.config.lastFetchedAt || null);
       }
       setWaiting(j.waitingDrafts || 0);
+      setPlan(j.plan || "FREE");
+      setDraftsUsed(typeof j.draftsUsedThisMonth === "number" ? j.draftsUsedThisMonth : 0);
+      setDraftsCap(typeof j.draftsCap === "number" ? j.draftsCap : 2);
     }
     if (dRes.ok) {
       const j = await dRes.json();
@@ -113,7 +120,16 @@ export default function MarketingAutopilotSettingsPage() {
         description="Your website changes. SendFable turns it into a campaign. You approve it."
       />
 
-      <div className="mt-6 space-y-6 rounded-xl border p-5">
+      <div className="mt-6">
+        <AutopilotUpgradeBanner
+          plan={plan}
+          draftsUsed={draftsUsed}
+          draftsCap={draftsCap}
+          surface="autopilot_settings"
+        />
+      </div>
+
+      <div className="mt-2 space-y-6 rounded-xl border p-5">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Step 1

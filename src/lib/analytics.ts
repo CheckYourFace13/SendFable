@@ -54,6 +54,7 @@ export const ANALYTICS_EVENTS = [
   "usage_80_percent",
   "usage_90_percent",
   "free_limit_reached",
+  "limit_hit",
   "upgrade_prompt_viewed",
   "upgrade_prompt_clicked",
   "pricing_from_app_viewed",
