@@ -1,12 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import { acquisitionDailyNewLimit, acquisitionDailyTotalLimit } from "@/lib/acquisition/flags";
 import { getEffectiveRampStage } from "@/lib/acquisition/ramp";
+import {
+  WEBSITE_DEMO_COPY_VERSION,
+  websiteDemoSlotsLeft,
+} from "@/lib/acquisition/queue-policy";
 
 function startOfUtcDay(d = new Date()): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
-export async function countSentToday(): Promise<{ total: number; initial: number }> {
+export async function countSentToday(): Promise<{
+  total: number;
+  initial: number;
+  demoInitial: number;
+}> {
   const since = startOfUtcDay();
   const rows = await prisma.acquisitionMessage.findMany({
     where: {
@@ -14,11 +22,15 @@ export async function countSentToday(): Promise<{ total: number; initial: number
       dryRun: false,
       sentAt: { gte: since },
     },
-    select: { step: true },
+    select: { step: true, copyVersion: true },
   });
+  const casey = rows.filter((r) => r.copyVersion !== WEBSITE_DEMO_COPY_VERSION);
   return {
-    total: rows.length,
-    initial: rows.filter((r) => r.step === "INITIAL").length,
+    total: casey.length,
+    initial: casey.filter((r) => r.step === "INITIAL").length,
+    demoInitial: rows.filter(
+      (r) => r.step === "INITIAL" && r.copyVersion === WEBSITE_DEMO_COPY_VERSION
+    ).length,
   };
 }
 
@@ -34,6 +46,26 @@ export async function canSendAnyToday(): Promise<boolean> {
   const stage = await getEffectiveRampStage();
   const { total } = await countSentToday();
   return total < acquisitionDailyTotalLimit(stage);
+}
+
+/** Personalized demos do not consume the Casey 5/10 cap. */
+export async function canSendWebsiteDemoToday(): Promise<boolean> {
+  const { demoInitial } = await countSentToday();
+  return websiteDemoSlotsLeft(demoInitial, 0) > 0;
+}
+
+/** Unsent demo drafts count against today's 2 so the queue cannot grow past the cap. */
+export async function websiteDemoDraftRoom(): Promise<number> {
+  const { demoInitial } = await countSentToday();
+  const queued = await prisma.acquisitionMessage.count({
+    where: {
+      dryRun: false,
+      step: "INITIAL",
+      copyVersion: WEBSITE_DEMO_COPY_VERSION,
+      status: { in: ["DRAFT", "SCHEDULED"] },
+    },
+  });
+  return websiteDemoSlotsLeft(demoInitial, queued);
 }
 
 export async function ensurePipelineControl() {

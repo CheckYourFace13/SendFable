@@ -9,9 +9,20 @@ import { ACQUISITION_AUTOPILOT_LANDING } from "@/lib/acquisition/personalize";
 
 export const WEBSITE_DEMO_COPY_VERSION = "personalized_website_demo";
 
-/** Hard-off until the owner approves the two preview emails. Env cannot enable this. */
+/** Separate from Casey. Two new personalized-demo prospects per day. */
+export const WEBSITE_DEMO_DAILY_NEW_LIMIT = 2;
+
+/**
+ * Live for a 2/day test after the image-relevance fix.
+ * Env cannot raise this cap or turn the track off by accident.
+ */
 export function acquisitionWebsiteDemoEnabled(): boolean {
-  return false;
+  return true;
+}
+
+export function websiteDemoSlotsLeft(sentToday: number, queued: number): number {
+  if (!acquisitionWebsiteDemoEnabled()) return 0;
+  return Math.max(0, WEBSITE_DEMO_DAILY_NEW_LIMIT - sentToday - queued);
 }
 
 export type QueueMessage = {

@@ -12,7 +12,11 @@ import {
   draftMessageForProspect,
   sendAcquisitionMessage,
 } from "@/lib/acquisition/send";
-import { loadSendCandidates, reconcileStaleInitialDrafts } from "@/lib/acquisition/queue";
+import {
+  loadSendCandidates,
+  loadWebsiteDemoCandidates,
+  reconcileStaleInitialDrafts,
+} from "@/lib/acquisition/queue";
 import {
   ensurePipelineControl,
   isPipelinePaused,
@@ -173,6 +177,20 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
               actions.push("hard_pause:send_failures");
               break;
             }
+          }
+        }
+        const demos = await loadWebsiteDemoCandidates(2);
+        let demoCapHit = false;
+        for (const m of demos) {
+          if (demoCapHit) break;
+          const tz = defaultProspectTimeZone(m.prospect.state);
+          if (!isWithinSendWindow(now, tz).ok) continue;
+          const r = await sendAcquisitionMessage(m.id);
+          if (r.ok) {
+            sent++;
+            actions.push(`sent:${m.step}:${m.copyVersion || "demo"}`);
+          } else if (r.reason === "daily_demo_cap") {
+            demoCapHit = true;
           }
         }
         if (sent === 0) actions.push("send:none");

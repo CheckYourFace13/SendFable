@@ -60,6 +60,8 @@ export function formatTrackComparison(normal: TrackCounts, demo: TrackCounts): s
   const c = compareAcquisitionTracks(normal, demo);
   const pct = (n: number) => `${Math.round(n * 1000) / 10}%`;
   return [
+    `Normal Casey: delivered ${normal.delivered}, clicks ${normal.clicked}, replies ${normal.replied}, signups ${normal.signup}, paid ${normal.paid}`,
+    `Personalized demo: delivered ${demo.delivered}, clicks ${demo.clicked}, replies ${demo.replied}, positive replies ${demo.positiveReply}, signups ${demo.signup}, paid ${demo.paid}`,
     `Normal Casey click rate: ${pct(c.normalClickRate)} (${normal.clicked}/${normal.delivered})`,
     `Personalized demo click rate: ${pct(c.personalizedDemoClickRate)} (${demo.clicked}/${demo.delivered})`,
     `Normal Casey signup rate: ${pct(c.normalSignupRate)} (${normal.signup}/${normal.delivered})`,
@@ -98,6 +100,27 @@ async function countDelivered(copyVersions: string[]): Promise<{ delivered: numb
   return { delivered, clicked };
 }
 
+async function countReplies(copyVersions: string[]): Promise<{ replied: number; positiveReply: number }> {
+  const rows = await prisma.acquisitionProspect.findMany({
+    where: {
+      replyClass: { not: null },
+      messages: {
+        some: {
+          dryRun: false,
+          step: "INITIAL",
+          copyVersion: { in: copyVersions },
+          status: { in: ["SENT", "DELIVERED"] },
+        },
+      },
+    },
+    select: { replyClass: true },
+  });
+  return {
+    replied: rows.length,
+    positiveReply: rows.filter((row) => row.replyClass === "POSITIVE").length,
+  };
+}
+
 async function countOutcomes(copyVersions: string[]): Promise<{ signup: number; paid: number }> {
   const [signup, paid] = await Promise.all([
     prisma.acquisitionProspect.count({
@@ -130,23 +153,28 @@ async function countOutcomes(copyVersions: string[]): Promise<{ signup: number; 
   return { signup, paid };
 }
 
-/** Daily-report lines. Demo stays at zero until that track is enabled. */
+/** Daily-report lines for the Casey vs personalized-demo comparison. */
 export async function trackComparisonLines(): Promise<string[]> {
   try {
-    const [normalD, demoD, normalO, demoO] = await Promise.all([
+    const [normalD, demoD, normalO, demoO, normalR, demoR] = await Promise.all([
       countDelivered(["v1a", "v1b"]),
       countDelivered([WEBSITE_DEMO_COPY_VERSION]),
       countOutcomes(["v1a", "v1b"]),
       countOutcomes([WEBSITE_DEMO_COPY_VERSION]),
+      countReplies(["v1a", "v1b"]),
+      countReplies([WEBSITE_DEMO_COPY_VERSION]),
     ]);
     const normal = emptyTrackCounts();
     normal.delivered = normalD.delivered;
     normal.clicked = normalD.clicked;
+    normal.replied = normalR.replied;
     normal.signup = normalO.signup;
     normal.paid = normalO.paid;
     const demo = emptyTrackCounts();
     demo.delivered = demoD.delivered;
     demo.clicked = demoD.clicked;
+    demo.replied = demoR.replied;
+    demo.positiveReply = demoR.positiveReply;
     demo.signup = demoO.signup;
     demo.paid = demoO.paid;
     return ["", ...formatTrackComparison(normal, demo)];

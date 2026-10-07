@@ -7,7 +7,10 @@ import {
   orderSendCandidates,
   planStaleInitial,
   stableAutopilotVariant,
+  websiteDemoSlotsLeft,
+  WEBSITE_DEMO_DAILY_NEW_LIMIT,
 } from "@/lib/acquisition/queue-policy";
+import { ACQUISITION_RAMP_STAGES } from "@/lib/acquisition/flags";
 
 const current = {
   step: "INITIAL",
@@ -98,6 +101,18 @@ describe("acquisition queue policy", () => {
     assert.equal(planStaleInitial(stale, true), "retire_duplicate");
     assert.equal(planStaleInitial(current, false), "keep");
     assert.equal(planStaleInitial({ ...stale, step: "FOLLOW_UP_1" }, false), "keep");
+    assert.equal(
+      planStaleInitial(
+        {
+          step: "INITIAL",
+          subject: "We made this from Harbor Coffee's website",
+          ctaPath: "/automated-email-marketing",
+          copyVersion: "personalized_website_demo",
+        },
+        false
+      ),
+      "keep"
+    );
   });
 
   it("assigns a stable A/B variant", () => {
@@ -105,9 +120,29 @@ describe("acquisition queue policy", () => {
     assert.ok(["v1a", "v1b"].includes(stableAutopilotVariant("prospect-1")));
   });
 
-  it("does not put a prospect on the demo track while owner review is open", () => {
-    assert.equal(acquisitionWebsiteDemoEnabled(), false);
-    assert.equal(chooseInitialTrack(true), "normal");
+  it("gives a prospect one initial path and caps the demo track at 2", () => {
+    assert.equal(acquisitionWebsiteDemoEnabled(), true);
+    assert.equal(chooseInitialTrack(true), "personalized_website_demo");
     assert.equal(chooseInitialTrack(false), "normal");
+    assert.equal(WEBSITE_DEMO_DAILY_NEW_LIMIT, 2);
+    assert.equal(websiteDemoSlotsLeft(0, 0), 2);
+    assert.equal(websiteDemoSlotsLeft(1, 1), 0);
+    assert.equal(websiteDemoSlotsLeft(2, 0), 0);
+    assert.equal(ACQUISITION_RAMP_STAGES[1].newPerDay, 5);
+    assert.equal(ACQUISITION_RAMP_STAGES[1].totalPerDay, 10);
+    const ordered = orderSendCandidates([
+      {
+        ...current,
+        prospectId: "demo",
+        copyVersion: "personalized_website_demo",
+        subject: "We made this from Harbor Coffee's website",
+        createdAt: new Date("2026-10-01T00:00:00Z"),
+      },
+      { ...current, prospectId: "casey" },
+    ]);
+    assert.deepEqual(
+      ordered.map((m) => m.prospectId),
+      ["casey"]
+    );
   });
 });

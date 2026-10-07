@@ -4,6 +4,7 @@
  */
 
 import { PLANS } from "@/lib/plans";
+import { acquisitionPhysicalAddress } from "@/lib/acquisition/flags";
 import { renderCampaignPreview, PREVIEW_LABEL } from "@/lib/acquisition/website-demo/preview";
 import type { MarketingFacts } from "@/lib/acquisition/website-demo/extract";
 import { DEMO_NEVER_SENDS_TO_CUSTOMER_LIST } from "@/lib/acquisition/website-demo/preview";
@@ -76,6 +77,8 @@ export function buildWebsiteDemoEmail(input: {
     "",
     free,
     "",
+    acquisitionPhysicalAddress(),
+    "",
     `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${input.unsubUrl}`,
   ].join("\n");
 
@@ -92,6 +95,7 @@ ${preview.html}
 <p style="margin:0 0 18px;"><a href="${esc(input.ctaUrl)}" style="color:#4F46E5;">${esc(input.ctaUrl)}</a></p>
 <p style="margin:0 0 4px;font-size:16px;">— Casey<br>SendFable</p>
 <p style="margin:16px 0;font-size:14px;color:#4b5563;">${esc(free)}</p>
+<p style="margin:0 0 12px;font-size:12px;color:#6b7280;">${esc(acquisitionPhysicalAddress())}</p>
 <p style="margin:0;font-size:12px;color:#6b7280;">If you'd rather not hear from me again, reply "no thanks" or <a href="${esc(input.unsubUrl)}">unsubscribe</a>.</p>
 </div></body></html>`;
 

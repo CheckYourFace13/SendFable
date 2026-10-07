@@ -116,6 +116,7 @@ export type ImageCandidate = {
   alt: string;
   width: number;
   height: number;
+  href?: string;
 };
 
 function contentHtml(html: string): string {
@@ -192,6 +193,238 @@ export function pickImage(
   return best.img;
 }
 
+const IMAGE_STOP = new Set([
+  "the", "and", "vs", "for", "with", "from", "your", "this", "that", "into",
+  "over", "under", "at", "of", "to", "in", "on", "by", "or", "our", "its",
+  "but", "not", "are", "was", "per", "poster", "image", "photo", "picture",
+  "graphic", "hero", "banner", "img", "copy", "www", "uploads", "content",
+]);
+
+export function distinctiveTokens(text: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of text.toLowerCase().split(/[^a-z0-9]+/)) {
+    if (raw.length <= 3 || IMAGE_STOP.has(raw) || /^\d+$/.test(raw) || seen.has(raw)) continue;
+    seen.add(raw);
+    out.push(raw);
+  }
+  return out;
+}
+
+function resolveUrl(raw: string, pageUrl: string): string | null {
+  if (!raw || raw.startsWith("data:")) return null;
+  try {
+    const abs = new URL(raw, pageUrl);
+    if (abs.protocol !== "http:" && abs.protocol !== "https:") return null;
+    return abs.toString();
+  } catch {
+    return null;
+  }
+}
+
+function acceptableImageUrl(src: string, alt: string, width: number, height: number): boolean {
+  if ((width > 0 && width <= 48) || (height > 0 && height <= 48)) return false;
+  if (width === 1 || height === 1) return false;
+  let path = "";
+  try {
+    path = new URL(src).pathname;
+  } catch {
+    return false;
+  }
+  if (BAD_IMAGE.test(`${path} ${alt}`.toLowerCase())) return false;
+  if (/\.svg($|\?)/i.test(path)) return false;
+  if (/\.gif($|\?)/i.test(path) && width > 0 && width < 80) return false;
+  return true;
+}
+
+function urlsFromImgTag(tag: string): string[] {
+  const urls: string[] = [];
+  const lazy = /data-(?:lazy-src|src|original)\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1];
+  const src = /(?:^|\s)src\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1];
+  const srcset = /srcset\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1];
+  if (lazy) urls.push(lazy);
+  if (src) urls.push(src);
+  if (srcset) {
+    for (const part of srcset.split(",")) {
+      const u = part.trim().split(/\s+/)[0];
+      if (u) urls.push(u);
+    }
+  }
+  return urls;
+}
+
+function nearestAnchorHref(html: string, index: number): string {
+  const before = html.slice(Math.max(0, index - 900), index);
+  const close = before.lastIndexOf("</a>");
+  const open = Math.max(before.lastIndexOf("<a "), before.lastIndexOf("<a\n"));
+  if (open < 0 || open < close) return "";
+  return /href\s*=\s*["']([^"']+)["']/i.exec(before.slice(open))?.[1] || "";
+}
+
+/** Images in a fragment: img, lazy attrs, srcset, and CSS background-image. */
+export function visualCandidates(html: string, pageUrl: string): ImageCandidate[] {
+  const out: ImageCandidate[] = [];
+  const seen = new Set<string>();
+  const push = (raw: string, alt: string, width: number, height: number, href: string) => {
+    const src = resolveUrl(raw, pageUrl);
+    if (!src || seen.has(src) || !acceptableImageUrl(src, alt, width, height)) return;
+    if (!sameSiteImage(src, pageUrl)) return;
+    seen.add(src);
+    const absHref = href ? resolveUrl(href, pageUrl) || "" : "";
+    out.push({ src, alt: stripTags(alt), width, height, href: absHref || undefined });
+  };
+
+  const imgRe = /<img\b[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = imgRe.exec(html))) {
+    const tag = m[0];
+    const alt = /alt\s*=\s*["']([^"']*)["']/i.exec(tag)?.[1] || "";
+    const width = Number(/width\s*=\s*["']?(\d+)/i.exec(tag)?.[1] || 0);
+    const height = Number(/height\s*=\s*["']?(\d+)/i.exec(tag)?.[1] || 0);
+    const href = nearestAnchorHref(html, m.index ?? 0);
+    for (const raw of urlsFromImgTag(tag)) push(raw, alt, width, height, href);
+  }
+
+  const bgRe = /background-image\s*:\s*url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi;
+  while ((m = bgRe.exec(html))) {
+    push(m[1], "", 0, 0, nearestAnchorHref(html, m.index ?? 0));
+  }
+  return out;
+}
+
+const WRAP_TAGS = new Set(["div", "section", "article", "li", "figure", "main", "aside"]);
+
+function elementSpans(html: string): Array<{ start: number; end: number }> {
+  const re = /<!--[\s\S]*?-->|<\/?([a-zA-Z0-9]+)([^>]*)>/g;
+  const stack: Array<{ tag: string; start: number }> = [];
+  const spans: Array<{ start: number; end: number }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    if (m[0].startsWith("<!--")) continue;
+    const tag = (m[1] || "").toLowerCase();
+    if (!WRAP_TAGS.has(tag)) continue;
+    if (/\/\s*>$/.test(m[0])) continue;
+    if (m[0][1] === "/") {
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].tag !== tag) continue;
+        const open = stack[i];
+        stack.length = i;
+        spans.push({ start: open.start, end: m.index + m[0].length });
+        break;
+      }
+      continue;
+    }
+    stack.push({ tag, start: m.index });
+  }
+  return spans;
+}
+
+function headingAt(html: string, heading: string): number {
+  const re = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    if (stripTags(m[2] || "") === heading) return m.index ?? -1;
+  }
+  return -1;
+}
+
+function realHeadingCount(slice: string, businessName?: string | null): number {
+  const biz = (businessName || "").trim().toLowerCase();
+  const re = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let n = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(slice))) {
+    const text = stripTags(m[2] || "");
+    if (biz && text.toLowerCase() === biz) continue;
+    if (headingScore(text) < 1) continue;
+    n++;
+  }
+  return n;
+}
+
+function cardHtml(
+  html: string,
+  heading: string,
+  pageUrl: string,
+  businessName?: string | null
+): string | null {
+  const at = headingAt(html, heading);
+  if (at < 0) return null;
+  const containing = elementSpans(html)
+    .filter((span) => span.start < at && span.end > at)
+    .sort((a, b) => a.end - a.start - (b.end - b.start));
+  for (const span of containing) {
+    const slice = html.slice(span.start, span.end);
+    if (realHeadingCount(slice, businessName) !== 1) continue;
+    if (!visualCandidates(slice, pageUrl).length) continue;
+    return slice;
+  }
+  return null;
+}
+
+function relevanceScore(img: ImageCandidate, tokens: string[]): number {
+  if (!tokens.length) return 0;
+  let score = 0;
+  const alt = img.alt.toLowerCase();
+  const file = img.src.toLowerCase();
+  const href = (img.href || "").toLowerCase();
+  if (tokens.some((t) => alt.includes(t))) score += 8;
+  if (tokens.some((t) => file.includes(t))) score += 8;
+  if (tokens.some((t) => href.includes(t))) score += 8;
+  return score;
+}
+
+function conflictsWithOtherEvent(img: ImageCandidate, otherTokens: string[], mine: string[]): boolean {
+  if (!otherTokens.length) return false;
+  const blob = `${img.alt} ${img.src} ${img.href || ""}`.toLowerCase();
+  const hitsOther = otherTokens.some((t) => blob.includes(t));
+  const hitsMine = mine.some((t) => blob.includes(t));
+  return hitsOther && !hitsMine;
+}
+
+function otherEventTokens(html: string, heading: string, businessName?: string | null): string[] {
+  const biz = (businessName || "").trim().toLowerCase();
+  const tokens = new Set<string>();
+  const re = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    const text = stripTags(m[2] || "");
+    if (text === heading) continue;
+    if (biz && text.toLowerCase() === biz) continue;
+    if (headingScore(text) < 1) continue;
+    for (const token of distinctiveTokens(text)) tokens.add(token);
+  }
+  return [...tokens];
+}
+
+/**
+ * An image is usable only when it belongs to this event's card.
+ * Another event's artwork on the same page is rejected.
+ * Low confidence returns null — a campaign with no image is preferred.
+ */
+export function selectCardImage(
+  html: string,
+  heading: string,
+  pageUrl: string,
+  businessName?: string | null
+): ImageCandidate | null {
+  const region = contentHtml(html);
+  const slice = cardHtml(region, heading, pageUrl, businessName);
+  if (!slice) return null;
+  const images = visualCandidates(slice, pageUrl);
+  if (!images.length) return null;
+  const mine = distinctiveTokens(heading);
+  const others = otherEventTokens(region, heading, businessName);
+  const clean = images.filter((img) => !conflictsWithOtherEvent(img, others, mine));
+  if (!clean.length) return null;
+  if (images.length === 1) return clean[0];
+  const ranked = clean
+    .map((img) => ({ img, score: relevanceScore(img, mine) }))
+    .filter((row) => row.score >= 8)
+    .sort((a, b) => b.score - a.score || b.img.width - a.img.width);
+  return ranked[0]?.img ?? null;
+}
+
 const CTA_PREFER =
   /\b(order|book|reserve|tickets|get tickets|view|shop|see menu|rsvp|register|learn more|see details|buy)\b/i;
 
@@ -244,12 +477,7 @@ export function extractMarketingFacts(
   const timeText = section.body.match(TIME_RE)?.[0] ?? null;
   if (!sentence && !dateText && !priceText) return null;
 
-  const inSection = imageCandidates(section.slice, pageUrl).filter((img) =>
-    sameSiteImage(img.src, pageUrl)
-  );
-  const image =
-    inSection[0] ||
-    pickImage(imageCandidates(html, pageUrl), section.heading, pageUrl);
+  const image = selectCardImage(html, section.heading, pageUrl, businessName);
   const linked = pickCta(section.slice, pageUrl);
   const cta =
     linked.href !== pageUrl || linked.label !== "See the details"

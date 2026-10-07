@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { acquisitionAutoApprove, acquisitionSendingEnabled } from "@/lib/acquisition/flags";
 import { runQualityGate } from "@/lib/acquisition/quality-gate";
-import { draftMessageForProspect } from "@/lib/acquisition/send";
+import { draftMessageForProspect, draftWebsiteDemoForProspect } from "@/lib/acquisition/send";
+import { websiteDemoDraftRoom } from "@/lib/acquisition/caps";
 import {
   isExistingCustomerDomainOrEmail,
   isSuppressed,
@@ -36,6 +37,8 @@ export async function autoApproveAndQueue(opts?: { limit?: number }): Promise<{
   let approved = 0;
   let skipped = 0;
   const reasons: Record<string, number> = {};
+  let demoRoom = await websiteDemoDraftRoom();
+  let demoTried = false;
 
   for (const p of rows) {
     if (await isExistingCustomerDomainOrEmail(p.contactEmail, p.domain)) {
@@ -57,6 +60,29 @@ export async function autoApproveAndQueue(opts?: { limit?: number }): Promise<{
         reasons[f] = (reasons[f] || 0) + 1;
       }
       continue;
+    }
+
+    if (!demoTried && demoRoom > 0) {
+      demoTried = true;
+      const demo = await draftWebsiteDemoForProspect(p.id, {
+        dryRun: !acquisitionSendingEnabled(),
+      });
+      if (demo.ok) {
+        demoRoom--;
+        await prisma.acquisitionProspect.update({
+          where: { id: p.id },
+          data: { status: "QUEUED", ownerApproved: true },
+        });
+        await prisma.acquisitionEvent.create({
+          data: {
+            prospectId: p.id,
+            type: "auto_approved",
+            meta: { score: p.score, track: "personalized_website_demo" },
+          },
+        });
+        approved++;
+        continue;
+      }
     }
 
     const draft = await draftMessageForProspect(p.id, "INITIAL", {

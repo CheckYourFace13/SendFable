@@ -9,6 +9,7 @@ import {
 import {
   campaignSubjectFromHeadline,
   extractMarketingFacts,
+  selectCardImage,
 } from "@/lib/acquisition/website-demo/extract";
 import { buildWebsiteDemoEmail, DEMO_NEVER_SENDS_TO_CUSTOMER_LIST } from "@/lib/acquisition/website-demo/email";
 import { PREVIEW_LABEL } from "@/lib/acquisition/website-demo/preview";
@@ -117,6 +118,100 @@ describe("website demo extraction", () => {
       fetchPage: async (url) => ({ url, body: THIN }),
     });
     assert.equal(demo, null);
+  });
+});
+
+const OPERA = `<main>
+  <div class="show">
+    <a href="https://opera.example/tosca/"><img src="https://opera.example/tosca.png" alt="Tosca poster" width="500" height="647"></a>
+    <h2>Tosca</h2>
+    <p>A drama on October 4, 2026. Tickets are available for this production at the hall.</p>
+  </div>
+  <div class="show">
+    <a href="https://opera.example/fortuna/"><img src="https://opera.example/Fortuna-the-Time-Bender.png" alt="Fortuna the Time Bender vs the schoolgirls of doom poster" width="500" height="647" srcset="https://opera.example/Fortuna-the-Time-Bender.png 500w, https://opera.example/Fortuna-the-Time-Bender-232.png 232w"></a>
+    <h2>Fortuna the Time Bender vs the Schoolgirls of Doom</h2>
+    <p>A Comic Book Superhero Opera on November 13, 2026. Fortuna is a superhero with the power to elongate time.</p>
+  </div>
+  <div class="show">
+    <a href="https://opera.example/figaro/"><img loading="lazy" src="https://opera.example/The-Marriage-of-Figaro.png" alt="The Marriage of Figaro poster" width="500" height="647" srcset="https://opera.example/The-Marriage-of-Figaro.png 500w"></a>
+    <h2>The Marriage of Figaro</h2>
+    <p>Mozart's comedy returns on January 8, 2027. Tickets are on sale for this production tonight.</p>
+  </div>
+</main>`;
+
+describe("website demo image relevance", () => {
+  const page = "https://opera.example/season/";
+
+  it("does not let an adjacent event image leak onto the featured show", () => {
+    const fortuna = selectCardImage(
+      OPERA,
+      "Fortuna the Time Bender vs the Schoolgirls of Doom",
+      page,
+      "Nashville Opera"
+    );
+    assert.equal(fortuna?.src, "https://opera.example/Fortuna-the-Time-Bender.png");
+    assert.doesNotMatch(fortuna?.src || "", /Figaro|Tosca/i);
+    const facts = extractMarketingFacts(OPERA, page, "Nashville Opera");
+    assert.equal(facts?.headline, "Fortuna the Time Bender vs the Schoolgirls of Doom");
+    assert.equal(facts?.imageUrl, "https://opera.example/Fortuna-the-Time-Bender.png");
+    assert.equal(facts?.dateText, "November 13, 2026");
+  });
+
+  it("selects the image inside the matching card and link", () => {
+    const figaro = selectCardImage(OPERA, "The Marriage of Figaro", page);
+    assert.match(figaro?.src || "", /Figaro/);
+    assert.match(figaro?.href || "", /\/figaro\//);
+  });
+
+  it("uses no image when the card has none", () => {
+    const html = `<main><section><h2>Pumpkin Latte Weekend</h2><p>Join us October 10-12 for pumpkin lattes at four dollars while the special lasts.</p></section></main>`;
+    const facts = extractMarketingFacts(html, "https://northshore.example/events", "North Shore Coffee");
+    assert.equal(facts?.headline, "Pumpkin Latte Weekend");
+    assert.equal(facts?.imageUrl, null);
+  });
+
+  it("reads a lazy-loaded image and a srcset URL", () => {
+    const html = `<main><section>
+      <h2>Pumpkin Latte Weekend</h2>
+      <p>Join us October 10-12 for our pumpkin latte special. $4.95 while it lasts.</p>
+      <img alt="Pumpkin latte" width="800" height="600" src="data:image/gif;base64,AAAA" data-src="/pumpkin-latte.jpg" srcset="/pumpkin-latte-small.jpg 200w, /pumpkin-latte.jpg 800w">
+    </section></main>`;
+    const img = selectCardImage(html, "Pumpkin Latte Weekend", "https://northshore.example/events");
+    assert.match(img?.src || "", /pumpkin-latte\.jpg/);
+    assert.doesNotMatch(img?.src || "", /data:|small/);
+  });
+
+  it("excludes logos and icons even when they are the only image", () => {
+    const html = `<main><section>
+      <h2>Pumpkin Latte Weekend</h2>
+      <p>Join us October 10-12 for our pumpkin latte special. $4.95 while it lasts.</p>
+      <img src="https://northshore.example/logo.png" alt="logo" width="120" height="40">
+      <img src="https://northshore.example/icon-sprite.png" alt="icon" width="64" height="64">
+    </section></main>`;
+    assert.equal(
+      selectCardImage(html, "Pumpkin Latte Weekend", "https://northshore.example/events"),
+      null
+    );
+  });
+
+  it("keeps a section background and ignores the next card's photo", () => {
+    const html = `<main>
+      <section>
+        <h2>Tickets on Sale Now</h2>
+        <h3>PopUpPlay Halloween Party at Cherry Street Pier</h3>
+        <p>Get ready for some not-so-spooky fun at Cherry Street Pier on Oct. 31 from 11 am to 1 pm! Tickets are $20 per person.</p>
+        <div class="chunk-bg" style="background-image: url('https://pier.example/halloween-party.jpg')"></div>
+      </section>
+      <section>
+        <img src="https://pier.example/other-venue.jpg" alt="The waterfront" width="800" height="600">
+        <h2>Transforming the waterfront this season</h2>
+        <p>The pier hosts events all year and tickets go on sale each month for something new.</p>
+      </section>
+    </main>`;
+    const facts = extractMarketingFacts(html, "https://pier.example/", "Cherry Street Pier");
+    assert.equal(facts?.headline, "PopUpPlay Halloween Party at Cherry Street Pier");
+    assert.equal(facts?.imageUrl, "https://pier.example/halloween-party.jpg");
+    assert.doesNotMatch(facts?.imageUrl || "", /other-venue/);
   });
 });
 

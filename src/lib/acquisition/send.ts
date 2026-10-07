@@ -16,9 +16,14 @@ import { bodyHasUnsubscribe, runQualityGate } from "@/lib/acquisition/quality-ga
 import {
   canSendAnyToday,
   canSendNewToday,
+  canSendWebsiteDemoToday,
   checkOutreachSafetyAndMaybePause,
   isPipelinePaused,
 } from "@/lib/acquisition/caps";
+import { WEBSITE_DEMO_COPY_VERSION } from "@/lib/acquisition/queue-policy";
+import { buildWebsiteDemo } from "@/lib/acquisition/website-demo/build";
+import { buildWebsiteDemoEmail } from "@/lib/acquisition/website-demo/email";
+import { confirmSameSiteImage } from "@/lib/acquisition/website-demo/image";
 import {
   addDays,
   defaultProspectTimeZone,
@@ -179,6 +184,99 @@ export async function draftMessageForProspect(
   return { ok: true, messageId };
 }
 
+function htmlToPlain(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Draft one personalized website-demo initial. Never replaces an existing initial,
+ * and never creates a customer campaign.
+ */
+export async function draftWebsiteDemoForProspect(
+  prospectId: string,
+  opts?: { dryRun?: boolean }
+): Promise<{ ok: boolean; messageId?: string; reason?: string }> {
+  const p = await prisma.acquisitionProspect.findUnique({ where: { id: prospectId } });
+  if (!p || !p.contactEmail || !p.website) return { ok: false, reason: "missing_prospect_or_email" };
+
+  const existing = await prisma.acquisitionMessage.findFirst({
+    where: { prospectId, step: "INITIAL", status: { not: "CANCELLED" } },
+    select: { id: true },
+  });
+  if (existing) return { ok: false, reason: "step_already_exists" };
+
+  const ownerPreview = await prisma.acquisitionEvent.findFirst({
+    where: {
+      type: "owner_personalized_demo",
+      prospectId: null,
+      meta: { path: ["domain"], equals: p.domain },
+    },
+    select: { id: true },
+  });
+  if (ownerPreview) return { ok: false, reason: "owner_preview_only" };
+
+  let built;
+  try {
+    built = await buildWebsiteDemo({
+      website: p.website.startsWith("http") ? p.website : `https://${p.website}`,
+      businessName: p.businessName,
+    });
+  } catch {
+    return { ok: false, reason: "demo_fetch_failed" };
+  }
+  if (!built || built.track !== "personalized_website_demo") {
+    return { ok: false, reason: "no_demo" };
+  }
+
+  let facts = built.facts;
+  if (facts.imageUrl) {
+    const check = await confirmSameSiteImage(facts.imageUrl, facts.pageUrl);
+    if (check === "reject") facts = { ...facts, imageUrl: null, imageAlt: null };
+  }
+
+  const unsub = await unsubUrlFor(p.id, p.contactEmail);
+  const mail = buildWebsiteDemoEmail({
+    businessName: p.businessName,
+    firstName: p.firstName,
+    facts,
+    unsubUrl: unsub,
+    ctaUrl: "ACQ_CTA_PLACEHOLDER",
+  });
+  if (!bodyHasUnsubscribe(mail.html) || !bodyHasUnsubscribe(mail.text)) {
+    return { ok: false, reason: "missing_unsubscribe" };
+  }
+
+  const msg = await prisma.acquisitionMessage.create({
+    data: {
+      prospectId: p.id,
+      step: "INITIAL",
+      subject: mail.subject,
+      bodyText: mail.html,
+      status: "DRAFT",
+      dryRun: opts?.dryRun ?? false,
+      copyVersion: WEBSITE_DEMO_COPY_VERSION,
+      openerType: "events",
+      ctaPath: "/automated-email-marketing",
+    },
+  });
+
+  const cta = await clickUrlFor(msg.id, "/automated-email-marketing", WEBSITE_DEMO_COPY_VERSION);
+  const bodyText = mail.html.replace(/ACQ_CTA_PLACEHOLDER/g, cta);
+  await prisma.acquisitionMessage.update({
+    where: { id: msg.id },
+    data: { bodyText },
+  });
+  return { ok: true, messageId: msg.id };
+}
+
 /**
  * Send one scheduled/draft acquisition message. Hard-gated by SENDING flag.
  * dryRun messages never call SES.
@@ -231,7 +329,9 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
   const safety = await checkOutreachSafetyAndMaybePause();
   if (!safety.ok) return { ok: false, reason: "safety_pause" };
 
-  if (msg.step === "INITIAL") {
+  if (msg.step === "INITIAL" && msg.copyVersion === WEBSITE_DEMO_COPY_VERSION) {
+    if (!(await canSendWebsiteDemoToday())) return { ok: false, reason: "daily_demo_cap" };
+  } else if (msg.step === "INITIAL") {
     if (!(await canSendNewToday())) return { ok: false, reason: "daily_new_cap" };
   } else if (!(await canSendAnyToday())) {
     return { ok: false, reason: "daily_total_cap" };
@@ -258,13 +358,14 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
   const from = sender.from;
 
   try {
+    const demo = msg.copyVersion === WEBSITE_DEMO_COPY_VERSION;
     const result = await sendEmail({
       from,
       to: p.contactEmail!,
       replyTo: acquisitionReplyTo(),
       subject: msg.subject,
-      text: msg.bodyText,
-      html: plainToHtml(msg.bodyText),
+      text: demo ? htmlToPlain(msg.bodyText) : msg.bodyText,
+      html: demo ? msg.bodyText : plainToHtml(msg.bodyText),
       tags: {
         kind: "acquisition",
         prospectId: p.id.slice(0, 64),

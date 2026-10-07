@@ -11,6 +11,7 @@ import {
   planStaleInitial,
   SENT_INITIAL_STATUSES,
   stableAutopilotVariant,
+  WEBSITE_DEMO_COPY_VERSION,
   type QueueMessage,
 } from "@/lib/acquisition/queue-policy";
 
@@ -122,6 +123,7 @@ export async function loadSendCandidates(limit = 30) {
         status: { in: ["DRAFT", "SCHEDULED"] },
         step: "INITIAL",
         ctaPath: ACQUISITION_AUTOPILOT_LANDING,
+        NOT: { copyVersion: WEBSITE_DEMO_COPY_VERSION },
       },
       include: { prospect: true },
       orderBy: { createdAt: "asc" },
@@ -146,4 +148,18 @@ export async function loadSendCandidates(limit = 30) {
     })) as Array<QueueMessage & (typeof initials)[number]>
   );
   return ordered.slice(0, limit);
+}
+
+export async function loadWebsiteDemoCandidates(limit = 2) {
+  return prisma.acquisitionMessage.findMany({
+    where: {
+      dryRun: false,
+      status: { in: ["DRAFT", "SCHEDULED"] },
+      step: "INITIAL",
+      copyVersion: WEBSITE_DEMO_COPY_VERSION,
+    },
+    include: { prospect: true },
+    orderBy: { createdAt: "asc" },
+    take: limit,
+  });
 }

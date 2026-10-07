@@ -16,7 +16,10 @@ import type { MarketingFacts } from "@/lib/acquisition/website-demo/extract";
 
 const prisma = new PrismaClient();
 const OWNER = "chris@iscreamstudio.com";
-const SKIP_HOST = /(sendfable|boatingchicago|iscreamstudio|example\.com)/i;
+const TARGETS = [
+  { domain: "nashvilleopera.org", website: "https://nashvilleopera.org/" },
+  { domain: "cherrystreetpier.com", website: "https://www.cherrystreetpier.com/" },
+];
 
 async function withConfirmedImage(facts: MarketingFacts): Promise<MarketingFacts> {
   if (!facts.imageUrl) return facts;
@@ -26,53 +29,39 @@ async function withConfirmedImage(facts: MarketingFacts): Promise<MarketingFacts
 }
 
 async function main() {
-  const prospects = await prisma.acquisitionProspect.findMany({
-    where: {
-      activeWebsite: true,
-      contactEmail: { not: null },
-      status: { in: ["QUALIFIED", "QUEUED", "DISCOVERED"] },
-    },
-    orderBy: { score: "desc" },
-    take: 16,
-    select: {
-      id: true,
-      businessName: true,
-      website: true,
-      domain: true,
-      firstName: true,
-      score: true,
-    },
-  });
-
   const sent: Array<Record<string, string>> = [];
   let attempts = 0;
 
-  for (const p of prospects) {
+  for (const target of TARGETS) {
     if (sent.length >= 2) break;
-    if (SKIP_HOST.test(p.domain) || SKIP_HOST.test(p.website)) continue;
     attempts++;
-    if (attempts > 8) break;
+    const prospect = await prisma.acquisitionProspect.findFirst({
+      where: { domain: target.domain },
+      select: { businessName: true, website: true, firstName: true },
+    });
+    const businessName = prospect?.businessName || target.domain;
+    const website = prospect?.website || target.website;
 
     const built = await buildWebsiteDemo({
-      website: p.website.startsWith("http") ? p.website : `https://${p.website}`,
-      businessName: p.businessName,
+      website: website.startsWith("http") ? website : `https://${website}`,
+      businessName,
     });
     if (!built) {
-      console.log(`skip_no_facts ${p.businessName} ${p.domain}`);
+      console.log(`skip_no_facts ${businessName} ${target.domain}`);
       continue;
     }
 
     const facts = await withConfirmedImage(built.facts);
     const mail = buildWebsiteDemoEmail({
-      businessName: p.businessName,
-      firstName: p.firstName,
+      businessName,
+      firstName: prospect?.firstName,
       facts,
       unsubUrl: "https://sendfable.com/unsubscribe",
       ctaUrl: "https://sendfable.com/automated-email-marketing?utm_source=casey&utm_medium=email&utm_campaign=personalized_website_demo&utm_content=owner_preview",
     });
 
-    const subject = `[OWNER PERSONALIZED DEMO] ${mail.subject}`;
-    const banner = `<p style="margin:0 0 16px;padding:10px 12px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-family:Georgia,serif;font-size:14px;">Corrected owner preview. Review this version. It was not sent to ${p.businessName}. The unsubscribe link is inert.</p>`;
+    const subject = `[OWNER PERSONALIZED DEMO FINAL] ${mail.subject}`;
+    const banner = `<p style="margin:0 0 16px;padding:10px 12px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-family:Georgia,serif;font-size:14px;">Final owner preview. It was not sent to ${businessName}. The unsubscribe link is inert.</p>`;
     const html = mail.html.replace(/<body[^>]*>/, (open) => `${open}${banner}`);
 
     const result = await sendEmail({
@@ -93,8 +82,8 @@ async function main() {
         prospectId: null,
         type: "owner_personalized_demo",
         meta: {
-          businessName: p.businessName,
-          domain: p.domain,
+          businessName,
+          domain: target.domain,
           sourceUrl: facts.pageUrl,
           campaignSubject: mail.campaignSubject,
           ownerSubject: subject,
@@ -105,7 +94,7 @@ async function main() {
     });
 
     sent.push({
-      business: p.businessName,
+      business: businessName,
       source: facts.pageUrl,
       caseySubject: subject,
       campaignSubject: mail.campaignSubject,
@@ -117,7 +106,7 @@ async function main() {
       file,
       messageId: result.messageId,
     });
-    console.log(`sent_owner_preview ${p.businessName}`);
+    console.log(`sent_owner_preview ${businessName}`);
   }
 
   console.log(JSON.stringify({ attempts, sent }, null, 2));
