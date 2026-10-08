@@ -31,11 +31,27 @@ const RAMP_UNSUB_MAX = 0.02;
 const MIN_SAMPLE_FOR_RAMP = 10;
 const MIN_SAMPLE_FOR_HARD = 20;
 /**
- * Single bounce/unsub at small volume is noise (1/20 = 5%).
- * Require ≥2 events, or a larger sample, before hard-pausing forever.
+ * Single bounce at small volume is noise (1/20 = 5%).
+ * Require ≥2 bounce events, or a larger sample, before hard-pausing on bounce.
  */
-const MIN_ABS_FOR_HARD_BOUNCE_OR_UNSUB = 2;
-const MIN_SAMPLE_FOR_SINGLE_EVENT_HARD = 50;
+const MIN_ABS_FOR_HARD_BOUNCE = 2;
+const MIN_SAMPLE_FOR_SINGLE_EVENT_HARD_BOUNCE = 50;
+/**
+ * Unsub hard-pause at Stage 1 volume: rate alone is too twitchy.
+ * Below 100 sends, require ≥3 absolute unsubs in addition to ≥5% rate.
+ * At/above 100 sends, ≥5% rate is enough.
+ */
+const MIN_ABS_FOR_HARD_UNSUB_SMALL_SAMPLE = 3;
+const MIN_SAMPLE_FOR_UNSUB_RATE_ONLY = 100;
+
+/** Owner-facing thresholds (keep in sync with shouldHardPause / shouldReduceStage). */
+export const UNSUB_SAFETY_THRESHOLDS = {
+  softRate: SOFT_UNSUB,
+  hardRate: HARD_UNSUB,
+  minSentForHardEval: MIN_SAMPLE_FOR_HARD,
+  smallSampleAbsFloor: MIN_ABS_FOR_HARD_UNSUB_SMALL_SAMPLE,
+  rateOnlyMinSent: MIN_SAMPLE_FOR_UNSUB_RATE_ONLY,
+} as const;
 
 async function ensureControl() {
   return prisma.acquisitionPipelineControl.upsert({
@@ -411,16 +427,52 @@ export function shouldHardPause(opts: {
       : Math.round(opts.unsubRate * opts.sent);
 
   if (opts.bounceRate >= HARD_BOUNCE) {
-    const enoughAbs = bounced >= MIN_ABS_FOR_HARD_BOUNCE_OR_UNSUB;
-    const largeSample = opts.sent >= MIN_SAMPLE_FOR_SINGLE_EVENT_HARD;
+    const enoughAbs = bounced >= MIN_ABS_FOR_HARD_BOUNCE;
+    const largeSample = opts.sent >= MIN_SAMPLE_FOR_SINGLE_EVENT_HARD_BOUNCE;
     if (enoughAbs || largeSample) return { pause: true, reason: "bounce" };
   }
   if (opts.unsubRate >= HARD_UNSUB) {
-    const enoughAbs = unsubscribed >= MIN_ABS_FOR_HARD_BOUNCE_OR_UNSUB;
-    const largeSample = opts.sent >= MIN_SAMPLE_FOR_SINGLE_EVENT_HARD;
-    if (enoughAbs || largeSample) return { pause: true, reason: "unsub" };
+    if (opts.sent >= MIN_SAMPLE_FOR_UNSUB_RATE_ONLY) {
+      return { pause: true, reason: "unsub" };
+    }
+    // Small sample: rate alone is not enough — need absolute unsub floor.
+    if (unsubscribed >= MIN_ABS_FOR_HARD_UNSUB_SMALL_SAMPLE) {
+      return { pause: true, reason: "unsub" };
+    }
   }
   return { pause: false };
+}
+
+/** Plain-language unsub safety line for owner reports / admin. */
+export function formatUnsubSafetyExplanation(opts: {
+  sent: number;
+  unsubscribed: number;
+  unsubRate: number;
+}): string {
+  const pct = `${(opts.unsubRate * 100).toFixed(2)}%`;
+  const softPct = `${SOFT_UNSUB * 100}%`;
+  const hardPct = `${HARD_UNSUB * 100}%`;
+  const hard = shouldHardPause({
+    sent: opts.sent,
+    bounceRate: 0,
+    complaintRate: 0,
+    unsubRate: opts.unsubRate,
+    bounced: 0,
+    unsubscribed: opts.unsubscribed,
+  });
+  const softActive =
+    opts.sent >= MIN_SAMPLE_FOR_HARD && opts.unsubRate > SOFT_UNSUB && !hard.pause;
+  if (hard.pause) {
+    return `${opts.unsubscribed} unsubscribes / ${opts.sent} sends = ${pct}. Hard pause active (rate ≥ ${hardPct}${
+      opts.sent < MIN_SAMPLE_FOR_UNSUB_RATE_ONLY
+        ? `; ≥${MIN_ABS_FOR_HARD_UNSUB_SMALL_SAMPLE} unsubscribes required below ${MIN_SAMPLE_FOR_UNSUB_RATE_ONLY} sends`
+        : ""
+    }).`;
+  }
+  if (softActive) {
+    return `${opts.unsubscribed} unsubscribes / ${opts.sent} sends = ${pct}. Soft backoff active; hard pause requires ${MIN_ABS_FOR_HARD_UNSUB_SMALL_SAMPLE} unsubscribes until ${MIN_SAMPLE_FOR_UNSUB_RATE_ONLY} sends.`;
+  }
+  return `${opts.unsubscribed} unsubscribes / ${opts.sent} sends = ${pct}. Soft > ${softPct}; hard ≥ ${hardPct} (below ${MIN_SAMPLE_FOR_UNSUB_RATE_ONLY} sends also needs ≥${MIN_ABS_FOR_HARD_UNSUB_SMALL_SAMPLE} unsubscribes).`;
 }
 
 export function shouldReduceStage(opts: {

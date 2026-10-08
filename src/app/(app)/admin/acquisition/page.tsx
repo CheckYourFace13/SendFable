@@ -225,7 +225,10 @@ export default function AdminAcquisitionPage() {
             </div>
             <div>7d bounce: {data.autonomy.rates7d?.bouncePct}%</div>
             <div>7d complaint: {data.autonomy.rates7d?.complaintPct}%</div>
-            <div>7d unsub: {data.autonomy.rates7d?.unsubPct}%</div>
+            <div>
+              7d unsub: {data.autonomy.rates7d?.unsubPct}% ({data.autonomy.rates7d?.unsubscribed ?? 0}/
+              {data.autonomy.rates7d?.sent ?? 0} sends)
+            </div>
             <div>Replies: {data.autonomy.replies}</div>
             <div>Positive: {data.autonomy.positiveReplies}</div>
             <div>Signups: {data.autonomy.signups}</div>
@@ -234,6 +237,18 @@ export default function AdminAcquisitionPage() {
             <div>Next ramp: {data.autonomy.nextRamp}</div>
             <div>Sender: {data.autonomy.senderOk ? "OK" : data.autonomy.senderDetail}</div>
             <div>IMAP replies: {data.autonomy.imapConfigured ? "configured" : "not configured"}</div>
+            {data.autonomy.unsubSafety && (
+              <div className="sm:col-span-2 lg:col-span-3 text-slate-700">
+                Unsub safety: {data.autonomy.unsubSafety.explanation}
+                <span className="ml-1 text-slate-500">
+                  (soft &gt;{data.autonomy.unsubSafety.softRatePct}%; hard ≥
+                  {data.autonomy.unsubSafety.hardRatePct}%
+                  {"; "}
+                  below {data.autonomy.unsubSafety.rateOnlyMinSent} sends also needs ≥
+                  {data.autonomy.unsubSafety.smallSampleAbsFloor} unsubs)
+                </span>
+              </div>
+            )}
             {data.autonomy.pauseReason && (
               <div className="text-red-700">Pause: {data.autonomy.pauseReason}</div>
             )}

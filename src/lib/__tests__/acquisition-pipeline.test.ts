@@ -451,6 +451,88 @@ describe("acquisition autonomy gates", () => {
       }).pause,
       false
     );
+    // Unsub small-sample floor: 2/39 ≈ 5.13% must NOT hard-pause.
+    assert.equal(
+      shouldHardPause({
+        sent: 39,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 2 / 39,
+        unsubscribed: 2,
+      }).pause,
+      false
+    );
+    assert.equal(
+      shouldHardPause({
+        sent: 39,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 3 / 39,
+        unsubscribed: 3,
+      }).pause,
+      true
+    );
+    assert.equal(
+      shouldHardPause({
+        sent: 80,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 4 / 80,
+        unsubscribed: 4,
+      }).pause,
+      true
+    );
+    // 4/99 ≈ 4.04% — below 5% hard rate.
+    assert.equal(
+      shouldHardPause({
+        sent: 99,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 4 / 99,
+        unsubscribed: 4,
+      }).pause,
+      false
+    );
+    assert.equal(
+      shouldHardPause({
+        sent: 100,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 5 / 100,
+        unsubscribed: 5,
+      }).pause,
+      true
+    );
+    assert.equal(
+      shouldHardPause({
+        sent: 100,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 4 / 100,
+        unsubscribed: 4,
+      }).pause,
+      false
+    );
+    assert.equal(
+      shouldHardPause({
+        sent: 20,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 2 / 20,
+        unsubscribed: 2,
+      }).pause,
+      false
+    );
+    assert.equal(
+      shouldHardPause({
+        sent: 20,
+        bounceRate: 0,
+        complaintRate: 0,
+        unsubRate: 1 / 20,
+        unsubscribed: 1,
+      }).pause,
+      false
+    );
     assert.equal(
       shouldReduceStage({ sent: 50, bounceRate: 0.03, unsubRate: 0 }),
       true
@@ -468,6 +550,23 @@ describe("acquisition autonomy gates", () => {
           complaintRate: 0,
           unsubRate: 0,
           sampleOk: false,
+        },
+      }),
+      true
+    );
+    // Current prod window: 2/39 unsubs must auto-clear recoverable unsub hard pause.
+    assert.equal(
+      shouldAutoResumeRecoverablePause({
+        pauseReason: "unsub_rate_5.13%",
+        rates: {
+          sent: 39,
+          bounced: 0,
+          complained: 0,
+          unsubscribed: 2,
+          bounceRate: 0,
+          complaintRate: 0,
+          unsubRate: 2 / 39,
+          sampleOk: true,
         },
       }),
       true

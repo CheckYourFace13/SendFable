@@ -11,8 +11,10 @@ import { sendEmail, platformFrom } from "@/lib/mailer";
 import { buildWeeklyOptimization } from "@/lib/acquisition/weekly";
 import {
   canRampGiven,
+  formatUnsubSafetyExplanation,
   getStageCaps,
   ratesOverDays,
+  UNSUB_SAFETY_THRESHOLDS,
 } from "@/lib/acquisition/ramp";
 import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { prisma } from "@/lib/prisma";
@@ -209,6 +211,12 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
   const abWinner =
     (conversion as { activeCopyVersion?: string; abTest?: { enabled?: boolean } } | null)
       ?.activeCopyVersion || "v1a/v1b Autopilot A/B";
+  const rates7 = await ratesOverDays(7);
+  const unsubSafetyLine = formatUnsubSafetyExplanation({
+    sent: rates7.sent,
+    unsubscribed: rates7.unsubscribed,
+    unsubRate: rates7.unsubRate,
+  });
 
   const dateLabel = now.toLocaleDateString("en-US", {
     month: "short",
@@ -248,6 +256,12 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     `Daily Casey total cap: ${stageCaps.totalPerDay}`,
     `Inventory (sendable): ${inventory.sendableInventory}`,
     `Pipeline paused: ${paused.paused ? `YES (${paused.reason || "—"})` : "NO"}`,
+    `7D safety sends: ${rates7.sent}`,
+    `7D safety unsubs: ${rates7.unsubscribed}`,
+    `7D unsub rate: ${(rates7.unsubRate * 100).toFixed(2)}%`,
+    `Unsub soft threshold: >${UNSUB_SAFETY_THRESHOLDS.softRate * 100}%`,
+    `Unsub hard threshold: ≥${UNSUB_SAFETY_THRESHOLDS.hardRate * 100}% (below ${UNSUB_SAFETY_THRESHOLDS.rateOnlyMinSent} sends also needs ≥${UNSUB_SAFETY_THRESHOLDS.smallSampleAbsFloor} unsubs)`,
+    `Unsub safety: ${unsubSafetyLine}`,
     top
       ? `Top prospect: ${top.businessName}${top.city ? ` (${top.city})` : ""} · score ${top.score}`
       : "Top prospect: —",
@@ -530,6 +544,18 @@ export async function getAcquisitionDashboard() {
       complaintPct: Math.round(rates7.complaintRate * 10000) / 100,
       unsubPct: Math.round(rates7.unsubRate * 10000) / 100,
       sent: rates7.sent,
+      unsubscribed: rates7.unsubscribed,
+    },
+    unsubSafety: {
+      explanation: formatUnsubSafetyExplanation({
+        sent: rates7.sent,
+        unsubscribed: rates7.unsubscribed,
+        unsubRate: rates7.unsubRate,
+      }),
+      softRatePct: UNSUB_SAFETY_THRESHOLDS.softRate * 100,
+      hardRatePct: UNSUB_SAFETY_THRESHOLDS.hardRate * 100,
+      smallSampleAbsFloor: UNSUB_SAFETY_THRESHOLDS.smallSampleAbsFloor,
+      rateOnlyMinSent: UNSUB_SAFETY_THRESHOLDS.rateOnlyMinSent,
     },
     replies: overall.replies,
     positiveReplies: positiveAll,
