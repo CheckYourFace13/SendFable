@@ -135,7 +135,7 @@ export default function MigrateFromMailchimpPage() {
             </Link>
           </li>
           <li>
-            <Link href="/alternatives/mailchimp" className="font-medium text-coral underline">
+            <Link href="/mailchimp-alternative" className="font-medium text-coral underline">
               Mailchimp alternative overview
             </Link>
           </li>

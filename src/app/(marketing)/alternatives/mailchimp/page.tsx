@@ -79,11 +79,11 @@ export default function MailchimpAlternativePage() {
         </p>
         <p className="text-sm">
           Also see{" "}
-          <Link href="/vs/mailchimp" className="text-teal hover:underline">
-            Sendfable vs Mailchimp
+          <Link href="/compare/mailchimp" className="text-teal hover:underline">
+            SendFable vs Mailchimp
           </Link>{" "}
           and{" "}
-          <Link href="/migrate" className="text-teal hover:underline">
+          <Link href="/migrate/mailchimp" className="text-teal hover:underline">
             how to migrate
           </Link>
           .

@@ -84,8 +84,8 @@ export default function MailchimpPricingAlternativePage() {
           Full SendFable vs Mailchimp comparison
         </Link>{" "}
         ·{" "}
-        <Link className="text-coral hover:underline" href="/guides/mailchimp-vs-sendfable-pricing">
-          Pricing guide
+        <Link className="text-coral hover:underline" href="/pricing">
+          SendFable pricing
         </Link>
       </p>
       <MarketingCta />

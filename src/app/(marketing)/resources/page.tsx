@@ -63,24 +63,14 @@ const LINKS = [
     body: "Permission-based collection — purchased lists are not allowed.",
   },
   {
-    title: "Best Mailchimp alternative for small businesses",
-    href: "/guides/best-mailchimp-alternative-for-small-businesses",
-    body: "What “best” should mean: permission, sender setup, predictable pricing — without CRM force-fit.",
-  },
-  {
-    title: "How to switch from Mailchimp",
-    href: "/guides/how-to-switch-from-mailchimp",
-    body: "Longer walkthrough: export, clean, import, verify, test, small send, then cancel.",
-  },
-  {
     title: "Mailchimp alternative",
     href: "/mailchimp-alternative",
     body: "Honest trade-offs plus an approximate cost calculator.",
   },
   {
-    title: "Switch from Mailchimp",
-    href: "/switch-from-mailchimp",
-    body: "Export, import, verify sender, rebuild the campaigns that matter.",
+    title: "Migrate from Mailchimp",
+    href: "/migrate/mailchimp",
+    body: "Export, clean, import, verify sender, test, then cancel.",
   },
   {
     title: "Compare email tools",
@@ -91,11 +81,6 @@ const LINKS = [
     title: "Best by use case",
     href: "/best-email-marketing-software",
     body: "SendFable does not “win” categories it does not serve.",
-  },
-  {
-    title: "Migrate from Mailchimp",
-    href: "/migrate/mailchimp",
-    body: "Export, clean, import, verify sender, and send your first test.",
   },
   {
     title: "Templates",

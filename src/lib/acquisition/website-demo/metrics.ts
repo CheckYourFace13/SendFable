@@ -78,14 +78,34 @@ export function isWebsiteDemoCopy(copyVersion: string | null | undefined): boole
   return copyVersion === WEBSITE_DEMO_COPY_VERSION;
 }
 
-async function countDelivered(copyVersions: string[]): Promise<{ delivered: number; clicked: number }> {
+type DayWindow = { since?: Date };
+
+async function countSentNew(
+  copyVersions: string[],
+  window: DayWindow = {}
+): Promise<number> {
+  return prisma.acquisitionMessage.count({
+    where: {
+      dryRun: false,
+      step: "INITIAL",
+      copyVersion: { in: copyVersions },
+      status: { in: ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] },
+      ...(window.since ? { sentAt: { gte: window.since } } : {}),
+    },
+  });
+}
+
+async function countDelivered(
+  copyVersions: string[],
+  window: DayWindow = {}
+): Promise<{ delivered: number; clicked: number }> {
   const [delivered, clicked] = await Promise.all([
     prisma.acquisitionMessage.count({
       where: {
         dryRun: false,
         step: "INITIAL",
         copyVersion: { in: copyVersions },
-        deliveredAt: { not: null },
+        deliveredAt: window.since ? { gte: window.since } : { not: null },
       },
     }),
     prisma.acquisitionMessage.count({
@@ -93,17 +113,54 @@ async function countDelivered(copyVersions: string[]): Promise<{ delivered: numb
         dryRun: false,
         step: "INITIAL",
         copyVersion: { in: copyVersions },
-        clickedAt: { not: null },
+        clickedAt: window.since ? { gte: window.since } : { not: null },
       },
     }),
   ]);
   return { delivered, clicked };
 }
 
-async function countReplies(copyVersions: string[]): Promise<{ replied: number; positiveReply: number }> {
-  const rows = await prisma.acquisitionProspect.findMany({
+async function countReplies(
+  copyVersions: string[],
+  window: DayWindow = {}
+): Promise<{ replied: number; positiveReply: number }> {
+  if (!window.since) {
+    const rows = await prisma.acquisitionProspect.findMany({
+      where: {
+        replyClass: { not: null },
+        messages: {
+          some: {
+            dryRun: false,
+            step: "INITIAL",
+            copyVersion: { in: copyVersions },
+            status: { in: ["SENT", "DELIVERED"] },
+          },
+        },
+      },
+      select: { replyClass: true },
+    });
+    return {
+      replied: rows.length,
+      positiveReply: rows.filter((row) => row.replyClass === "POSITIVE").length,
+    };
+  }
+
+  const events = await prisma.acquisitionEvent.findMany({
     where: {
-      replyClass: { not: null },
+      type: "reply",
+      createdAt: { gte: window.since },
+      prospectId: { not: null },
+    },
+    select: { prospectId: true, meta: true },
+  });
+  const ids = [
+    ...new Set(events.map((e) => e.prospectId).filter((id): id is string => Boolean(id))),
+  ];
+  if (!ids.length) return { replied: 0, positiveReply: 0 };
+
+  const matched = await prisma.acquisitionProspect.findMany({
+    where: {
+      id: { in: ids },
       messages: {
         some: {
           dryRun: false,
@@ -113,19 +170,26 @@ async function countReplies(copyVersions: string[]): Promise<{ replied: number; 
         },
       },
     },
-    select: { replyClass: true },
+    select: { id: true, replyClass: true },
   });
+  const matchedIds = new Set(matched.map((p) => p.id));
+  const dayRows = events.filter((e) => e.prospectId && matchedIds.has(e.prospectId));
   return {
-    replied: rows.length,
-    positiveReply: rows.filter((row) => row.replyClass === "POSITIVE").length,
+    replied: dayRows.length,
+    positiveReply: dayRows.filter(
+      (e) => (e.meta as { replyClass?: string } | null)?.replyClass === "POSITIVE"
+    ).length,
   };
 }
 
-async function countOutcomes(copyVersions: string[]): Promise<{ signup: number; paid: number }> {
+async function countOutcomes(
+  copyVersions: string[],
+  window: DayWindow = {}
+): Promise<{ signup: number; paid: number }> {
   const [signup, paid] = await Promise.all([
     prisma.acquisitionProspect.count({
       where: {
-        signupAt: { not: null },
+        signupAt: window.since ? { gte: window.since } : { not: null },
         messages: {
           some: {
             dryRun: false,
@@ -138,7 +202,7 @@ async function countOutcomes(copyVersions: string[]): Promise<{ signup: number; 
     }),
     prisma.acquisitionProspect.count({
       where: {
-        paidAt: { not: null },
+        paidAt: window.since ? { gte: window.since } : { not: null },
         messages: {
           some: {
             dryRun: false,
@@ -153,31 +217,75 @@ async function countOutcomes(copyVersions: string[]): Promise<{ signup: number; 
   return { signup, paid };
 }
 
-/** Daily-report lines for the Casey vs personalized-demo comparison. */
-export async function trackComparisonLines(): Promise<string[]> {
+async function countUnsubscribed(
+  copyVersions: string[],
+  window: DayWindow = {}
+): Promise<number> {
+  return prisma.acquisitionProspect.count({
+    where: {
+      status: "UNSUBSCRIBED",
+      ...(window.since ? { updatedAt: { gte: window.since } } : {}),
+      messages: {
+        some: {
+          dryRun: false,
+          step: "INITIAL",
+          copyVersion: { in: copyVersions },
+          status: { in: ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] },
+        },
+      },
+    },
+  });
+}
+
+async function trackSlice(copyVersions: string[], window: DayWindow) {
+  const [sent, d, o, r, unsub] = await Promise.all([
+    countSentNew(copyVersions, window),
+    countDelivered(copyVersions, window),
+    countOutcomes(copyVersions, window),
+    countReplies(copyVersions, window),
+    countUnsubscribed(copyVersions, window),
+  ]);
+  return {
+    sent,
+    delivered: d.delivered,
+    clicked: d.clicked,
+    replied: r.replied,
+    unsubscribed: unsub,
+    signup: o.signup,
+    paid: o.paid,
+  };
+}
+
+function formatSlice(
+  label: string,
+  s: Awaited<ReturnType<typeof trackSlice>>
+): string {
+  return `${label}: new ${s.sent}, delivered ${s.delivered}, clicks ${s.clicked}, replies ${s.replied}, unsubs ${s.unsubscribed}, signups ${s.signup}, paid ${s.paid}`;
+}
+
+/**
+ * Daily-report lines for Casey vs personalized-demo.
+ * When `since` is set (Chicago day start), counts are day-scoped.
+ */
+export async function trackComparisonLines(since?: Date): Promise<string[]> {
   try {
-    const [normalD, demoD, normalO, demoO, normalR, demoR] = await Promise.all([
-      countDelivered(["v1a", "v1b"]),
-      countDelivered([WEBSITE_DEMO_COPY_VERSION]),
-      countOutcomes(["v1a", "v1b"]),
-      countOutcomes([WEBSITE_DEMO_COPY_VERSION]),
-      countReplies(["v1a", "v1b"]),
-      countReplies([WEBSITE_DEMO_COPY_VERSION]),
+    const window: DayWindow = since ? { since } : {};
+    const [normal, demo, v1a, v1b] = await Promise.all([
+      trackSlice(["v1a", "v1b"], window),
+      trackSlice([WEBSITE_DEMO_COPY_VERSION], window),
+      trackSlice(["v1a"], window),
+      trackSlice(["v1b"], window),
     ]);
-    const normal = emptyTrackCounts();
-    normal.delivered = normalD.delivered;
-    normal.clicked = normalD.clicked;
-    normal.replied = normalR.replied;
-    normal.signup = normalO.signup;
-    normal.paid = normalO.paid;
-    const demo = emptyTrackCounts();
-    demo.delivered = demoD.delivered;
-    demo.clicked = demoD.clicked;
-    demo.replied = demoR.replied;
-    demo.positiveReply = demoR.positiveReply;
-    demo.signup = demoO.signup;
-    demo.paid = demoO.paid;
-    return ["", ...formatTrackComparison(normal, demo)];
+    const totalNew = normal.sent + demo.sent;
+    return [
+      "",
+      "— Tracks (this report window) —",
+      formatSlice("Normal Casey", normal),
+      formatSlice("Personalized demo", demo),
+      `Total new outreach: ${totalNew} (Casey ${normal.sent} + demo ${demo.sent})`,
+      formatSlice("v1a", v1a),
+      formatSlice("v1b", v1b),
+    ];
   } catch {
     return [];
   }

@@ -103,8 +103,8 @@ export default function MailchimpAlternativePage() {
           </Link>
         </li>
         <li>
-          <Link className="text-coral hover:underline" href="/switch-from-mailchimp">
-            Switch from Mailchimp
+          <Link className="text-coral hover:underline" href="/migrate/mailchimp">
+            Migrate from Mailchimp
           </Link>
         </li>
         <li>

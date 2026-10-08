@@ -72,11 +72,11 @@ export default function VsMailchimpPage() {
       <p className="mt-4 text-xs text-muted-foreground">
         Mailchimp prices as of 2026 estimates for Standard plan by contact tier — verify on
         mailchimp.com. Features change over time. See also{" "}
-        <Link className="text-coral hover:underline" href="/switch-from-mailchimp">
-          switching from Mailchimp
+        <Link className="text-coral hover:underline" href="/migrate/mailchimp">
+          migrating from Mailchimp
         </Link>{" "}
         and{" "}
-        <Link className="text-coral hover:underline" href="/guides/mailchimp-vs-sendfable-pricing">
+        <Link className="text-coral hover:underline" href="/mailchimp-pricing-alternative">
           dated pricing notes
         </Link>
         .

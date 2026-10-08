@@ -40,7 +40,6 @@ export default function ExportMailchimpGuide() {
       ]}
       related={[
         { href: "/guides/import-mailchimp-contacts-to-sendfable", label: "Import into SendFable" },
-        { href: "/switch-from-mailchimp", label: "Full switch checklist" },
         { href: "/migrate/mailchimp", label: "Mailchimp migration" },
       ]}
     />

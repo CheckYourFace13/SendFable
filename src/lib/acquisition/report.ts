@@ -17,6 +17,10 @@ import {
 import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { prisma } from "@/lib/prisma";
 import { trackComparisonLines } from "@/lib/acquisition/website-demo/metrics";
+import {
+  WEBSITE_DEMO_COPY_VERSION,
+  WEBSITE_DEMO_DAILY_NEW_LIMIT,
+} from "@/lib/acquisition/queue-policy";
 
 const REPORT_TZ = "America/Chicago";
 /** Send the daily report after the Chicago send window has had time to run. */
@@ -114,14 +118,25 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
   const qualified = await prisma.acquisitionProspect.count({
     where: { status: "QUALIFIED", updatedAt: { gte: since } },
   });
-  const sentNew = await prisma.acquisitionMessage.count({
+  const caseyNew = await prisma.acquisitionMessage.count({
     where: {
       step: "INITIAL",
       dryRun: false,
       sentAt: { gte: since },
       status: { in: ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] },
+      OR: [{ copyVersion: null }, { copyVersion: { not: WEBSITE_DEMO_COPY_VERSION } }],
     },
   });
+  const demoNew = await prisma.acquisitionMessage.count({
+    where: {
+      step: "INITIAL",
+      dryRun: false,
+      sentAt: { gte: since },
+      status: { in: ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] },
+      copyVersion: WEBSITE_DEMO_COPY_VERSION,
+    },
+  });
+  const sentNew = caseyNew + demoNew;
   const followUps = await prisma.acquisitionMessage.count({
     where: {
       step: { in: ["FOLLOW_UP_1", "FOLLOW_UP_2"] },
@@ -208,11 +223,13 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     "",
     `Discovered: ${discovered}`,
     `Qualified: ${qualified}`,
-    `New outreach: ${sentNew}`,
+    `Normal Casey new: ${caseyNew}`,
+    `Personalized demo new: ${demoNew}`,
+    `Total new outreach: ${sentNew}`,
     `Follow-ups: ${followUps}`,
     `Sent (new+fu): ${sentNew + followUps}`,
-    `Delivered: ${delivered}`,
-    `Clicks: ${clicks}`,
+    `Delivered (all tracks): ${delivered}`,
+    `Clicks (all tracks): ${clicks}`,
     `Replies: ${replies}`,
     `Positive: ${positive}`,
     `Unsubscribed: ${unsubs}`,
@@ -221,12 +238,14 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     `First sends: ${firstSends}`,
     `Paid: ${paid}`,
     `Autopilot CTA results (clicks/visits): ${autopilotClicks}`,
-    ...(await trackComparisonLines()),
+    ...(await trackComparisonLines(since)),
     "",
     `Current A/B: ${abWinner}`,
     `Current stage: ${stageCaps.stage}`,
-    `Daily new cap: ${stageCaps.newPerDay}`,
-    `Daily total cap: ${stageCaps.totalPerDay}`,
+    `Daily Casey new cap: ${stageCaps.newPerDay}`,
+    `Personalized demo cap: ${WEBSITE_DEMO_DAILY_NEW_LIMIT}/day (separate; does not consume Casey cap)`,
+    `Combined new capacity: ${stageCaps.newPerDay + WEBSITE_DEMO_DAILY_NEW_LIMIT}/day`,
+    `Daily Casey total cap: ${stageCaps.totalPerDay}`,
     `Inventory (sendable): ${inventory.sendableInventory}`,
     `Pipeline paused: ${paused.paused ? `YES (${paused.reason || "—"})` : "NO"}`,
     top
