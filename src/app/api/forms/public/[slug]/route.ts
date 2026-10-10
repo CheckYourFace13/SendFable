@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildSmsConsentDisclosure, SMS_CONSENT_DISCLOSURE_VERSION } from "@/lib/sms/consent";
 import { appUrl } from "@/lib/utils";
+import { signToken } from "@/lib/tokens";
+import { emailConsentText } from "@/lib/forms/fields";
+import { applyPublicFormCors, publicFormPreflight } from "@/lib/forms/cors";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { slug: string } }
-) {
+export function OPTIONS(req: Request) {
+  return publicFormPreflight(req);
+}
+
+export async function GET(req: Request, { params }: { params: { slug: string } }) {
   const form = await prisma.signupForm.findUnique({
     where: { hostedSlug: params.slug },
     select: {
@@ -15,33 +19,51 @@ export async function GET(
       doubleOptIn: true,
       hostedSlug: true,
       collectPhone: true,
-      workspace: { select: { name: true, websiteUrl: true } },
+      smsConsentEnabled: true,
+      buttonLabel: true,
+      successMessage: true,
+      theme: true,
+      emailDisclosureVersion: true,
+      status: true,
+      workspace: { select: { name: true, primaryColor: true } },
     },
   });
-  if (!form) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!form || form.status !== "ACTIVE") {
+    return applyPublicFormCors(req, NextResponse.json({ error: "Not found" }, { status: 404 }));
+  }
 
-  const fields = Array.isArray(form.fields) ? [...(form.fields as object[])] : [];
-  const hasPhone = form.collectPhone || fields.some((f: any) => f?.type === "phone" || f?.key === "phone");
+  const token = await signToken(
+    "form-issue",
+    { slug: form.hostedSlug, issuedAt: new Date().toISOString() },
+    "2h"
+  );
   const brandName = form.workspace.name;
-  const privacyPolicyUrl = `${appUrl("/privacy")}`;
-  const smsTermsUrl = `${appUrl("/terms")}`;
+  const privacyPolicyUrl = appUrl("/privacy");
+  const smsTermsUrl = appUrl("/terms");
 
-  return NextResponse.json({
-    form: {
-      name: form.name,
-      fields,
-      doubleOptIn: form.doubleOptIn,
-      hostedSlug: form.hostedSlug,
-      collectPhone: hasPhone,
-      brandName,
-      privacyPolicyUrl,
-      smsTermsUrl,
-      smsConsentDisclosureVersion: SMS_CONSENT_DISCLOSURE_VERSION,
-      smsConsentDisclosure: buildSmsConsentDisclosure({
+  return applyPublicFormCors(
+    req,
+    NextResponse.json({
+      form: {
+        name: form.name,
+        fields: form.fields,
+        doubleOptIn: form.doubleOptIn,
+        hostedSlug: form.hostedSlug,
+        collectPhone: form.collectPhone,
+        smsConsentEnabled: form.smsConsentEnabled,
+        buttonLabel: form.buttonLabel,
+        successMessage: form.successMessage,
+        theme: form.theme,
+        primaryColor: form.workspace.primaryColor,
         brandName,
+        emailConsentText: emailConsentText(brandName),
+        emailDisclosureVersion: form.emailDisclosureVersion,
         privacyPolicyUrl,
         smsTermsUrl,
-      }),
-    },
-  });
+        smsConsentDisclosureVersion: SMS_CONSENT_DISCLOSURE_VERSION,
+        smsConsentDisclosure: buildSmsConsentDisclosure({ brandName, privacyPolicyUrl, smsTermsUrl }),
+      },
+      token,
+    })
+  );
 }

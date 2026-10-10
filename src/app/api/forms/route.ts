@@ -4,8 +4,8 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { slugify, randomToken } from "@/lib/utils";
-import { isSmsAccountSignupEnabled } from "@/lib/sms/flags";
 import { FORM_PRESETS } from "@/lib/form-presets";
+import { normalizeFormFields, requirementModeFor, defaultNewsletterFields } from "@/lib/forms/fields";
 
 const fieldSchema = z.object({
   key: z.string().min(1).max(40),
@@ -52,22 +52,14 @@ export async function POST(req: Request) {
   }
 
   const preset = FORM_PRESETS[parsed.data.preset ?? "email"];
-  const fields = parsed.data.fields ?? preset.fields;
-  const requirementMode = parsed.data.requirementMode ?? preset.requirementMode;
-  const collectPhone =
-    parsed.data.collectPhone ?? (preset.collectPhone || fields.some((f) => f.type === "phone"));
-
-  // Server-side gate: phone-collecting forms cannot be created while SMS
-  // signup is disabled — except the owner pilot workspace.
-  if ((collectPhone || requirementMode !== "email-required") && !isSmsAccountSignupEnabled()) {
-    const { isSmsControlledAccessWorkspace } = await import("@/lib/sms/pilot");
-    if (!(await isSmsControlledAccessWorkspace(ctx.workspace.id))) {
-      return NextResponse.json(
-        { error: "Text signup forms are not available yet" },
-        { status: 403 }
-      );
-    }
+  const requested = parsed.data.fields ?? (parsed.data.preset ? preset.fields : defaultNewsletterFields());
+  const normalized = normalizeFormFields(requested);
+  if (normalized.error) {
+    return NextResponse.json({ error: normalized.error }, { status: 400 });
   }
+  const fields = normalized.fields;
+  const requirementMode = requirementModeFor(fields);
+  const collectPhone = fields.some((field) => field.key === "phone");
 
   let hostedSlug = slugify(parsed.data.name) || "form";
   const clash = await prisma.signupForm.findUnique({ where: { hostedSlug } });

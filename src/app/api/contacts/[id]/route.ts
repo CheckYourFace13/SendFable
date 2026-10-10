@@ -55,6 +55,23 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       })
     : null;
 
+  const [emailConsent, smsConsentEvents] = await Promise.all([
+    contact.email
+      ? prisma.emailConsentEvent.findMany({
+          where: { workspaceId: ctx.workspace.id, contactId: contact.id },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          select: { id: true, action: true, source: true, disclosureVersion: true, createdAt: true },
+        })
+      : Promise.resolve([]),
+    prisma.smsConsentEvent.findMany({
+      where: { workspaceId: ctx.workspace.id, contactId: contact.id },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: { id: true, action: true, source: true, disclosureVersion: true, createdAt: true },
+    }),
+  ]);
+
   const activity = contact.recipients.map((r) => ({
     campaignId: r.campaign.id,
     campaignName: r.campaign.name,
@@ -66,7 +83,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
   const { recipients: _r, ...rest } = contact;
   return NextResponse.json({
-    contact: { ...rest, suppression, smsSuppression, activity },
+    contact: { ...rest, suppression, smsSuppression, activity, emailConsent, smsConsentEvents },
   });
 }
 

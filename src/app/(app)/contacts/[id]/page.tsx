@@ -44,6 +44,8 @@ type ContactDetail = {
   customFields: Record<string, string>;
   unsubscribedAt: string | null;
   createdAt: string;
+  emailConsent?: Array<{ id: string; action: string; source: string; disclosureVersion: string | null; createdAt: string }>;
+  smsConsentEvents?: Array<{ id: string; action: string; source: string; disclosureVersion: string | null; createdAt: string }>;
   tags: Array<{ tag: { id: string; name: string; color: string } }>;
   suppression?: { reason: string; createdAt: string } | null;
   smsSuppression?: { reason: string; createdAt: string } | null;
@@ -323,6 +325,25 @@ export default function ContactDetailPage() {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="mb-6 rounded-xl border bg-white p-6">
+        <h2 className="font-semibold">Consent history</h2>
+        <ul className="mt-3 space-y-2 text-sm">
+          {(contact.emailConsent || []).map((event) => (
+            <li key={event.id}>
+              Email {event.action === "REOPT_IN" ? "rejoined" : "subscribed"} · {event.source} · {formatDateTime(event.createdAt)}
+            </li>
+          ))}
+          {(contact.smsConsentEvents || []).map((event) => (
+            <li key={event.id}>
+              Text {event.action} · {event.source} · {formatDateTime(event.createdAt)}
+            </li>
+          ))}
+          {!contact.emailConsent?.length && !contact.smsConsentEvents?.length && (
+            <li className="text-muted-foreground">No form consent events yet.</li>
+          )}
+        </ul>
       </div>
 
       <div className="rounded-xl border bg-white p-6">

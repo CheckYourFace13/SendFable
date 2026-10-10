@@ -355,6 +355,7 @@ model Workspace {
   smsExceptionalCharges SmsExceptionalCharge[]
   smsSuppressions       SmsSuppression[]
   smsConsentEvents      SmsConsentEvent[]
+  emailConsentEvents    EmailConsentEvent[]
   smsImportBatches      ContactImportBatch[]
 
   /// Marketing Autopilot (website → campaign draft → owner approval)
@@ -450,7 +451,8 @@ model Contact {
   workspace        Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   tags             ContactTag[]
   recipients       CampaignRecipient[]
-  smsConsentEvents SmsConsentEvent[]
+  smsConsentEvents   SmsConsentEvent[]
+  emailConsentEvents EmailConsentEvent[]
   smsRecipients    SmsRecipient[]
   smsMessages      SmsMessage[]
 
@@ -518,6 +520,16 @@ model SignupForm {
   /// Collect a mobile phone field (with a separate, never-prechecked SMS
   /// consent checkbox). The exact disclosure shown is versioned per submission.
   collectPhone    Boolean @default(false)
+  /// Separate from collecting a phone number. Off means the number is contact
+  /// data only and cannot grant promotional SMS.
+  smsConsentEnabled Boolean @default(false)
+  buttonLabel       String  @default("Subscribe")
+  successMessage    String  @default("Thanks for joining. You'll hear from us soon.")
+  /// light | dark | inherit. Inherit lets an embedded form use the site's type.
+  theme             String  @default("inherit")
+  emailDisclosureVersion String @default("email-consent-2026-10-10")
+  /// ACTIVE forms accept submissions.
+  status            String  @default("ACTIVE")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1136,6 +1148,27 @@ model SmsConsentEvent {
   contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
 
   @@index([workspaceId, phoneE164, createdAt])
+  @@index([contactId])
+}
+
+/// Immutable email consent audit for form opt-in and intentional re-opt-in.
+model EmailConsentEvent {
+  id                String   @id @default(cuid())
+  workspaceId       String
+  contactId         String?
+  formId            String?
+  email             String
+  /// OPT_IN | REOPT_IN
+  action            String
+  source            String
+  disclosureVersion String?
+  evidence          Json     @default("{}")
+  createdAt         DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, email, createdAt])
   @@index([contactId])
 }
 

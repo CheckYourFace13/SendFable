@@ -3,19 +3,23 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { appUrl } from "@/lib/utils";
-
-const fieldSchema = z.object({
-  key: z.string().min(1).max(40),
-  label: z.string().min(1).max(80),
-  type: z.enum(["email", "text", "checkbox"]),
-  required: z.boolean(),
-});
+import { normalizeFormFields, requirementModeFor } from "@/lib/forms/fields";
+import { developerInstructions, embedSnippet } from "@/lib/forms/install";
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
-  fields: z.array(fieldSchema).min(1).max(20).optional(),
+  fields: z.array(z.object({
+    key: z.string(),
+    label: z.string(),
+    type: z.string(),
+    required: z.boolean(),
+  })).min(1).max(12).optional(),
   doubleOptIn: z.boolean().optional(),
-  tagIds: z.array(z.string()).optional(),
+  tagIds: z.array(z.string()).max(5).optional(),
+  smsConsentEnabled: z.boolean().optional(),
+  buttonLabel: z.string().trim().min(1).max(40).optional(),
+  successMessage: z.string().trim().min(1).max(240).optional(),
+  theme: z.enum(["light", "dark", "inherit"]).optional(),
   hostedSlug: z
     .string()
     .trim()
@@ -35,9 +39,26 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (!form) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const hostedUrl = appUrl(`/f/${form.hostedSlug}`);
-  const embedCode = `<iframe src="${hostedUrl}?embed=1" style="width:100%;max-width:420px;height:360px;border:0;" title="${form.name}"></iframe>`;
+  const origin = new URL(hostedUrl).origin;
+  const embedCode = embedSnippet(origin, form.hostedSlug);
+  const tags = await prisma.tag.findMany({
+    where: { workspaceId: ctx.workspace.id },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+  const audience = tags.find((tag) => ((form.tagIds as string[]) || []).includes(tag.id));
+  const instructions = developerInstructions({
+    origin,
+    businessName: ctx.workspace.name,
+    formName: form.name,
+    slug: form.hostedSlug,
+    audienceName: audience?.name || "the audience selected on this form",
+    fields: Array.isArray(form.fields) ? (form.fields as never) : [],
+    smsConsentEnabled: form.smsConsentEnabled,
+    successMessage: form.successMessage,
+  });
 
-  return NextResponse.json({ form, hostedUrl, embedCode });
+  return NextResponse.json({ form, hostedUrl, embedCode, tags, instructions });
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -66,14 +87,41 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
   }
 
+  let fields = parsed.data.fields;
+  let requirementMode: string | undefined;
+  let collectPhone: boolean | undefined;
+  if (fields) {
+    const normalized = normalizeFormFields(fields);
+    if (normalized.error) return NextResponse.json({ error: normalized.error }, { status: 400 });
+    fields = normalized.fields;
+    requirementMode = requirementModeFor(normalized.fields);
+    collectPhone = normalized.fields.some((field) => field.key === "phone");
+  }
+  if (parsed.data.tagIds?.length) {
+    const owned = await prisma.tag.count({
+      where: { workspaceId: ctx.workspace.id, id: { in: parsed.data.tagIds } },
+    });
+    if (owned !== parsed.data.tagIds.length) {
+      return NextResponse.json({ error: "Choose an audience from this business" }, { status: 400 });
+    }
+  }
+  const phoneOn = collectPhone ?? existing.collectPhone;
+  const smsConsentEnabled = phoneOn ? parsed.data.smsConsentEnabled : false;
+
   const form = await prisma.signupForm.update({
     where: { id: params.id },
     data: {
       name: parsed.data.name,
-      fields: parsed.data.fields,
+      fields: fields as never,
       doubleOptIn: parsed.data.doubleOptIn,
       tagIds: parsed.data.tagIds,
       hostedSlug: parsed.data.hostedSlug,
+      requirementMode,
+      collectPhone,
+      smsConsentEnabled,
+      buttonLabel: parsed.data.buttonLabel,
+      successMessage: parsed.data.successMessage,
+      theme: parsed.data.theme,
     },
   });
 

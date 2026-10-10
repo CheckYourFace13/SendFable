@@ -7,6 +7,7 @@ export type TokenPurpose =
   | "acquisition-unsub"
   | "acquisition-click"
   | "form-confirm"
+  | "form-issue"
   | "invite"
   | "autopilot-action";
 

@@ -8,6 +8,7 @@ import { ListChecks } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { embedSnippet } from "@/lib/forms/install";
 
 type Form = { id: string; name: string; hostedSlug: string; submitCount: number };
 
@@ -68,7 +69,7 @@ export default function FormsPage() {
         <ul className="divide-y rounded-xl border bg-white">
           {forms.map((f) => {
             const hosted = `${origin}/f/${f.hostedSlug}`;
-            const embed = `<iframe src="${hosted}?embed=1" style="width:100%;max-width:420px;height:360px;border:0;" title="${f.name}"></iframe>`;
+            const embed = origin ? embedSnippet(origin, f.hostedSlug) : "";
             return (
               <li key={f.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <Link href={`/forms/${f.id}`} className="min-w-0">

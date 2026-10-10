@@ -15,10 +15,21 @@ export async function GET(req: Request) {
     return NextResponse.redirect(appUrl("/?error=invalid-confirm"));
   }
 
-  await prisma.contact.updateMany({
-    where: { id: payload.contactId, status: "PENDING_CONFIRM" },
-    data: { status: "SUBSCRIBED", confirmToken: null },
+  const contact = await prisma.contact.findUnique({
+    where: { id: payload.contactId },
+    select: { id: true, email: true, workspaceId: true, status: true },
   });
+  if (contact?.status === "PENDING_CONFIRM") {
+    await prisma.contact.update({
+      where: { id: contact.id },
+      data: { status: "SUBSCRIBED", confirmToken: null },
+    });
+    if (contact.email) {
+      await prisma.suppressionEntry.deleteMany({
+        where: { workspaceId: contact.workspaceId, email: contact.email, reason: "UNSUBSCRIBED" },
+      });
+    }
+  }
 
   return NextResponse.redirect(appUrl("/f/confirmed"));
 }

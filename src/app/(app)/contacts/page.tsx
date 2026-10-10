@@ -45,6 +45,8 @@ type Contact = {
   company: string | null;
   status: string;
   smsStatus?: string;
+  source?: string | null;
+  createdAt?: string;
   tags: Array<{ tag: { id: string; name: string; color: string } }>;
 };
 
@@ -263,6 +265,8 @@ export default function ContactsPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email status</TableHead>
                 <TableHead>Text status</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Signup date</TableHead>
                 <TableHead>Tags</TableHead>
               </TableRow>
             </TableHeader>
@@ -297,6 +301,12 @@ export default function ContactsPage() {
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {c.source?.startsWith("form:") ? `Form · ${c.source.replace(/^form:/, "").replace(/:test$/, " test")}` : c.source || "—"}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "—"}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
