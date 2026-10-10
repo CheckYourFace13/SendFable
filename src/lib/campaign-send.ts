@@ -257,7 +257,7 @@ export async function sendOneRecipient(recipientId: string): Promise<void> {
       }),
     ]);
 
-    await incrementMonthlySendCount(owner.id, 1);
+    await incrementMonthlySendCount(owner.id, 1, { workspaceId: campaign.workspaceId });
     await maybeCompleteCampaign(campaign.id);
   } catch (err) {
     const attempts = recipient.attemptCount + 1;

@@ -1,6 +1,7 @@
 import type { Plan, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { PLANS, rampDailyLimit } from "@/lib/plans";
+import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
 
 export async function ensureSendCountReset(user: User): Promise<User> {
   const now = new Date();
@@ -18,11 +19,20 @@ export async function ensureSendCountReset(user: User): Promise<User> {
   });
 }
 
-export function isReadOnlyForSending(user: User, contactCount: number): boolean {
+function utcMonthStart(d = new Date()): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0));
+}
+
+export function isReadOnlyForSending(
+  user: User,
+  contactCount: number,
+  opts?: { ignorePaymentFailed?: boolean; plan?: Plan }
+): boolean {
   if (user.sendingHeldAt) return true;
-  const cap = PLANS[user.plan].contactCap;
+  const planKey = opts?.plan ?? user.plan;
+  const cap = PLANS[planKey].contactCap;
   if (contactCount > cap) return true;
-  if (user.paymentFailedAt) {
+  if (!opts?.ignorePaymentFailed && user.paymentFailedAt) {
     const graceMs = 3 * 24 * 60 * 60 * 1000;
     if (Date.now() - user.paymentFailedAt.getTime() > graceMs) return true;
   }
@@ -34,11 +44,24 @@ export async function checkLaunchQuota(
   workspaceId: string,
   recipientCount: number
 ): Promise<{ ok: true } | { ok: false; error: string; upgradeRequired?: boolean }> {
-  const user = await ensureSendCountReset(owner);
-  const plan = PLANS[user.plan];
+  const ent = await getWorkspaceEntitlement(workspaceId);
+  if (ent.disabled) {
+    return { ok: false, error: "This workspace is disabled." };
+  }
+
+  const planKey = ent.plan;
+  const plan = PLANS[planKey];
+  const internalOverride = Boolean(ent.isInternal && ent.internalPlanOverride);
+
+  const user = internalOverride ? owner : await ensureSendCountReset(owner);
 
   const contactCount = await prisma.contact.count({ where: { workspaceId } });
-  if (isReadOnlyForSending(user, contactCount)) {
+  if (
+    isReadOnlyForSending(user, contactCount, {
+      ignorePaymentFailed: internalOverride,
+      plan: planKey,
+    })
+  ) {
     return {
       ok: false,
       error:
@@ -49,15 +72,27 @@ export async function checkLaunchQuota(
     };
   }
 
-  if (user.monthlySendCount + recipientCount > plan.emailsPerMonth) {
+  let usedMonth = user.monthlySendCount;
+  if (internalOverride) {
+    // Dogfood Free accurately: count only this workspace's sends this month.
+    usedMonth = await prisma.campaignRecipient.count({
+      where: {
+        status: "SENT",
+        sentAt: { gte: utcMonthStart() },
+        campaign: { workspaceId },
+      },
+    });
+  }
+
+  if (usedMonth + recipientCount > plan.emailsPerMonth) {
     return {
       ok: false,
-      error: `This send would exceed your monthly allowance (up to ${plan.emailsPerMonth.toLocaleString()} emails/month; ${user.monthlySendCount.toLocaleString()} used this calendar month). Unused sends do not roll over.`,
+      error: `This send would exceed your monthly allowance (up to ${plan.emailsPerMonth.toLocaleString()} emails/month; ${usedMonth.toLocaleString()} used this calendar month). Unused sends do not roll over.`,
       upgradeRequired: true,
     };
   }
 
-  const daily = rampDailyLimit(user.accountRampLevel, user.plan);
+  const daily = rampDailyLimit(user.accountRampLevel, planKey);
   const startOfDay = new Date();
   startOfDay.setUTCHours(0, 0, 0, 0);
   const sentToday = await prisma.campaignRecipient.count({
@@ -78,7 +113,19 @@ export async function checkLaunchQuota(
   return { ok: true };
 }
 
-export async function incrementMonthlySendCount(userId: string, n: number): Promise<void> {
+export async function incrementMonthlySendCount(
+  userId: string,
+  n: number,
+  opts?: { workspaceId?: string }
+): Promise<void> {
+  if (opts?.workspaceId) {
+    const ent = await getWorkspaceEntitlement(opts.workspaceId).catch(() => null);
+    if (ent?.isInternal && ent.internalPlanOverride) {
+      // Workspace-scoped counting for internal overrides — do not consume the
+      // operator account's shared Stripe-backed monthly counter.
+      return;
+    }
+  }
   await prisma.user.update({
     where: { id: userId },
     data: { monthlySendCount: { increment: n } },

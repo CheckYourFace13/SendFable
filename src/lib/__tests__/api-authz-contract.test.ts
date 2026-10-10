@@ -43,6 +43,7 @@ const PUBLIC_BY_DESIGN = new Set([
 const AUTH_MARKERS = [
   /getApiContext\s*\(/,
   /requirePlatformAdmin\s*\(/,
+  /requireOwnerAdminUser\s*\(/,
   /\bauth\s*\(\)/,
   /requireIntegrationAuth\s*\(/,
 ];

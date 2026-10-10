@@ -40,6 +40,12 @@ export default function AdminOverviewPage() {
       />
 
       <div className="flex flex-wrap gap-3 text-sm">
+        <Link className="text-coral underline" href="/admin/internal">
+          Internal workspaces
+        </Link>
+        <Link className="text-coral underline" href="/admin/workspaces">
+          All workspaces
+        </Link>
         <Link className="text-coral underline" href="/admin/users">
           Users
         </Link>

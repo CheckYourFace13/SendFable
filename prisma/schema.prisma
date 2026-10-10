@@ -23,6 +23,13 @@ enum MembershipRole {
   MEMBER
 }
 
+/// Cross-tenant platform role (not workspace MembershipRole).
+/// Only OWNER_ADMIN may access /admin owner console APIs.
+enum PlatformRole {
+  NONE
+  OWNER_ADMIN
+}
+
 enum IdentityType {
   ADDRESS
   DOMAIN
@@ -225,6 +232,9 @@ model User {
   sendingHeldAt     DateTime?
   sendingHoldReason String?
 
+  /// Platform owner console (SendFable operator only; not a workspace role)
+  platformRole PlatformRole @default(NONE)
+
   /// Growth referral
   referralCode   String? @unique
   referredByCode String?
@@ -238,6 +248,7 @@ model User {
   creditLedger      CreditLedgerEntry[]
   auditLogs         AuditLog[]
   policyAcceptances PolicyAcceptance[]
+  productIssues     ProductIssue[]
 }
 
 model Account {
@@ -303,6 +314,14 @@ model Workspace {
   publicArchiveEnabled   Boolean @default(false)
   publicArchiveIndexable Boolean @default(false)
 
+  /// Owner-operated internal/dogfood workspace (SendFable-owned properties).
+  /// Does not alter public Stripe billing. Entitlements use internalPlanOverride
+  /// when set (INTERNAL PLAN OVERRIDE) — Free limits still apply unless raised.
+  isInternal           Boolean   @default(false)
+  internalPlanOverride Plan?
+  internalLabel        String?
+  disabledAt           DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -319,6 +338,7 @@ model Workspace {
   auditLogs         AuditLog[]
   landingPages      LandingPage[]
   policyAcceptances PolicyAcceptance[]
+  productIssues     ProductIssue[]
 
   /// SMS (Text Messaging product — flag-gated)
   smsSubscription       SmsSubscription?
@@ -724,6 +744,23 @@ model AuditLog {
 
   @@index([workspaceId, createdAt])
   @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+/// Lightweight dogfood friction notes (INTERNAL workspaces only).
+model ProductIssue {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String?
+  page        String?
+  feature     String?
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
 }
 
 model LandingPage {

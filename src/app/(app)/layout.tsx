@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { AlertTriangle } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { SidebarNav } from "@/components/app/sidebar-nav";
@@ -9,9 +10,14 @@ import { VerifyEmailBanner } from "@/components/app/verify-email-banner";
 import { RedisDevBanner } from "@/components/app/redis-dev-banner";
 import { EarlyLaunchBanner } from "@/components/app/early-launch-banner";
 import { PolicyReacceptBanner } from "@/components/app/policy-reaccept-banner";
+import { AdminViewBanner } from "@/components/app/admin-view-banner";
+import { ReportProductIssue } from "@/components/app/report-product-issue";
 import { requireWorkspaceContext } from "@/lib/session";
 import { needsPolicyReacceptance } from "@/lib/policy-acceptance";
 import { PLANS } from "@/lib/plans";
+import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
+import { ADMIN_VIEW_COOKIE } from "@/lib/admin-view";
+import { isOwnerAdminUser } from "@/lib/platform-admin";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -20,6 +26,27 @@ export const metadata: Metadata = {
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, workspace } = await requireWorkspaceContext();
   const showPolicyReaccept = await needsPolicyReacceptance(user.id);
+  const entitlement = await getWorkspaceEntitlement(workspace.id).catch(() => null);
+  const planName = PLANS[entitlement?.plan ?? user.plan].name;
+  const planNote =
+    entitlement?.isInternal && entitlement.internalPlanOverride
+      ? `${planName} · internal override`
+      : `${planName} plan`;
+
+  let adminViewName: string | null = null;
+  const rawView = cookies().get(ADMIN_VIEW_COOKIE)?.value;
+  if (rawView) {
+    try {
+      const parsed = JSON.parse(rawView) as { workspaceName?: string; workspaceId?: string };
+      if (parsed.workspaceId === workspace.id && parsed.workspaceName) {
+        adminViewName = parsed.workspaceName;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  const showIssueReporter =
+    Boolean(workspace.isInternal) && (await isOwnerAdminUser(user));
 
   return (
     <div className="flex min-h-screen bg-page">
@@ -32,16 +59,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
         <div className="border-t border-white/10 p-4">
           <div className="truncate text-sm font-medium text-page">{workspace.name}</div>
-          <div className="text-xs text-page/70">{PLANS[user.plan].name} plan</div>
+          <div className="text-xs text-page/70">{planNote}</div>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        {adminViewName && <AdminViewBanner workspaceName={adminViewName} />}
         <EarlyLaunchBanner />
         <RedisDevBanner />
         {showPolicyReaccept && <PolicyReacceptBanner />}
         {!user.emailVerified && <VerifyEmailBanner />}
-        {user.paymentFailedAt && (
+        {user.paymentFailedAt && !(entitlement?.isInternal && entitlement.internalPlanOverride) && (
           <div className="flex flex-wrap items-center justify-center gap-2 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-900">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             Your last payment failed. Sending pauses if it isn&apos;t resolved.
@@ -58,7 +86,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="hidden text-sm text-muted-foreground lg:block">{workspace.name}</div>
           <UserMenu name={user.name} email={user.email} />
         </header>
-        <main className="flex-1 overflow-x-auto bg-parchment/40 p-4 lg:p-8">{children}</main>
+        <main className="relative flex-1 overflow-x-auto bg-parchment/40 p-4 lg:p-8">
+          {children}
+          {showIssueReporter && <ReportProductIssue />}
+        </main>
       </div>
     </div>
   );
