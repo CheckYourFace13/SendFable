@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/session";
 import { slugify, randomToken } from "@/lib/utils";
 import { FORM_PRESETS } from "@/lib/form-presets";
 import { normalizeFormFields, requirementModeFor, defaultNewsletterFields } from "@/lib/forms/fields";
+import { audienceIds, fieldSummary } from "@/lib/forms/manage";
 
 const fieldSchema = z.object({
   key: z.string().min(1).max(40),
@@ -32,11 +33,24 @@ export async function GET() {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const forms = await prisma.signupForm.findMany({
-    where: { workspaceId: ctx.workspace.id },
-    orderBy: { updatedAt: "desc" },
+  const [forms, tags] = await Promise.all([
+    prisma.signupForm.findMany({
+      where: { workspaceId: ctx.workspace.id, status: { not: "ARCHIVED" } },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.tag.findMany({
+      where: { workspaceId: ctx.workspace.id },
+      select: { id: true, name: true },
+    }),
+  ]);
+  const names = new Map(tags.map((tag) => [tag.id, tag.name]));
+  return NextResponse.json({
+    forms: forms.map((form) => ({
+      ...form,
+      audienceName: audienceIds(form.tagIds).map((id) => names.get(id)).find(Boolean) ?? null,
+      fieldSummary: fieldSummary(form.fields),
+    })),
   });
-  return NextResponse.json({ forms });
 }
 
 export async function POST(req: Request) {
@@ -60,6 +74,15 @@ export async function POST(req: Request) {
   const fields = normalized.fields;
   const requirementMode = requirementModeFor(fields);
   const collectPhone = fields.some((field) => field.key === "phone");
+  const tagIds = audienceIds(parsed.data.tagIds);
+  if (tagIds.length) {
+    const owned = await prisma.tag.count({
+      where: { workspaceId: ctx.workspace.id, id: { in: tagIds } },
+    });
+    if (owned !== tagIds.length) {
+      return NextResponse.json({ error: "Choose an audience from this business" }, { status: 400 });
+    }
+  }
 
   let hostedSlug = slugify(parsed.data.name) || "form";
   const clash = await prisma.signupForm.findUnique({ where: { hostedSlug } });
@@ -71,10 +94,11 @@ export async function POST(req: Request) {
       name: parsed.data.name,
       fields: fields as unknown as Prisma.InputJsonValue,
       doubleOptIn: parsed.data.doubleOptIn ?? false,
-      tagIds: parsed.data.tagIds ?? [],
+      tagIds,
       requirementMode,
       collectPhone,
       hostedSlug,
+      status: tagIds.length > 0 ? "ACTIVE" : "PAUSED",
     },
   });
 

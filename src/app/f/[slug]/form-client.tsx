@@ -27,13 +27,21 @@ export function HostedFormClient({ slug }: { slug: string }) {
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [unavailable, setUnavailable] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     void (async () => {
       const res = await fetch(`/api/forms/public/${slug}`);
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+      if (data?.unavailable) {
+        setUnavailable(data.message || "This form is not accepting submissions right now.");
+        return;
+      }
+      if (!res.ok || !data?.form) {
+        setUnavailable("This form is not available.");
+        return;
+      }
       setForm(data.form);
       setToken(data.token || "");
       const init: Record<string, string | boolean> = { sf_hp: "" };
@@ -75,6 +83,14 @@ export function HostedFormClient({ slug }: { slug: string }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (unavailable) {
+    return (
+      <div className="flex min-h-[240px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
+        {unavailable}
+      </div>
+    );
   }
 
   if (!form) {

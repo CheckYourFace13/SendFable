@@ -5,6 +5,7 @@ import { appUrl } from "@/lib/utils";
 import { signToken } from "@/lib/tokens";
 import { emailConsentText } from "@/lib/forms/fields";
 import { applyPublicFormCors, publicFormPreflight } from "@/lib/forms/cors";
+import { canAcceptPublicSignups, FORM_UNAVAILABLE } from "@/lib/forms/manage";
 
 export function OPTIONS(req: Request) {
   return publicFormPreflight(req);
@@ -25,11 +26,18 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
       theme: true,
       emailDisclosureVersion: true,
       status: true,
+      tagIds: true,
       workspace: { select: { name: true, primaryColor: true } },
     },
   });
-  if (!form || form.status !== "ACTIVE") {
+  if (!form) {
     return applyPublicFormCors(req, NextResponse.json({ error: "Not found" }, { status: 404 }));
+  }
+  if (!canAcceptPublicSignups(form.status, form.tagIds)) {
+    return applyPublicFormCors(
+      req,
+      NextResponse.json({ unavailable: true, message: FORM_UNAVAILABLE })
+    );
   }
 
   const token = await signToken(

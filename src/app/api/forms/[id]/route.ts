@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/session";
 import { appUrl } from "@/lib/utils";
 import { normalizeFormFields, requirementModeFor } from "@/lib/forms/fields";
 import { developerInstructions, embedSnippet } from "@/lib/forms/install";
+import { AUDIENCE_REQUIRED, audienceIds } from "@/lib/forms/manage";
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
@@ -20,6 +21,7 @@ const patchSchema = z.object({
   buttonLabel: z.string().trim().min(1).max(40).optional(),
   successMessage: z.string().trim().min(1).max(240).optional(),
   theme: z.enum(["light", "dark", "inherit"]).optional(),
+  status: z.enum(["ACTIVE", "PAUSED"]).optional(),
   hostedSlug: z
     .string()
     .trim()
@@ -34,7 +36,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const form = await prisma.signupForm.findFirst({
-    where: { id: params.id, workspaceId: ctx.workspace.id },
+    where: { id: params.id, workspaceId: ctx.workspace.id, status: { not: "ARCHIVED" } },
   });
   if (!form) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -74,7 +76,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const existing = await prisma.signupForm.findFirst({
-    where: { id: params.id, workspaceId: ctx.workspace.id },
+    where: { id: params.id, workspaceId: ctx.workspace.id, status: { not: "ARCHIVED" } },
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -107,6 +109,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
   const phoneOn = collectPhone ?? existing.collectPhone;
   const smsConsentEnabled = phoneOn ? parsed.data.smsConsentEnabled : false;
+  const nextTags = parsed.data.tagIds !== undefined ? audienceIds(parsed.data.tagIds) : audienceIds(existing.tagIds);
+  let status = parsed.data.status ?? existing.status;
+  if (status === "ACTIVE" && nextTags.length === 0) {
+    if (parsed.data.status === "ACTIVE") {
+      return NextResponse.json({ error: AUDIENCE_REQUIRED }, { status: 400 });
+    }
+    status = "PAUSED";
+  }
 
   const form = await prisma.signupForm.update({
     where: { id: params.id },
@@ -114,7 +124,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       name: parsed.data.name,
       fields: fields as never,
       doubleOptIn: parsed.data.doubleOptIn,
-      tagIds: parsed.data.tagIds,
+      tagIds: parsed.data.tagIds !== undefined ? nextTags : undefined,
       hostedSlug: parsed.data.hostedSlug,
       requirementMode,
       collectPhone,
@@ -122,10 +132,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       buttonLabel: parsed.data.buttonLabel,
       successMessage: parsed.data.successMessage,
       theme: parsed.data.theme,
+      status,
     },
   });
 
-  return NextResponse.json({ form });
+  return NextResponse.json({
+    form,
+    notice: status === "PAUSED" && existing.status === "ACTIVE" && nextTags.length === 0 ? AUDIENCE_REQUIRED : undefined,
+  });
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
@@ -133,10 +147,13 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const existing = await prisma.signupForm.findFirst({
-    where: { id: params.id, workspaceId: ctx.workspace.id },
+    where: { id: params.id, workspaceId: ctx.workspace.id, status: { not: "ARCHIVED" } },
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.signupForm.delete({ where: { id: params.id } });
+  await prisma.signupForm.update({
+    where: { id: params.id },
+    data: { status: "ARCHIVED" },
+  });
   return NextResponse.json({ ok: true });
 }

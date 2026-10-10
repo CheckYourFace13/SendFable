@@ -1,13 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { FIELD_CATALOG, emailConsentText, type CatalogKey, type FormFieldDef } from "@/lib/forms/fields";
 
 type Tag = { id: string; name: string };
@@ -24,6 +35,7 @@ const CATALOG_DEFAULTS: Record<CatalogKey, { on: boolean; required: boolean }> =
 
 export default function FormDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [form, setForm] = useState<any>(null);
   const [hostedUrl, setHostedUrl] = useState("");
   const [embedCode, setEmbedCode] = useState("");
@@ -38,6 +50,7 @@ export default function FormDetailPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [testResult, setTestResult] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -117,12 +130,11 @@ export default function FormDetailPage() {
         successMessage: form.successMessage,
         theme: form.theme,
         doubleOptIn: form.doubleOptIn,
-        hostedSlug: form.hostedSlug,
       }),
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.error || "Save failed");
-    toast.success("Form saved");
+    toast.success(data.notice || "Form saved");
     const fresh = await fetch(`/api/forms/${params.id}`);
     const freshData = await fresh.json();
     if (fresh.ok) {
@@ -149,6 +161,29 @@ export default function FormDetailPage() {
     toast.success(message);
   }
 
+  async function setStatus(status: "ACTIVE" | "PAUSED") {
+    const res = await fetch(`/api/forms/${params.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status,
+        ...(status === "ACTIVE" ? { tagIds: audienceId ? [audienceId] : [] } : {}),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast.error(data.error || "Could not update this form");
+    setForm(data.form);
+    toast.success(status === "PAUSED" ? "Form paused" : "Form resumed");
+  }
+
+  async function remove() {
+    const res = await fetch(`/api/forms/${params.id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) return toast.error(data.error || "Could not delete this form");
+    toast.success("Form deleted. Existing subscribers stay in their audience.");
+    router.push("/forms");
+  }
+
   function copy(value: string, label: string) {
     void navigator.clipboard.writeText(value);
     toast.success(label);
@@ -161,6 +196,43 @@ export default function FormDetailPage() {
       <PageHeader title={form.name} description="Choose what to collect, then put the form on your website.">
         <Button onClick={() => void save()}>Save</Button>
       </PageHeader>
+
+      <section className="mb-6 rounded-xl border bg-white p-6">
+        <h2 className="font-semibold">Basics</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div>
+            <Label htmlFor="form-name">Form name</Label>
+            <Input
+              id="form-name"
+              className="mt-1"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Renaming does not change the public link /f/{form.hostedSlug}.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={form.status === "PAUSED" ? "warning" : "success"}>
+              {form.status === "PAUSED" ? "Paused" : "Active"}
+            </Badge>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void setStatus(form.status === "PAUSED" ? "ACTIVE" : "PAUSED")}
+            >
+              {form.status === "PAUSED" ? "Resume form" : "Pause form"}
+            </Button>
+          </div>
+        </div>
+        {form.status === "PAUSED" && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            {audienceId
+              ? "This form is paused. Visitors cannot sign up until you resume it."
+              : "Choose an audience, then resume this form so it can accept signups."}
+          </p>
+        )}
+      </section>
 
       <section className="mb-6 rounded-xl border bg-white p-6">
         <h2 className="font-semibold">What would you like to collect?</h2>
@@ -236,10 +308,15 @@ export default function FormDetailPage() {
           />
           <Button type="button" variant="outline" onClick={() => void createAudience()}>+ Create audience</Button>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">{form.name} → {audienceName}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{form.name} → {audienceId ? audienceName : "Choose an audience"}</p>
+        {!audienceId && (
+          <p className="mt-2 text-sm text-amber-800">Choose an audience before this form can accept signups. Changing the audience later applies to future submissions only.</p>
+        )}
       </section>
 
-      <section className="mb-6 grid gap-4 rounded-xl border bg-white p-6 sm:grid-cols-2">
+      <section className="mb-6 rounded-xl border bg-white p-6">
+        <h2 className="font-semibold">Appearance</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
           <Label>Button label</Label>
           <Input className="mt-1" value={form.buttonLabel || ""} onChange={(e) => setForm({ ...form, buttonLabel: e.target.value })} />
@@ -259,6 +336,7 @@ export default function FormDetailPage() {
         <div className="sm:col-span-2">
           <Label>Success message</Label>
           <Input className="mt-1" value={form.successMessage || ""} onChange={(e) => setForm({ ...form, successMessage: e.target.value })} />
+        </div>
         </div>
       </section>
 
@@ -344,6 +422,33 @@ export default function FormDetailPage() {
           {testResult && <p className="mt-2 text-sm">{testResult}</p>}
         </div>
       </section>
+
+      <section className="rounded-xl border border-red-200 bg-white p-6">
+        <h2 className="font-semibold text-red-700">Delete form</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Future signups stop and the installed link or embed stops working. Subscribers, their audience, and campaign history stay.
+        </p>
+        <Button type="button" variant="outline" className="mt-4 text-red-700" onClick={() => setConfirmDelete(true)}>
+          Delete form
+        </Button>
+      </section>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {form.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Future signups stop, and the installed link or embed will stop working. Existing subscribers stay in their audience. Campaign history and contact data are not deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-red-600 text-white hover:bg-red-700" onClick={() => void remove()}>
+              Delete form
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

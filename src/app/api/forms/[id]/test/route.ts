@@ -17,7 +17,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   const form = await prisma.signupForm.findFirst({
-    where: { id: params.id, workspaceId: ctx.workspace.id },
+    where: { id: params.id, workspaceId: ctx.workspace.id, status: { not: "ARCHIVED" } },
     include: { workspace: true },
   });
   if (!form) return NextResponse.json({ error: "Not found" }, { status: 404 });

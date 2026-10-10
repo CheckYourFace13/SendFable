@@ -34,8 +34,8 @@ const SCRIPT = `
     fetch(origin + "/api/forms/public/" + encodeURIComponent(slug))
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        if (!data || !data.form) {
-          el.textContent = "This form is unavailable.";
+        if (!data || data.unavailable || !data.form) {
+          el.textContent = (data && data.message) || "This form is not accepting submissions right now.";
           return;
         }
         var form = data.form;

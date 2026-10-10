@@ -13,6 +13,7 @@ import {
 } from "@/lib/sms/consent";
 import { isSmsSuppressed, matchExistingContact, recordIntakeConflict } from "@/lib/sms/contact-intake";
 import { emailConsentText, type FormFieldDef } from "@/lib/forms/fields";
+import { AUDIENCE_REQUIRED, audienceIds, canAcceptPublicSignups, FORM_UNAVAILABLE } from "@/lib/forms/manage";
 import { emailRejoinDecision, honeypotTripped, sanitizeHttpUrl, sanitizeUtm } from "@/lib/forms/policy";
 
 type FormRecord = {
@@ -52,7 +53,13 @@ export type AcceptResult =
 
 export async function acceptFormSubmission(input: AcceptInput): Promise<AcceptResult> {
   const form = input.form;
-  if (form.status !== "ACTIVE") return { ok: false, status: 404, error: "Form not found" };
+  if (form.status === "ARCHIVED") return { ok: false, status: 404, error: "Form not found" };
+  if (!input.test && !canAcceptPublicSignups(form.status, form.tagIds)) {
+    return { ok: false, status: 403, error: FORM_UNAVAILABLE };
+  }
+  if (input.test && audienceIds(form.tagIds).length === 0) {
+    return { ok: false, status: 400, error: AUDIENCE_REQUIRED };
+  }
 
   if (honeypotTripped(input.values.sf_hp)) {
     return { ok: true, pendingConfirm: false, stored: false };

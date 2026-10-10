@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { normalizeFormFields, requirementModeFor } from "../forms/fields";
+import { audienceIds, canAcceptPublicSignups, fieldSummary } from "../forms/manage";
 import { developerInstructions, embedSnippet } from "../forms/install";
 import {
   emailRejoinDecision,
@@ -95,4 +96,40 @@ test("spam signals reject a filled honeypot and an instant submit", () => {
   assert.equal(sanitizeHttpUrl("javascript:alert(1)"), null);
   assert.equal(sanitizeUtm("newsletter"), "newsletter");
   assert.equal(sanitizeUtm("<script>"), null);
+});
+
+test("form management keeps rename, pause, and audience rules separate from the slug", () => {
+  assert.deepEqual(audienceIds(["aud-1", "", 3]), ["aud-1"]);
+  assert.equal(canAcceptPublicSignups("ACTIVE", ["aud-1"]), true);
+  assert.equal(canAcceptPublicSignups("ACTIVE", []), false);
+  assert.equal(canAcceptPublicSignups("PAUSED", ["aud-1"]), false);
+  assert.equal(canAcceptPublicSignups("ARCHIVED", ["aud-1"]), false);
+  assert.equal(
+    fieldSummary([
+      { key: "email", label: "Email" },
+      { key: "firstName", label: "First name" },
+      { key: "phone", label: "Phone" },
+    ]),
+    "Email, First name, Phone"
+  );
+
+  const list = readFileSync("src/app/(app)/forms/page.tsx", "utf8");
+  assert.match(list, />Edit</);
+  assert.match(list, /Audience:/);
+  assert.match(list, /Fields:/);
+  assert.match(list, /Pause form/);
+  assert.match(list, /Resume form/);
+  assert.match(list, /Delete form/);
+
+  const editor = readFileSync("src/app/(app)/forms/[id]/page.tsx", "utf8");
+  assert.match(editor, /Form name/);
+  assert.match(editor, /What would you like to collect/);
+  assert.match(editor, /Send submissions to/);
+  assert.match(editor, /Put this form on your website/);
+  assert.match(editor, /Test form/);
+  assert.equal(editor.includes("hostedSlug: form.hostedSlug"), false);
+
+  const route = readFileSync("src/app/api/forms/[id]/route.ts", "utf8");
+  assert.match(route, /status: "ARCHIVED"/);
+  assert.equal(route.includes("signupForm.delete"), false);
 });
