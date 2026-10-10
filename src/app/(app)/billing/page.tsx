@@ -31,6 +31,7 @@ export default function BillingPage() {
   const [showBadgeValue, setShowBadgeValue] = useState(false);
   const [internalUnlimited, setInternalUnlimited] = useState(false);
   const [entitlementLabel, setEntitlementLabel] = useState("");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -43,6 +44,7 @@ export default function BillingPage() {
         setInternalUnlimited(Boolean(data.internalUnlimited));
         setEntitlementLabel(data.entitlementLabel || "");
       }
+      setReady(true);
     })();
     track("pricing_from_app_viewed");
   }, []);
@@ -77,8 +79,14 @@ export default function BillingPage() {
   }
 
   const current = PLANS[plan];
-  const emailPct = Math.min(100, (usage.emails / current.emailsPerMonth) * 100);
-  const contactPct = Math.min(100, (usage.contacts / current.contactCap) * 100);
+
+  if (!ready) {
+    return (
+      <div>
+        <PageHeader title="Billing" description="Loading…" />
+      </div>
+    );
+  }
 
   if (internalUnlimited) {
     return (
@@ -103,6 +111,9 @@ export default function BillingPage() {
       </div>
     );
   }
+
+  const emailPct = Math.min(100, (usage.emails / current.emailsPerMonth) * 100);
+  const contactPct = Math.min(100, (usage.contacts / current.contactCap) * 100);
 
   return (
     <div>

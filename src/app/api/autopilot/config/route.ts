@@ -9,6 +9,11 @@ import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 import type { Prisma } from "@prisma/client";
 
+function jsonConfig<T extends { estimatedCostMicros: bigint }>(config: T | null) {
+  if (!config) return null;
+  return { ...config, estimatedCostMicros: config.estimatedCostMicros.toString() };
+}
+
 const putSchema = z.object({
   pageUrl: z.string().trim().url().max(2000),
   audienceType: z.enum(["all", "tags", "segment"]).default("all"),
@@ -56,7 +61,7 @@ export async function GET() {
   const draftsCap = quotas.autopilotDraftsPerMonth;
 
   return NextResponse.json({
-    config,
+    config: jsonConfig(config),
     waitingDrafts: waiting,
     lastCampaign: lastSent,
     allowedFrequencies: quotas.autopilotFrequencies,
@@ -155,7 +160,7 @@ export async function PUT(req: Request) {
   }
 
   return NextResponse.json({
-    config,
+    config: jsonConfig(config),
     allowedFrequencies: quotas.autopilotFrequencies,
     internalUnlimited: quotas.entitlement === "OWNER_INTERNAL_UNLIMITED",
   });
