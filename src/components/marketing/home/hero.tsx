@@ -19,11 +19,13 @@ export function Hero() {
             Email and text marketing without the marketing-software headache
           </h1>
           <p className="mt-5 max-w-prose text-lg leading-relaxed text-charcoal/80">
-            Free {PLANS.FREE.contactCap.toLocaleString()} contacts /{" "}
-            {PLANS.FREE.emailsPerMonth.toLocaleString()} emails · Starter ${PLANS.STARTER.monthlyPrice}
-            {smsPublic
-              ? " · Email, Text, or Both in one campaign."
-              : " · Clear email campaigns for small businesses."}
+            Email. Text. Or both. Free {PLANS.FREE.contactCap.toLocaleString()} contacts and{" "}
+            {PLANS.FREE.emailsPerMonth.toLocaleString()} emails a month. Starter $
+            {PLANS.STARTER.monthlyPrice}.
+          </p>
+          <p className="mt-3 max-w-prose text-base leading-relaxed text-charcoal/75">
+            Marketing Autopilot turns a website update into a campaign that looks like you. You
+            choose when it sends.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button asChild size="lg" className="bg-coral-solid text-white hover:bg-coral-hover">

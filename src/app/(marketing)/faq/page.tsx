@@ -24,7 +24,7 @@ export default function FaqPage() {
     },
     {
       q: "Is there a free plan?",
-      a: `Yes. Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails per month, with a “Sent with SendFable” footer. No credit card required to start.`,
+      a: `Yes. Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails per month, with a “Powered by SendFable” footer. No credit card required to start.`,
     },
     {
       q: "Can I send email and text?",

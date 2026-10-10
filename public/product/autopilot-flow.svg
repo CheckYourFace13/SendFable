@@ -7,7 +7,7 @@
   </defs>
   <rect width="1200" height="420" fill="url(#bg)"/>
   <text x="40" y="48" font-family="Georgia, serif" font-size="28" fill="#1A1A1A">Marketing Autopilot</text>
-  <text x="40" y="78" font-family="system-ui,sans-serif" font-size="14" fill="#5A5A5A">Website changes ’ campaign draft ’ you approve</text>
+  <text x="40" y="78" font-family="system-ui,sans-serif" font-size="14" fill="#5A5A5A">Their content, their look, then you schedule</text>
 
   <!-- Website -->
   <rect x="40" y="110" width="240" height="220" rx="16" fill="#fff" stroke="#1A1A1A" stroke-opacity="0.12"/>
@@ -24,26 +24,26 @@
   <text x="360" y="140" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#6B7280">EMAIL DRAFT</text>
   <text x="360" y="175" font-family="system-ui,sans-serif" font-size="15" font-weight="600" fill="#1A1A1A">Subject: New Fall Special</text>
   <text x="360" y="200" font-family="system-ui,sans-serif" font-size="13" fill="#374151">Ready-to-send campaign</text>
-  <text x="360" y="230" font-family="system-ui,sans-serif" font-size="12" fill="#6B7280">Uses your SendFable template</text>
+  <text x="360" y="230" font-family="system-ui,sans-serif" font-size="12" fill="#6B7280">Uses your logo and colors</text>
 
   <text x="620" y="220" font-size="28" fill="#9CA3AF">’</text>
 
   <!-- Approval -->
   <rect x="660" y="110" width="280" height="220" rx="16" fill="#ECFDF5" stroke="#059669" stroke-opacity="0.4"/>
   <text x="680" y="140" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#6B7280">OWNER APPROVAL</text>
-  <rect x="680" y="165" width="140" height="28" rx="6" fill="#059669"/>
-  <text x="692" y="184" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#fff">Approve &amp; send</text>
+  <rect x="680" y="165" width="200" height="28" rx="6" fill="#059669"/>
+  <text x="696" y="184" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#fff">Approve &amp; schedule</text>
   <rect x="680" y="205" width="90" height="28" rx="6" fill="#4F46E5"/>
   <text x="705" y="224" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#fff">Edit</text>
   <rect x="780" y="205" width="110" height="28" rx="6" fill="#6B7280"/>
-  <text x="795" y="224" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#fff">Don't send</text>
-  <text x="680" y="270" font-family="system-ui,sans-serif" font-size="12" fill="#065F46">No approval. No send.</text>
+  <text x="788" y="224" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#fff">Skip this one</text>
+  <text x="680" y="270" font-family="system-ui,sans-serif" font-size="12" fill="#065F46">Nothing sends until scheduled.</text>
 
   <text x="960" y="220" font-size="28" fill="#9CA3AF">’</text>
 
   <!-- Customers -->
   <rect x="1000" y="140" width="160" height="160" rx="16" fill="#fff" stroke="#1A1A1A" stroke-opacity="0.12"/>
   <text x="1020" y="175" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#6B7280">CUSTOMERS</text>
-  <text x="1020" y="210" font-family="system-ui,sans-serif" font-size="14" fill="#1A1A1A">Only after you</text>
-  <text x="1020" y="232" font-family="system-ui,sans-serif" font-size="14" fill="#1A1A1A">confirm send</text>
+  <text x="1020" y="210" font-family="system-ui,sans-serif" font-size="14" fill="#1A1A1A">Only at the</text>
+  <text x="1020" y="232" font-family="system-ui,sans-serif" font-size="14" fill="#1A1A1A">time you pick</text>
 </svg>

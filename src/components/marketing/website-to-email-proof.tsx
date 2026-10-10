@@ -17,7 +17,7 @@ function LatteArt() {
   );
 }
 
-const STEPS = ["Their website", "SendFable creates the email", "Owner approves", "Send"];
+const STEPS = ["Their content", "Their look", "You schedule"];
 
 export function WebsiteToEmailProof() {
   return (
@@ -72,7 +72,7 @@ export function WebsiteToEmailProof() {
           </div>
           <div className="p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/45">
-              Example SendFable campaign
+              Harbor &amp; Rye
             </p>
             <div className="mt-3 overflow-hidden rounded-lg">
               <div className="aspect-[16/9] max-h-36">
@@ -84,8 +84,13 @@ export function WebsiteToEmailProof() {
             <p className="mt-2 text-sm text-ink/65">
               Harbor &amp; Rye&apos;s pumpkin latte is on for the weekend.
             </p>
-            <p className="mt-3 inline-block rounded-md bg-coral-solid px-3 py-1.5 text-xs font-semibold text-white">
+            <p className="mt-3 inline-block rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-white">
               See the special
+            </p>
+            <p className="mt-4 border-t border-ink/10 pt-3 text-[10px] leading-snug text-ink/40">
+              Powered by SendFable
+              <br />
+              We turn your content into emails ready to send.
             </p>
           </div>
         </div>

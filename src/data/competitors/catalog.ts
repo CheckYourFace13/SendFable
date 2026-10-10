@@ -58,7 +58,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Simpler small-business workflow",
       "Transparent lower list pricing at many practical tiers",
       "Managed SES delivery without suite lock-in",
-      "Marketing Autopilot: watch a promotions page → draft a campaign → you approve before send (no complex journey builder required)",
+      "Marketing Autopilot: a page change becomes a campaign in your look, and you choose when it sends",
     ],
     competitorStronger: [
       "Integration marketplace",
@@ -66,7 +66,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Ecommerce and agency familiarity",
     ],
     shortAnswer:
-      "Choose SendFable when you want simple campaigns, clear pricing, and website-to-campaign drafts you approve. Choose Mailchimp when you need a broad marketing suite, deep automations, or a large integration ecosystem.",
+      "Choose SendFable when you want Email, Text, or Both, clear pricing, forms, and website-to-campaign drafts you schedule. Choose Mailchimp when you need a broad marketing suite, deep automations, or a large integration ecosystem.",
     whoSendfableIsFor:
       "Local and small businesses that need contacts, polished campaigns, forms, and managed delivery without buying a CRM/ecommerce suite.",
     whoCompetitorIsFor:
@@ -170,7 +170,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Managed SES positioning",
       "Very clear small-business Free→Pro Plus ladder",
       "Any-email signup focus",
-      "Marketing Autopilot: page changes → campaign draft → owner approval (simpler than journey builders)",
+      "Marketing Autopilot: page changes become a campaign in your look, and you choose when it sends",
     ],
     competitorStronger: ["Established builder polish", "Automation depth for the price", "Larger existing user community"],
     shortAnswer:
@@ -221,7 +221,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Predictable contact-tier pricing",
       "Simpler small-business UX",
       "Campaign-first focus",
-      "Marketing Autopilot watches your promotions page and prepares campaigns for approval",
+      "Marketing Autopilot watches your page, drafts in your look, and waits until you schedule",
     ],
     competitorStronger: ["Volume-based pricing", "SMS + multi-channel in-product", "Transactional email heritage"],
     shortAnswer:

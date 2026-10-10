@@ -280,10 +280,10 @@ describe("autopilot footer branding", () => {
     assert.match(html, new RegExp(drink.primaryColor, "i"));
     assert.match(html, /autumn-pour\.jpg/);
     assert.match(html, /See the pour/);
-    assert.match(html, /Sent with/);
-    assert.match(html, /Turn website updates into ready-to-send emails/);
+    assert.match(html, /Powered by/);
+    assert.match(html, /We turn your content into emails ready to send/);
     assert.match(html, /footer_badge/);
-    const badgeAt = html.toLowerCase().indexOf("sent with");
+    const badgeAt = html.toLowerCase().indexOf("powered by");
     const headlineAt = html.indexOf("Autumn pour");
     assert.ok(headlineAt >= 0 && badgeAt > headlineAt);
   });
@@ -375,6 +375,6 @@ describe("autopilot image relevance and manual email", () => {
       showSendfableBadge: false,
     });
     assert.match(html, /Manual Co/);
-    assert.doesNotMatch(html, /Turn website updates into ready-to-send emails/);
+    assert.doesNotMatch(html, /We turn your content into emails ready to send/);
   });
 });

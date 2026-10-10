@@ -24,8 +24,8 @@ describe("internal unlimited entitlement", () => {
     assert.equal(q.autopilotDraftsPerMonth, null);
     assert.deepEqual(q.autopilotFrequencies, ["DAILY", "TWICE_DAILY", "WEEKLY"]);
     assert.equal(q.showSendfableBadge, true);
-    assert.match(referralBadgeLabelHtml(), /Sent with/);
-    assert.match(referralBadgeLabelHtml(), /Turn website updates into ready-to-send emails/);
+    assert.match(referralBadgeLabelHtml(), /Powered by/);
+    assert.match(referralBadgeLabelHtml(), /We turn your content into emails ready to send/);
   });
 
   it("keeps public Free quotas and the upgrade footer", () => {

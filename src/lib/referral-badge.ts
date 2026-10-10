@@ -1,15 +1,14 @@
-/** Free-plan “Sent with SendFable” footer badge — conversion + attribution. */
+/** Promotional footer. The customer stays the brand; this line sits underneath. */
 
 export const REFERRAL_BADGE_URL =
   "https://sendfable.com/signup?utm_source=customer_email&utm_medium=footer_badge&utm_campaign=free_plan";
 
-/** Preferred free-plan badge copy — SendFable product, never iScream Studio. */
+/** Preferred footer — SendFable product, never iScream Studio. */
 export const REFERRAL_BADGE_LABEL_HTML =
-  'Sent with <strong style="color:#E4572E;">SendFable</strong><br/><span style="font-size:10px;color:#9ca3af;">Turn website updates into ready-to-send emails</span>';
+  'Powered by <strong style="color:#E4572E;">SendFable</strong><br/><span style="font-size:10px;color:#9ca3af;">We turn your content into emails ready to send.</span>';
 
-/** Alternate concise treatment (A/B via REFERRAL_BADGE_VARIANT). */
-export const REFERRAL_BADGE_LABEL_ALT_HTML =
-  'Sent with <strong style="color:#E4572E;">SendFable</strong><br/><span style="font-size:10px;color:#9ca3af;">Create emails like this free</span>';
+/** Same promise if a badge variant is set. Do not restore the older “Sent with” line. */
+export const REFERRAL_BADGE_LABEL_ALT_HTML = REFERRAL_BADGE_LABEL_HTML;
 
 export function referralBadgeLabelHtml(): string {
   const v = (process.env.REFERRAL_BADGE_VARIANT || "a").toLowerCase();

@@ -14,7 +14,7 @@ export interface PlanConfig {
    */
   seats: number;
   customDomains: boolean;
-  badge: boolean; // "Sent with Sendfable" footer badge
+  badge: boolean; // "Powered by SendFable" footer when required
   /** Absolute per-day ceiling regardless of ramp level */
   dailyCeiling: number;
 }

@@ -158,27 +158,27 @@ export default function AutomatedEmailMarketingPage() {
 
       <section className="mt-16">
         <h2 className="text-2xl font-semibold text-ink">How it works</h2>
+        <p className="mt-3 text-sm text-ink/70">
+          The email looks like your business. SendFable is the engine underneath, and it appears
+          at the bottom only when your plan requires it.
+        </p>
         <ol className="mt-6 space-y-5">
           {[
             {
-              t: "Collect",
-              b: "SendFable hosted or embedded forms collect email (optional name/phone and separate SMS consent).",
-            },
-            {
               t: "Watch",
-              b: "Point Autopilot at specials, events, products, or news. We check on a simple schedule.",
+              b: "SendFable notices meaningful content changes on the page where you already post.",
             },
             {
-              t: "Draft",
-              b: "Meaningful changes create a real SendFable campaign draft from an existing template — not a plain text dump.",
+              t: "Create",
+              b: "That content becomes a campaign with your logo, your colors, your words, and an image only when it belongs to the update.",
             },
             {
-              t: "Approve",
-              b: "You get a preview email with Approve & Schedule, Edit, or Skip this campaign. You choose the date, time, and timezone. If you do nothing, nothing sends, and the draft stays waiting.",
+              t: "Review",
+              b: "You see the finished draft. Edit it, or skip this campaign.",
             },
             {
-              t: "Send",
-              b: "After you schedule it, the campaign sends at that time through the normal SendFable email pipeline.",
+              t: "Schedule",
+              b: "You choose the date and time. Nothing sends until you do. No reply means it waits.",
             },
           ].map((s, i) => (
             <li key={s.t} className="flex gap-4">
@@ -207,7 +207,7 @@ export default function AutomatedEmailMarketingPage() {
       </section>
 
       <section className="mt-16 rounded-xl border border-ink/10 bg-parchment/50 p-6">
-        <h2 className="text-xl font-semibold text-ink">Page changes → campaign ready → you approve</h2>
+        <h2 className="text-xl font-semibold text-ink">Your content, your look, then you schedule</h2>
         <p className="mt-2 text-sm text-ink/65">
           Competitors often offer complex automation builders. SendFable&apos;s differentiator is
           simpler: watch the page where you already post promotions, prepare the campaign, and wait
@@ -250,7 +250,7 @@ export default function AutomatedEmailMarketingPage() {
       <Faq items={FAQS} />
       <MarketingCta
         title="Automate your marketing without giving up control"
-        body="Start free. Point Autopilot at one page. Approve every send."
+        body="Start free. Point Autopilot at one page. Nothing sends until you schedule it."
         primaryLabel="Start free"
       />
     </div>

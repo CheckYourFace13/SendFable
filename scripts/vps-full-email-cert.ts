@@ -232,9 +232,9 @@ async function main() {
       });
       record(
         "FREE_FOOTER",
-        /Sent with/.test(freeHtml) &&
+        /Powered by/.test(freeHtml) &&
           /SendFable/.test(freeHtml) &&
-          /Turn website updates into ready-to-send emails/.test(freeHtml) &&
+          /We turn your content into emails ready to send/.test(freeHtml) &&
           !/Simple email marketing by iScream/i.test(freeHtml)
           ? "PASS"
           : "FAIL"

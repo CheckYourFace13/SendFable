@@ -18,7 +18,7 @@ Annual = two months free. Allowances reset each **calendar month** (UTC).
 
 | Plan | `badge` | Public / footer meaning |
 |---|---|---|
-| Free | `true` | “Sent with SendFable” required |
+| Free | `true` | “Powered by SendFable” required |
 | Starter | `false` | No platform badge |
 | Growth | `false` | No platform badge |
 | Pro | `false` | No platform badge |

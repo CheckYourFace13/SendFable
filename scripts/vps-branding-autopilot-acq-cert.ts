@@ -312,14 +312,14 @@ async function main() {
     });
 
     const badgeOk = showBadge
-      ? /Sent with/.test(html) &&
+      ? /Powered by/.test(html) &&
         /SendFable/.test(html) &&
         !/Simple email marketing by iScream/i.test(html)
       : !/footer_badge/.test(html);
     const legalOk = /BoatingChicago is operated by iScream Studio INC/.test(html);
     const noPromoIScream =
       !/Simple email marketing by iScream/i.test(html) &&
-      !/Sent with[\s\S]*iScream/i.test(html);
+      !/Powered by[\s\S]*iScream/i.test(html);
     record("FREE_FOOTER", badgeOk ? "PASS" : "FAIL", showBadge ? "badge present" : "paid no badge");
     record("LEGAL_DISCLOSURE", legalOk ? "PASS" : "FAIL");
     record("ISCREAM_PROMINENT_REMOVED", noPromoIScream && badgeOk ? "PASS" : "FAIL");

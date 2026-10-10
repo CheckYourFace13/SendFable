@@ -43,7 +43,7 @@ describe("workspace isolation contract", () => {
 
     assert.match(htmlA, /Acme Bakery/);
     assert.match(htmlA, /100 Main St/);
-    assert.match(htmlA, /Sent with/);
+    assert.match(htmlA, /Powered by/);
     assert.match(htmlA, /SendFable/);
     assert.doesNotMatch(htmlA, /iScream Studio INC/);
     assert.doesNotMatch(htmlA, /1364 Patriot Blvd/);
@@ -68,7 +68,7 @@ describe("workspace isolation contract", () => {
       unsubscribeUrl: "https://sendfable.com/unsubscribe/p",
     });
     assert.match(html, /Paid Co/);
-    assert.doesNotMatch(html, /Sent with/);
+    assert.doesNotMatch(html, /Powered by/);
     assert.doesNotMatch(html, /footer_badge/);
   });
 

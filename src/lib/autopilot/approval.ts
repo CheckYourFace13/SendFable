@@ -145,7 +145,7 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
     actionBtn(editUrl, "Edit", "#4F46E5") +
     actionBtn(rejectUrl, "Skip this campaign", "#6b7280") +
     `</tr></table>` +
-    `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">These links open a confirmation page. Opening a link does not send the campaign. If you do nothing, the draft stays waiting in SendFable.</p>`;
+    `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">Nothing sends until you choose the date and time. Opening a link does not send the campaign. If you do nothing, the draft stays waiting.</p>`;
 
   await sendEmail({
     from: platformFrom(),

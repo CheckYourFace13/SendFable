@@ -39,8 +39,8 @@ test.describe("Marketing Autopilot certification surfaces", () => {
   test("feature page lifecycle copy", async ({ page }) => {
     await page.goto("/automated-email-marketing");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    for (const label of ["Collect", "Watch", "Draft", "Approve", "Send"]) {
-      await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
+    for (const label of ["Watch", "Create", "Review", "Schedule"]) {
+      await expect(page.getByRole("heading", { name: label, exact: true })).toBeVisible();
     }
     await expect(page.getByText(/No approval\. No send/i).first()).toBeVisible();
     await expect(page.getByText(/No response/i).first()).toBeVisible();
@@ -50,9 +50,9 @@ test.describe("Marketing Autopilot certification surfaces", () => {
     await page.goto("/");
     const section = page.locator("#marketing-autopilot");
     await expect(section).toBeVisible();
-    await expect(section).toContainText(/YOUR WEBSITE CHANGES/i);
-    await expect(section).toContainText(/YOU APPROVE IT/i);
-    await expect(section).toContainText(/No approval\. No send/i);
+    await expect(section).toContainText(/Your website changes/i);
+    await expect(section).toContainText(/You choose when it sends/i);
+    await expect(section).toContainText(/Nothing sends until you schedule it/i);
     await expect(section.getByRole("link", { name: /Start free/i })).toBeVisible();
   });
 

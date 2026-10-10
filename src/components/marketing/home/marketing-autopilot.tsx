@@ -23,8 +23,8 @@ const SHOTS = [
   },
   {
     webp: "/product/autopilot-approval-confirm.webp",
-    alt: "Owner confirmation page before send",
-    label: "3 · You approve",
+    alt: "Owner chooses a date and time before anything sends",
+    label: "3 · You schedule",
   },
 ];
 
@@ -52,8 +52,9 @@ export function MarketingAutopilotHome() {
             You choose when it sends.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-charcoal/75 sm:text-lg">
-            Try Marketing Autopilot free for 3 months. That trial includes 1 automatically created
-            campaign per month. You still approve every campaign and choose when it sends.
+            Post a special, event, product, article, or update. SendFable uses that content to
+            create a campaign that looks like your business. Try it free for 3 months — 1 campaign
+            a month.
           </p>
           <p className="mt-4 text-sm font-bold uppercase tracking-wider text-coral">
             Nothing sends until you schedule it.

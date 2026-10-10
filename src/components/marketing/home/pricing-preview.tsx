@@ -14,11 +14,13 @@ import {
 } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import type { Plan } from "@prisma/client";
+import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
+import { AUTOPILOT_CREATION_PACKS } from "@/lib/autopilot/commercial";
 
 function planBlurb(plan: Plan): string[] {
   const p = PLANS[plan];
   const lines = [upToContacts(plan), upToEmails(plan)];
-  if (p.badge) lines.push("Sent with SendFable badge");
+  if (p.badge) lines.push("Powered by SendFable");
   else lines.push("No platform badge");
   if (p.customDomains) lines.push("Custom domain authentication");
   // Team seats exist in code for Pro / Pro Plus but are not advertised publicly
@@ -28,6 +30,8 @@ function planBlurb(plan: Plan): string[] {
 
 /** Public signup CTA — product is generally available. */
 const PRICING_CTA_HREF = "/signup";
+
+const AUTOPILOT_PRICE_NOTE = `Free keeps manual email. Autopilot is optional: 3 months, 1 creation a month, no rollover. Then Starter ${autopilotMaxDraftsPerMonth("STARTER")}, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")} a month. Extra packs: ${AUTOPILOT_CREATION_PACKS.map((p) => `${p.credits} for $${p.cents / 100}`).join(", ")}. Manual campaigns do not use those credits. Nothing sends until you schedule it.`;
 
 export function PricingPreview({
   embedded = false,
@@ -77,9 +81,7 @@ export function PricingPreview({
             Clear pricing. Start free.
           </h2>
           <p className="mt-3 text-charcoal/75">
-            Limits you can read. Upgrade when your list grows — no mystery add-ons on this page.
-            Try Marketing Autopilot free for 3 months: 1 automatically created campaign per month.
-            Paid plans include a monthly creation allowance. Nothing sends until you schedule it.
+            Limits you can read. Upgrade when your list grows. {AUTOPILOT_PRICE_NOTE}
           </p>
           <div className="mt-8 flex flex-col items-center gap-2">
             {toggle}
@@ -91,8 +93,7 @@ export function PricingPreview({
       {embedded && (
         <div className="mb-8 flex flex-col items-center gap-2">
           <p className="max-w-2xl text-center text-sm text-charcoal/75">
-            Try Marketing Autopilot free for 3 months: 1 automatically created campaign per month.
-            Paid plans include a monthly creation allowance. Nothing sends until you schedule it.
+            {AUTOPILOT_PRICE_NOTE}
           </p>
           {toggle}
           {annual && <p className="text-sm text-teal">{ANNUAL_SAVINGS_LABEL}</p>}

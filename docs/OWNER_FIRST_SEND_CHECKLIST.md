@@ -12,7 +12,7 @@ Use a real mailbox you control. Do not email prospects.
 - [ ] Send Confidence shows ready (fix blockers if any)
 - [ ] Send to the 3 contacts only
 - [ ] Confirm From / Reply-To / subject / footer address / unsubscribe
-- [ ] Confirm Free badge “Sent with SendFable” if on Free
+- [ ] Confirm Free badge “Powered by SendFable” if on Free
 - [ ] Click a link; confirm tracking redirect
 - [ ] Unsubscribe one contact; confirm suppressed
 - [ ] Duplicate campaign; save second draft

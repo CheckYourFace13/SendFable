@@ -107,7 +107,7 @@ Core send path is real: auth → audience → builder → launch (BullMQ or inli
 |------|--------|----------|
 | Stripe Checkout/Portal/plans | COMPLETE | `/billing` · NEEDS_CREDENTIAL |
 | Team invites | COMPLETE | Pro gate, `/invite/[token]` |
-| Free “Sent with Sendfable” badge | COMPLETE | `plans.ts` + compiler |
+| Free “Powered by SendFable” badge | COMPLETE | `plans.ts` + compiler |
 | Referrals + credit ledger | PARTIAL | signup attribution, settings UI, ledger on verify |
 | Public archive | PARTIAL | `/a/[slug]` + schema flags; settings UX thin |
 | Hosted landing pages | MISSING | model only |

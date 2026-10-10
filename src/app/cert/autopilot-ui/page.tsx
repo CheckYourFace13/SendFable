@@ -140,10 +140,10 @@ function EmailView() {
         </dl>
         <div className="mt-5 flex flex-wrap gap-2">
           <span className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white">
-            Approve & send
+            Approve &amp; schedule
           </span>
           <span className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white">
-            Edit before sending
+            Edit
           </span>
           <span className="rounded-md bg-slate-600 px-3 py-2 text-xs font-semibold text-white">
             Skip this campaign
@@ -159,7 +159,7 @@ function ConfirmView() {
   return (
     <Card>
       <p className="text-xs font-semibold uppercase text-black/45">Marketing Autopilot</p>
-      <h1 className="mt-2 text-xl font-semibold">Ready to send this campaign?</h1>
+      <h1 className="mt-2 text-xl font-semibold">Choose when this campaign sends</h1>
       <dl className="mt-6 space-y-3 text-sm">
         <div>
           <dt className="text-black/45">What changed</dt>
@@ -175,13 +175,13 @@ function ConfirmView() {
         </div>
       </dl>
       <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-        Ready to send this campaign to 1 customer?
+        Nothing sends until you choose the date and time.
       </p>
       <button
         type="button"
         className="mt-6 w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white"
       >
-        Approve & send now
+        SCHEDULE CAMPAIGN
       </button>
       <p className="mt-4 text-xs text-black/45">
         Opening this page does not send anything. Only the confirmation button performs the action.

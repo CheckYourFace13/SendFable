@@ -67,7 +67,13 @@ export default function FeaturesPage() {
     {
       id: "website-campaign",
       title: "Website → Campaign",
-      body: "Meaningful page changes become draft emails with relevant copy. No busywork rewriting the same special twice.",
+      body: "A real change on your site becomes a draft in your voice. You do not rewrite the same special by hand.",
+      href: "/automated-email-marketing",
+    },
+    {
+      id: "brand-match",
+      title: "Your look, not ours",
+      body: "Autopilot uses your logo, colors, and images that belong to that update. The campaign should look like your business. SendFable stays at the bottom, and only when the plan requires it.",
       href: "/automated-email-marketing",
     },
     {
@@ -93,7 +99,7 @@ export default function FeaturesPage() {
     {
       id: "branding",
       title: "Free-plan branding",
-      body: `Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month with a “Sent with SendFable” footer. Paid plans remove the badge.`,
+      body: `Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month with a “Powered by SendFable” footer. Paid plans remove it.`,
       href: "/pricing",
     },
     ...(smsPublic
@@ -157,8 +163,7 @@ export default function FeaturesPage() {
         Email, text &amp; marketing automation features
       </h1>
       <p className="mt-4 max-w-2xl text-lg text-ink/70">
-        Everything you need to grow a permission-based audience and send campaigns that feel personal
-        — without suite sprawl.
+        Collect the audience. Create the message. Choose when it goes. The mail looks like your business.
       </p>
 
       <figure className="mt-10 overflow-hidden rounded-xl border border-ink/10 bg-parchment/40">
@@ -171,7 +176,7 @@ export default function FeaturesPage() {
           priority
         />
         <figcaption className="px-4 py-3 text-left text-sm text-ink/60">
-          Marketing Autopilot: website change → draft → your approval.{" "}
+          Marketing Autopilot: your content, your look, then you schedule it.{" "}
           <Link href="/automated-email-marketing" className="text-coral underline-offset-2 hover:underline">
             See how it works
           </Link>
