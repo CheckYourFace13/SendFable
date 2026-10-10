@@ -5,6 +5,7 @@ import { PLANS } from "@/lib/plans";
 import { randomToken, slugify } from "@/lib/utils";
 import { FORM_PRESETS } from "@/lib/form-presets";
 import { assertSafePublicUrl } from "@/lib/ssrf";
+import { internalWorkspaceHealth } from "@/lib/owner-admin-access";
 
 const PLAN_KEYS = new Set<Plan>(["FREE", "STARTER", "GROWTH", "PRO", "PRO_PLUS"]);
 
@@ -68,6 +69,16 @@ export async function listInternalWorkspaceSummaries() {
             },
           })
         : null;
+      const [openIssues, failedCampaigns] = await Promise.all([
+        prisma.productIssue.count({ where: { workspaceId: ws.id } }),
+        prisma.campaign.count({ where: { workspaceId: ws.id, status: "FAILED" } }),
+      ]);
+      const health = internalWorkspaceHealth({
+        disabled: Boolean(ws.disabledAt),
+        sendingStatus: defaultIdentity?.status ?? null,
+        openIssues,
+        failedCampaigns,
+      });
 
       return {
         id: ws.id,
@@ -93,6 +104,7 @@ export async function listInternalWorkspaceSummaries() {
           : null,
         lastCampaign,
         sending: defaultIdentity,
+        health,
         owner: owner
           ? { id: owner.id, email: owner.email, name: owner.name, accountPlan: owner.plan }
           : null,

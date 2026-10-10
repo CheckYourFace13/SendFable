@@ -11,7 +11,6 @@ import {
   ListChecks,
   Send,
   Settings,
-  Shield,
   Tags,
   Users,
 } from "lucide-react";
@@ -28,7 +27,6 @@ const NAV = [
   { href: "/library", label: "Templates", icon: FileText },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/admin", label: "Admin", icon: Shield },
 ];
 
 export function SidebarNav() {

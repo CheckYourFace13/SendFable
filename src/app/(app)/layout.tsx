@@ -18,6 +18,7 @@ import { PLANS } from "@/lib/plans";
 import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
 import { ADMIN_VIEW_COOKIE } from "@/lib/admin-view";
 import { isOwnerAdminUser } from "@/lib/platform-admin";
+import { OWNER_ADMIN_HOME } from "@/lib/owner-admin-access";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -45,8 +46,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       /* ignore */
     }
   }
-  const showIssueReporter =
-    Boolean(workspace.isInternal) && (await isOwnerAdminUser(user));
+  const ownerAdmin = await isOwnerAdminUser(user);
+  const showIssueReporter = Boolean(workspace.isInternal) && ownerAdmin;
 
   return (
     <div className="flex min-h-screen bg-page">
@@ -90,6 +91,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {children}
           {showIssueReporter && <ReportProductIssue />}
         </main>
+        {ownerAdmin && (
+          <footer className="border-t border-ink/5 px-4 py-1.5 text-right lg:px-8">
+            <Link
+              href={OWNER_ADMIN_HOME}
+              data-testid="owner-admin-link"
+              className="text-[11px] font-normal text-ink/35 hover:text-ink/55"
+            >
+              Admin
+            </Link>
+          </footer>
+        )}
       </div>
     </div>
   );

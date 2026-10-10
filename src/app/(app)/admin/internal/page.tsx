@@ -19,6 +19,7 @@ type Row = {
   autopilot: { enabled: boolean; pageUrl: string } | null;
   lastCampaign: { name: string; status: string; channel: string } | null;
   sending: { value: string; displayName: string | null; status: string } | null;
+  health: { ok: boolean; label: string };
 };
 
 export default function InternalWorkspacesAdminPage() {
@@ -139,13 +140,14 @@ export default function InternalWorkspacesAdminPage() {
               <th className="px-3 py-2">Autopilot</th>
               <th className="px-3 py-2">Last campaign</th>
               <th className="px-3 py-2">Sending</th>
+              <th className="px-3 py-2">Health</th>
               <th className="px-3 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-muted-foreground">
+                <td colSpan={10} className="px-3 py-6 text-muted-foreground">
                   No internal workspaces yet. Create DrinkKnird to start dogfooding.
                 </td>
               </tr>
@@ -186,6 +188,11 @@ export default function InternalWorkspacesAdminPage() {
                   {r.sending
                     ? `${r.sending.displayName || "—"} · ${r.sending.status}`
                     : "—"}
+                </td>
+                <td className="px-3 py-3">
+                  <span className={r.health?.ok === false ? "text-red-700" : "text-muted-foreground"}>
+                    {r.health?.label || "—"}
+                  </span>
                 </td>
                 <td className="px-3 py-3">
                   <div className="flex flex-col gap-1">
