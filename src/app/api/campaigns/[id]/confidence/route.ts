@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
 import { countAudience } from "@/lib/audience";
 import { computeSendConfidence } from "@/lib/send-confidence";
+import { isOwnerInternalWorkspace } from "@/lib/internal-entitlement";
 import { normalizeEmail } from "@/lib/utils";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -85,6 +86,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     smsAudienceSize,
     hasActiveSmsNumber,
     hasActiveSmsSubscription,
+    internalUnlimited: isOwnerInternalWorkspace({
+      isInternal: ctx.workspace.isInternal,
+      disabled: Boolean(ctx.workspace.disabledAt),
+    }),
   });
 
   return NextResponse.json(result);

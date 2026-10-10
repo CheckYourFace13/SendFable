@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
-import { PLANS } from "@/lib/plans";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 import { signToken } from "@/lib/tokens";
 import { sendWorkspaceInvite } from "@/lib/transactional";
 import { normalizeEmail, isValidEmail } from "@/lib/utils";
@@ -46,7 +46,12 @@ export async function POST(req: Request) {
   }
 
   const owner = await getWorkspaceOwner(ctx.workspace.id);
-  if (PLANS[owner.plan].seats <= 1) {
+  const seatCap = softwareQuotas({
+    isInternal: ctx.workspace.isInternal,
+    disabled: Boolean(ctx.workspace.disabledAt),
+    plan: owner.plan,
+  }).seats;
+  if (seatCap != null && seatCap <= 1) {
     return NextResponse.json(
       { error: "Team seats are available on Pro and Pro Plus plans", upgradeRequired: true },
       { status: 402 }
@@ -69,7 +74,7 @@ export async function POST(req: Request) {
   const pendingCount = await prisma.invitation.count({
     where: { workspaceId: ctx.workspace.id },
   });
-  if (memberCount + pendingCount >= PLANS[owner.plan].seats) {
+  if (seatCap != null && memberCount + pendingCount >= seatCap) {
     return NextResponse.json({ error: "Seat limit reached" }, { status: 402 });
   }
 

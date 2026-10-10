@@ -15,8 +15,10 @@ export default function FormsPage() {
   const router = useRouter();
   const [forms, setForms] = useState<Form[]>([]);
   const [name, setName] = useState("");
+  const [origin, setOrigin] = useState("");
 
   useEffect(() => {
+    setOrigin(window.location.origin);
     void (async () => {
       const res = await fetch("/api/forms");
       const data = await res.json();
@@ -64,22 +66,48 @@ export default function FormsPage() {
         />
       ) : (
         <ul className="divide-y rounded-xl border bg-white">
-          {forms.map((f) => (
-            <li key={f.id}>
-              <Link
-                href={`/forms/${f.id}`}
-                className="flex items-center justify-between px-5 py-4 hover:bg-slate-50"
-              >
-                <div>
+          {forms.map((f) => {
+            const hosted = `${origin}/f/${f.hostedSlug}`;
+            const embed = `<iframe src="${hosted}?embed=1" style="width:100%;max-width:420px;height:360px;border:0;" title="${f.name}"></iframe>`;
+            return (
+              <li key={f.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <Link href={`/forms/${f.id}`} className="min-w-0">
                   <div className="font-medium">{f.name}</div>
-                  <div className="text-sm text-muted-foreground">/f/{f.hostedSlug}</div>
+                  <div className="truncate text-sm text-muted-foreground">{hosted}</div>
+                </Link>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{f.submitCount} submissions</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(hosted);
+                      toast.success("Hosted form link copied");
+                    }}
+                  >
+                    Copy hosted form link
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(embed);
+                      toast.success("Embed code copied");
+                    }}
+                  >
+                    Copy embed code
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" asChild>
+                    <a href={hosted} target="_blank" rel="noreferrer">
+                      Preview form
+                    </a>
+                  </Button>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {f.submitCount} submissions
-                </span>
-              </Link>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

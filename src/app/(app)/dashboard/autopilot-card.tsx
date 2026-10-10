@@ -2,8 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { AutopilotUpgradeBanner } from "@/components/app/autopilot-upgrade-banner";
-import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
-import { getWorkspaceOwner } from "@/lib/workspace-owner";
+import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 
 export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: string }) {
   const config = await prisma.marketingAutopilotConfig.findUnique({
@@ -24,14 +24,20 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
     );
   }
 
-  const owner = await getWorkspaceOwner(workspaceId);
+  const ent = await getWorkspaceEntitlement(workspaceId);
+  const quotas = softwareQuotas({
+    isInternal: ent.isInternal,
+    disabled: ent.disabled,
+    plan: ent.plan,
+  });
+  const unlimited = quotas.entitlement === "OWNER_INTERNAL_UNLIMITED";
   const monthStart = new Date(
     Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)
   );
   const draftsUsedThisMonth = await prisma.marketingAutopilotDraft.count({
     where: { workspaceId, createdAt: { gte: monthStart } },
   });
-  const draftsCap = autopilotMaxDraftsPerMonth(owner.plan);
+  const draftsCap = quotas.autopilotDraftsPerMonth;
 
   const waiting = await prisma.marketingAutopilotDraft.count({
     where: {
@@ -57,12 +63,14 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
 
   return (
     <div className="mb-6">
-      <AutopilotUpgradeBanner
-        plan={owner.plan}
-        draftsUsed={draftsUsedThisMonth}
-        draftsCap={draftsCap}
-        surface="dashboard"
-      />
+      {!unlimited && draftsCap != null && (
+        <AutopilotUpgradeBanner
+          plan={ent.plan}
+          draftsUsed={draftsUsedThisMonth}
+          draftsCap={draftsCap}
+          surface="dashboard"
+        />
+      )}
       <div className="rounded-xl border border-teal/25 bg-teal/5 px-4 py-4 text-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -78,7 +86,8 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
                   : "Not yet"}
               </li>
               <li>
-                Drafts this month: {draftsUsedThisMonth} / {draftsCap}
+                Drafts this month:{" "}
+                {unlimited ? `${draftsUsedThisMonth} · unlimited` : `${draftsUsedThisMonth} / ${draftsCap}`}
               </li>
               <li>Drafts waiting: {waiting}</li>
               <li>

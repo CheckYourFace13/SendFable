@@ -48,6 +48,8 @@ export interface ConfidenceInput {
   smsAudienceSize?: number;
   hasActiveSmsNumber?: boolean;
   hasActiveSmsSubscription?: boolean;
+  /** Owner internal workspaces are not held to public plan email caps. */
+  internalUnlimited?: boolean;
 }
 
 function hasUnsubscribe(html: string): boolean {
@@ -391,7 +393,10 @@ export function computeSendConfidence(input: ConfidenceInput): ConfidenceResult 
     });
   }
 
-  if (input.owner.monthlySendCount + input.audienceSize > plan.emailsPerMonth) {
+  if (
+    !input.internalUnlimited &&
+    input.owner.monthlySendCount + input.audienceSize > plan.emailsPerMonth
+  ) {
     checks.push({
       id: "quota",
       level: "error",

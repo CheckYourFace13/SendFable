@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { requireWorkspaceContext, getWorkspaceOwner } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PLANS } from "@/lib/plans";
+import { isOwnerInternalWorkspace } from "@/lib/internal-entitlement";
 import { ensureSendCountReset } from "@/lib/quota";
 import { formatNumber } from "@/lib/utils";
 import { DashboardCharts } from "./dashboard-charts";
@@ -25,6 +26,10 @@ export default async function DashboardPage() {
 
   const owner = await ensureSendCountReset(await getWorkspaceOwner(workspace.id));
   const plan = PLANS[owner.plan];
+  const internalUnlimited = isOwnerInternalWorkspace({
+    isInternal: workspace.isInternal,
+    disabled: Boolean(workspace.disabledAt),
+  });
 
   const [contactCount, campaignCount, recentCampaigns, completedCount, verifiedSender] =
     await Promise.all([
@@ -79,15 +84,17 @@ export default async function DashboardPage() {
   if (firstRun) {
     return (
       <div className="mx-auto max-w-xl">
-        <UsageUpgradeBanner
-          planName={plan.name}
-          planIsFree={owner.plan === "FREE"}
-          emailsUsed={owner.monthlySendCount}
-          emailsCap={plan.emailsPerMonth}
-          contactsUsed={contactCount}
-          contactsCap={plan.contactCap}
-          surface="dashboard"
-        />
+        {!internalUnlimited && (
+          <UsageUpgradeBanner
+            planName={plan.name}
+            planIsFree={owner.plan === "FREE"}
+            emailsUsed={owner.monthlySendCount}
+            emailsCap={plan.emailsPerMonth}
+            contactsUsed={contactCount}
+            contactsCap={plan.contactCap}
+            surface="dashboard"
+          />
+        )}
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           Let&apos;s send your first campaign
         </h1>
@@ -157,23 +164,26 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <UsageUpgradeBanner
-        planName={plan.name}
-        planIsFree={owner.plan === "FREE"}
-        emailsUsed={owner.monthlySendCount}
-        emailsCap={plan.emailsPerMonth}
-        contactsUsed={contactCount}
-        contactsCap={plan.contactCap}
-        surface="dashboard"
-      />
+      {!internalUnlimited && (
+        <UsageUpgradeBanner
+          planName={plan.name}
+          planIsFree={owner.plan === "FREE"}
+          emailsUsed={owner.monthlySendCount}
+          emailsCap={plan.emailsPerMonth}
+          contactsUsed={contactCount}
+          contactsCap={plan.contactCap}
+          surface="dashboard"
+        />
+      )}
       <FirstSendFeedback show={completedCount === 1} />
       <AutopilotDashboardCard workspaceId={workspace.id} />
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Home</h1>
           <p className="text-sm text-muted-foreground">
-            {formatNumber(contactCount)} people · {formatNumber(owner.monthlySendCount)} /{" "}
-            {formatNumber(plan.emailsPerMonth)} emails this month
+            {internalUnlimited
+              ? `${formatNumber(contactCount)} people · Internal workspace — unlimited`
+              : `${formatNumber(contactCount)} people · ${formatNumber(owner.monthlySendCount)} / ${formatNumber(plan.emailsPerMonth)} emails this month`}
           </p>
         </div>
         <div className="flex gap-2">

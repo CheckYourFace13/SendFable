@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
 import { importSchema } from "@/lib/validators/audience";
 import { normalizeEmail, isValidEmail } from "@/lib/utils";
-import { PLANS } from "@/lib/plans";
+import { numericCap, softwareQuotas } from "@/lib/internal-entitlement";
 import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import {
   resolveImportStatus,
@@ -68,7 +68,12 @@ export async function POST(req: Request) {
   }
 
   const existingCount = await prisma.contact.count({ where: { workspaceId: ctx.workspace.id } });
-  const cap = PLANS[owner.plan].contactCap;
+  const quotas = softwareQuotas({
+    isInternal: ctx.workspace.isInternal,
+    disabled: Boolean(ctx.workspace.disabledAt),
+    plan: owner.plan,
+  });
+  const cap = numericCap(quotas.contactCap);
   const room = Math.max(0, cap - existingCount);
 
   // ── Normalize + validate rows ─────────────────────────────────────────────
@@ -242,7 +247,7 @@ export async function POST(req: Request) {
       phoneWithoutPermission,
       statusUpdates: toUpdateStatus.length,
       skippedCap,
-      contactCap: cap,
+      contactCap: quotas.contactCap,
     });
   }
 
@@ -393,7 +398,7 @@ export async function POST(req: Request) {
     phoneWithoutPermission,
     statusUpdates: toUpdateStatus.length,
     skippedCap,
-    contactCap: cap,
+    contactCap: quotas.contactCap,
     provider: provider || null,
     importBatchId: batch.id,
   });

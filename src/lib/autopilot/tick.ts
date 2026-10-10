@@ -19,8 +19,8 @@ import {
   FREQUENCY_INTERVAL_MS,
   type AutopilotFrequency,
 } from "@/lib/autopilot/types";
-import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
-import { getWorkspaceOwner } from "@/lib/workspace-owner";
+import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
@@ -152,12 +152,18 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
     return actions;
   }
 
-  const owner = await getWorkspaceOwner(config.workspaceId);
+  const ent = await getWorkspaceEntitlement(config.workspaceId);
+  const quotas = softwareQuotas({
+    isInternal: ent.isInternal,
+    disabled: ent.disabled,
+    plan: ent.plan,
+  });
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const monthCount = await prisma.marketingAutopilotDraft.count({
     where: { workspaceId: config.workspaceId, createdAt: { gte: monthStart } },
   });
-  if (monthCount >= autopilotMaxDraftsPerMonth(owner.plan)) {
+  const monthCap = quotas.autopilotDraftsPerMonth;
+  if (monthCap != null && monthCount >= monthCap) {
     actions.push("rate_month");
     return actions;
   }

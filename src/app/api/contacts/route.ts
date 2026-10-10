@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
 import { contactCreateSchema } from "@/lib/validators/audience";
-import { PLANS } from "@/lib/plans";
+import { numericCap, softwareQuotas } from "@/lib/internal-entitlement";
 import {
   isSmsSuppressed,
   matchExistingContact,
@@ -77,7 +77,14 @@ export async function POST(req: Request) {
 
   const owner = await getWorkspaceOwner(ctx.workspace.id);
   const count = await prisma.contact.count({ where: { workspaceId: ctx.workspace.id } });
-  if (count >= PLANS[owner.plan].contactCap) {
+  const contactCap = numericCap(
+    softwareQuotas({
+      isInternal: ctx.workspace.isInternal,
+      disabled: Boolean(ctx.workspace.disabledAt),
+      plan: owner.plan,
+    }).contactCap
+  );
+  if (count >= contactCap) {
     return NextResponse.json(
       { error: "Contact cap reached for your plan", upgradeRequired: true },
       { status: 402 }

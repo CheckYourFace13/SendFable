@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireWorkspaceContext, getWorkspaceOwner } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { PLANS } from "@/lib/plans";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { SendersManager } from "./senders-manager";
@@ -47,7 +47,13 @@ export default async function SendersPage({
           rewriteRequired: i.rewriteRequired,
           dkimTokens: (i.dkimTokens as string[] | null) ?? null,
         }))}
-        customDomainsAllowed={PLANS[owner.plan].customDomains}
+        customDomainsAllowed={
+          softwareQuotas({
+            isInternal: workspace.isInternal,
+            disabled: Boolean(workspace.disabledAt),
+            plan: owner.plan,
+          }).customDomains
+        }
         platformDomain={platformSendDomain()}
       />
     </div>

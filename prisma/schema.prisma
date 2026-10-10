@@ -315,11 +315,14 @@ model Workspace {
   publicArchiveIndexable Boolean @default(false)
 
   /// Owner-operated internal/dogfood workspace (SendFable-owned properties).
-  /// Does not alter public Stripe billing. Entitlements use internalPlanOverride
-  /// when set (INTERNAL PLAN OVERRIDE) — Free limits still apply unless raised.
+  /// Does not create a Stripe subscription. Software quotas are
+  /// OWNER_INTERNAL_UNLIMITED. Outgoing mail still carries the SendFable footer.
+  /// SMS provider cost, consent, and activation stay real.
   isInternal           Boolean   @default(false)
   internalPlanOverride Plan?
   internalLabel        String?
+  /// Per-workspace Autopilot approval mailbox. Falls back to the workspace owner.
+  approvalEmail        String?
   disabledAt           DateTime?
 
   createdAt DateTime @default(now())

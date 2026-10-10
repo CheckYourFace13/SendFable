@@ -6,7 +6,7 @@ import { resolveCampaignFromHeaders } from "@/lib/identities";
 import { sendEmail } from "@/lib/mailer";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { renderMergeTags } from "@/lib/merge";
-import { PLANS } from "@/lib/plans";
+import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
 import { getWorkspaceOwner } from "@/lib/session";
 import {
   CAMPAIGN_SEND_DISABLED_MESSAGE,
@@ -65,7 +65,11 @@ export async function POST(req: Request) {
     html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
       businessName: auth.workspace.name,
       mailingAddress: auth.workspace.mailingAddress,
-      showSendfableBadge: PLANS[owner.plan].badge,
+      showSendfableBadge: showSendfableBadgeFor({
+        isInternal: auth.workspace.isInternal,
+        disabledAt: auth.workspace.disabledAt,
+        plan: owner.plan,
+      }),
       previewText: campaign.previewText,
       unsubscribeUrl: appUrl("/unsubscribe/test"),
     });

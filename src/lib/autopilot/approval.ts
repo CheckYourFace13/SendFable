@@ -149,7 +149,7 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
 
   await sendEmail({
     from: platformFrom(),
-    to: owner.email,
+    to: draft.workspace.approvalEmail?.trim() || owner.email,
     subject: "Your next campaign is ready to review",
     html: shell("Your next campaign is ready to review", body),
   });

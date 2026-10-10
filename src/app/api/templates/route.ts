@@ -4,7 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
 import { compileEmailHtml, createEmptyDesign, type EmailDesign } from "@/lib/email-compiler";
-import { PLANS } from "@/lib/plans";
+import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -62,7 +62,11 @@ export async function POST(req: Request) {
   const compiledHtml = compileEmailHtml(design, {
     businessName: ctx.workspace.name,
     mailingAddress: ctx.workspace.mailingAddress,
-    showSendfableBadge: PLANS[owner.plan].badge,
+    showSendfableBadge: showSendfableBadgeFor({
+      isInternal: ctx.workspace.isInternal,
+      disabledAt: ctx.workspace.disabledAt,
+      plan: owner.plan,
+    }),
   });
 
   const template = await prisma.template.create({

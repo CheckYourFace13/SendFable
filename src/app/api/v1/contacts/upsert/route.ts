@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail, isValidEmail } from "@/lib/utils";
 import { isSuppressed } from "@/lib/suppression";
-import { PLANS } from "@/lib/plans";
+import { numericCap, softwareQuotas } from "@/lib/internal-entitlement";
 import { getWorkspaceOwner } from "@/lib/session";
 import {
   BRIEF_AUDIENCE_TAG,
@@ -51,7 +51,14 @@ export async function POST(req: Request) {
 
   const owner = await getWorkspaceOwner(auth.workspace.id);
   const count = await prisma.contact.count({ where: { workspaceId: auth.workspace.id } });
-  if (count >= PLANS[owner.plan].contactCap) {
+  const contactCap = numericCap(
+    softwareQuotas({
+      isInternal: auth.workspace.isInternal,
+      disabled: Boolean(auth.workspace.disabledAt),
+      plan: owner.plan,
+    }).contactCap
+  );
+  if (count >= contactCap) {
     return NextResponse.json({ error: "Contact cap reached" }, { status: 503 });
   }
 

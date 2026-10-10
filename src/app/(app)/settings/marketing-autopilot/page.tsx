@@ -30,7 +30,8 @@ export default function MarketingAutopilotSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [plan, setPlan] = useState("FREE");
   const [draftsUsed, setDraftsUsed] = useState(0);
-  const [draftsCap, setDraftsCap] = useState(2);
+  const [draftsCap, setDraftsCap] = useState<number | null>(2);
+  const [internalUnlimited, setInternalUnlimited] = useState(false);
   const [drafts, setDrafts] = useState<
     { id: string; status: string; subject: string | null; campaignId: string | null }[]
   >([]);
@@ -53,7 +54,8 @@ export default function MarketingAutopilotSettingsPage() {
       setWaiting(j.waitingDrafts || 0);
       setPlan(j.plan || "FREE");
       setDraftsUsed(typeof j.draftsUsedThisMonth === "number" ? j.draftsUsedThisMonth : 0);
-      setDraftsCap(typeof j.draftsCap === "number" ? j.draftsCap : 2);
+      setInternalUnlimited(Boolean(j.internalUnlimited));
+      setDraftsCap(j.internalUnlimited ? null : typeof j.draftsCap === "number" ? j.draftsCap : 2);
     }
     if (dRes.ok) {
       const j = await dRes.json();
@@ -121,12 +123,16 @@ export default function MarketingAutopilotSettingsPage() {
       />
 
       <div className="mt-6">
-        <AutopilotUpgradeBanner
-          plan={plan}
-          draftsUsed={draftsUsed}
-          draftsCap={draftsCap}
-          surface="autopilot_settings"
-        />
+        {internalUnlimited ? (
+          <p className="text-sm text-muted-foreground">Internal workspace — unlimited</p>
+        ) : (
+          <AutopilotUpgradeBanner
+            plan={plan}
+            draftsUsed={draftsUsed}
+            draftsCap={draftsCap ?? 0}
+            surface="autopilot_settings"
+          />
+        )}
       </div>
 
       <div className="mt-2 space-y-6 rounded-xl border p-5">

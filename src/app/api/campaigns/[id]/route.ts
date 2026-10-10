@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
-import { PLANS } from "@/lib/plans";
+import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
 import { getWorkspaceOwner } from "@/lib/session";
 import { sanitizeEmailHtml } from "@/lib/html-sanitize";
 import { isSmsAccountSignupEnabled, isSmsCodeEnabled } from "@/lib/sms/flags";
@@ -111,7 +111,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       businessName: tradeName,
       mailingAddress: ctx.workspace.mailingAddress,
       legalOperatorName: smsProfile?.legalEntityName?.trim() || null,
-      showSendfableBadge: PLANS[owner.plan].badge,
+      showSendfableBadge: showSendfableBadgeFor({
+        isInternal: ctx.workspace.isInternal,
+        disabledAt: ctx.workspace.disabledAt,
+        plan: owner.plan,
+      }),
       previewText: parsed.data.previewText ?? existing.previewText,
     });
   }

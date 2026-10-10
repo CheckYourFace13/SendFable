@@ -7,7 +7,7 @@ import { rateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
 import { isSuppressed } from "@/lib/suppression";
 import { signToken } from "@/lib/tokens";
 import { sendDoubleOptInConfirmation } from "@/lib/transactional";
-import { PLANS } from "@/lib/plans";
+import { numericCap, softwareQuotas } from "@/lib/internal-entitlement";
 import { getWorkspaceOwner } from "@/lib/session";
 import { normalizeUsPhone } from "@/lib/sms/phone";
 import {
@@ -95,7 +95,14 @@ export async function POST(req: Request) {
 
   const owner = await getWorkspaceOwner(form.workspaceId);
   const count = await prisma.contact.count({ where: { workspaceId: form.workspaceId } });
-  if (count >= PLANS[owner.plan].contactCap) {
+  const contactCap = numericCap(
+    softwareQuotas({
+      isInternal: form.workspace.isInternal,
+      disabled: Boolean(form.workspace.disabledAt),
+      plan: owner.plan,
+    }).contactCap
+  );
+  if (count >= contactCap) {
     return NextResponse.json({ error: "This list is full" }, { status: 503 });
   }
 

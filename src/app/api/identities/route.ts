@@ -6,7 +6,7 @@ import { identityNeedsRewrite, coveredByVerifiedDomain } from "@/lib/identities"
 import { createSesDomainIdentity, dkimRecordsFor } from "@/lib/ses-domains";
 import { signToken } from "@/lib/tokens";
 import { sendSenderVerification } from "@/lib/transactional";
-import { PLANS } from "@/lib/plans";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 import { normalizeEmail, isValidEmail } from "@/lib/utils";
 
 const DOMAIN_RE = /^(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/;
@@ -101,7 +101,12 @@ export async function POST(req: Request) {
 
   // DOMAIN
   const owner = await getWorkspaceOwner(ctx.workspace.id);
-  if (!PLANS[owner.plan].customDomains) {
+  const domainsAllowed = softwareQuotas({
+    isInternal: ctx.workspace.isInternal,
+    disabled: Boolean(ctx.workspace.disabledAt),
+    plan: owner.plan,
+  }).customDomains;
+  if (!domainsAllowed) {
     return NextResponse.json(
       { error: "Custom domain authentication is available on Growth and Pro plans.", upgradeRequired: true },
       { status: 402 }

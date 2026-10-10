@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { randomToken } from "@/lib/utils";
-import { PLANS } from "@/lib/plans";
+import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
 import { getWorkspaceOwner } from "@/lib/session";
 import {
   CAMPAIGN_SEND_DISABLED_MESSAGE,
@@ -115,7 +115,11 @@ export async function POST(req: Request) {
   const compiledHtml = compileEmailHtml(design, {
     businessName: auth.workspace.name,
     mailingAddress: auth.workspace.mailingAddress,
-    showSendfableBadge: PLANS[owner.plan].badge,
+    showSendfableBadge: showSendfableBadgeFor({
+      isInternal: auth.workspace.isInternal,
+      disabledAt: auth.workspace.disabledAt,
+      plan: owner.plan,
+    }),
     previewText: parsed.data.previewText || undefined,
   });
 
@@ -157,7 +161,11 @@ export async function POST(req: Request) {
     status: campaign.status,
     scheduledAt: campaign.scheduledAt,
     tag: audienceTag.name,
-    badge: PLANS[owner.plan].badge,
+    badge: showSendfableBadgeFor({
+      isInternal: auth.workspace.isInternal,
+      disabledAt: auth.workspace.disabledAt,
+      plan: owner.plan,
+    }),
   });
 }
 

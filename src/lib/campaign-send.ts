@@ -10,8 +10,9 @@ import {
 import { contactMergeData, renderMergeTags } from "@/lib/merge";
 import { appUrl } from "@/lib/utils";
 import { signToken } from "@/lib/tokens";
-import { PLANS, BOUNCE_PAUSE_THRESHOLD, COMPLAINT_PAUSE_THRESHOLD, maxRampLevel } from "@/lib/plans";
-import { getWorkspaceOwner } from "@/lib/workspace-owner";
+import { BOUNCE_PAUSE_THRESHOLD, COMPLAINT_PAUSE_THRESHOLD, maxRampLevel } from "@/lib/plans";
+import { getWorkspaceEntitlement, getWorkspaceOwner } from "@/lib/workspace-owner";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 import { incrementMonthlySendCount } from "@/lib/quota";
 import { sendCampaignAutoPausedAlert } from "@/lib/transactional";
 import { enqueueRecipients, drainCampaignJobs } from "@/lib/queue";
@@ -149,7 +150,12 @@ export async function sendOneRecipient(recipientId: string): Promise<void> {
   }
 
   const owner = await getWorkspaceOwner(campaign.workspaceId);
-  const showBadge = PLANS[owner.plan].badge;
+  const ent = await getWorkspaceEntitlement(campaign.workspaceId);
+  const showBadge = softwareQuotas({
+    isInternal: ent.isInternal,
+    disabled: ent.disabled,
+    plan: ent.plan,
+  }).showSendfableBadge;
 
   const smsProfile = await prisma.smsComplianceProfile.findUnique({
     where: { workspaceId: campaign.workspaceId },

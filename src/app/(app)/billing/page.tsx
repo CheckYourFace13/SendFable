@@ -29,6 +29,8 @@ export default function BillingPage() {
   const [usage, setUsage] = useState({ emails: 0, contacts: 0 });
   const [loading, setLoading] = useState<string | null>(null);
   const [showBadgeValue, setShowBadgeValue] = useState(false);
+  const [internalUnlimited, setInternalUnlimited] = useState(false);
+  const [entitlementLabel, setEntitlementLabel] = useState("");
 
   useEffect(() => {
     void (async () => {
@@ -38,6 +40,8 @@ export default function BillingPage() {
         setPlan(data.plan);
         setUsage(data.usage);
         setShowBadgeValue(Boolean(data.showNoBadgeValue));
+        setInternalUnlimited(Boolean(data.internalUnlimited));
+        setEntitlementLabel(data.entitlementLabel || "");
       }
     })();
     track("pricing_from_app_viewed");
@@ -75,6 +79,30 @@ export default function BillingPage() {
   const current = PLANS[plan];
   const emailPct = Math.min(100, (usage.emails / current.emailsPerMonth) * 100);
   const contactPct = Math.min(100, (usage.contacts / current.contactCap) * 100);
+
+  if (internalUnlimited) {
+    return (
+      <div>
+        <PageHeader
+          title="Billing"
+          description="Internal workspace. No subscription charge."
+        />
+        <div className="max-w-lg rounded-xl border bg-white p-6">
+          <h3 className="font-semibold">{entitlementLabel || "Internal — Unlimited"}</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Contacts, email, forms, and Marketing Autopilot are not limited by a public plan.
+            Outgoing emails still include the SendFable footer. Text messaging keeps real
+            provider cost, consent, and usage tracking.
+          </p>
+          <p className="mt-4 text-sm">
+            <Link href="/billing/sms" className="underline">
+              Text messaging usage
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

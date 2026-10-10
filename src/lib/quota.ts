@@ -2,6 +2,7 @@ import type { Plan, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { PLANS, rampDailyLimit } from "@/lib/plans";
 import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 
 export async function ensureSendCountReset(user: User): Promise<User> {
   const now = new Date();
@@ -49,9 +50,22 @@ export async function checkLaunchQuota(
     return { ok: false, error: "This workspace is disabled." };
   }
 
+  const quotas = softwareQuotas({
+    isInternal: ent.isInternal,
+    disabled: ent.disabled,
+    plan: ent.plan,
+  });
+  const internalUnlimited = quotas.entitlement === "OWNER_INTERNAL_UNLIMITED";
   const planKey = ent.plan;
   const plan = PLANS[planKey];
   const internalOverride = Boolean(ent.isInternal && ent.internalPlanOverride);
+
+  if (internalUnlimited) {
+    if (owner.sendingHeldAt) {
+      return { ok: false, error: "Sending is paused on this account." };
+    }
+    return { ok: true };
+  }
 
   const user = internalOverride ? owner : await ensureSendCountReset(owner);
 

@@ -79,7 +79,37 @@ export default function FormDetailPage() {
       </div>
 
       <div className="mb-8 max-w-xl space-y-3 rounded-xl border bg-white p-6">
-        <h3 className="font-semibold">Share</h3>
+        <h3 className="font-semibold">Share this form</h3>
+        <p className="text-sm text-muted-foreground">
+          New subscribers join only this business&apos;s audience.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              void navigator.clipboard.writeText(hostedUrl);
+              toast.success("Hosted form link copied");
+            }}
+          >
+            Copy hosted form link
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              void navigator.clipboard.writeText(embedCode);
+              toast.success("Embed code copied");
+            }}
+          >
+            Copy embed code
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <a href={hostedUrl} target="_blank" rel="noreferrer">
+              Preview form
+            </a>
+          </Button>
+        </div>
         <div>
           <Label>Hosted page</Label>
           <Input readOnly value={hostedUrl} onFocus={(e) => e.target.select()} />
@@ -87,6 +117,20 @@ export default function FormDetailPage() {
         <div>
           <Label>Embed code</Label>
           <Textarea readOnly value={embedCode} rows={4} className="font-mono text-xs" />
+        </div>
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            <strong className="text-ink">Option A.</strong> Link to the hosted signup form. Paste the
+            link in a button, menu, or social bio.
+          </p>
+          <p>
+            <strong className="text-ink">Option B.</strong> Embed the form on your site. Paste the
+            embed code where you want the form to appear.
+          </p>
+          <p>
+            <strong className="text-ink">Option C.</strong> Add contacts with the SendFable API if
+            you already have an integration key for this workspace.
+          </p>
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ import { countAudience } from "@/lib/audience";
 import { launchCampaign } from "@/lib/campaign-send";
 import { launchSmsCampaign, resolveSmsAudienceContacts } from "@/lib/sms/campaign";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
-import { PLANS } from "@/lib/plans";
+import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
 import { sanitizeEmailHtml } from "@/lib/html-sanitize";
 import { maybeAwardReferralSignupCredit } from "@/lib/referrals";
 import { externalEmailActive, isEarlyLaunch } from "@/lib/early-launch";
@@ -132,7 +132,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       const html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
         businessName: ctx.workspace.name,
         mailingAddress: ctx.workspace.mailingAddress,
-        showSendfableBadge: PLANS[owner.plan].badge,
+        showSendfableBadge: showSendfableBadgeFor({
+          isInternal: ctx.workspace.isInternal,
+          disabledAt: ctx.workspace.disabledAt,
+          plan: owner.plan,
+        }),
         previewText: campaign.previewText,
       });
       await prisma.campaign.update({

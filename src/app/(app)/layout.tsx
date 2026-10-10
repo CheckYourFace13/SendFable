@@ -19,6 +19,13 @@ import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
 import { ADMIN_VIEW_COOKIE } from "@/lib/admin-view";
 import { isOwnerAdminUser } from "@/lib/platform-admin";
 import { OWNER_ADMIN_HOME } from "@/lib/owner-admin-access";
+import { prisma } from "@/lib/prisma";
+import {
+  INTERNAL_ENTITLEMENT_LABEL,
+  isOwnerInternalWorkspace,
+  workspaceSwitcherModel,
+} from "@/lib/internal-entitlement";
+import { WorkspaceSwitcher } from "@/components/app/workspace-switcher";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -29,10 +36,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const showPolicyReaccept = await needsPolicyReacceptance(user.id);
   const entitlement = await getWorkspaceEntitlement(workspace.id).catch(() => null);
   const planName = PLANS[entitlement?.plan ?? user.plan].name;
-  const planNote =
-    entitlement?.isInternal && entitlement.internalPlanOverride
-      ? `${planName} · internal override`
-      : `${planName} plan`;
+  const internalUnlimited = entitlement
+    ? isOwnerInternalWorkspace({
+        isInternal: entitlement.isInternal,
+        disabled: entitlement.disabled,
+      })
+    : false;
+  const planNote = internalUnlimited ? INTERNAL_ENTITLEMENT_LABEL : `${planName} plan`;
 
   let adminViewName: string | null = null;
   const rawView = cookies().get(ADMIN_VIEW_COOKIE)?.value;
@@ -48,6 +58,29 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   const ownerAdmin = await isOwnerAdminUser(user);
   const showIssueReporter = Boolean(workspace.isInternal) && ownerAdmin;
+  const internalWorkspaces = ownerAdmin
+    ? await prisma.workspace.findMany({
+        where: { isInternal: true, disabledAt: null },
+        select: { id: true, name: true, isInternal: true },
+        orderBy: { name: "asc" },
+      })
+    : [];
+  const ownMemberships = ownerAdmin
+    ? []
+    : await prisma.membership.findMany({
+        where: { userId: user.id, workspace: { isInternal: false } },
+        include: { workspace: { select: { id: true, name: true, isInternal: true } } },
+        orderBy: { createdAt: "asc" },
+      });
+  const switcher = workspaceSwitcherModel({
+    isOwnerAdmin: ownerAdmin,
+    internalWorkspaces,
+    memberships: ownMemberships.map((m) => ({
+      id: m.workspace.id,
+      name: m.workspace.name,
+      isInternal: m.workspace.isInternal,
+    })),
+  });
 
   return (
     <div className="flex min-h-screen bg-page">
@@ -70,7 +103,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <RedisDevBanner />
         {showPolicyReaccept && <PolicyReacceptBanner />}
         {!user.emailVerified && <VerifyEmailBanner />}
-        {user.paymentFailedAt && !(entitlement?.isInternal && entitlement.internalPlanOverride) && (
+        {user.paymentFailedAt && !internalUnlimited && (
           <div className="flex flex-wrap items-center justify-center gap-2 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-900">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             Your last payment failed. Sending pauses if it isn&apos;t resolved.
@@ -84,7 +117,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <MobileAppNav workspaceName={workspace.name} />
             <Logo href="/dashboard" className="h-7 w-auto" />
           </div>
-          <div className="hidden text-sm text-muted-foreground lg:block">{workspace.name}</div>
+          <div className="min-w-0 flex-1">
+            {switcher.mode === "plain" ? (
+              <div className="truncate text-sm font-medium text-ink">{workspace.name}</div>
+            ) : (
+              <WorkspaceSwitcher
+                currentId={workspace.id}
+                currentName={workspace.name}
+                mode={switcher.mode}
+                businesses={switcher.businesses}
+                showAdminLinks={switcher.showAdminLinks}
+                adminView={Boolean(adminViewName)}
+              />
+            )}
+          </div>
           <UserMenu name={user.name} email={user.email} />
         </header>
         <main className="relative flex-1 overflow-x-auto bg-parchment/40 p-4 lg:p-8">

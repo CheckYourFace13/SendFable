@@ -6,6 +6,7 @@ import { randomToken, slugify } from "@/lib/utils";
 import { FORM_PRESETS } from "@/lib/form-presets";
 import { assertSafePublicUrl } from "@/lib/ssrf";
 import { internalWorkspaceHealth } from "@/lib/owner-admin-access";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 
 const PLAN_KEYS = new Set<Plan>(["FREE", "STARTER", "GROWTH", "PRO", "PRO_PLUS"]);
 
@@ -88,6 +89,16 @@ export async function listInternalWorkspaceSummaries() {
         disabledAt: ws.disabledAt,
         plan,
         planSource: ws.internalPlanOverride ? "INTERNAL_PLAN_OVERRIDE" : "OWNER_PLAN",
+        entitlement: softwareQuotas({
+          isInternal: true,
+          disabled: Boolean(ws.disabledAt),
+          plan,
+        }).entitlement,
+        entitlementLabel: softwareQuotas({
+          isInternal: true,
+          disabled: Boolean(ws.disabledAt),
+          plan,
+        }).label,
         planLimits: PLANS[plan],
         contacts: ws._count.contacts,
         campaigns: ws._count.campaigns,
@@ -427,4 +438,161 @@ export async function provisionDrinkKnirdProductSurface(opts: {
   });
 
   return { tag, form, identity, autopilot, welcome };
+}
+
+/**
+ * Audience + hosted form + reply-to for one internal business.
+ * Does not enable Autopilot and does not reuse another workspace's records.
+ */
+export async function ensureInternalBusinessSurface(opts: {
+  workspaceId: string;
+  adminUserId: string;
+  businessName: string;
+  replyToEmail?: string | null;
+  senderDisplayName?: string | null;
+  approvalEmail?: string | null;
+  ip?: string | null;
+}) {
+  const ws = await prisma.workspace.findUniqueOrThrow({ where: { id: opts.workspaceId } });
+  if (!ws.isInternal) throw new Error("Not an internal workspace");
+
+  const audienceName = `${opts.businessName.trim()} Subscribers`;
+  const tag = await prisma.tag.upsert({
+    where: { workspaceId_name: { workspaceId: opts.workspaceId, name: audienceName } },
+    create: { workspaceId: opts.workspaceId, name: audienceName, color: "#1B4332" },
+    update: {},
+  });
+
+  const formName = `${opts.businessName.trim()} Newsletter`;
+  let form = await prisma.signupForm.findFirst({
+    where: { workspaceId: opts.workspaceId, name: formName },
+  });
+  if (!form) {
+    const base = slugify(`${opts.businessName} newsletter`) || "newsletter";
+    let hostedSlug = base;
+    const clash = await prisma.signupForm.findUnique({ where: { hostedSlug } });
+    if (clash) hostedSlug = `${base}-${randomToken(4)}`;
+    const preset = FORM_PRESETS.email;
+    form = await prisma.signupForm.create({
+      data: {
+        workspaceId: opts.workspaceId,
+        name: formName,
+        fields: preset.fields as unknown as Prisma.InputJsonValue,
+        doubleOptIn: false,
+        tagIds: [tag.id],
+        requirementMode: preset.requirementMode,
+        collectPhone: false,
+        hostedSlug,
+      },
+    });
+  }
+
+  const replyTo = opts.replyToEmail?.trim().toLowerCase() || null;
+  const displayName = opts.senderDisplayName?.trim() || opts.businessName.trim();
+  let identity = replyTo
+    ? await prisma.senderIdentity.findFirst({
+        where: { workspaceId: opts.workspaceId, value: replyTo },
+      })
+    : null;
+  if (replyTo && !identity) {
+    const admin = await prisma.user.findUnique({
+      where: { id: opts.adminUserId },
+      select: { email: true },
+    });
+    const ownerMailbox = admin?.email.toLowerCase() === replyTo;
+    identity = await prisma.senderIdentity.create({
+      data: {
+        workspaceId: opts.workspaceId,
+        type: "ADDRESS",
+        value: replyTo,
+        displayName,
+        status: ownerMailbox ? "VERIFIED" : "PENDING",
+        rewriteRequired: true,
+        verifiedAt: ownerMailbox ? new Date() : null,
+        isDefault: true,
+      },
+    });
+  } else if (identity && identity.displayName !== displayName) {
+    identity = await prisma.senderIdentity.update({
+      where: { id: identity.id },
+      data: { displayName },
+    });
+  }
+
+  if (identity && ws.defaultSenderIdentityId !== identity.id) {
+    await prisma.workspace.update({
+      where: { id: ws.id },
+      data: { defaultSenderIdentityId: identity.id },
+    });
+  }
+
+  const approvalEmail = opts.approvalEmail?.trim().toLowerCase() || null;
+  if (approvalEmail && ws.approvalEmail !== approvalEmail) {
+    await prisma.workspace.update({
+      where: { id: ws.id },
+      data: { approvalEmail },
+    });
+  }
+
+  await writeAuditLog({
+    workspaceId: opts.workspaceId,
+    userId: opts.adminUserId,
+    action: "admin.internal_workspace.surface_ensured",
+    targetType: "workspace",
+    targetId: opts.workspaceId,
+    meta: {
+      audience: tag.name,
+      formSlug: form.hostedSlug,
+      identityId: identity?.id ?? null,
+      approvalEmail,
+    },
+    ip: opts.ip,
+  });
+
+  return { tag, form, identity };
+}
+
+/** Mark a workspace the owner already owns as an internal business. Does not touch Autopilot. */
+export async function adoptOwnedWorkspaceAsInternal(opts: {
+  adminUserId: string;
+  workspaceId: string;
+  websiteUrl?: string | null;
+  approvalEmail?: string | null;
+  ip?: string | null;
+}) {
+  const membership = await prisma.membership.findUnique({
+    where: {
+      userId_workspaceId: { userId: opts.adminUserId, workspaceId: opts.workspaceId },
+    },
+    include: { workspace: true },
+  });
+  if (!membership || membership.role !== "OWNER") {
+    throw new Error("Only the workspace owner can mark it internal");
+  }
+  const ws = membership.workspace;
+  let websiteUrl = opts.websiteUrl?.trim() || ws.websiteUrl || null;
+  if (websiteUrl && !/^https?:\/\//i.test(websiteUrl)) websiteUrl = `https://${websiteUrl}`;
+  if (websiteUrl) await assertSafePublicUrl(websiteUrl);
+
+  const updated = await prisma.workspace.update({
+    where: { id: ws.id },
+    data: {
+      isInternal: true,
+      internalLabel: ws.internalLabel || ws.name,
+      websiteUrl: ws.websiteUrl || websiteUrl,
+      approvalEmail: ws.approvalEmail || opts.approvalEmail?.trim().toLowerCase() || null,
+    },
+  });
+
+  await writeAuditLog({
+    workspaceId: ws.id,
+    userId: opts.adminUserId,
+    action: "admin.internal_workspace.adopted",
+    targetType: "workspace",
+    targetId: ws.id,
+    meta: { name: ws.name, websiteUrl: updated.websiteUrl },
+    ip: opts.ip,
+  });
+
+  return updated;
 }

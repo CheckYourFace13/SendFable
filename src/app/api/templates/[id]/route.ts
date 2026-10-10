@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
-import { PLANS } from "@/lib/plans";
+import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
@@ -47,7 +47,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     compiledHtml = compileEmailHtml(parsed.data.designJson as EmailDesign, {
       businessName: ctx.workspace.name,
       mailingAddress: ctx.workspace.mailingAddress,
-      showSendfableBadge: PLANS[owner.plan].badge,
+      showSendfableBadge: showSendfableBadgeFor({
+        isInternal: ctx.workspace.isInternal,
+        disabledAt: ctx.workspace.disabledAt,
+        plan: owner.plan,
+      }),
     });
   }
 

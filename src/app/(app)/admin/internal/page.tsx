@@ -13,6 +13,7 @@ type Row = {
   disabledAt: string | null;
   plan: string;
   planSource: string;
+  entitlementLabel?: string;
   contacts: number;
   emailsThisMonth: number;
   smsThisMonth: number;
@@ -28,6 +29,14 @@ export default function InternalWorkspacesAdminPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [draft, setDraft] = useState({
+    name: "",
+    websiteUrl: "",
+    approvalEmail: "",
+    replyTo: "",
+    senderDisplayName: "",
+  });
 
   async function load() {
     const res = await fetch("/api/admin/internal-workspaces");
@@ -41,9 +50,11 @@ export default function InternalWorkspacesAdminPage() {
 
   useEffect(() => {
     void load();
+    if (new URLSearchParams(window.location.search).get("new") === "1") setShowAdd(true);
   }, []);
 
-  async function ensureDrinkKnird() {
+  async function addBusiness(e: React.FormEvent) {
+    e.preventDefault();
     setBusy("create");
     setMsg("");
     try {
@@ -51,11 +62,12 @@ export default function InternalWorkspacesAdminPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: "DrinkKnird",
-          websiteUrl: "https://drinkknird.com",
-          internalLabel: "DrinkKnird",
-          plan: "FREE",
-          provisionDrinkKnird: true,
+          name: draft.name,
+          websiteUrl: draft.websiteUrl,
+          approvalEmail: draft.approvalEmail || undefined,
+          replyTo: draft.replyTo || undefined,
+          senderDisplayName: draft.senderDisplayName || undefined,
+          provisionSurface: true,
         }),
       });
       const json = await res.json();
@@ -65,16 +77,18 @@ export default function InternalWorkspacesAdminPage() {
       }
       setMsg(
         json.created
-          ? `Created DrinkKnird. Form: /f/${json.provision?.formSlug}`
-          : `DrinkKnird already exists. Form: /f/${json.provision?.formSlug || "—"}`
+          ? `Created ${draft.name}. Form: /f/${json.provision?.formSlug}`
+          : `${draft.name} already exists. Form: /f/${json.provision?.formSlug || "—"}`
       );
+      setDraft({ name: "", websiteUrl: "", approvalEmail: "", replyTo: "", senderDisplayName: "" });
+      setShowAdd(false);
       await load();
     } finally {
       setBusy("");
     }
   }
 
-  async function viewAs(workspaceId: string) {
+  async function viewAs(workspaceId: string, next = "/dashboard") {
     setBusy(workspaceId);
     try {
       const res = await fetch("/api/admin/view-as", {
@@ -87,7 +101,7 @@ export default function InternalWorkspacesAdminPage() {
         setMsg(json.error || "Failed");
         return;
       }
-      router.push("/dashboard");
+      router.push(next);
       router.refresh();
     } finally {
       setBusy("");
@@ -113,10 +127,10 @@ export default function InternalWorkspacesAdminPage() {
         <button
           type="button"
           disabled={!!busy}
-          onClick={() => void ensureDrinkKnird()}
+          onClick={() => setShowAdd((v) => !v)}
           className="rounded-lg bg-ink px-3 py-2 text-sm text-page disabled:opacity-60"
         >
-          {busy === "create" ? "Working…" : "Ensure DrinkKnird (FREE)"}
+          + Add internal business
         </button>
         <Link href="/admin" className="rounded-lg border px-3 py-2 text-sm">
           Admin home
@@ -126,6 +140,65 @@ export default function InternalWorkspacesAdminPage() {
         </Link>
       </div>
 
+      {showAdd && (
+        <form onSubmit={(e) => void addBusiness(e)} className="grid max-w-xl gap-3 rounded-xl border bg-white p-4">
+          <label className="text-sm">
+            Business name
+            <input
+              required
+              className="mt-1 w-full rounded-md border px-3 py-2"
+              value={draft.name}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Website
+            <input
+              required
+              className="mt-1 w-full rounded-md border px-3 py-2"
+              placeholder="https://example.com"
+              value={draft.websiteUrl}
+              onChange={(e) => setDraft({ ...draft, websiteUrl: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Owner/approval email
+            <input
+              type="email"
+              className="mt-1 w-full rounded-md border px-3 py-2"
+              placeholder="you@company.com"
+              value={draft.approvalEmail}
+              onChange={(e) => setDraft({ ...draft, approvalEmail: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Reply-To
+            <input
+              type="email"
+              className="mt-1 w-full rounded-md border px-3 py-2"
+              value={draft.replyTo}
+              onChange={(e) => setDraft({ ...draft, replyTo: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Sender display name
+            <input
+              className="mt-1 w-full rounded-md border px-3 py-2"
+              placeholder="Defaults to the business name"
+              value={draft.senderDisplayName}
+              onChange={(e) => setDraft({ ...draft, senderDisplayName: e.target.value })}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={!!busy}
+            className="rounded-lg bg-ink px-3 py-2 text-sm text-page disabled:opacity-60"
+          >
+            {busy === "create" ? "Working…" : "Create internal business"}
+          </button>
+        </form>
+      )}
+
       {msg && <p className="text-sm text-muted-foreground">{msg}</p>}
 
       <div className="overflow-x-auto rounded-xl border bg-white">
@@ -133,7 +206,7 @@ export default function InternalWorkspacesAdminPage() {
           <thead className="border-b bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
               <th className="px-3 py-2">Workspace</th>
-              <th className="px-3 py-2">Plan</th>
+              <th className="px-3 py-2">Entitlement</th>
               <th className="px-3 py-2">Contacts</th>
               <th className="px-3 py-2">Email / mo</th>
               <th className="px-3 py-2">SMS / mo</th>
@@ -161,14 +234,7 @@ export default function InternalWorkspacesAdminPage() {
                     <div className="text-xs text-red-600">Disabled</div>
                   )}
                 </td>
-                <td className="px-3 py-3">
-                  <div>{r.plan}</div>
-                  <div className="text-[10px] uppercase tracking-wide text-amber-700">
-                    {r.planSource === "INTERNAL_PLAN_OVERRIDE"
-                      ? "Internal plan override"
-                      : r.planSource}
-                  </div>
-                </td>
+                <td className="px-3 py-3">{r.entitlementLabel || r.plan}</td>
                 <td className="px-3 py-3">{r.contacts}</td>
                 <td className="px-3 py-3">{r.emailsThisMonth}</td>
                 <td className="px-3 py-3">{r.smsThisMonth}</td>
@@ -203,13 +269,26 @@ export default function InternalWorkspacesAdminPage() {
                       type="button"
                       disabled={!!busy || !!r.disabledAt}
                       className="text-left text-coral underline disabled:opacity-50"
-                      onClick={() => void viewAs(r.id)}
+                      onClick={() => void viewAs(r.id, "/dashboard")}
                     >
-                      View as workspace
-                    </button>
-                    <Link className="text-coral underline" href="/dashboard">
                       Open
-                    </Link>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!!busy || !!r.disabledAt}
+                      className="text-left text-coral underline disabled:opacity-50"
+                      onClick={() => void viewAs(r.id, "/dashboard")}
+                    >
+                      View as
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!!busy || !!r.disabledAt}
+                      className="text-left text-coral underline disabled:opacity-50"
+                      onClick={() => void viewAs(r.id, "/settings")}
+                    >
+                      Settings
+                    </button>
                   </div>
                 </td>
               </tr>

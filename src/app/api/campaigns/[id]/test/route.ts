@@ -6,7 +6,7 @@ import { resolveCampaignFromHeaders } from "@/lib/identities";
 import { sendEmail } from "@/lib/mailer";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { renderMergeTags } from "@/lib/merge";
-import { PLANS } from "@/lib/plans";
+import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { appUrl } from "@/lib/utils";
 import {
@@ -60,7 +60,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
       businessName: ctx.workspace.name,
       mailingAddress: ctx.workspace.mailingAddress,
-      showSendfableBadge: PLANS[owner.plan].badge,
+      showSendfableBadge: showSendfableBadgeFor({
+        isInternal: ctx.workspace.isInternal,
+        disabledAt: ctx.workspace.disabledAt,
+        plan: owner.plan,
+      }),
       previewText: campaign.previewText,
       unsubscribeUrl: appUrl("/unsubscribe/test"),
     });

@@ -3,12 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { assertSafePublicUrl } from "@/lib/ssrf";
-import {
-  autopilotAllowedFrequencies,
-  autopilotMaxDraftsPerMonth,
-  clampAutopilotFrequency,
-} from "@/lib/autopilot/plans";
-import { getWorkspaceOwner } from "@/lib/workspace-owner";
+import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
+import { softwareQuotas } from "@/lib/internal-entitlement";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 import type { Prisma } from "@prisma/client";
@@ -28,7 +24,12 @@ export async function GET() {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const owner = await getWorkspaceOwner(ctx.workspace.id);
+  const ent = await getWorkspaceEntitlement(ctx.workspace.id);
+  const quotas = softwareQuotas({
+    isInternal: ent.isInternal,
+    disabled: ent.disabled,
+    plan: ent.plan,
+  });
   const config = await prisma.marketingAutopilotConfig.findUnique({
     where: { workspaceId: ctx.workspace.id },
   });
@@ -52,17 +53,20 @@ export async function GET() {
   const draftsUsedThisMonth = await prisma.marketingAutopilotDraft.count({
     where: { workspaceId: ctx.workspace.id, createdAt: { gte: monthStart } },
   });
-  const draftsCap = autopilotMaxDraftsPerMonth(owner.plan);
+  const draftsCap = quotas.autopilotDraftsPerMonth;
 
   return NextResponse.json({
     config,
     waitingDrafts: waiting,
     lastCampaign: lastSent,
-    allowedFrequencies: autopilotAllowedFrequencies(owner.plan),
-    plan: owner.plan,
+    allowedFrequencies: quotas.autopilotFrequencies,
+    plan: ent.plan,
+    entitlement: quotas.entitlement,
+    entitlementLabel: quotas.label,
+    internalUnlimited: quotas.entitlement === "OWNER_INTERNAL_UNLIMITED",
     draftsUsedThisMonth,
     draftsCap,
-    draftsLimitReached: draftsUsedThisMonth >= draftsCap,
+    draftsLimitReached: draftsCap != null && draftsUsedThisMonth >= draftsCap,
   });
 }
 
@@ -87,8 +91,15 @@ export async function PUT(req: Request) {
     );
   }
 
-  const owner = await getWorkspaceOwner(ctx.workspace.id);
-  const frequency = clampAutopilotFrequency(owner.plan, parsed.data.checkFrequency);
+  const ent = await getWorkspaceEntitlement(ctx.workspace.id);
+  const quotas = softwareQuotas({
+    isInternal: ent.isInternal,
+    disabled: ent.disabled,
+    plan: ent.plan,
+  });
+  const frequency = quotas.autopilotFrequencies.includes(parsed.data.checkFrequency)
+    ? parsed.data.checkFrequency
+    : quotas.autopilotFrequencies[0]!;
 
   const prior = await prisma.marketingAutopilotConfig.findUnique({
     where: { workspaceId: ctx.workspace.id },
@@ -145,6 +156,7 @@ export async function PUT(req: Request) {
 
   return NextResponse.json({
     config,
-    allowedFrequencies: autopilotAllowedFrequencies(owner.plan),
+    allowedFrequencies: quotas.autopilotFrequencies,
+    internalUnlimited: quotas.entitlement === "OWNER_INTERNAL_UNLIMITED",
   });
 }
