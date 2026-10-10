@@ -173,7 +173,7 @@ export default function AutomatedEmailMarketingPage() {
             },
             {
               t: "Approve",
-              b: "You get a preview email with Approve & send, Edit, or Don't send. Confirmation is required before send. Edit before sending opens the exact draft. No response always means no send.",
+              b: "You get a preview email with Approve & Send, Edit, or Skip this campaign. Confirmation is required before send. Edit opens the exact draft. If you do nothing, nothing sends, and the draft stays waiting.",
             },
             {
               t: "Send",

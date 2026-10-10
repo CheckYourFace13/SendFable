@@ -17,7 +17,7 @@ export function AutopilotConfirmForm({
 
   const labels = {
     approve: "Approve & send now",
-    reject: "Confirm — do not send",
+    reject: "Skip this campaign",
     edit: "Open in editor",
   } as const;
 

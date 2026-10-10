@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { assessChange, addedLines } from "@/lib/autopilot/change-filter";
-import { contentFingerprint, changeFingerprint } from "@/lib/autopilot/hash";
+import { contentFingerprint, changeFingerprint, changesAreSimilar } from "@/lib/autopilot/hash";
 import { htmlToVisibleText } from "@/lib/autopilot/extract";
 import { generateExtractive } from "@/lib/autopilot/generate";
 import { clampAutopilotFrequency, autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
@@ -92,5 +92,22 @@ describe("autopilot fingerprints", () => {
     const a = changeFingerprint("https://x.com/s", "New sale 20% off jackets");
     const b = changeFingerprint("https://x.com/s", "New sale 20% off jackets");
     assert.equal(a, b);
+  });
+
+  it("treats a small edit as the same change and a different event as new", () => {
+    assert.equal(
+      changesAreSimilar(
+        "Fall pint special twenty percent off this weekend at the taproom",
+        "Fall pint special twenty percent off this weekend at the taproom. Updated hours."
+      ),
+      true
+    );
+    assert.equal(
+      changesAreSimilar(
+        "Fall pint special twenty percent off this weekend",
+        "New Year tasting menu with five courses and a live trio"
+      ),
+      false
+    );
   });
 });

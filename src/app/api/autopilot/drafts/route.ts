@@ -16,13 +16,60 @@ export async function GET() {
       subject: true,
       explanation: true,
       sourceUrl: true,
+      changeSummary: true,
       campaignId: true,
       detectedAt: true,
       decidedAt: true,
-      expiresAt: true,
       createdAt: true,
+      campaign: {
+        select: { audienceType: true, audienceTagIds: true, status: true },
+      },
     },
   });
 
-  return NextResponse.json({ drafts });
+  const tagIds = [
+    ...new Set(
+      drafts.flatMap((draft) =>
+        Array.isArray(draft.campaign?.audienceTagIds)
+          ? (draft.campaign.audienceTagIds as string[])
+          : []
+      )
+    ),
+  ];
+  const tags = tagIds.length
+    ? await prisma.tag.findMany({
+        where: { workspaceId: ctx.workspace.id, id: { in: tagIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const tagNames = new Map(tags.map((tag) => [tag.id, tag.name]));
+
+  return NextResponse.json({
+    drafts: drafts.map((draft) => {
+      const ids = Array.isArray(draft.campaign?.audienceTagIds)
+        ? (draft.campaign.audienceTagIds as string[])
+        : [];
+      const named = ids.map((id) => tagNames.get(id)).filter(Boolean);
+      const audience =
+        draft.campaign?.audienceType === "tags"
+          ? named.join(", ") || "Selected audience"
+          : draft.campaign?.audienceType === "segment"
+            ? "A segment"
+            : "Everyone subscribed";
+      return {
+        id: draft.id,
+        status: draft.status,
+        subject: draft.subject,
+        explanation: draft.explanation,
+        sourceUrl: draft.sourceUrl,
+        changeSummary: draft.changeSummary,
+        campaignId: draft.campaignId,
+        campaignStatus: draft.campaign?.status ?? null,
+        detectedAt: draft.detectedAt,
+        decidedAt: draft.decidedAt,
+        createdAt: draft.createdAt,
+        audience,
+      };
+    }),
+  });
 }

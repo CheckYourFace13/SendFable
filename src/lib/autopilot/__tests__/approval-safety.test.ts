@@ -35,4 +35,23 @@ describe("autopilot approval safety", () => {
     assert.doesNotMatch(src, /launchCampaign/);
     assert.match(src, /sendAutopilotApprovalEmail/);
   });
+
+  it("waiting drafts are not auto-expired and reminders fire once", () => {
+    const tick = readFileSync(join(process.cwd(), "src/lib/autopilot/tick.ts"), "utf8");
+    assert.doesNotMatch(tick, /expireStale/);
+    assert.doesNotMatch(tick, /status:\s*"EXPIRED"/);
+    assert.match(tick, /reminderSentAt: null/);
+    assert.match(tick, /sendDueAutopilotReminders/);
+    const approval = readFileSync(join(process.cwd(), "src/lib/autopilot/approval.ts"), "utf8");
+    assert.match(approval, /Skip this campaign/);
+    assert.doesNotMatch(approval, /data: \{ status: "EXPIRED" \}/);
+    assert.match(approval, /already_decided/);
+    const queue = readFileSync(
+      join(process.cwd(), "src/app/(app)/settings/marketing-autopilot/page.tsx"),
+      "utf8"
+    );
+    assert.match(queue, /Waiting for approval/);
+    assert.match(queue, /Approve &amp; Send/);
+    assert.match(queue, /Skip/);
+  });
 });

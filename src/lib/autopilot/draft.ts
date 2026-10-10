@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { compileEmailHtml } from "@/lib/email-compiler";
 import { createSimpleDesign } from "@/lib/simple-design";
 import type { GeneratedCampaign } from "@/lib/autopilot/generate";
-import { AUTOPILOT_DRAFT_TTL_MS } from "@/lib/autopilot/types";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
@@ -62,7 +61,6 @@ export async function createAutopilotCampaignDraft(opts: {
   });
 
   const name = `Autopilot: ${opts.generated.headline.slice(0, 60)}`;
-  const expiresAt = new Date(Date.now() + AUTOPILOT_DRAFT_TTL_MS);
 
   const result = await prisma.$transaction(async (tx) => {
     const campaign = await tx.campaign.create({
@@ -101,7 +99,7 @@ export async function createAutopilotCampaignDraft(opts: {
         goal: opts.generated.goal,
         templateSlug,
         explanation: opts.generated.explanation,
-        expiresAt,
+        expiresAt: null,
         generationCostMicros: BigInt(opts.generated.costMicros),
         generationModel: opts.generated.model,
       },

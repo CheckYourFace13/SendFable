@@ -27,10 +27,10 @@ export default async function AutopilotReviewPage({
 
   if ("error" in loaded && loaded.error && !("draft" in loaded && loaded.draft)) {
     const messages: Record<string, string> = {
-      invalid_token: "This link is invalid or expired.",
+      invalid_token: "This link is invalid or expired. Nothing was sent. The draft stays waiting in SendFable if you have not decided yet.",
       not_found: "This campaign draft could not be found.",
       token_used: "This link was already used.",
-      expired: "This draft expired. Nothing was sent.",
+      expired: "This link is no longer active. Nothing was sent. Open Marketing Autopilot in SendFable if the draft is still waiting.",
       already_decided: "This draft was already decided. Nothing else will send from this link.",
     };
     return (
@@ -60,7 +60,7 @@ export default async function AutopilotReviewPage({
   const recipients = loaded.recipients ?? 0;
   const titles = {
     approve: "Ready to send this campaign?",
-    reject: "Do not send this campaign?",
+    reject: "Skip this campaign?",
     edit: "Edit this campaign before sending?",
   } as const;
 
@@ -95,7 +95,7 @@ export default async function AutopilotReviewPage({
       )}
       {action === "reject" && (
         <p className="mt-6 rounded-lg border border-ink/10 bg-parchment px-4 py-3 text-sm text-ink/80">
-          Confirm you do not want to send this campaign. Nothing will go out.
+          Skip this campaign. It will not send. Your other drafts stay where they are.
         </p>
       )}
       {action === "edit" && (
@@ -109,7 +109,7 @@ export default async function AutopilotReviewPage({
 
       <p className="mt-8 text-xs text-ink/45">
         Opening this page does not send anything. Only the confirmation button below performs
-        the action. No response always means no send.
+        the action. If you do nothing, nothing sends, and the draft stays waiting for you.
       </p>
     </Shell>
   );

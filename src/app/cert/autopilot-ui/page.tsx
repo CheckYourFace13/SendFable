@@ -146,7 +146,7 @@ function EmailView() {
             Edit before sending
           </span>
           <span className="rounded-md bg-slate-600 px-3 py-2 text-xs font-semibold text-white">
-            Do not send
+            Skip this campaign
           </span>
         </div>
         <p className="mt-4 text-xs text-black/45">Opening a link does not send the campaign.</p>

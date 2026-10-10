@@ -73,7 +73,7 @@ export default function FeaturesPage() {
     {
       id: "approval",
       title: "Owner approval",
-      body: "Approve & Send, Edit, or Don’t Send. No response always means no send. At most one reminder while a draft waits.",
+      body: "Approve & Send, Edit, or Skip. If you do nothing, nothing sends. The draft stays waiting for you.",
     },
     {
       id: "contacts",

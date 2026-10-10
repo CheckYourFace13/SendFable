@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { fetchPublicText } from "@/lib/ssrf";
 import { withAcquisitionLock } from "@/lib/acquisition/lock";
 import { htmlToVisibleText } from "@/lib/autopilot/extract";
-import { changeFingerprint, contentFingerprint } from "@/lib/autopilot/hash";
+import { changeFingerprint, changesAreSimilar, contentFingerprint } from "@/lib/autopilot/hash";
 import { assessChange } from "@/lib/autopilot/change-filter";
 import { generateWithOptionalLlm } from "@/lib/autopilot/generate";
 import { createAutopilotCampaignDraft } from "@/lib/autopilot/draft";
@@ -135,8 +135,26 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
       actions.push("dup_open_draft");
       return actions;
     }
-    if (["SENT", "APPROVED", "REJECTED"].includes(existing.status)) {
+    if (["SENT", "APPROVED", "REJECTED", "EXPIRED"].includes(existing.status)) {
       actions.push("dup_already_handled");
+      return actions;
+    }
+  }
+
+  const related = await prisma.marketingAutopilotDraft.findMany({
+    where: { workspaceId: config.workspaceId, sourceUrl: finalUrl },
+    orderBy: { createdAt: "desc" },
+    take: 12,
+    select: { status: true, changedContent: true },
+  });
+  for (const prior of related) {
+    if (!prior.changedContent || !changesAreSimilar(prior.changedContent, assessment.addedText)) continue;
+    if (["AWAITING_APPROVAL", "DRAFTED", "EDITING"].includes(prior.status)) {
+      actions.push("dup_similar_open");
+      return actions;
+    }
+    if (["SENT", "APPROVED", "REJECTED", "EXPIRED"].includes(prior.status)) {
+      actions.push("dup_similar_handled");
       return actions;
     }
   }
@@ -223,21 +241,12 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
   return actions;
 }
 
-async function expireStale(now: Date): Promise<number> {
-  const res = await prisma.marketingAutopilotDraft.updateMany({
-    where: {
-      status: "AWAITING_APPROVAL",
-      expiresAt: { lt: now },
-    },
-    data: { status: "EXPIRED" },
-  });
-  return res.count;
-}
-
-async function sendReminders(now: Date): Promise<number> {
+/** One reminder per waiting draft. A draft with no response stays AWAITING_APPROVAL. */
+export async function sendDueAutopilotReminders(now: Date, onlyDraftId?: string): Promise<number> {
   const cutoff = new Date(now.getTime() - AUTOPILOT_REMINDER_AFTER_MS);
   const drafts = await prisma.marketingAutopilotDraft.findMany({
     where: {
+      ...(onlyDraftId ? { id: onlyDraftId } : {}),
       status: "AWAITING_APPROVAL",
       reminderSentAt: null,
       approvalEmailSentAt: { lte: cutoff },
@@ -270,10 +279,7 @@ export async function runAutopilotTick(now = new Date()): Promise<{
 }> {
   const lock = await withAcquisitionLock("autopilot-tick", 55, async () => {
     const actions: string[] = [];
-    const expired = await expireStale(now);
-    if (expired) actions.push(`expired:${expired}`);
-
-    const reminded = await sendReminders(now);
+    const reminded = await sendDueAutopilotReminders(now);
     if (reminded) actions.push(`reminders:${reminded}`);
 
     const configs = await prisma.marketingAutopilotConfig.findMany({

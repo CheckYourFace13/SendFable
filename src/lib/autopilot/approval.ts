@@ -24,7 +24,7 @@ function shell(title: string, bodyHtml: string): string {
   ${bodyHtml}
 </td></tr>
 <tr><td style="padding-top:24px;text-align:center;font-size:12px;color:#9ca3af;">
-  Nothing sends until you approve. No response means no send.
+  If you do nothing, nothing sends. The draft stays waiting for you.
 </td></tr>
 </table>
 </td></tr>
@@ -142,10 +142,10 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
     )}…</p>` +
     `<table role="presentation" cellpadding="0" cellspacing="0"><tr>` +
     actionBtn(approveUrl, "Approve &amp; send", "#059669") +
-    actionBtn(editUrl, "Edit before sending", "#4F46E5") +
-    actionBtn(rejectUrl, "Do not send", "#6b7280") +
+    actionBtn(editUrl, "Edit", "#4F46E5") +
+    actionBtn(rejectUrl, "Skip this campaign", "#6b7280") +
     `</tr></table>` +
-    `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">These links open a confirmation page. Opening a link does not send the campaign.</p>`;
+    `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">These links open a confirmation page. Opening a link does not send the campaign. If you do nothing, the draft stays waiting in SendFable.</p>`;
 
   await sendEmail({
     from: platformFrom(),
@@ -190,15 +190,6 @@ export async function loadAutopilotReview(token: string) {
   if (draft.approvalTokenVersion !== verified.version) {
     return { error: "token_used" as const };
   }
-  if (draft.expiresAt && draft.expiresAt.getTime() < Date.now()) {
-    if (draft.status === "AWAITING_APPROVAL") {
-      await prisma.marketingAutopilotDraft.update({
-        where: { id: draft.id },
-        data: { status: "EXPIRED" },
-      });
-    }
-    return { error: "expired" as const };
-  }
   if (!["AWAITING_APPROVAL", "DRAFTED", "EDITING"].includes(draft.status)) {
     return { error: "already_decided" as const, draft, action: verified.action };
   }
@@ -236,15 +227,33 @@ export async function executeAutopilotAction(opts: {
   if (draft.approvalTokenVersion !== verified.version) {
     return { ok: false, error: "token_used" };
   }
-  if (draft.expiresAt && draft.expiresAt.getTime() < Date.now()) {
-    await prisma.marketingAutopilotDraft.update({
-      where: { id: draft.id },
-      data: { status: "EXPIRED" },
-    });
-    return { ok: false, error: "expired" };
-  }
 
-  if (verified.action === "edit") {
+  return applyAutopilotDecision({
+    draftId: draft.id,
+    workspaceId: draft.workspaceId,
+    action: verified.action,
+    confirm: opts.confirm,
+  });
+}
+
+export async function applyAutopilotDecision(opts: {
+  draftId: string;
+  workspaceId: string;
+  action: AutopilotAction;
+  confirm: boolean;
+}): Promise<
+  | { ok: true; result: "approved_sent" | "rejected" | "edit"; campaignId?: string }
+  | { ok: false; error: string }
+> {
+  const draft = await prisma.marketingAutopilotDraft.findFirst({
+    where: { id: opts.draftId, workspaceId: opts.workspaceId },
+    include: { campaign: true },
+  });
+  if (!draft) return { ok: false, error: "not_found" };
+  const open = ["AWAITING_APPROVAL", "DRAFTED", "EDITING"].includes(draft.status);
+  if (!open) return { ok: false, error: "already_decided" };
+
+  if (opts.action === "edit") {
     if (!opts.confirm) return { ok: false, error: "confirm_required" };
     if (!draft.campaignId) return { ok: false, error: "no_campaign" };
     await prisma.marketingAutopilotDraft.update({
@@ -265,7 +274,7 @@ export async function executeAutopilotAction(opts: {
     return { ok: true, result: "edit", campaignId: draft.campaignId };
   }
 
-  if (verified.action === "reject") {
+  if (opts.action === "reject") {
     if (!opts.confirm) return { ok: false, error: "confirm_required" };
     await prisma.marketingAutopilotDraft.update({
       where: { id: draft.id },
@@ -288,9 +297,6 @@ export async function executeAutopilotAction(opts: {
   // approve
   if (!opts.confirm) return { ok: false, error: "confirm_required" };
   if (!draft.campaignId) return { ok: false, error: "no_campaign" };
-  if (!["AWAITING_APPROVAL", "DRAFTED", "EDITING"].includes(draft.status)) {
-    return { ok: false, error: "already_decided" };
-  }
 
   // Mark approved first (single-use token), then launch — never auto from GET
   await prisma.marketingAutopilotDraft.update({

@@ -15,8 +15,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AutopilotUpgradeBanner } from "@/components/app/autopilot-upgrade-banner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Freq = "DAILY" | "TWICE_DAILY" | "WEEKLY";
+type WaitingDraft = {
+  id: string;
+  status: string;
+  subject: string | null;
+  sourceUrl: string | null;
+  audience: string | null;
+  campaignId: string | null;
+  detectedAt: string | null;
+  createdAt: string | null;
+};
+
+const WAITING = new Set(["AWAITING_APPROVAL", "DRAFTED", "EDITING"]);
+
+function when(value: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString();
+}
 
 export default function MarketingAutopilotSettingsPage() {
   const [pageUrl, setPageUrl] = useState("");
@@ -32,9 +59,8 @@ export default function MarketingAutopilotSettingsPage() {
   const [draftsUsed, setDraftsUsed] = useState(0);
   const [draftsCap, setDraftsCap] = useState<number | null>(2);
   const [internalUnlimited, setInternalUnlimited] = useState(false);
-  const [drafts, setDrafts] = useState<
-    { id: string; status: string; subject: string | null; campaignId: string | null }[]
-  >([]);
+  const [drafts, setDrafts] = useState<WaitingDraft[]>([]);
+  const [pendingAction, setPendingAction] = useState<{ id: string; action: "approve" | "skip" } | null>(null);
 
   async function load() {
     const [cRes, dRes] = await Promise.all([
@@ -107,6 +133,29 @@ export default function MarketingAutopilotSettingsPage() {
     await load();
   }
 
+  async function decide(id: string, action: "approve" | "skip" | "edit") {
+    const res = await fetch(`/api/autopilot/drafts/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, confirm: true }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(data.error || "Could not update this draft");
+      return;
+    }
+    if (action === "edit" && data.campaignId) {
+      window.location.href = `/campaigns/${data.campaignId}`;
+      return;
+    }
+    toast.success(action === "approve" ? "Campaign is sending" : "Campaign skipped. It will not send.");
+    setPendingAction(null);
+    await load();
+  }
+
+  const waitingDrafts = drafts.filter((draft) => WAITING.has(draft.status));
+  const decidedDrafts = drafts.filter((draft) => !WAITING.has(draft.status));
+
   if (loading) {
     return (
       <div>
@@ -116,11 +165,46 @@ export default function MarketingAutopilotSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Marketing Autopilot"
-        description="Your website changes. SendFable turns it into a campaign. You approve it."
+        description="Marketing Autopilot creates the campaign. You decide what happens next."
       />
+
+      <section id="waiting" className="mt-6 rounded-xl border p-5">
+        <h2 className="font-semibold">Waiting for approval</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Approve &amp; Send, Edit, or Skip. If you do nothing, nothing sends. The draft stays waiting for you.
+        </p>
+        {waitingDrafts.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">No drafts are waiting.</p>
+        ) : (
+          <ul className="mt-4 divide-y rounded-xl border">
+            {waitingDrafts.map((draft) => (
+              <li key={draft.id} className="space-y-3 px-4 py-4 text-sm">
+                <div>
+                  <p className="font-medium">{draft.subject || "Draft campaign"}</p>
+                  <p className="mt-1 text-muted-foreground">Audience: {draft.audience || "Everyone subscribed"}</p>
+                  <p className="truncate text-muted-foreground">Source: {draft.sourceUrl || "—"}</p>
+                  <p className="text-muted-foreground">Detected: {when(draft.detectedAt)}</p>
+                  <p className="text-muted-foreground">Created: {when(draft.createdAt)}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => setPendingAction({ id: draft.id, action: "approve" })}>
+                    Approve &amp; Send
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void decide(draft.id, "edit")}>
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setPendingAction({ id: draft.id, action: "skip" })}>
+                    Skip
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="mt-6">
         {internalUnlimited ? (
@@ -224,7 +308,7 @@ export default function MarketingAutopilotSettingsPage() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Nothing sends until you approve. No response always means no send.
+          If you do nothing, nothing sends. The draft stays waiting for you. At most one reminder.
         </p>
       </div>
 
@@ -247,15 +331,15 @@ export default function MarketingAutopilotSettingsPage() {
         </div>
       )}
 
-      {drafts.length > 0 && (
+      {decidedDrafts.length > 0 && (
         <div className="mt-6">
-          <h2 className="text-sm font-semibold">Recent drafts</h2>
+          <h2 className="text-sm font-semibold">Earlier drafts</h2>
           <ul className="mt-2 divide-y rounded-xl border">
-            {drafts.slice(0, 8).map((d) => (
+            {decidedDrafts.slice(0, 8).map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                 <div>
                   <p className="font-medium">{d.subject || "Draft"}</p>
-                  <p className="text-xs text-muted-foreground">{d.status}</p>
+                  <p className="text-xs text-muted-foreground">{d.status === "REJECTED" ? "Skipped" : d.status}</p>
                 </div>
                 {d.campaignId && (
                   <Link className="text-coral underline" href={`/campaigns/${d.campaignId}`}>
@@ -267,6 +351,29 @@ export default function MarketingAutopilotSettingsPage() {
           </ul>
         </div>
       )}
+
+      <AlertDialog open={!!pendingAction} onOpenChange={(open) => !open && setPendingAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingAction?.action === "approve" ? "Send this campaign now?" : "Skip this campaign?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingAction?.action === "approve"
+                ? "Approve & Send delivers this campaign to its audience."
+                : "Skip this campaign. It will not send. Other waiting drafts stay in the queue."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => pendingAction && void decide(pendingAction.id, pendingAction.action)}
+            >
+              {pendingAction?.action === "approve" ? "Approve & Send" : "Skip this campaign"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

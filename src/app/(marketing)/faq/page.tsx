@@ -38,11 +38,11 @@ export default function FaqPage() {
     },
     {
       q: "What is Marketing Autopilot?",
-      a: "Marketing Autopilot watches a page on your website (specials, events, offers). When something meaningful changes, SendFable drafts a campaign. Nothing sends until you approve.",
+      a: "Marketing Autopilot watches a page on your website and creates a campaign. You decide what happens next: Approve & Send, Edit, or Skip.",
     },
     {
       q: "Does Autopilot send automatically?",
-      a: "No. Approve & Send, Edit, or Don’t Send. If you don’t respond, nothing is sent. At most one reminder is sent while a draft is waiting.",
+      a: "No. Approve & Send, Edit, or Skip. If you do nothing, nothing sends. The draft stays waiting for you. At most one reminder.",
     },
     {
       q: "Can I import contacts?",

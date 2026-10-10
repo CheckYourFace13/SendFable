@@ -12,6 +12,7 @@ export type AutopilotDraftStatus =
 
 export type AutopilotAction = "approve" | "reject" | "edit";
 
+/** Kept for older references. Waiting drafts are not expired on this timer. */
 export const AUTOPILOT_DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const AUTOPILOT_REMINDER_AFTER_MS = 48 * 60 * 60 * 1000;
 export const AUTOPILOT_MAX_GENERATIONS_PER_DAY = 5;

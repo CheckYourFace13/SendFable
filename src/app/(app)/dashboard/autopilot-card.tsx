@@ -89,7 +89,7 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
                 Drafts this month:{" "}
                 {unlimited ? `${draftsUsedThisMonth} · unlimited` : `${draftsUsedThisMonth} / ${draftsCap}`}
               </li>
-              <li>Drafts waiting: {waiting}</li>
+              <li>Drafts waiting: {waiting}. If you do nothing, nothing sends.</li>
               <li>
                 Last campaign:{" "}
                 {lastSent?.decidedAt
@@ -101,7 +101,7 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
           <div className="flex flex-wrap gap-2">
             {waitingDraft?.campaignId && (
               <Button asChild size="sm">
-                <Link href={`/campaigns/${waitingDraft.campaignId}`}>Review draft</Link>
+                <Link href="/settings/marketing-autopilot#waiting">Waiting for approval</Link>
               </Button>
             )}
             <Button asChild size="sm" variant="outline">
