@@ -49,7 +49,7 @@ export default function MailchimpPricingAlternativePage() {
       </ul>
 
       <p className="mt-6 text-sm text-ink/75">
-        Marketing Autopilot is not permanently included on Free. Try it free for 3 months: 1
+        Scribe is not permanently included on Free. Try it free for 3 months: 1
         automatically created campaign per month. Paid plans include a monthly allowance. Nothing
         sends until you schedule it.{" "}
         <Link className="text-coral hover:underline" href="/automated-email-marketing">

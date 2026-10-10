@@ -58,11 +58,11 @@ export function AutopilotUpgradeBanner({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-medium">
-            You&apos;ve used your {draftsCap} Autopilot draft
+            You&apos;ve used your {draftsCap} Scribe creation
             {draftsCap === 1 ? "" : "s"} this month
           </p>
           <p className="mt-0.5 opacity-90">
-            Upgrade to {nextName} for {nextDrafts} drafts
+            Upgrade to {nextName} for {nextDrafts} creations
             {plan === "FREE" ? " and daily checks" : plan === "STARTER" ? " and twice-daily checks" : ""}
             . Existing drafts and settings stay put.
           </p>

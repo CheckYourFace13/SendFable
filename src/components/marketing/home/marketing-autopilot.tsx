@@ -42,7 +42,7 @@ export function MarketingAutopilotHome() {
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">
-            Marketing Autopilot
+            Scribe
           </p>
           <h2 className="mt-3 font-display text-display-md text-ink text-balance sm:text-display-lg">
             Your website changes.
@@ -108,7 +108,7 @@ export function MarketingAutopilotHome() {
             <Link href="/signup">Start free</Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="border-ink/15">
-            <Link href="/automated-email-marketing">See Marketing Autopilot</Link>
+            <Link href="/automated-email-marketing">See Scribe</Link>
           </Button>
         </div>
       </div>

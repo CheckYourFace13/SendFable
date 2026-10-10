@@ -323,7 +323,7 @@ describe("autopilot scheduling", () => {
   it("does not launch from approval, the worker tick, or an empty response", () => {
     const approval = src("src/lib/autopilot/approval.ts");
     const tick = src("src/lib/autopilot/tick.ts");
-    const queue = src("src/app/(app)/settings/marketing-autopilot/page.tsx");
+    const queue = src("src/app/(app)/scribe/page.tsx");
     assert.doesNotMatch(approval, /launchCampaign/);
     assert.match(approval, /schedule_required/);
     assert.match(approval, /parseAutopilotSchedule/);

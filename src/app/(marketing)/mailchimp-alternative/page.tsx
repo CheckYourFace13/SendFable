@@ -91,7 +91,7 @@ export default function MailchimpAlternativePage() {
       <p className="mt-10 text-sm text-slate-700">
         Want marketing that mostly writes itself?{" "}
         <Link className="text-coral hover:underline" href="/automated-email-marketing">
-          See Marketing Autopilot
+          See Scribe
         </Link>{" "}
         — website changes become a campaign draft you approve before anything sends.
       </p>

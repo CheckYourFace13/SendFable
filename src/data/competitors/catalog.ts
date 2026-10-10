@@ -58,7 +58,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Simpler small-business workflow",
       "Transparent lower list pricing at many practical tiers",
       "Managed SES delivery without suite lock-in",
-      "Marketing Autopilot: a page change becomes a campaign in your look, and you choose when it sends",
+      "Scribe: a page change becomes a campaign in your look, and you choose when it sends",
     ],
     competitorStronger: [
       "Integration marketplace",
@@ -170,7 +170,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Managed SES positioning",
       "Very clear small-business Free→Pro Plus ladder",
       "Any-email signup focus",
-      "Marketing Autopilot: page changes become a campaign in your look, and you choose when it sends",
+      "Scribe: page changes become a campaign in your look, and you choose when it sends",
     ],
     competitorStronger: ["Established builder polish", "Automation depth for the price", "Larger existing user community"],
     shortAnswer:
@@ -221,7 +221,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Predictable contact-tier pricing",
       "Simpler small-business UX",
       "Campaign-first focus",
-      "Marketing Autopilot watches your page, drafts in your look, and waits until you schedule",
+      "Scribe watches your page, drafts in your look, and waits until you schedule",
     ],
     competitorStronger: ["Volume-based pricing", "SMS + multi-channel in-product", "Transactional email heritage"],
     shortAnswer:
@@ -271,7 +271,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     sendfableStronger: [
       "Simpler non-store workflows",
       "Clear pricing without ecommerce suite assumptions",
-      "Marketing Autopilot prepares campaigns from website updates with mandatory owner approval",
+      "Scribe prepares campaigns from website updates with mandatory owner approval",
     ],
     competitorStronger: ["Ecommerce automations", "Product/catalog sync", "SMS for stores"],
     shortAnswer:
@@ -411,7 +411,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     sendfableStronger: [
       "Ease of use",
       "Lower complexity and price for basic campaigns",
-      "Marketing Autopilot: website updates become drafts you approve — not a multi-step journey builder",
+      "Scribe: website updates become drafts you approve — not a multi-step journey builder",
     ],
     competitorStronger: ["Automation", "CRM", "Conditional journeys"],
     shortAnswer:
@@ -594,7 +594,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     potentialDrawbacks: ["Cost and complexity for simple newsletters"],
     sendfableStronger: [
       "Price and simplicity for email-only needs",
-      "Marketing Autopilot turns marketing-page updates into approval-gated campaign drafts",
+      "Scribe turns marketing-page updates into approval-gated campaign drafts",
     ],
     competitorStronger: ["CRM", "Attribution", "Enterprise marketing ops"],
     shortAnswer:
@@ -871,7 +871,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     sendfableStronger: [
       "Lower simple pricing at many tiers",
       "Modern self-serve simplicity",
-      "Marketing Autopilot: watch specials/events pages → draft → you approve before send",
+      "Scribe: watch specials/events pages → draft → you approve before send",
     ],
     competitorStronger: ["Phone support familiarity", "Event tools add-ons"],
     shortAnswer:
@@ -922,7 +922,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Simpler SMB campaign workflow",
       "Transparent published caps",
       "Lower complexity for non-ecommerce",
-      "Marketing Autopilot: promotions-page watch → draft → owner approval (not a full CDP journey suite)",
+      "Scribe: promotions-page watch → draft → owner approval (not a full CDP journey suite)",
     ],
     competitorStronger: [
       "Ecommerce CDP depth",

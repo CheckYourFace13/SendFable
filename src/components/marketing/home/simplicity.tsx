@@ -22,7 +22,7 @@ const ADVANCED = [
   "Scheduled sends",
   "Domain authentication",
   "Follow-ups",
-  "Signup forms",
+  "Signup tools",
   "Analytics",
 ];
 

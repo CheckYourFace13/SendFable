@@ -9,9 +9,9 @@ import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { PLANS } from "@/lib/plans";
 
 export const metadata = marketingPageMeta({
-  title: "Automated Email Marketing for Small Businesses | SendFable",
+  title: "Scribe — automated email marketing from your website content",
   description:
-    "SendFable watches your marketing page, creates a ready-to-send email when something changes, and waits for your approval before sending.",
+    "Scribe watches a page on your site, drafts a campaign in your look, and waits until you schedule it.",
   path: "/automated-email-marketing",
 });
 
@@ -49,11 +49,11 @@ const USE_CASES = [
 const FAQS = [
   {
     q: "Will SendFable send emails without me?",
-    a: "No. Marketing Autopilot never sends a generated campaign without your explicit approval. No response always means no send.",
+    a: "No. Scribe never sends a generated campaign until you schedule it. No response always means no send.",
   },
   {
     q: "Is this the same as Mailchimp-style automation builders?",
-    a: "No. Complex journey builders ask you to wire triggers and branches. Marketing Autopilot is simpler: your marketing page changes → a campaign is drafted → you approve, edit, or skip.",
+    a: "No. Scribe is simpler: your page changes, a campaign is drafted in your look, and you schedule it, edit it, or skip it.",
   },
   {
     q: "What pages can I watch?",
@@ -64,8 +64,8 @@ const FAQS = [
     a: "No. Email security scanners often open links automatically. Approve & Schedule opens a page where you choose a date, time, and timezone. Nothing sends until you schedule it.",
   },
   {
-    q: "Which plans include Marketing Autopilot?",
-    a: `Free does not permanently include Marketing Autopilot. You can start a 3-month free trial with 1 automatically created campaign per month. Unused trial creations do not roll over. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}. A draft is created only when the page actually changes.`,
+    q: "Which plans include Scribe?",
+    a: `Free does not permanently include Scribe. You can start a 3-month trial with 1 creation per month. Unused trial creations do not roll over. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}. A draft is created only when the page meaningfully changes.`,
   },
   {
     q: "Does Autopilot send texts too?",
@@ -80,7 +80,7 @@ export default function AutomatedEmailMarketingPage() {
         data={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: "Automated Email Marketing for Small Businesses",
+          name: "Scribe — automated email marketing from your website content",
           description:
             "Watch your marketing page, draft campaigns automatically, send only after approval.",
           url: "https://sendfable.com/automated-email-marketing",
@@ -89,12 +89,12 @@ export default function AutomatedEmailMarketingPage() {
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Automated email marketing", href: "/automated-email-marketing", current: true },
+          { label: "Scribe", href: "/automated-email-marketing", current: true },
         ]}
       />
 
       <h1 className="font-display text-4xl font-bold tracking-tight text-ink text-balance">
-        Automated email marketing that still keeps you in control
+        Scribe — automated email marketing from your website content
       </h1>
       <p className="mt-4 text-lg text-ink/65">
         Your website changes. SendFable builds the campaign. You choose when it sends. Try Marketing
@@ -108,14 +108,14 @@ export default function AutomatedEmailMarketingPage() {
       <div className="mt-6 rounded-xl border-2 border-coral/40 bg-coral/5 px-5 py-4">
         <p className="text-sm font-bold uppercase tracking-wider text-coral">No approval. No send.</p>
         <p className="mt-1 text-sm text-ink/70">
-          Nothing sends until you schedule it. Try Marketing Autopilot free for 3 months. Includes 1
-          automatically created campaign per month during the trial.
+          Nothing sends until you schedule it. Try Scribe free for 3 months. 1 creation a month during
+          the trial.
         </p>
       </div>
 
       <div className="mt-10 grid gap-3 sm:grid-cols-2">
         {[
-          { src: "/product/autopilot-setup.webp", alt: "Marketing Autopilot setup" },
+          { src: "/product/autopilot-setup.webp", alt: "Scribe setup" },
           { src: "/product/autopilot-detected.webp", alt: "Website change detected" },
           { src: "/product/autopilot-draft.webp", alt: "Generated campaign draft" },
           { src: "/product/autopilot-approval-email.webp", alt: "Owner approval email" },
@@ -152,7 +152,7 @@ export default function AutomatedEmailMarketingPage() {
           <Link href="/signup">Start free</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/signup">Turn on Marketing Autopilot</Link>
+          <Link href="/signup">Turn on Scribe</Link>
         </Button>
       </div>
 
@@ -249,7 +249,7 @@ export default function AutomatedEmailMarketingPage() {
 
       <Faq items={FAQS} />
       <MarketingCta
-        title="Automate your marketing without giving up control"
+        title="Fresh content in. A campaign ready for your review."
         body="Start free. Point Autopilot at one page. Nothing sends until you schedule it."
         primaryLabel="Start free"
       />

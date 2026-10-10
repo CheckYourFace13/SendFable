@@ -31,7 +31,7 @@ function planBlurb(plan: Plan): string[] {
 /** Public signup CTA — product is generally available. */
 const PRICING_CTA_HREF = "/signup";
 
-const AUTOPILOT_PRICE_NOTE = `Free keeps manual email. Autopilot is optional: 3 months, 1 creation a month, no rollover. Then Starter ${autopilotMaxDraftsPerMonth("STARTER")}, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")} a month. Extra packs: ${AUTOPILOT_CREATION_PACKS.map((p) => `${p.credits} for $${p.cents / 100}`).join(", ")}. Manual campaigns do not use those credits. Nothing sends until you schedule it.`;
+const AUTOPILOT_PRICE_NOTE = `Free keeps manual email. Scribe is optional: 3 months, 1 creation a month, no rollover. Then Starter ${autopilotMaxDraftsPerMonth("STARTER")}, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")} a month. Extra packs: ${AUTOPILOT_CREATION_PACKS.map((p) => `${p.credits} for $${p.cents / 100}`).join(", ")}. Manual campaigns do not use those credits. Nothing sends until you schedule it.`;
 
 export function PricingPreview({
   embedded = false,

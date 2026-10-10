@@ -7,7 +7,7 @@ test.describe("Marketing Autopilot public surfaces", () => {
       /Automated email marketing/i
     );
     await expect(page.getByText(/No approval\. No send/i).first()).toBeVisible();
-    await expect(page.getByText(/Marketing Autopilot/i).first()).toBeVisible();
+    await expect(page.getByText(/Scribe/i).first()).toBeVisible();
   });
 
   test("homepage includes Autopilot section", async ({ page }) => {

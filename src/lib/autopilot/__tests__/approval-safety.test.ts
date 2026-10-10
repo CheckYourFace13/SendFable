@@ -47,11 +47,8 @@ describe("autopilot approval safety", () => {
     assert.match(approval, /Skip this campaign/);
     assert.doesNotMatch(approval, /data: \{ status: "EXPIRED" \}/);
     assert.match(approval, /already_decided/);
-    const queue = readFileSync(
-      join(process.cwd(), "src/app/(app)/settings/marketing-autopilot/page.tsx"),
-      "utf8"
-    );
-    assert.match(queue, /Waiting for approval/);
+    const queue = readFileSync(join(process.cwd(), "src/app/(app)/scribe/page.tsx"), "utf8");
+    assert.match(queue, /Waiting for you/);
     assert.match(queue, /Approve &amp; Schedule/);
     assert.match(queue, /SCHEDULE CAMPAIGN/);
     assert.doesNotMatch(queue, /Send this campaign now/);

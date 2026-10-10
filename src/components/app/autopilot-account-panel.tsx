@@ -33,10 +33,12 @@ export function AutopilotAccountPanel({
   internalUnlimited,
   commercial,
   onChanged,
+  only,
 }: {
   internalUnlimited: boolean;
   commercial: Commercial | null;
   onChanged: () => void;
+  only?: "usage" | "brand";
 }) {
   const [code, setCode] = useState("");
   const [editing, setEditing] = useState(false);
@@ -53,7 +55,7 @@ export function AutopilotAccountPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(data.error || "Could not update Marketing Autopilot");
+        toast.error(data.error || "Could not update Scribe");
         return;
       }
       if (data.url) {
@@ -69,21 +71,19 @@ export function AutopilotAccountPanel({
 
   return (
     <div className="mt-6 space-y-4">
+      {only !== "brand" && (
       <section className="rounded-xl border p-5">
-        <h2 className="font-semibold">Marketing Autopilot creations</h2>
+        <h2 className="font-semibold">Scribe creations</h2>
         {internalUnlimited ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            This internal workspace can create Autopilot campaigns without a monthly cap.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Unlimited</p>
         ) : commercial?.trialAvailable ? (
           <div className="mt-3 space-y-3 text-sm">
-            <p className="font-medium">Try Marketing Autopilot free for 3 months.</p>
-            <p>Includes: 1 automatically created marketing campaign per month.</p>
-            <p>You still approve every campaign and choose when it sends.</p>
-            <p>No approval = no send.</p>
+            <p className="font-medium">Try Scribe free for 3 months.</p>
+            <p>1 campaign creation each month. No credit card required.</p>
+            <p>Nothing sends until you schedule it.</p>
             <p className="text-muted-foreground">
-              This is separate from your Free plan&apos;s 1,000 emails a month. Unused trial
-              creations do not roll over. No credit card.
+              Unused trial creations do not roll over. This is separate from your Free plan&apos;s
+              monthly emails.
             </p>
             <Button
               disabled={busy}
@@ -101,19 +101,17 @@ export function AutopilotAccountPanel({
             </li>
             {commercial?.trialActive && (
               <li>
-                Trial: {commercial.trialCreationsRemaining} creation left this month ·{" "}
-                {commercial.trialMonthsLeft} month{commercial.trialMonthsLeft === 1 ? "" : "s"} left
+                3-month Scribe trial · 1 creation per month · Month{" "}
+                {Math.min(3, Math.max(1, 4 - commercial.trialMonthsLeft))} of 3
               </li>
             )}
             <li>Purchased creations: {commercial?.credits ?? 0}</li>
-            <li>
-              Promo:{" "}
-              {commercial?.promo === "MONTHLY"
-                ? "1 creation per month"
-                : commercial?.promo === "WEEKLY"
-                  ? "1 creation per week"
-                  : "None"}
-            </li>
+            {commercial?.promo === "MONTHLY" && (
+              <li>1 complimentary creation each month. SendFable branding required.</li>
+            )}
+            {commercial?.promo === "WEEKLY" && (
+              <li>1 complimentary creation each week. SendFable branding required.</li>
+            )}
           </ul>
         )}
 
@@ -147,7 +145,7 @@ export function AutopilotAccountPanel({
                     void post("/api/autopilot/credits", { pack: pack.id }, "Opening checkout")
                   }
                 >
-                  {pack.label} · ${(pack.cents / 100).toFixed(0)}
+                  Buy {pack.label} · ${(pack.cents / 100).toFixed(0)}
                 </Button>
               ))}
             </div>
@@ -157,14 +155,14 @@ export function AutopilotAccountPanel({
           </div>
         )}
       </section>
+      )}
 
-      {brand && (
+      {only !== "usage" && brand && (
         <section className="rounded-xl border p-5">
-          <h2 className="font-semibold">Your email look</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {brand.suggested
-              ? "SendFable found this look on your website."
-              : "SendFable can read the look of the page you watch."}
+              ? "Scribe found this look on your website."
+              : "Scribe can read the look of the page you watch."}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg border bg-white">
@@ -185,7 +183,7 @@ export function AutopilotAccountPanel({
                 <span className="inline-block h-4 w-4 rounded-full border" style={{ background: brand.accentColor }} />
                 Accent color
               </p>
-              <p className="mt-1">Font: {brand.fontLabel}</p>
+              <p className="mt-1">Type: {brand.fontLabel}</p>
               <p>Button: {brand.buttonLabel}</p>
             </div>
           </div>
@@ -196,7 +194,7 @@ export function AutopilotAccountPanel({
               disabled={busy}
               onClick={() => void post("/api/autopilot/brand", { action: "refresh" }, "Look updated from your website")}
             >
-              {brand.suggested ? "Check again" : "Find this look on your website"}
+              Refresh from website
             </Button>
             {brand.suggested && !brand.confirmed && (
               <Button

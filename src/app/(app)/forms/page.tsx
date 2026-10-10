@@ -91,7 +91,7 @@ export default function FormsPage() {
 
   return (
     <div>
-      <PageHeader title="Signup forms" description="Hosted pages and embeddable snippets.">
+      <PageHeader title="Signup tools" description="Give people an easy way to join your audience.">
         <div className="flex gap-2">
           <Input
             placeholder="Newsletter signup"
@@ -109,7 +109,7 @@ export default function FormsPage() {
       {forms.length === 0 ? (
         <EmptyState
           icon={<ListChecks />}
-          title="Grow your list with a signup form"
+          title="Give people an easy way to join"
           description="Share a simple page so new people can join with permission."
           action={
             <Button onClick={() => void create("Newsletter signup")}>Create signup form</Button>

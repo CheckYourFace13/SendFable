@@ -9,9 +9,9 @@ import { isSmsPublicEnabled } from "@/lib/sms/flags";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 
 export const metadata = marketingPageMeta({
-  title: "FAQ — Email, text & Marketing Autopilot",
+  title: "FAQ — Email, text, and Scribe",
   description:
-    "Answers about SendFable’s free plan, Email/Text/Both, Marketing Autopilot, forms, domains, limits, SMS activation, and cancellation.",
+    "Answers about SendFable’s free plan, Email/Text/Both, Scribe, signup tools, domains, limits, and cancellation.",
   path: "/faq",
 });
 
@@ -20,7 +20,7 @@ export default function FaqPage() {
   const items = [
     {
       q: "What is SendFable?",
-      a: "SendFable is simple email and text marketing for small businesses: contacts, campaigns, templates, forms, Marketing Autopilot, and managed delivery — without a giant CRM suite.",
+      a: "SendFable is email and text marketing for small businesses: audience, campaigns, templates, signup tools, and Scribe — without a giant CRM suite.",
     },
     {
       q: "Is there a free plan?",
@@ -37,11 +37,11 @@ export default function FaqPage() {
       a: "No. You can create an account and use the Free plan without a card. A card is only needed when you upgrade or purchase Text Messaging.",
     },
     {
-      q: "What is Marketing Autopilot?",
-      a: "Marketing Autopilot watches a page on your website and creates a campaign. You decide what happens next: Approve & Schedule, Edit, or Skip this campaign. Nothing sends until you schedule it.",
+      q: "What is Scribe?",
+      a: "Scribe watches a page on your website and drafts a campaign in your look. You Approve & Schedule, Edit, or Skip. Nothing sends until you schedule it.",
     },
     {
-      q: "Does Autopilot send automatically?",
+      q: "Does Scribe send automatically?",
       a: "No. Approve & Schedule, Edit, or Skip this campaign. If you do nothing, nothing sends. The draft stays waiting for you. At most one reminder.",
     },
     {
@@ -58,7 +58,7 @@ export default function FaqPage() {
     },
     {
       q: "What happens when I reach a plan limit?",
-      a: "Your contacts and past campaigns stay put. You’ll see a clear upgrade prompt when you hit contact or monthly email limits. Autopilot stops creating new drafts when you hit that month’s draft allowance until you upgrade or the month resets.",
+      a: "Your contacts and past campaigns stay put. You’ll see a clear upgrade prompt when you hit contact or monthly email limits. Scribe stops creating new campaigns when you hit that month’s allowance until you upgrade or the month resets.",
     },
     {
       q: "What does SMS activation cost?",
@@ -71,8 +71,8 @@ export default function FaqPage() {
       a: "Yes. Paid subscriptions can be canceled from billing / the customer portal. You keep access through the paid period; Free-plan limits apply afterward.",
     },
     {
-      q: "How many Autopilot drafts do I get?",
-      a: `Free does not permanently include Marketing Autopilot. Start a 3-month free trial for 1 automatically created campaign per month. Unused trial creations do not roll over. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
+      q: "How many Scribe creations do I get?",
+      a: `Free does not permanently include Scribe. Start a 3-month trial for 1 creation per month. Unused trial creations do not roll over. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
     },
   ];
 
@@ -92,7 +92,7 @@ export default function FaqPage() {
       />
       <h1 className="font-display text-4xl font-bold tracking-tight text-ink">FAQ</h1>
       <p className="mt-3 text-lg text-ink/70">
-        Straight answers about plans, Email/Text/Both, Autopilot, and limits. For deeper how-tos, see{" "}
+        Straight answers about plans, Email/Text/Both, Scribe, and limits. For deeper how-tos, see{" "}
         <Link href="/guides" className="text-coral underline-offset-2 hover:underline">
           Guides
         </Link>{" "}
@@ -107,7 +107,7 @@ export default function FaqPage() {
       </div>
       <MarketingCta
         title="Ready to try SendFable?"
-        body="Start free — no credit card. Upgrade when your list or Autopilot needs more room."
+        body="Start free — no credit card. Upgrade when your list or Scribe needs more room."
         primaryLabel="Start free"
       />
     </div>

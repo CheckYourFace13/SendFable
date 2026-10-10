@@ -193,7 +193,7 @@ export default function FormDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title={form.name} description="Choose what to collect, then put the form on your website.">
+      <PageHeader title={form.name} description="Choose what to collect, then share the link or the embed.">
         <Button onClick={() => void save()}>Save</Button>
       </PageHeader>
 

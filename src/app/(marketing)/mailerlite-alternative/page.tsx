@@ -66,7 +66,7 @@ export default function MailerLiteAlternativePage() {
           <p className="mt-4 text-slate-700">
             Want website changes to become campaign drafts?{" "}
             <Link className="text-coral hover:underline" href="/automated-email-marketing">
-              See Marketing Autopilot
+              See Scribe
             </Link>
             .
           </p>

@@ -10,7 +10,7 @@ import { isSmsPublicEnabled } from "@/lib/sms/flags";
 export const metadata = marketingPageMeta({
   title: "Email, Text & Marketing Automation Features",
   description:
-    "SendFable features: Email, Text, or Both campaigns, forms, templates, Marketing Autopilot, owner approval, contacts, reports, Send Confidence, and clear Free-plan branding.",
+    "SendFable features: Email, Text, or Both, signup tools, templates, Scribe, scheduling, audience, reports, and Send Confidence.",
   path: "/features",
   image: "/product/autopilot-feature-page.webp",
 });
@@ -48,7 +48,7 @@ export default function FeaturesPage() {
       : []),
     {
       id: "forms",
-      title: "Forms",
+      title: "Signup tools",
       body: "Hosted signup forms grow a consented list without leaving your brand. Optional double opt-in when you want extra confirmation.",
       href: "/features#forms",
     },
@@ -60,8 +60,8 @@ export default function FeaturesPage() {
     },
     {
       id: "autopilot",
-      title: "Marketing Autopilot",
-      body: `Watch one page on your site. When specials or events change, SendFable drafts a campaign. Free can start a 3-month trial with 1 creation a month. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
+      title: "Scribe",
+      body: `Scribe watches one page. When the content meaningfully changes, it drafts a campaign in your look. Free can try it for 3 months, 1 creation a month. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
       href: "/automated-email-marketing",
     },
     {
@@ -73,7 +73,7 @@ export default function FeaturesPage() {
     {
       id: "brand-match",
       title: "Your look, not ours",
-      body: "Autopilot uses your logo, colors, and images that belong to that update. The campaign should look like your business. SendFable stays at the bottom, and only when the plan requires it.",
+      body: "Scribe uses your logo, colors, and images that belong to that update. The campaign should look like your business. SendFable stays at the bottom, and only when the plan requires it.",
       href: "/automated-email-marketing",
     },
     {
@@ -169,14 +169,14 @@ export default function FeaturesPage() {
       <figure className="mt-10 overflow-hidden rounded-xl border border-ink/10 bg-parchment/40">
         <Image
           src="/product/autopilot-feature-page.webp"
-          alt="Marketing Autopilot turning a website special into an approved SendFable campaign"
+          alt="Scribe turning a website special into a campaign you schedule"
           width={1200}
           height={720}
           className="h-auto w-full"
           priority
         />
         <figcaption className="px-4 py-3 text-left text-sm text-ink/60">
-          Marketing Autopilot: your content, your look, then you schedule it.{" "}
+          Scribe: your content, your look, then you schedule it.{" "}
           <Link href="/automated-email-marketing" className="text-coral underline-offset-2 hover:underline">
             See how it works
           </Link>

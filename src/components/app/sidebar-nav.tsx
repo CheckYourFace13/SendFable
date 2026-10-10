@@ -6,6 +6,7 @@ import {
   ArrowRightLeft,
   BarChart3,
   CreditCard,
+  Feather,
   FileText,
   LayoutDashboard,
   ListChecks,
@@ -23,8 +24,9 @@ const NAV = [
   { href: "/contacts/migrate", label: "Migrate", icon: ArrowRightLeft },
   { href: "/segments", label: "Segments", icon: BarChart3 },
   { href: "/tags", label: "Tags", icon: Tags },
-  { href: "/forms", label: "Forms", icon: ListChecks },
+  { href: "/forms", label: "Signup Tools", icon: ListChecks },
   { href: "/library", label: "Templates", icon: FileText },
+  { href: "/scribe", label: "Scribe", icon: Feather },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

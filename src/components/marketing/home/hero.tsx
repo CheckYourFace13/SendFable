@@ -24,8 +24,8 @@ export function Hero() {
             {PLANS.STARTER.monthlyPrice}.
           </p>
           <p className="mt-3 max-w-prose text-base leading-relaxed text-charcoal/75">
-            Marketing Autopilot turns a website update into a campaign that looks like you. You
-            choose when it sends.
+            Scribe turns fresh content into a campaign that looks like you. You choose when it
+            sends.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button asChild size="lg" className="bg-coral-solid text-white hover:bg-coral-hover">

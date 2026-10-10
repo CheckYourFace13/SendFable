@@ -55,13 +55,12 @@ function TextMessagingSettingsLink() {
 function MarketingAutopilotSettingsLink() {
   return (
     <div className="mt-6 max-w-2xl rounded-xl border p-4 text-sm">
-      <p className="font-medium">Marketing Autopilot</p>
+      <p className="font-medium">Scribe</p>
       <p className="mt-1 text-muted-foreground">
-        Watch a marketing page. When it changes, SendFable drafts a campaign — you approve before
-        anything sends.
+        Turn fresh content into a campaign ready for your review.
       </p>
-      <Link className="mt-2 inline-block underline" href="/settings/marketing-autopilot">
-        Set up Marketing Autopilot
+      <Link className="mt-2 inline-block underline" href="/scribe">
+        Open Scribe
       </Link>
     </div>
   );

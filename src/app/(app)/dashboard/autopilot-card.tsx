@@ -12,13 +12,12 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
   if (!config?.enabled) {
     return (
       <div className="mb-6 rounded-xl border border-dashed border-ink/15 bg-parchment/40 px-4 py-3 text-sm">
-        <p className="font-medium text-ink">Marketing Autopilot</p>
+        <p className="font-medium text-ink">Scribe</p>
         <p className="mt-1 text-muted-foreground">
-          Watch a specials or events page. Draft campaigns automatically — send only when you
-          approve.
+          Turn fresh content into a campaign ready for your review.
         </p>
-        <Link className="mt-2 inline-block text-coral underline" href="/settings/marketing-autopilot">
-          Set up
+        <Link className="mt-2 inline-block text-coral underline" href="/scribe">
+          Open Scribe
         </Link>
       </div>
     );
@@ -74,7 +73,7 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
       <div className="rounded-xl border border-teal/25 bg-teal/5 px-4 py-4 text-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="font-semibold text-ink">Marketing Autopilot</p>
+            <p className="font-semibold text-ink">Scribe</p>
             <ul className="mt-2 space-y-1 text-muted-foreground">
               <li>
                 Watching: <span className="text-ink">{host}</span>
@@ -105,11 +104,11 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
           <div className="flex flex-wrap gap-2">
             {waitingDraft?.campaignId && (
               <Button asChild size="sm">
-                <Link href="/settings/marketing-autopilot#waiting">Waiting for approval</Link>
+                <Link href="/scribe#drafts">Waiting for you</Link>
               </Button>
             )}
             <Button asChild size="sm" variant="outline">
-              <Link href="/settings/marketing-autopilot">Settings</Link>
+              <Link href="/scribe">Open Scribe</Link>
             </Button>
           </div>
         </div>

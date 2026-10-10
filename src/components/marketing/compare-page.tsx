@@ -37,7 +37,7 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
     ["Billing basis", "Contact + monthly email caps", competitor.billingBasis],
     [
       "Automation",
-      "Marketing Autopilot: your content, your look, then you schedule. Plus campaigns, forms, and Email, Text, or Both.",
+      "Scribe: your content, your look, then you schedule. Plus campaigns, signup tools, and Email, Text, or Both.",
       capabilityLabel(competitor.automation),
     ],
     ["CRM", "Not a CRM suite", capabilityLabel(competitor.crm)],

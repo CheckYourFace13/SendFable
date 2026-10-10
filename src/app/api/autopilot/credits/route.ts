@@ -45,8 +45,8 @@ export async function POST(req: Request) {
           currency: "usd",
           unit_amount: pack.cents,
           product_data: {
-            name: `Marketing Autopilot — ${pack.label}`,
-            description: "Extra Autopilot campaign creations for this workspace.",
+            name: `Scribe — ${pack.label}`,
+            description: "Extra Scribe campaign creations for this workspace.",
           },
         },
       },

@@ -64,7 +64,7 @@ export default function MailchimpAlternativePage() {
           <li>You refuse to require Google login for your team</li>
           <li>You are fine rebuilding automations instead of importing complex journeys</li>
           <li>
-            You want Marketing Autopilot: SendFable watches the page where you already post
+            You want Scribe: SendFable watches the page where you already post
             promotions or events and prepares the email. Nothing sends until you approve it.
           </li>
         </ul>

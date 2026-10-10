@@ -37,7 +37,7 @@ export default function CompareHubPage() {
         {SENDFABLE_FACTS.positioning} We say where competitors are stronger — and where SendFable may
         be the better fit. Differentiator:{" "}
         <Link className="text-coral hover:underline" href="/automated-email-marketing">
-          Marketing Autopilot
+          Scribe
         </Link>{" "}
         turns website updates into approval-gated campaigns.
       </p>

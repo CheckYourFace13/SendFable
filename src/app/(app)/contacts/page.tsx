@@ -243,7 +243,7 @@ export default function ContactsPage() {
                 Add manually
               </Button>
               <Button asChild variant="ghost">
-                <Link href="/forms">Signup form</Link>
+                <Link href="/forms">Signup tools</Link>
               </Button>
             </div>
           }

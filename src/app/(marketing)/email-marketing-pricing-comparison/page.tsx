@@ -133,7 +133,7 @@ export default function EmailMarketingPricingComparisonPage() {
           </li>
           <li>Campaign-first UI, Simple Mode, Send Confidence, CSV import, hosted forms</li>
           <li>
-            Email, Text, or Both. Marketing Autopilot is a 3-month free trial on Free (1 campaign a
+            Email, Text, or Both. Scribe is a 3-month free trial on Free (1 campaign a
             month), then a monthly allowance on paid plans. Nothing sends until you schedule it.
           </li>
         </ul>
