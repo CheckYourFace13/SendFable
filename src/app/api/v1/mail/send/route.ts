@@ -81,7 +81,6 @@ export async function POST(req: Request) {
       tags: {
         purpose: parsed.data.kind,
         workspace: auth.workspace.id.slice(0, 32),
-        source: (auth.source || "integration").slice(0, 32),
       },
     });
 
