@@ -61,7 +61,7 @@ export default function FeaturesPage() {
     {
       id: "autopilot",
       title: "Marketing Autopilot",
-      body: `Watch one page on your site. When specials or events change, SendFable drafts a campaign. Free: weekly / ${autopilotMaxDraftsPerMonth("FREE")} drafts a month. Starter: daily / ${autopilotMaxDraftsPerMonth("STARTER")}. Growth+: twice daily / ${autopilotMaxDraftsPerMonth("GROWTH")}.`,
+      body: `Watch one page on your site. When specials or events change, SendFable drafts a campaign. Free can start a 3-month trial with 1 creation a month. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
       href: "/automated-email-marketing",
     },
     {
@@ -73,7 +73,7 @@ export default function FeaturesPage() {
     {
       id: "approval",
       title: "Owner approval",
-      body: "Approve & Send, Edit, or Skip. If you do nothing, nothing sends. The draft stays waiting for you.",
+      body: "Approve & Schedule, Edit, or Skip this campaign. Nothing sends until you schedule it. If you do nothing, the draft stays waiting.",
     },
     {
       id: "contacts",

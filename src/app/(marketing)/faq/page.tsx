@@ -38,11 +38,11 @@ export default function FaqPage() {
     },
     {
       q: "What is Marketing Autopilot?",
-      a: "Marketing Autopilot watches a page on your website and creates a campaign. You decide what happens next: Approve & Send, Edit, or Skip.",
+      a: "Marketing Autopilot watches a page on your website and creates a campaign. You decide what happens next: Approve & Schedule, Edit, or Skip this campaign. Nothing sends until you schedule it.",
     },
     {
       q: "Does Autopilot send automatically?",
-      a: "No. Approve & Send, Edit, or Skip. If you do nothing, nothing sends. The draft stays waiting for you. At most one reminder.",
+      a: "No. Approve & Schedule, Edit, or Skip this campaign. If you do nothing, nothing sends. The draft stays waiting for you. At most one reminder.",
     },
     {
       q: "Can I import contacts?",
@@ -72,7 +72,7 @@ export default function FaqPage() {
     },
     {
       q: "How many Autopilot drafts do I get?",
-      a: `Free: weekly checks, up to ${autopilotMaxDraftsPerMonth("FREE")} drafts/month. Starter: daily checks, up to ${autopilotMaxDraftsPerMonth("STARTER")} drafts/month. Growth and above: twice-daily checks available, up to ${autopilotMaxDraftsPerMonth("GROWTH")} drafts/month.`,
+      a: `Free does not permanently include Marketing Autopilot. Start a 3-month free trial for 1 automatically created campaign per month. Unused trial creations do not roll over. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
     },
   ];
 

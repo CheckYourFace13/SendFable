@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AutopilotUpgradeBanner } from "@/components/app/autopilot-upgrade-banner";
+import { AutopilotScheduleForm } from "@/components/app/autopilot-schedule-form";
+import { AutopilotAccountPanel } from "@/components/app/autopilot-account-panel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,9 +35,12 @@ type WaitingDraft = {
   subject: string | null;
   sourceUrl: string | null;
   audience: string | null;
+  recipientCount: number | null;
   campaignId: string | null;
+  campaignStatus: string | null;
   detectedAt: string | null;
   createdAt: string | null;
+  scheduledLabel: string | null;
 };
 
 const WAITING = new Set(["AWAITING_APPROVAL", "DRAFTED", "EDITING"]);
@@ -60,7 +65,29 @@ export default function MarketingAutopilotSettingsPage() {
   const [draftsCap, setDraftsCap] = useState<number | null>(2);
   const [internalUnlimited, setInternalUnlimited] = useState(false);
   const [drafts, setDrafts] = useState<WaitingDraft[]>([]);
-  const [pendingAction, setPendingAction] = useState<{ id: string; action: "approve" | "skip" } | null>(null);
+  const [pendingSkip, setPendingSkip] = useState<string | null>(null);
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+  const [commercial, setCommercial] = useState<null | {
+    includedPerMonth: number | null;
+    trialAvailable: boolean;
+    trialActive: boolean;
+    trialCreationsRemaining: number;
+    trialMonthsLeft: number;
+    credits: number;
+    promo: "NONE" | "MONTHLY" | "WEEKLY";
+    packs: Array<{ id: string; credits: number; cents: number; label: string }>;
+    brand: {
+      businessName: string;
+      logoUrl: string | null;
+      primaryColor: string;
+      accentColor: string;
+      fontLabel: string;
+      buttonLabel: string;
+      buttonStyle: string;
+      confirmed: boolean;
+      suggested: boolean;
+    };
+  }>(null);
 
   async function load() {
     const [cRes, dRes] = await Promise.all([
@@ -81,7 +108,8 @@ export default function MarketingAutopilotSettingsPage() {
       setPlan(j.plan || "FREE");
       setDraftsUsed(typeof j.draftsUsedThisMonth === "number" ? j.draftsUsedThisMonth : 0);
       setInternalUnlimited(Boolean(j.internalUnlimited));
-      setDraftsCap(j.internalUnlimited ? null : typeof j.draftsCap === "number" ? j.draftsCap : 2);
+      setDraftsCap(j.internalUnlimited ? null : typeof j.draftsCap === "number" ? j.draftsCap : 0);
+      setCommercial(j.commercial || null);
     }
     if (dRes.ok) {
       const j = await dRes.json();
@@ -133,11 +161,15 @@ export default function MarketingAutopilotSettingsPage() {
     await load();
   }
 
-  async function decide(id: string, action: "approve" | "skip" | "edit") {
+  async function decide(
+    id: string,
+    action: "skip" | "edit" | "schedule" | "cancel-schedule",
+    schedule?: { date: string; time: string; timezone: string }
+  ) {
     const res = await fetch(`/api/autopilot/drafts/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, confirm: true }),
+      body: JSON.stringify({ action, confirm: true, ...schedule }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -148,13 +180,25 @@ export default function MarketingAutopilotSettingsPage() {
       window.location.href = `/campaigns/${data.campaignId}`;
       return;
     }
-    toast.success(action === "approve" ? "Campaign is sending" : "Campaign skipped. It will not send.");
-    setPendingAction(null);
+    if (action === "schedule") {
+      toast.success(`Scheduled for ${data.scheduledLabel || "the time you chose"}`);
+    } else if (action === "cancel-schedule") {
+      toast.success("Schedule canceled. Nothing will send.");
+    } else {
+      toast.success("Campaign skipped. It will not send.");
+    }
+    setPendingSkip(null);
+    setSchedulingId(null);
     await load();
   }
 
-  const waitingDrafts = drafts.filter((draft) => WAITING.has(draft.status));
-  const decidedDrafts = drafts.filter((draft) => !WAITING.has(draft.status));
+  const scheduledDrafts = drafts.filter((draft) => draft.campaignStatus === "SCHEDULED");
+  const waitingDrafts = drafts.filter(
+    (draft) => WAITING.has(draft.status) && draft.campaignStatus !== "SCHEDULED"
+  );
+  const decidedDrafts = drafts.filter(
+    (draft) => !WAITING.has(draft.status) && draft.campaignStatus !== "SCHEDULED"
+  );
 
   if (loading) {
     return (
@@ -168,13 +212,19 @@ export default function MarketingAutopilotSettingsPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Marketing Autopilot"
-        description="Marketing Autopilot creates the campaign. You decide what happens next."
+        description="Your website changes. SendFable builds the campaign. You choose when it sends."
+      />
+
+      <AutopilotAccountPanel
+        internalUnlimited={internalUnlimited}
+        commercial={commercial}
+        onChanged={() => void load()}
       />
 
       <section id="waiting" className="mt-6 rounded-xl border p-5">
         <h2 className="font-semibold">Waiting for approval</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Approve &amp; Send, Edit, or Skip. If you do nothing, nothing sends. The draft stays waiting for you.
+          Approve &amp; Schedule, Edit, or Skip this campaign. If you do nothing, nothing sends. The draft stays waiting for you.
         </p>
         {waitingDrafts.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">No drafts are waiting.</p>
@@ -184,22 +234,32 @@ export default function MarketingAutopilotSettingsPage() {
               <li key={draft.id} className="space-y-3 px-4 py-4 text-sm">
                 <div>
                   <p className="font-medium">{draft.subject || "Draft campaign"}</p>
-                  <p className="mt-1 text-muted-foreground">Audience: {draft.audience || "Everyone subscribed"}</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Audience: {draft.audience || "Everyone subscribed"}
+                    {draft.recipientCount != null ? ` · ${draft.recipientCount.toLocaleString()} recipients` : ""}
+                  </p>
                   <p className="truncate text-muted-foreground">Source: {draft.sourceUrl || "—"}</p>
                   <p className="text-muted-foreground">Detected: {when(draft.detectedAt)}</p>
                   <p className="text-muted-foreground">Created: {when(draft.createdAt)}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => setPendingAction({ id: draft.id, action: "approve" })}>
-                    Approve &amp; Send
+                  <Button size="sm" onClick={() => setSchedulingId(draft.id)}>
+                    Approve &amp; Schedule
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => void decide(draft.id, "edit")}>
                     Edit
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setPendingAction({ id: draft.id, action: "skip" })}>
-                    Skip
+                  <Button size="sm" variant="outline" onClick={() => setPendingSkip(draft.id)}>
+                    Skip this campaign
                   </Button>
                 </div>
+                {schedulingId === draft.id && (
+                  <AutopilotScheduleForm
+                    audience={draft.audience || "Everyone subscribed"}
+                    recipientCount={draft.recipientCount}
+                    onSchedule={(value) => void decide(draft.id, "schedule", value)}
+                  />
+                )}
               </li>
             ))}
           </ul>
@@ -308,9 +368,46 @@ export default function MarketingAutopilotSettingsPage() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          If you do nothing, nothing sends. The draft stays waiting for you. At most one reminder.
+          Nothing sends until you schedule it. If you do nothing, the draft stays waiting. At most one reminder.
         </p>
       </div>
+
+      {scheduledDrafts.length > 0 && (
+        <section className="mt-6 rounded-xl border p-5">
+          <h2 className="font-semibold">Scheduled</h2>
+          <ul className="mt-4 space-y-4">
+            {scheduledDrafts.map((draft) => (
+              <li key={draft.id} className="space-y-3 text-sm">
+                <p className="font-medium">{draft.subject || "Draft campaign"}</p>
+                <p>Scheduled for {draft.scheduledLabel || "the time you chose"}</p>
+                <p className="text-muted-foreground">
+                  Audience: {draft.audience || "Everyone subscribed"}
+                  {draft.recipientCount != null ? ` · ${draft.recipientCount.toLocaleString()} recipients` : ""}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => void decide(draft.id, "edit")}>
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setSchedulingId(draft.id)}>
+                    Reschedule
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void decide(draft.id, "cancel-schedule")}>
+                    Cancel schedule
+                  </Button>
+                </div>
+                {schedulingId === draft.id && (
+                  <AutopilotScheduleForm
+                    audience={draft.audience || "Everyone subscribed"}
+                    recipientCount={draft.recipientCount}
+                    submitLabel="SCHEDULE CAMPAIGN"
+                    onSchedule={(value) => void decide(draft.id, "schedule", value)}
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {enabled && (
         <div className="mt-6 rounded-xl border p-5 text-sm">
@@ -352,24 +449,18 @@ export default function MarketingAutopilotSettingsPage() {
         </div>
       )}
 
-      <AlertDialog open={!!pendingAction} onOpenChange={(open) => !open && setPendingAction(null)}>
+      <AlertDialog open={!!pendingSkip} onOpenChange={(open) => !open && setPendingSkip(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {pendingAction?.action === "approve" ? "Send this campaign now?" : "Skip this campaign?"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Skip this campaign?</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingAction?.action === "approve"
-                ? "Approve & Send delivers this campaign to its audience."
-                : "Skip this campaign. It will not send. Other waiting drafts stay in the queue."}
+              Skip this campaign. It will not send. Other waiting drafts stay in the queue.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => pendingAction && void decide(pendingAction.id, pendingAction.action)}
-            >
-              {pendingAction?.action === "approve" ? "Approve & Send" : "Skip this campaign"}
+            <AlertDialogAction onClick={() => pendingSkip && void decide(pendingSkip, "skip")}>
+              Skip this campaign
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

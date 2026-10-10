@@ -361,6 +361,8 @@ model Workspace {
   /// Marketing Autopilot (website → campaign draft → owner approval)
   marketingAutopilotConfig MarketingAutopilotConfig?
   marketingAutopilotDrafts MarketingAutopilotDraft[]
+  autopilotCommercial      AutopilotCommercial?
+  autopilotCreditGrants    AutopilotCreditGrant[]
 }
 
 model Membership {
@@ -729,6 +731,8 @@ model WebhookEvent {
   @@unique([source, externalId])
 }
 
+/// First-party integration idempotency (DrinkKnird weekly, BoatingChicago Brief, etc.).
+/// Same (workspaceId, key) always returns the stored response — never double-launches.
 /// Non-monetary placeholder credits for future Stripe credit application
 model CreditLedgerEntry {
   id        String   @id @default(cuid())
@@ -1584,6 +1588,12 @@ model MarketingAutopilotDraft {
   generationCostMicros BigInt  @default(0)
   generationModel      String?
 
+  /// Which entitlement paid for this draft. Footer branding stays with this value.
+  creationSource   String?
+  brandingRequired Boolean  @default(false)
+  scheduledFor     DateTime?
+  scheduleTimezone String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1595,6 +1605,38 @@ model MarketingAutopilotDraft {
   @@index([workspaceId, status])
   @@index([status, expiresAt])
   @@index([configId, status])
+  @@index([workspaceId, creationSource, createdAt])
+}
+
+/// Trial, purchased creation credits, and promo entitlement for one workspace.
+model AutopilotCommercial {
+  workspaceId      String    @id
+  trialStartedAt   DateTime?
+  creditBalance    Int       @default(0)
+  /// NONE | MONTHLY | WEEKLY
+  promo            String    @default("NONE")
+  promoRedeemedAt  DateTime?
+  brandConfirmedAt DateTime?
+  brandSuggestedAt DateTime?
+  buttonStyle      String    @default("rounded")
+  backgroundColor  String?
+  textColor        String?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+/// One-time Autopilot creation-pack purchases. paymentId prevents double credit.
+model AutopilotCreditGrant {
+  id          String   @id @default(cuid())
+  workspaceId String
+  paymentId   String   @unique
+  packId      String
+  credits     Int
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
 }
 
 /// Singleton pipeline control row (id = "default").

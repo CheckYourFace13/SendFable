@@ -76,7 +76,8 @@ function blockHeading(props: Record<string, unknown>): string {
 function blockText(props: Record<string, unknown>): string {
   const html = String(props.html ?? props.text ?? "");
   const align = String(props.align ?? "left");
-  return `<tr><td style="padding:8px 32px;text-align:${attr(align)};font-size:15px;line-height:1.6;color:#374151;">
+  const color = String(props.color ?? "#374151");
+  return `<tr><td style="padding:8px 32px;text-align:${attr(align)};font-size:15px;line-height:1.6;color:${attr(color)};">
     ${html}
   </td></tr>`;
 }
@@ -98,10 +99,11 @@ function blockButton(props: Record<string, unknown>): string {
   const bg = String(props.backgroundColor ?? "#4F46E5");
   const color = String(props.textColor ?? "#ffffff");
   const align = String(props.align ?? "center");
+  const radius = Number.isFinite(Number(props.borderRadius)) ? Number(props.borderRadius) : 8;
   return `<tr><td style="padding:16px 32px;" align="${attr(align)}">
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
-      <td style="border-radius:8px;background-color:${attr(bg)};">
-        <a href="${attr(href)}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:${attr(color)};text-decoration:none;border-radius:8px;">${esc(label)}</a>
+      <td style="border-radius:${radius}px;background-color:${attr(bg)};">
+        <a href="${attr(href)}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:${attr(color)};text-decoration:none;border-radius:${radius}px;">${esc(label)}</a>
       </td>
     </tr></table>
   </td></tr>`;

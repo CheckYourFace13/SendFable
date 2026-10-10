@@ -13,6 +13,7 @@ import { signToken } from "@/lib/tokens";
 import { BOUNCE_PAUSE_THRESHOLD, COMPLAINT_PAUSE_THRESHOLD, maxRampLevel } from "@/lib/plans";
 import { getWorkspaceEntitlement, getWorkspaceOwner } from "@/lib/workspace-owner";
 import { softwareQuotas } from "@/lib/internal-entitlement";
+import { sendBadgeForCampaign } from "@/lib/autopilot/commercial-account";
 import { incrementMonthlySendCount } from "@/lib/quota";
 import { sendCampaignAutoPausedAlert } from "@/lib/transactional";
 import { enqueueRecipients, drainCampaignJobs } from "@/lib/queue";
@@ -171,7 +172,7 @@ export async function sendOneRecipient(recipientId: string): Promise<void> {
       businessName: tradeName,
       mailingAddress: campaign.workspace.mailingAddress,
       legalOperatorName: legalOp,
-      showSendfableBadge: showBadge,
+      showSendfableBadge: await sendBadgeForCampaign(campaign.id, showBadge),
       previewText: campaign.previewText,
     });
   }

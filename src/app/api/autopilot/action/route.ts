@@ -6,6 +6,9 @@ import { appUrl } from "@/lib/utils";
 const schema = z.object({
   token: z.string().min(10).max(4000),
   confirm: z.literal(true),
+  date: z.string().max(20).optional(),
+  time: z.string().max(10).optional(),
+  timezone: z.string().max(80).optional(),
 });
 
 /**
@@ -21,6 +24,9 @@ export async function POST(req: Request) {
   const result = await executeAutopilotAction({
     token: parsed.data.token,
     confirm: true,
+    date: parsed.data.date,
+    time: parsed.data.time,
+    timezone: parsed.data.timezone,
   });
 
   if (!result.ok) {
@@ -35,7 +41,12 @@ export async function POST(req: Request) {
     });
   }
 
-  return NextResponse.json({ ok: true, result: result.result, campaignId: result.campaignId });
+  return NextResponse.json({
+    ok: true,
+    result: result.result,
+    campaignId: result.campaignId,
+    scheduledLabel: "scheduledLabel" in result ? result.scheduledLabel : undefined,
+  });
 }
 
 export async function GET() {

@@ -59,7 +59,7 @@ export default async function AutopilotReviewPage({
   const { draft, action } = loaded;
   const recipients = loaded.recipients ?? 0;
   const titles = {
-    approve: "Ready to send this campaign?",
+    approve: "Choose when this campaign sends",
     reject: "Skip this campaign?",
     edit: "Edit this campaign before sending?",
   } as const;
@@ -89,8 +89,8 @@ export default async function AutopilotReviewPage({
       </dl>
 
       {action === "approve" && (
-        <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Ready to send this campaign to {recipients.toLocaleString()} customers?
+        <p className="mt-6 rounded-lg border border-ink/10 bg-parchment px-4 py-3 text-sm text-ink/80">
+          Nothing sends until you schedule it. Choose a date, time, and timezone.
         </p>
       )}
       {action === "reject" && (
@@ -105,7 +105,12 @@ export default async function AutopilotReviewPage({
         </p>
       )}
 
-      <AutopilotConfirmForm token={token} action={action} />
+      <AutopilotConfirmForm
+        token={token}
+        action={action}
+        audience="Selected audience"
+        recipientCount={recipients}
+      />
 
       <p className="mt-8 text-xs text-ink/45">
         Opening this page does not send anything. Only the confirmation button below performs

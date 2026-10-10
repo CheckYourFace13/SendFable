@@ -4,8 +4,8 @@ import { appUrl } from "@/lib/utils";
 import { platformFrom, sendEmail } from "@/lib/mailer";
 import { getWorkspaceOwner } from "@/lib/workspace-owner";
 import { countAudience } from "@/lib/audience";
-import { launchCampaign } from "@/lib/campaign-send";
 import type { AutopilotAction } from "@/lib/autopilot/types";
+import { formatScheduledWhen, parseAutopilotSchedule } from "@/lib/autopilot/schedule";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
@@ -141,7 +141,7 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
       previewSnippet
     )}…</p>` +
     `<table role="presentation" cellpadding="0" cellspacing="0"><tr>` +
-    actionBtn(approveUrl, "Approve &amp; send", "#059669") +
+    actionBtn(approveUrl, "Approve &amp; schedule", "#059669") +
     actionBtn(editUrl, "Edit", "#4F46E5") +
     actionBtn(rejectUrl, "Skip this campaign", "#6b7280") +
     `</tr></table>` +
@@ -212,8 +212,11 @@ export async function loadAutopilotReview(token: string) {
 export async function executeAutopilotAction(opts: {
   token: string;
   confirm: boolean;
+  date?: string | null;
+  time?: string | null;
+  timezone?: string | null;
 }): Promise<
-  | { ok: true; result: "approved_sent" | "rejected" | "edit"; campaignId?: string }
+  | { ok: true; result: "scheduled" | "rejected" | "edit"; campaignId?: string; scheduledLabel?: string }
   | { ok: false; error: string }
 > {
   const verified = await verifyAutopilotActionToken(opts.token);
@@ -226,6 +229,17 @@ export async function executeAutopilotAction(opts: {
   if (!draft) return { ok: false, error: "not_found" };
   if (draft.approvalTokenVersion !== verified.version) {
     return { ok: false, error: "token_used" };
+  }
+
+  if (verified.action === "approve") {
+    return scheduleAutopilotDraft({
+      draftId: draft.id,
+      workspaceId: draft.workspaceId,
+      confirm: opts.confirm,
+      date: opts.date,
+      time: opts.time,
+      timezone: opts.timezone,
+    });
   }
 
   return applyAutopilotDecision({
@@ -242,7 +256,7 @@ export async function applyAutopilotDecision(opts: {
   action: AutopilotAction;
   confirm: boolean;
 }): Promise<
-  | { ok: true; result: "approved_sent" | "rejected" | "edit"; campaignId?: string }
+  | { ok: true; result: "scheduled" | "rejected" | "edit"; campaignId?: string; scheduledLabel?: string }
   | { ok: false; error: string }
 > {
   const draft = await prisma.marketingAutopilotDraft.findFirst({
@@ -294,51 +308,103 @@ export async function applyAutopilotDecision(opts: {
     return { ok: true, result: "rejected" };
   }
 
-  // approve
-  if (!opts.confirm) return { ok: false, error: "confirm_required" };
-  if (!draft.campaignId) return { ok: false, error: "no_campaign" };
+  // Approve never sends immediately. Scheduling is a separate confirmed action.
+  return { ok: false, error: "schedule_required" };
+}
 
-  // Mark approved first (single-use token), then launch — never auto from GET
-  await prisma.marketingAutopilotDraft.update({
-    where: { id: draft.id },
-    data: {
-      status: "APPROVED",
-      decidedAt: new Date(),
-      decidedAction: "APPROVE",
-      approvalTokenVersion: { increment: 1 },
-    },
+export async function scheduleAutopilotDraft(opts: {
+  draftId: string;
+  workspaceId: string;
+  confirm: boolean;
+  date?: string | null;
+  time?: string | null;
+  timezone?: string | null;
+}): Promise<
+  | { ok: true; result: "scheduled"; campaignId?: string; scheduledLabel: string }
+  | { ok: false; error: string }
+> {
+  if (!opts.confirm) return { ok: false, error: "confirm_required" };
+  const when = parseAutopilotSchedule({
+    date: opts.date,
+    time: opts.time,
+    timezone: opts.timezone,
   });
+  if (!when.ok) return when;
+
+  const draft = await prisma.marketingAutopilotDraft.findFirst({
+    where: { id: opts.draftId, workspaceId: opts.workspaceId },
+    include: { campaign: true },
+  });
+  if (!draft?.campaignId || !draft.campaign) return { ok: false, error: "no_campaign" };
+  if (["SENDING", "SENT"].includes(draft.campaign.status)) {
+    return { ok: false, error: "already_decided" };
+  }
+  const open = ["AWAITING_APPROVAL", "DRAFTED", "EDITING", "APPROVED"].includes(draft.status);
+  if (!open) return { ok: false, error: "already_decided" };
+
+  await prisma.$transaction([
+    prisma.campaign.update({
+      where: { id: draft.campaignId },
+      data: { status: "SCHEDULED", scheduledAt: when.at },
+    }),
+    prisma.marketingAutopilotDraft.update({
+      where: { id: draft.id },
+      data: {
+        status: "APPROVED",
+        decidedAt: new Date(),
+        decidedAction: "SCHEDULE",
+        scheduledFor: when.at,
+        scheduleTimezone: when.timezone,
+        approvalTokenVersion: { increment: 1 },
+      },
+    }),
+  ]);
 
   try {
-    await launchCampaign(draft.campaignId);
-  } catch (err) {
-    // Roll status back to AWAITING so owner can retry after fixing sender/audience
-    await prisma.marketingAutopilotDraft.update({
+    ensureAnalyticsPersistence();
+    trackEvent("autopilot_approved");
+  } catch {
+    /* fail open */
+  }
+
+  return {
+    ok: true,
+    result: "scheduled",
+    campaignId: draft.campaignId,
+    scheduledLabel: formatScheduledWhen(when.at, when.timezone),
+  };
+}
+
+export async function cancelAutopilotSchedule(opts: {
+  draftId: string;
+  workspaceId: string;
+  confirm: boolean;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!opts.confirm) return { ok: false, error: "confirm_required" };
+  const draft = await prisma.marketingAutopilotDraft.findFirst({
+    where: { id: opts.draftId, workspaceId: opts.workspaceId },
+    include: { campaign: true },
+  });
+  if (!draft?.campaign) return { ok: false, error: "not_found" };
+  if (draft.campaign.status !== "SCHEDULED") {
+    return { ok: false, error: "not_scheduled" };
+  }
+  await prisma.$transaction([
+    prisma.campaign.update({
+      where: { id: draft.campaign.id },
+      data: { status: "DRAFT", scheduledAt: null },
+    }),
+    prisma.marketingAutopilotDraft.update({
       where: { id: draft.id },
       data: {
         status: "AWAITING_APPROVAL",
         decidedAt: null,
         decidedAction: null,
+        scheduledFor: null,
+        scheduleTimezone: null,
+        approvalTokenVersion: { increment: 1 },
       },
-    });
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "launch_failed",
-    };
-  }
-
-  await prisma.marketingAutopilotDraft.update({
-    where: { id: draft.id },
-    data: { status: "SENT" },
-  });
-
-  try {
-    ensureAnalyticsPersistence();
-    trackEvent("autopilot_approved");
-    trackEvent("autopilot_campaign_sent");
-  } catch {
-    /* fail open */
-  }
-
-  return { ok: true, result: "approved_sent", campaignId: draft.campaignId };
+    }),
+  ]);
+  return { ok: true };
 }

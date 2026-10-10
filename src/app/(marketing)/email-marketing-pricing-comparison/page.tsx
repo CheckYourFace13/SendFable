@@ -133,8 +133,8 @@ export default function EmailMarketingPricingComparisonPage() {
           </li>
           <li>Campaign-first UI, Simple Mode, Send Confidence, CSV import, hosted forms</li>
           <li>
-            Email, Text, or Both. Marketing Autopilot is included: a website change becomes a
-            campaign, and nothing sends until you approve it.
+            Email, Text, or Both. Marketing Autopilot is a 3-month free trial on Free (1 campaign a
+            month), then a monthly allowance on paid plans. Nothing sends until you schedule it.
           </li>
         </ul>
         <h3 className="mt-8 text-lg font-semibold text-ink">Where others may win</h3>

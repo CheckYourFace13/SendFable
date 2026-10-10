@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { compileEmailHtml } from "@/lib/email-compiler";
 import { createSimpleDesign } from "@/lib/simple-design";
 import type { GeneratedCampaign } from "@/lib/autopilot/generate";
+import type { CreationChoice } from "@/lib/autopilot/commercial";
+import { lockCreation } from "@/lib/autopilot/commercial-account";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
@@ -17,19 +19,38 @@ export async function createAutopilotCampaignDraft(opts: {
   audienceType: string;
   audienceTagIds: string[];
   audienceSegmentId: string | null;
+  choice: CreationChoice;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
 }): Promise<{ draftId: string; campaignId: string }> {
   const workspace = await prisma.workspace.findUniqueOrThrow({
     where: { id: opts.workspaceId },
   });
+  const commercial = await prisma.autopilotCommercial.findUnique({
+    where: { workspaceId: opts.workspaceId },
+  });
 
-  let design = createSimpleDesign({
+  const designOpts = {
     headline: opts.generated.headline,
     messageHtml: opts.generated.bodyHtml,
     buttonLabel: opts.generated.ctaLabel,
     buttonHref: opts.generated.ctaHref || opts.sourceUrl,
     logoUrl: workspace.logoUrl,
+    logoAlt: workspace.name,
     primaryColor: workspace.primaryColor,
-  });
+    accentColor: workspace.secondaryColor,
+    textColor: commercial?.textColor || undefined,
+    backgroundColor: commercial?.backgroundColor || undefined,
+    fontFamily: workspace.fontStack,
+    omitPlaceholderImage: true,
+    imageUrl: opts.imageUrl || null,
+    imageAlt: opts.imageAlt || opts.generated.headline,
+    buttonRadius: (commercial?.buttonStyle === "square" ? "square" : "rounded") as
+      | "square"
+      | "rounded",
+  };
+
+  let design = createSimpleDesign(designOpts);
 
   let templateSlug = opts.generated.templateSlug;
   if (templateSlug) {
@@ -41,14 +62,7 @@ export async function createAutopilotCampaignDraft(opts: {
     });
     if (tpl?.designJson) {
       // Prefer template shell but inject our headline/body/CTA into simple blocks when possible
-      design = createSimpleDesign({
-        headline: opts.generated.headline,
-        messageHtml: opts.generated.bodyHtml,
-        buttonLabel: opts.generated.ctaLabel,
-        buttonHref: opts.generated.ctaHref || opts.sourceUrl,
-        logoUrl: workspace.logoUrl,
-        primaryColor: workspace.primaryColor,
-      });
+      design = createSimpleDesign(designOpts);
     } else {
       templateSlug = null;
     }
@@ -57,12 +71,13 @@ export async function createAutopilotCampaignDraft(opts: {
   const compiledHtml = compileEmailHtml(design, {
     businessName: workspace.name,
     mailingAddress: workspace.mailingAddress,
-    showSendfableBadge: true,
+    showSendfableBadge: opts.choice.brandingRequired,
   });
 
   const name = `Autopilot: ${opts.generated.headline.slice(0, 60)}`;
 
   const result = await prisma.$transaction(async (tx) => {
+    await lockCreation(tx, opts.workspaceId, opts.choice.source, new Date());
     const campaign = await tx.campaign.create({
       data: {
         workspaceId: opts.workspaceId,
@@ -102,6 +117,8 @@ export async function createAutopilotCampaignDraft(opts: {
         expiresAt: null,
         generationCostMicros: BigInt(opts.generated.costMicros),
         generationModel: opts.generated.model,
+        creationSource: opts.choice.source,
+        brandingRequired: opts.choice.brandingRequired,
       },
     });
 

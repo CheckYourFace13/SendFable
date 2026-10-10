@@ -2,10 +2,9 @@ import type { Plan } from "@prisma/client";
 import type { AutopilotFrequency } from "@/lib/autopilot/types";
 
 /**
- * Commercial placement (tiny operating cost → include early, still drive upgrades):
- * - FREE: can enable, weekly only, max 2 drafts/month
- * - STARTER: daily, 1 watched page
- * - GROWTH+: twice daily available
+ * Permanent monthly Autopilot creations. Free is 0.
+ * A Free workspace can still start an explicit 3-month trial (1 per month).
+ * Owner-internal unlimited is applied outside this function.
  */
 export function autopilotAllowedFrequencies(plan: Plan): AutopilotFrequency[] {
   if (plan === "FREE") return ["WEEKLY"];
@@ -14,9 +13,11 @@ export function autopilotAllowedFrequencies(plan: Plan): AutopilotFrequency[] {
 }
 
 export function autopilotMaxDraftsPerMonth(plan: Plan): number {
-  if (plan === "FREE") return 2;
-  if (plan === "STARTER") return 20;
-  return 60;
+  if (plan === "FREE") return 0;
+  if (plan === "STARTER") return 4;
+  if (plan === "GROWTH") return 8;
+  if (plan === "PRO") return 16;
+  return 30;
 }
 
 export function clampAutopilotFrequency(

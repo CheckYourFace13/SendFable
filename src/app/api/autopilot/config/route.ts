@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/session";
 import { assertSafePublicUrl } from "@/lib/ssrf";
 import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
 import { softwareQuotas } from "@/lib/internal-entitlement";
+import { describeAutopilotAccount } from "@/lib/autopilot/commercial-account";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 import type { Prisma } from "@prisma/client";
@@ -71,7 +72,12 @@ export async function GET() {
     internalUnlimited: quotas.entitlement === "OWNER_INTERNAL_UNLIMITED",
     draftsUsedThisMonth,
     draftsCap,
-    draftsLimitReached: draftsCap != null && draftsUsedThisMonth >= draftsCap,
+    draftsLimitReached: draftsCap != null && draftsCap > 0 && draftsUsedThisMonth >= draftsCap,
+    commercial: await describeAutopilotAccount(
+      ctx.workspace.id,
+      ent.plan,
+      quotas.entitlement === "OWNER_INTERNAL_UNLIMITED"
+    ),
   });
 }
 

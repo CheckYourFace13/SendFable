@@ -12,6 +12,7 @@ import {
   handleSmsSubscriptionEvent,
   recalcSmsBundleForCustomer,
 } from "@/lib/sms/stripe";
+import { grantAutopilotCredits } from "@/lib/autopilot/commercial-account";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,15 @@ export async function POST(req: Request) {
             session.metadata.smsActivationWorkspaceId,
             String(session.payment_intent || session.id)
           );
+          break;
+        }
+        if (session.mode === "payment" && session.metadata?.autopilotCreditWorkspaceId) {
+          await grantAutopilotCredits({
+            workspaceId: session.metadata.autopilotCreditWorkspaceId,
+            packId: String(session.metadata.autopilotCreditPack || ""),
+            paymentId: String(session.payment_intent || session.id),
+            amountCents: session.amount_total,
+          });
           break;
         }
         if (session.mode !== "subscription" || !session.subscription) break;

@@ -8,6 +8,7 @@ import { launchCampaign } from "@/lib/campaign-send";
 import { launchSmsCampaign, resolveSmsAudienceContacts } from "@/lib/sms/campaign";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
+import { sendBadgeForCampaign } from "@/lib/autopilot/commercial-account";
 import { sanitizeEmailHtml } from "@/lib/html-sanitize";
 import { maybeAwardReferralSignupCredit } from "@/lib/referrals";
 import { externalEmailActive, isEarlyLaunch } from "@/lib/early-launch";
@@ -132,11 +133,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       const html = compileEmailHtml(campaign.designJson as unknown as EmailDesign, {
         businessName: ctx.workspace.name,
         mailingAddress: ctx.workspace.mailingAddress,
-        showSendfableBadge: showSendfableBadgeFor({
-          isInternal: ctx.workspace.isInternal,
-          disabledAt: ctx.workspace.disabledAt,
-          plan: owner.plan,
-        }),
+        showSendfableBadge: await sendBadgeForCampaign(
+          campaign.id,
+          showSendfableBadgeFor({
+            isInternal: ctx.workspace.isInternal,
+            disabledAt: ctx.workspace.disabledAt,
+            plan: owner.plan,
+          })
+        ),
         previewText: campaign.previewText,
       });
       await prisma.campaign.update({

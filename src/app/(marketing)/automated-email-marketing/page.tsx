@@ -61,11 +61,11 @@ const FAQS = [
   },
   {
     q: "Does opening the approval email send the campaign?",
-    a: "No. Email security scanners often open links automatically. Approve & Send opens a confirmation page; only the final button (a secure POST) can send.",
+    a: "No. Email security scanners often open links automatically. Approve & Schedule opens a page where you choose a date, time, and timezone. Nothing sends until you schedule it.",
   },
   {
     q: "Which plans include Marketing Autopilot?",
-    a: `Free includes weekly checks and ${autopilotMaxDraftsPerMonth("FREE")} drafts a month. Starter ($${PLANS.STARTER.monthlyPrice}/mo) checks daily, up to ${autopilotMaxDraftsPerMonth("STARTER")} drafts a month. Growth and above can check twice a day, up to ${autopilotMaxDraftsPerMonth("GROWTH")} drafts a month. A draft is created only when the page actually changes.`,
+    a: `Free does not permanently include Marketing Autopilot. You can start a 3-month free trial with 1 automatically created campaign per month. Unused trial creations do not roll over. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}. A draft is created only when the page actually changes.`,
   },
   {
     q: "Does Autopilot send texts too?",
@@ -97,8 +97,8 @@ export default function AutomatedEmailMarketingPage() {
         Automated email marketing that still keeps you in control
       </h1>
       <p className="mt-4 text-lg text-ink/65">
-        Collect subscribers. Watch the page where you promote. Draft automatically. Approve. Send —
-        only when you say so.
+        Your website changes. SendFable builds the campaign. You choose when it sends. Try Marketing
+        Autopilot free for 3 months — 1 automatically created campaign per month.
       </p>
 
       <div className="mt-8">
@@ -108,7 +108,8 @@ export default function AutomatedEmailMarketingPage() {
       <div className="mt-6 rounded-xl border-2 border-coral/40 bg-coral/5 px-5 py-4">
         <p className="text-sm font-bold uppercase tracking-wider text-coral">No approval. No send.</p>
         <p className="mt-1 text-sm text-ink/70">
-          Automate your marketing without giving up control.
+          Nothing sends until you schedule it. Try Marketing Autopilot free for 3 months. Includes 1
+          automatically created campaign per month during the trial.
         </p>
       </div>
 
@@ -173,11 +174,11 @@ export default function AutomatedEmailMarketingPage() {
             },
             {
               t: "Approve",
-              b: "You get a preview email with Approve & Send, Edit, or Skip this campaign. Confirmation is required before send. Edit opens the exact draft. If you do nothing, nothing sends, and the draft stays waiting.",
+              b: "You get a preview email with Approve & Schedule, Edit, or Skip this campaign. You choose the date, time, and timezone. If you do nothing, nothing sends, and the draft stays waiting.",
             },
             {
               t: "Send",
-              b: "After explicit approval, the campaign sends through the normal SendFable email pipeline.",
+              b: "After you schedule it, the campaign sends at that time through the normal SendFable email pipeline.",
             },
           ].map((s, i) => (
             <li key={s.t} className="flex gap-4">
@@ -210,7 +211,7 @@ export default function AutomatedEmailMarketingPage() {
         <p className="mt-2 text-sm text-ink/65">
           Competitors often offer complex automation builders. SendFable&apos;s differentiator is
           simpler: watch the page where you already post promotions, prepare the campaign, and wait
-          for you. Nothing sends until you approve.
+          for you. Nothing sends until you schedule it.
         </p>
         <p className="mt-4 text-sm">
           <Link href="/compare/mailchimp" className="text-coral underline">
@@ -226,16 +227,22 @@ export default function AutomatedEmailMarketingPage() {
       <section className="mt-16">
         <h2 className="text-2xl font-semibold text-ink">Availability</h2>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-ink/70">
+          <li>Free — no permanent Autopilot. Optional 3-month trial: 1 creation per month.</li>
           <li>
-            Free — weekly checks, {autopilotMaxDraftsPerMonth("FREE")} drafts a month
+            Starter (${PLANS.STARTER.monthlyPrice}/mo) — {autopilotMaxDraftsPerMonth("STARTER")}{" "}
+            creations a month
           </li>
           <li>
-            Starter (${PLANS.STARTER.monthlyPrice}/mo) — daily checks,{" "}
-            {autopilotMaxDraftsPerMonth("STARTER")} drafts a month
+            Growth (${PLANS.GROWTH.monthlyPrice}/mo) — {autopilotMaxDraftsPerMonth("GROWTH")}{" "}
+            creations a month
           </li>
           <li>
-            Growth and above (${PLANS.GROWTH.monthlyPrice}/mo and up) — twice-daily checks,{" "}
-            {autopilotMaxDraftsPerMonth("GROWTH")} drafts a month
+            Pro (${PLANS.PRO.monthlyPrice}/mo) — {autopilotMaxDraftsPerMonth("PRO")} creations a
+            month
+          </li>
+          <li>
+            Pro Plus (${PLANS.PRO_PLUS.monthlyPrice}/mo) — {autopilotMaxDraftsPerMonth("PRO_PLUS")}{" "}
+            creations a month
           </li>
         </ul>
       </section>

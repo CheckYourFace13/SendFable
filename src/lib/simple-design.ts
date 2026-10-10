@@ -8,7 +8,17 @@ export function createSimpleDesign(opts?: {
   buttonLabel?: string;
   buttonHref?: string;
   logoUrl?: string | null;
+  logoAlt?: string;
   primaryColor?: string;
+  accentColor?: string;
+  textColor?: string;
+  backgroundColor?: string;
+  fontFamily?: string;
+  /** When set, skip the empty placeholder unless imageUrl is a real image. */
+  omitPlaceholderImage?: boolean;
+  imageUrl?: string | null;
+  imageAlt?: string;
+  buttonRadius?: "rounded" | "square";
 }): EmailDesign {
   const color = opts?.primaryColor || "#4F46E5";
   const blocks: EmailDesign["blocks"] = [];
@@ -17,11 +27,11 @@ export function createSimpleDesign(opts?: {
     blocks.push({
       id: randomToken(8),
       type: "image",
-      props: { src: opts.logoUrl, alt: "Logo", width: 160 },
+      props: { src: opts.logoUrl, alt: opts.logoAlt || "Logo", width: 160 },
     });
   }
 
-  blocks.push(
+  const content: EmailDesign["blocks"] = [
     {
       id: randomToken(8),
       type: "heading",
@@ -29,34 +39,54 @@ export function createSimpleDesign(opts?: {
         text: opts?.headline || "Your headline",
         level: 1,
         align: "left",
-        color: "#111827",
+        color: opts?.accentColor || "#111827",
       },
     },
-    {
+  ];
+
+  if (opts?.omitPlaceholderImage) {
+    if (opts.imageUrl) {
+      content.push({
+        id: randomToken(8),
+        type: "image",
+        props: { src: opts.imageUrl, alt: opts.imageAlt || "", width: 520 },
+      });
+    }
+  } else {
+    content.push({
       id: randomToken(8),
       type: "image",
       props: { src: "", alt: "Featured image", width: 520 },
-    },
+    });
+  }
+
+  const button: Record<string, unknown> = {
+    label: opts?.buttonLabel || "Learn more",
+    href: opts?.buttonHref || "https://",
+    backgroundColor: color,
+    textColor: "#ffffff",
+    align: "center",
+  };
+  if (opts?.buttonRadius) button.borderRadius = opts.buttonRadius === "square" ? 0 : 8;
+
+  const text: Record<string, unknown> = {
+    html:
+      opts?.messageHtml ||
+      "<p>Hi {{first_name|there}},</p><p>Write a short message your customers will actually want to read.</p>",
+    align: "left",
+  };
+  if (opts?.textColor) text.color = opts.textColor;
+
+  content.push(
     {
       id: randomToken(8),
       type: "text",
-      props: {
-        html:
-          opts?.messageHtml ||
-          "<p>Hi {{first_name|there}},</p><p>Write a short message your customers will actually want to read.</p>",
-        align: "left",
-      },
+      props: text,
     },
     {
       id: randomToken(8),
       type: "button",
-      props: {
-        label: opts?.buttonLabel || "Learn more",
-        href: opts?.buttonHref || "https://",
-        backgroundColor: color,
-        textColor: "#ffffff",
-        align: "center",
-      },
+      props: button,
     },
     {
       id: randomToken(8),
@@ -65,13 +95,17 @@ export function createSimpleDesign(opts?: {
     }
   );
 
+  blocks.push(...content);
+
   return {
     version: 1,
     blocks,
     settings: {
-      backgroundColor: "#f8fafc",
+      backgroundColor: opts?.backgroundColor || "#f8fafc",
       contentWidth: 600,
-      fontFamily: "Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
+      fontFamily:
+        opts?.fontFamily ||
+        "Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
     },
   };
 }

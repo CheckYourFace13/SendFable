@@ -20,7 +20,8 @@ describe("autopilot approval safety", () => {
       "utf8"
     );
     assert.match(src, /confirm_required/);
-    assert.match(src, /launchCampaign/);
+    assert.match(src, /schedule_required/);
+    assert.doesNotMatch(src, /launchCampaign/);
     // GET review path must not call launch
     const review = readFileSync(
       join(process.cwd(), "src/app/autopilot/review/page.tsx"),
@@ -51,7 +52,9 @@ describe("autopilot approval safety", () => {
       "utf8"
     );
     assert.match(queue, /Waiting for approval/);
-    assert.match(queue, /Approve &amp; Send/);
+    assert.match(queue, /Approve &amp; Schedule/);
+    assert.match(queue, /SCHEDULE CAMPAIGN/);
+    assert.doesNotMatch(queue, /Send this campaign now/);
     assert.match(queue, /Skip/);
   });
 });

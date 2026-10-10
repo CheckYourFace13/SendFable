@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
+import { countAudience } from "@/lib/audience";
+import { formatScheduledWhen } from "@/lib/autopilot/schedule";
 
 export async function GET() {
   const ctx = await getApiContext();
@@ -21,8 +23,18 @@ export async function GET() {
       detectedAt: true,
       decidedAt: true,
       createdAt: true,
+      creationSource: true,
+      brandingRequired: true,
+      scheduledFor: true,
+      scheduleTimezone: true,
       campaign: {
-        select: { audienceType: true, audienceTagIds: true, status: true },
+        select: {
+          audienceType: true,
+          audienceTagIds: true,
+          audienceSegmentId: true,
+          status: true,
+          scheduledAt: true,
+        },
       },
     },
   });
@@ -44,32 +56,53 @@ export async function GET() {
     : [];
   const tagNames = new Map(tags.map((tag) => [tag.id, tag.name]));
 
-  return NextResponse.json({
-    drafts: drafts.map((draft) => {
-      const ids = Array.isArray(draft.campaign?.audienceTagIds)
-        ? (draft.campaign.audienceTagIds as string[])
-        : [];
-      const named = ids.map((id) => tagNames.get(id)).filter(Boolean);
-      const audience =
-        draft.campaign?.audienceType === "tags"
-          ? named.join(", ") || "Selected audience"
-          : draft.campaign?.audienceType === "segment"
-            ? "A segment"
-            : "Everyone subscribed";
-      return {
-        id: draft.id,
-        status: draft.status,
-        subject: draft.subject,
-        explanation: draft.explanation,
-        sourceUrl: draft.sourceUrl,
-        changeSummary: draft.changeSummary,
-        campaignId: draft.campaignId,
-        campaignStatus: draft.campaign?.status ?? null,
-        detectedAt: draft.detectedAt,
-        decidedAt: draft.decidedAt,
-        createdAt: draft.createdAt,
-        audience,
-      };
-    }),
-  });
+  const mapped = [];
+  for (const draft of drafts) {
+    const ids = Array.isArray(draft.campaign?.audienceTagIds)
+      ? (draft.campaign.audienceTagIds as string[])
+      : [];
+    const named = ids.map((id) => tagNames.get(id)).filter(Boolean);
+    const audience =
+      draft.campaign?.audienceType === "tags"
+        ? named.join(", ") || "Selected audience"
+        : draft.campaign?.audienceType === "segment"
+          ? "A segment"
+          : "Everyone subscribed";
+    const scheduled =
+      draft.campaign?.status === "SCHEDULED" && (draft.scheduledFor || draft.campaign.scheduledAt);
+    let recipientCount: number | null = null;
+    const needsCount =
+      ["AWAITING_APPROVAL", "DRAFTED", "EDITING"].includes(draft.status) || Boolean(scheduled);
+    if (needsCount && draft.campaign) {
+      recipientCount = await countAudience(ctx.workspace.id, {
+        audienceType: (draft.campaign.audienceType as "all" | "tags" | "segment") || "all",
+        audienceTagIds: ids,
+        audienceSegmentId: draft.campaign.audienceSegmentId,
+      });
+    }
+    const when = draft.scheduledFor || draft.campaign?.scheduledAt || null;
+    mapped.push({
+      id: draft.id,
+      status: draft.status,
+      subject: draft.subject,
+      explanation: draft.explanation,
+      sourceUrl: draft.sourceUrl,
+      changeSummary: draft.changeSummary,
+      campaignId: draft.campaignId,
+      campaignStatus: draft.campaign?.status ?? null,
+      detectedAt: draft.detectedAt,
+      decidedAt: draft.decidedAt,
+      createdAt: draft.createdAt,
+      audience,
+      recipientCount,
+      creationSource: draft.creationSource,
+      brandingRequired: draft.brandingRequired,
+      scheduledLabel:
+        scheduled && when && draft.scheduleTimezone
+          ? formatScheduledWhen(when, draft.scheduleTimezone)
+          : null,
+    });
+  }
+
+  return NextResponse.json({ drafts: mapped });
 }

@@ -87,7 +87,11 @@ export async function AutopilotDashboardCard({ workspaceId }: { workspaceId: str
               </li>
               <li>
                 Drafts this month:{" "}
-                {unlimited ? `${draftsUsedThisMonth} · unlimited` : `${draftsUsedThisMonth} / ${draftsCap}`}
+                {unlimited
+                  ? `${draftsUsedThisMonth} · unlimited`
+                  : draftsCap === 0
+                    ? "Not included on Free — trial is 1 per month"
+                    : `${draftsUsedThisMonth} / ${draftsCap}`}
               </li>
               <li>Drafts waiting: {waiting}. If you do nothing, nothing sends.</li>
               <li>

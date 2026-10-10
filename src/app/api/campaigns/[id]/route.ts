@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
+import { sendBadgeForCampaign } from "@/lib/autopilot/commercial-account";
 import { getWorkspaceOwner } from "@/lib/session";
 import { sanitizeEmailHtml } from "@/lib/html-sanitize";
 import { isSmsAccountSignupEnabled, isSmsCodeEnabled } from "@/lib/sms/flags";
@@ -111,11 +112,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       businessName: tradeName,
       mailingAddress: ctx.workspace.mailingAddress,
       legalOperatorName: smsProfile?.legalEntityName?.trim() || null,
-      showSendfableBadge: showSendfableBadgeFor({
-        isInternal: ctx.workspace.isInternal,
-        disabledAt: ctx.workspace.disabledAt,
-        plan: owner.plan,
-      }),
+      showSendfableBadge: await sendBadgeForCampaign(
+        existing.id,
+        showSendfableBadgeFor({
+          isInternal: ctx.workspace.isInternal,
+          disabledAt: ctx.workspace.disabledAt,
+          plan: owner.plan,
+        })
+      ),
       previewText: parsed.data.previewText ?? existing.previewText,
     });
   }

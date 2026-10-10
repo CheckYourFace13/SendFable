@@ -6,8 +6,8 @@ const STEPS = [
   { n: "1", title: "Collect", body: "Customer joins your list." },
   { n: "2", title: "Watch", body: "SendFable watches your marketing page." },
   { n: "3", title: "Draft", body: "A ready-to-send campaign is created." },
-  { n: "4", title: "Approve", body: "You approve, edit, or skip it." },
-  { n: "5", title: "Send", body: "Nothing goes out until you say so." },
+  { n: "4", title: "Schedule", body: "You pick the date, time, and timezone." },
+  { n: "5", title: "Send", body: "Nothing goes out until that time." },
 ];
 
 const SHOTS = [
@@ -47,16 +47,16 @@ export function MarketingAutopilotHome() {
           <h2 className="mt-3 font-display text-display-md text-ink text-balance sm:text-display-lg">
             Your website changes.
             <br />
-            SendFable turns it into a campaign.
+            SendFable builds the campaign.
             <br />
-            You approve it.
+            You choose when it sends.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-charcoal/75 sm:text-lg">
-            Post a special, event, product, or update on your website. SendFable can turn it into a
-            ready-to-send campaign and wait for your approval.
+            Try Marketing Autopilot free for 3 months. That trial includes 1 automatically created
+            campaign per month. You still approve every campaign and choose when it sends.
           </p>
           <p className="mt-4 text-sm font-bold uppercase tracking-wider text-coral">
-            No approval. No send.
+            Nothing sends until you schedule it.
           </p>
         </div>
 

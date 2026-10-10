@@ -101,17 +101,17 @@ export function WebsiteToEmailProof() {
         </p>
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
           <span className="rounded-md bg-teal px-3 py-2 text-sm font-semibold text-white">
-            Approve &amp; send
+            Approve &amp; schedule
           </span>
           <span className="rounded-md border border-ink/15 bg-white px-3 py-2 text-sm font-semibold text-ink">
             Edit
           </span>
           <span className="rounded-md border border-ink/15 bg-white px-3 py-2 text-sm font-semibold text-ink">
-            Don&apos;t send
+            Skip this campaign
           </span>
         </div>
         <p className="mt-3 text-center text-sm font-bold uppercase tracking-wider text-coral">
-          No approval. No send.
+          Nothing sends until you schedule it.
         </p>
       </div>
     </figure>

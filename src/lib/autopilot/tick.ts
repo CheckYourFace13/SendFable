@@ -13,14 +13,15 @@ import { assessChange } from "@/lib/autopilot/change-filter";
 import { generateWithOptionalLlm } from "@/lib/autopilot/generate";
 import { createAutopilotCampaignDraft } from "@/lib/autopilot/draft";
 import { sendAutopilotApprovalEmail } from "@/lib/autopilot/approval";
+import { resolveAutopilotCreation, suggestBrandFromHtml } from "@/lib/autopilot/commercial-account";
+import { imageCandidates, pickImage } from "@/lib/acquisition/website-demo/extract";
+import { confirmSameSiteImage } from "@/lib/acquisition/website-demo/image";
 import {
   AUTOPILOT_MAX_GENERATIONS_PER_DAY,
   AUTOPILOT_REMINDER_AFTER_MS,
   FREQUENCY_INTERVAL_MS,
   type AutopilotFrequency,
 } from "@/lib/autopilot/types";
-import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
-import { softwareQuotas } from "@/lib/internal-entitlement";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
@@ -170,22 +171,6 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
     return actions;
   }
 
-  const ent = await getWorkspaceEntitlement(config.workspaceId);
-  const quotas = softwareQuotas({
-    isInternal: ent.isInternal,
-    disabled: ent.disabled,
-    plan: ent.plan,
-  });
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const monthCount = await prisma.marketingAutopilotDraft.count({
-    where: { workspaceId: config.workspaceId, createdAt: { gte: monthStart } },
-  });
-  const monthCap = quotas.autopilotDraftsPerMonth;
-  if (monthCap != null && monthCount >= monthCap) {
-    actions.push("rate_month");
-    return actions;
-  }
-
   // Pending approval already? Don't spam another
   const pending = await prisma.marketingAutopilotDraft.count({
     where: {
@@ -198,9 +183,21 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
     return actions;
   }
 
+  const choice = await resolveAutopilotCreation(config.workspaceId, now);
+  if (!choice) {
+    actions.push("no_creation_entitlement");
+    return actions;
+  }
+
   const workspace = await prisma.workspace.findUniqueOrThrow({
     where: { id: config.workspaceId },
   });
+
+  try {
+    await suggestBrandFromHtml(config.workspaceId, body, finalUrl);
+  } catch {
+    /* brand suggestion never blocks a draft */
+  }
 
   const generated = await generateWithOptionalLlm({
     addedText: assessment.addedText,
@@ -214,18 +211,41 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
     return actions;
   }
 
-  const { draftId } = await createAutopilotCampaignDraft({
-    workspaceId: config.workspaceId,
-    configId: config.id,
-    sourceUrl: finalUrl,
-    changeFingerprint: fp,
-    changeSummary: assessment.reason,
-    changedContent: assessment.addedText,
-    generated,
-    audienceType: config.audienceType,
-    audienceTagIds: (config.audienceTagIds as string[]) ?? [],
-    audienceSegmentId: config.audienceSegmentId,
-  });
+  let imageUrl: string | null = null;
+  let imageAlt: string | null = null;
+  const picked = pickImage(imageCandidates(body, finalUrl), generated.headline, finalUrl);
+  if (picked) {
+    const check = await confirmSameSiteImage(picked.src, finalUrl);
+    if (check === "ok") {
+      imageUrl = picked.src;
+      imageAlt = picked.alt || generated.headline;
+    }
+  }
+
+  let draftId: string;
+  try {
+    const created = await createAutopilotCampaignDraft({
+      workspaceId: config.workspaceId,
+      configId: config.id,
+      sourceUrl: finalUrl,
+      changeFingerprint: fp,
+      changeSummary: assessment.reason,
+      changedContent: assessment.addedText,
+      generated,
+      audienceType: config.audienceType,
+      audienceTagIds: (config.audienceTagIds as string[]) ?? [],
+      audienceSegmentId: config.audienceSegmentId,
+      choice,
+      imageUrl,
+      imageAlt,
+    });
+    draftId = created.draftId;
+  } catch (err) {
+    actions.push(
+      `create_blocked:${err instanceof Error ? err.message : "err"}`
+    );
+    return actions;
+  }
 
   actions.push(`drafted:${draftId}`);
 

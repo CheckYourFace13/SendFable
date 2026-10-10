@@ -78,8 +78,8 @@ export function PricingPreview({
           </h2>
           <p className="mt-3 text-charcoal/75">
             Limits you can read. Upgrade when your list grows — no mystery add-ons on this page.
-            Marketing Autopilot is included: Free checks weekly (2 drafts a month), Starter checks
-            daily, and Growth and above can check twice a day.
+            Try Marketing Autopilot free for 3 months: 1 automatically created campaign per month.
+            Paid plans include a monthly creation allowance. Nothing sends until you schedule it.
           </p>
           <div className="mt-8 flex flex-col items-center gap-2">
             {toggle}
@@ -91,8 +91,8 @@ export function PricingPreview({
       {embedded && (
         <div className="mb-8 flex flex-col items-center gap-2">
           <p className="max-w-2xl text-center text-sm text-charcoal/75">
-            Marketing Autopilot is included: Free checks weekly (2 drafts a month), Starter checks
-            daily, and Growth and above can check twice a day.
+            Try Marketing Autopilot free for 3 months: 1 automatically created campaign per month.
+            Paid plans include a monthly creation allowance. Nothing sends until you schedule it.
           </p>
           {toggle}
           {annual && <p className="text-sm text-teal">{ANNUAL_SAVINGS_LABEL}</p>}

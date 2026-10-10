@@ -49,9 +49,9 @@ export default function MailchimpPricingAlternativePage() {
       </ul>
 
       <p className="mt-6 text-sm text-ink/75">
-        Marketing Autopilot is included on those plans. SendFable can watch the page where you
-        already post promotions or events and prepare the customer email for you. Nothing sends
-        until you approve it.{" "}
+        Marketing Autopilot is not permanently included on Free. Try it free for 3 months: 1
+        automatically created campaign per month. Paid plans include a monthly allowance. Nothing
+        sends until you schedule it.{" "}
         <Link className="text-coral hover:underline" href="/automated-email-marketing">
           See how it works
         </Link>

@@ -32,7 +32,7 @@ describe("internal unlimited entitlement", () => {
     const q = softwareQuotas({ isInternal: false, plan: "FREE" });
     assert.equal(q.contactCap, PLANS.FREE.contactCap);
     assert.equal(q.emailsPerMonth, PLANS.FREE.emailsPerMonth);
-    assert.equal(q.autopilotDraftsPerMonth, 2);
+    assert.equal(q.autopilotDraftsPerMonth, 0);
     assert.deepEqual(q.autopilotFrequencies, ["WEEKLY"]);
     assert.equal(q.showSendfableBadge, true);
     assert.equal(q.customDomains, false);
@@ -42,11 +42,11 @@ describe("internal unlimited entitlement", () => {
     const growth = softwareQuotas({ isInternal: false, plan: "GROWTH" });
     assert.equal(growth.contactCap, PLANS.GROWTH.contactCap);
     assert.equal(growth.emailsPerMonth, PLANS.GROWTH.emailsPerMonth);
-    assert.equal(growth.autopilotDraftsPerMonth, 60);
+    assert.equal(growth.autopilotDraftsPerMonth, 8);
     assert.equal(growth.showSendfableBadge, false);
     assert.equal(growth.customDomains, true);
     const starter = softwareQuotas({ isInternal: false, plan: "STARTER" });
-    assert.equal(starter.autopilotDraftsPerMonth, 20);
+    assert.equal(starter.autopilotDraftsPerMonth, 4);
     assert.equal(starter.showSendfableBadge, false);
   });
 
