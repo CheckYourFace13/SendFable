@@ -182,8 +182,7 @@ export async function createInternalWorkspace(opts: {
         secondaryColor: "#081C15",
         onboardingCompletedAt: new Date(),
         onboardingStep: 10,
-        businessDescription:
-          "Recipes, drink ideas, and kitchen guides for cooking and entertaining at home.",
+        businessDescription: null,
       },
     });
 
