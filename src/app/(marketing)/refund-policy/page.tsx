@@ -8,12 +8,14 @@ import {
   PUBLIC_MAILBOXES,
 } from "@/lib/legal-policies";
 import { LegalA, LegalDoc, LegalH2, LegalUl } from "@/components/legal/legal-doc";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Billing, Renewal, Cancellation & Refund Policy",
   description:
     "SendFable subscription billing, automatic renewal, cancellation via Stripe Customer Portal, plan limits, and refund rules.",
-};
+  path: "/refund-policy",
+});
 
 function money(n: number) {
   return n === 0 ? "$0" : `$${n}`;
