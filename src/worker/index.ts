@@ -188,7 +188,7 @@ setInterval(async () => {
   }
 }, 60_000);
 
-// Marketing Autopilot tick — page watch → draft → approval (or opt-in auto-send enqueue)
+// Marketing Autopilot tick — page watch → draft → approval email (never auto-sends)
 setInterval(async () => {
   try {
     const { runAutopilotTick } = await import("@/lib/autopilot/tick");
@@ -199,7 +199,6 @@ setInterval(async () => {
         a.startsWith("drafted:") ||
         a.startsWith("change:") ||
         a.startsWith("approval_email") ||
-        a.startsWith("auto_send") ||
         a.startsWith("expired:") ||
         a.startsWith("reminders:") ||
         a.startsWith("err:")
@@ -211,16 +210,3 @@ setInterval(async () => {
     console.error("[worker] autopilot tick error", err);
   }
 }, 60_000);
-
-// Opt-in newsletter automation ledger (welcome + autopilot auto-send retries)
-setInterval(async () => {
-  try {
-    const { processDueAutomationSends } = await import("@/lib/newsletter/process");
-    const actions = await processDueAutomationSends(10);
-    if (actions.length || process.env.WORKER_VERBOSE) {
-      console.log("[worker] automation sends", actions.join(",") || "idle");
-    }
-  } catch (err) {
-    console.error("[worker] automation sends error", err);
-  }
-}, 15_000);
