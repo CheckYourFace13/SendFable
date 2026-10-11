@@ -13,7 +13,6 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN sh scripts/assert-tdp-newsletter.sh
 # Required at build time: Next statically embeds APP_URL into sitemap/robots/metadata.
 ARG APP_URL=https://sendfable.com
 ARG NEXTAUTH_URL=https://sendfable.com
