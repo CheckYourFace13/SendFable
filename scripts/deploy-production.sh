@@ -17,7 +17,7 @@ fi
 git log -1 --oneline
 HEAD_MSG="$(git log -1 --format=%s)"
 case "$HEAD_MSG" in
-  *"Remove the newsletter"*|*"remove the newsletter"*)
+  *"Remove the newsletter"*|*"remove the newsletter"*|*"Stop the newsletter"*|*"stop the newsletter"*)
     echo "REFUSING_DEPLOY: HEAD removes TDP newsletter automation ($HEAD_MSG)"
     exit 2
     ;;
