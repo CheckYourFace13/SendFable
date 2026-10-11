@@ -83,7 +83,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   });
 
   return (
-    <div className="flex min-h-screen bg-page">
+    <div className="flex h-screen overflow-hidden bg-page">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-ink/10 bg-ink text-page lg:flex">
         <div className="flex h-14 items-center border-b border-white/10 px-5">
           <Logo href="/dashboard" tone="dark" className="h-7 w-auto" />
@@ -97,7 +97,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {adminViewName && <AdminViewBanner workspaceName={adminViewName} />}
         <EarlyLaunchBanner />
         <RedisDevBanner />
@@ -133,7 +133,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
           <UserMenu name={user.name} email={user.email} />
         </header>
-        <main className="relative flex-1 overflow-x-auto bg-parchment/40 p-4 lg:p-8">
+        <main className="relative min-h-0 flex-1 overflow-auto bg-parchment/40 p-4 lg:p-8">
           {children}
           {showIssueReporter && <ReportProductIssue />}
         </main>
