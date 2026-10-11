@@ -7,12 +7,14 @@ import {
   PUBLIC_MAILBOXES,
 } from "@/lib/legal-policies";
 import { LegalA, LegalDoc, LegalH2, LegalUl } from "@/components/legal/legal-doc";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Acceptable Use & Anti-Spam Policy",
   description:
     "SendFable acceptable use and anti-spam rules: permission-based sending, prohibited lists and content, and enforcement.",
-};
+  path: "/acceptable-use",
+});
 
 export default function AcceptableUsePage() {
   return (

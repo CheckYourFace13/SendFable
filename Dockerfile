@@ -13,7 +13,6 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN sh scripts/assert-tdp-newsletter.sh
 # Required at build time: Next statically embeds APP_URL into sitemap/robots/metadata.
 ARG APP_URL=https://sendfable.com
 ARG NEXTAUTH_URL=https://sendfable.com
@@ -25,8 +24,6 @@ ENV NEXTAUTH_URL=$NEXTAUTH_URL
 ENV EARLY_LAUNCH=$EARLY_LAUNCH
 ENV ALLOW_PUBLIC_SIGNUP=$ALLOW_PUBLIC_SIGNUP
 ENV NEXT_TELEMETRY_DISABLED=1
-# Fail closed if TDP newsletter automation is missing from the build context.
-RUN sh scripts/assert-tdp-newsletter.sh
 RUN npx prisma generate
 RUN npm run build
 

@@ -2,12 +2,14 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { CHANGELOG } from "@/data/changelog";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Changelog",
   description:
     "Sendfable product changelog with dated entries for shipped features — authentication, sending, billing, and list protection.",
-};
+  path: "/changelog",
+});
 
 export default function ChangelogPage() {
   return (

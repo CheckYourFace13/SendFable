@@ -1,8 +1,7 @@
 /**
  * Marketing Autopilot worker tick.
  * Fetch → hash → deterministic filter → generate only if marketing-worthy → draft → approval email.
- * Default: NO RESPONSE = NO SEND (approval required).
- * Opt-in exception: MarketingAutopilotConfig.autoSendEnabled launches via ledger + campaign queue.
+ * NO RESPONSE = NO SEND. Never launches a campaign from this tick.
  */
 
 import { prisma } from "@/lib/prisma";
@@ -11,11 +10,9 @@ import { withAcquisitionLock } from "@/lib/acquisition/lock";
 import { htmlToVisibleText } from "@/lib/autopilot/extract";
 import { changeFingerprint, changesAreSimilar, contentFingerprint } from "@/lib/autopilot/hash";
 import { assessChange } from "@/lib/autopilot/change-filter";
-import { generateWithOptionalLlm, type GeneratedCampaign } from "@/lib/autopilot/generate";
+import { generateWithOptionalLlm } from "@/lib/autopilot/generate";
 import { createAutopilotCampaignDraft } from "@/lib/autopilot/draft";
 import { sendAutopilotApprovalEmail } from "@/lib/autopilot/approval";
-import { enqueueAutopilotAutoSend } from "@/lib/newsletter/auto-weekly";
-import { buildTheDrinkPlaceWeeklyEdition } from "@/lib/newsletter/tdp-weekly";
 import { resolveAutopilotCreation, suggestBrandFromHtml } from "@/lib/autopilot/commercial-account";
 import { imageCandidates, pickImage } from "@/lib/acquisition/website-demo/extract";
 import { confirmSameSiteImage } from "@/lib/acquisition/website-demo/image";
@@ -174,18 +171,16 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
     return actions;
   }
 
-  // Pending approval already? Don't spam another (approval-mode only).
-  if (!config.autoSendEnabled) {
-    const pending = await prisma.marketingAutopilotDraft.count({
-      where: {
-        workspaceId: config.workspaceId,
-        status: { in: ["AWAITING_APPROVAL", "DRAFTED"] },
-      },
-    });
-    if (pending >= 2) {
-      actions.push("pending_cap");
-      return actions;
-    }
+  // Pending approval already? Don't spam another
+  const pending = await prisma.marketingAutopilotDraft.count({
+    where: {
+      workspaceId: config.workspaceId,
+      status: { in: ["AWAITING_APPROVAL", "DRAFTED"] },
+    },
+  });
+  if (pending >= 2) {
+    actions.push("pending_cap");
+    return actions;
   }
 
   const choice = await resolveAutopilotCreation(config.workspaceId, now);
@@ -204,23 +199,12 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
     /* brand suggestion never blocks a draft */
   }
 
-  let generated: GeneratedCampaign | null =
-    workspace.name === "TheDrinkPlace"
-      ? (() => {
-          const edition = buildTheDrinkPlaceWeeklyEdition({ now });
-          if (!edition) return null;
-          const { links: _links, ...campaign } = edition;
-          return campaign as GeneratedCampaign;
-        })()
-      : null;
-  if (!generated) {
-    generated = await generateWithOptionalLlm({
-      addedText: assessment.addedText,
-      sourceUrl: finalUrl,
-      workspaceName: workspace.name,
-      reason: assessment.reason,
-    });
-  }
+  const generated = await generateWithOptionalLlm({
+    addedText: assessment.addedText,
+    sourceUrl: finalUrl,
+    workspaceName: workspace.name,
+    reason: assessment.reason,
+  });
 
   if (!generated) {
     actions.push("insufficient_info");
@@ -264,28 +248,6 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
   }
 
   actions.push(`drafted:${draftId}`);
-
-  if (config.autoSendEnabled) {
-    const draftRow = await prisma.marketingAutopilotDraft.findUniqueOrThrow({
-      where: { id: draftId },
-      select: { campaignId: true },
-    });
-    if (!draftRow.campaignId) {
-      actions.push(`auto_send_missing_campaign:${draftId}`);
-      return actions;
-    }
-    const queued = await enqueueAutopilotAutoSend({
-      workspaceId: config.workspaceId,
-      draftId,
-      campaignId: draftRow.campaignId,
-    });
-    actions.push(
-      queued.enqueued
-        ? `auto_send_enqueued:${draftId}`
-        : `auto_send_dup:${draftId}`
-    );
-    return actions;
-  }
 
   try {
     await sendAutopilotApprovalEmail(draftId);

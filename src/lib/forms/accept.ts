@@ -15,7 +15,6 @@ import { isSmsSuppressed, matchExistingContact, recordIntakeConflict } from "@/l
 import { emailConsentText, type FormFieldDef } from "@/lib/forms/fields";
 import { AUDIENCE_REQUIRED, audienceIds, canAcceptPublicSignups, FORM_UNAVAILABLE } from "@/lib/forms/manage";
 import { emailRejoinDecision, honeypotTripped, sanitizeHttpUrl, sanitizeUtm } from "@/lib/forms/policy";
-import { maybeEnqueueAutoWelcome } from "@/lib/newsletter/auto-welcome";
 
 type FormRecord = {
   id: string;
@@ -212,14 +211,13 @@ export async function acceptFormSubmission(input: AcceptInput): Promise<AcceptRe
       : { workspaceId_phoneE164: { workspaceId: form.workspaceId, phoneE164: phoneE164! } };
 
     const existingContact = email
-      ? await prisma.contact.findUnique({ where: upsertWhere, select: { customFields: true, status: true } })
+      ? await prisma.contact.findUnique({ where: upsertWhere, select: { customFields: true } })
       : phoneE164
         ? await prisma.contact.findUnique({
             where: { workspaceId_phoneE164: { workspaceId: form.workspaceId, phoneE164 } },
-            select: { customFields: true, status: true },
+            select: { customFields: true },
           })
         : null;
-    const priorStatus = existingContact?.status ?? null;
     const priorCustom =
       existingContact?.customFields && typeof existingContact.customFields === "object"
         ? (existingContact.customFields as Record<string, string>)
@@ -318,20 +316,6 @@ export async function acceptFormSubmission(input: AcceptInput): Promise<AcceptRe
         "7d"
       );
       await sendDoubleOptInConfirmation(email, form.workspace.name, jwt);
-    }
-
-    if (email && status === "SUBSCRIBED") {
-      const becameSubscribed = priorStatus !== "SUBSCRIBED";
-      try {
-        await maybeEnqueueAutoWelcome({
-          workspaceId: form.workspaceId,
-          contactId: contact.id,
-          becameSubscribed,
-          test: Boolean(input.test),
-        });
-      } catch (err) {
-        console.error("[accept] auto-welcome enqueue failed", err);
-      }
     }
 
     return { ok: true, pendingConfirm: Boolean(email && form.doubleOptIn), stored: true, contactId: contact.id };
