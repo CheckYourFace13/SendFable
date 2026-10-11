@@ -6,14 +6,12 @@ import {
   PUBLIC_MAILBOXES,
 } from "@/lib/legal-policies";
 import { LegalA, LegalDoc, LegalH2, LegalUl } from "@/components/legal/legal-doc";
-import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = marketingPageMeta({
+export const metadata = {
   title: "Cookie disclosure",
   description:
     "Cookies and similar technologies used by SendFable — first-party session, CSRF, and workspace preference cookies only.",
-  path: "/cookies",
-});
+};
 
 export default function CookiesPage() {
   return (

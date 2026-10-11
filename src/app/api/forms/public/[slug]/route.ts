@@ -6,8 +6,6 @@ import { signToken } from "@/lib/tokens";
 import { emailConsentText } from "@/lib/forms/fields";
 import { applyPublicFormCors, publicFormPreflight } from "@/lib/forms/cors";
 import { canAcceptPublicSignups, FORM_UNAVAILABLE } from "@/lib/forms/manage";
-import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
-import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
 
 export function OPTIONS(req: Request) {
   return publicFormPreflight(req);
@@ -29,7 +27,6 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
       emailDisclosureVersion: true,
       status: true,
       tagIds: true,
-      workspaceId: true,
       workspace: { select: { name: true, primaryColor: true } },
     },
   });
@@ -51,17 +48,6 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
   const brandName = form.workspace.name;
   const privacyPolicyUrl = appUrl("/privacy");
   const smsTermsUrl = appUrl("/terms");
-  let showSendfableBadge = true;
-  try {
-    const entitlement = await getWorkspaceEntitlement(form.workspaceId);
-    showSendfableBadge = showSendfableBadgeFor({
-      isInternal: entitlement.isInternal,
-      disabledAt: entitlement.disabled ? new Date() : null,
-      plan: entitlement.plan,
-    });
-  } catch {
-    showSendfableBadge = true;
-  }
 
   return applyPublicFormCors(
     req,
@@ -84,7 +70,6 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
         smsTermsUrl,
         smsConsentDisclosureVersion: SMS_CONSENT_DISCLOSURE_VERSION,
         smsConsentDisclosure: buildSmsConsentDisclosure({ brandName, privacyPolicyUrl, smsTermsUrl }),
-        showSendfableBadge,
       },
       token,
     })

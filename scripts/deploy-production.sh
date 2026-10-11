@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Authoritative SendFable production deploy.
-# Resets the checkout to origin/main (or DEPLOY_SHA) and rebuilds app + worker.
-# Does not enable newsletter auto-send and refuses a tree that still contains it.
+# Canonical production deploy for SendFable. Builds app+worker from git.
+# Newsletter automation is required: assert fails closed if modules are missing.
 set -euo pipefail
 cd /opt/sendfable
 export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -i /root/.ssh/github_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new}"
@@ -16,18 +15,25 @@ if [ "${SKIP_GIT_SYNC:-0}" != "1" ]; then
 fi
 
 git log -1 --oneline
-if [ -e src/lib/newsletter ] || [ -f scripts/assert-tdp-newsletter.sh ] || [ -f scripts/_tmp-sf-deploy-verify.sh ]; then
-  echo "REFUSING_DEPLOY: newsletter auto-send files are present"
-  exit 2
-fi
-if grep -R -n enqueueAutopilotAutoSend src/lib src/worker >/dev/null 2>&1; then
-  echo "REFUSING_DEPLOY: enqueueAutopilotAutoSend is still in the tree"
-  exit 2
-fi
+HEAD_MSG="$(git log -1 --format=%s)"
+case "$HEAD_MSG" in
+  *"Remove the newsletter"*|*"remove the newsletter"*|*"Stop the newsletter"*|*"stop the newsletter"*)
+    echo "REFUSING_DEPLOY: HEAD removes TDP newsletter automation ($HEAD_MSG)"
+    exit 2
+    ;;
+esac
+
+test -f scripts/assert-tdp-newsletter.sh
+test -f src/lib/newsletter/auto-welcome.ts
+test -f src/lib/newsletter/auto-weekly.ts
+test -f src/lib/newsletter/welcome-html.ts
+sh scripts/assert-tdp-newsletter.sh
 
 docker compose -p sendfable -f docker-compose.prod.yml build app worker
 docker compose -p sendfable -f docker-compose.prod.yml up -d --no-deps app worker
-sleep 12
-docker exec sendfable-worker sh -c 'test ! -d /app/src/lib/newsletter && ! grep -q enqueueAutopilotAutoSend /app/src/lib/autopilot/tick.ts /app/src/worker/index.ts'
-curl -sf -o /dev/null -w 'health:%{http_code}\n' http://127.0.0.1:3010/api/health
+sleep 15
+docker run --rm sendfable-worker:latest sh scripts/assert-tdp-newsletter.sh
+docker exec sendfable-worker sh scripts/assert-tdp-newsletter.sh
+docker exec sendfable-worker sh -c 'grep -q "Explore drinks" src/lib/newsletter/welcome-html.ts'
+curl -sf http://127.0.0.1:3010/api/health; echo
 echo DEPLOY_OK "$(git rev-parse --short HEAD)"

@@ -2,12 +2,8 @@ import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { PricingPreview } from "@/components/marketing/home/pricing-preview";
 import { SmsPricingSection } from "@/components/marketing/sms-pricing";
-import { Faq } from "@/components/marketing/faq";
 import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { PLANS } from "@/lib/plans";
-import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
-import { AUTOPILOT_CREATION_PACKS } from "@/lib/autopilot/commercial";
-import { SMS_ACTIVATION_FEE_CENTS, SMS_PLANS, formatCentsUsd, formatMicrosUsd } from "@/lib/sms/pricing";
 
 export const metadata = marketingPageMeta({
   title: "Pricing — Free to Pro Plus",
@@ -48,40 +44,6 @@ export default function PricingPage() {
         {/* Text messaging plans — server-flag gated; renders nothing while
             SENDFABLE_SMS_PUBLIC_ENABLED=false */}
         <SmsPricingSection />
-
-        <section className="mx-auto mt-16 max-w-3xl">
-          <h2 className="font-display text-3xl text-ink">Pricing questions</h2>
-          <div className="mt-4">
-            <Faq
-              items={[
-                {
-                  q: "What counts as a contact?",
-                  a: `A contact is a person stored in your workspace. Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts. The cap counts people on the list, and sending becomes read-only if you go over it until you remove contacts or upgrade.`,
-                },
-                {
-                  q: "What counts as an email send?",
-                  a: `One email to one recipient counts as one send. Free includes ${PLANS.FREE.emailsPerMonth.toLocaleString()} sends a month. Paid plans raise that allotment. Text messages are not email sends.`,
-                },
-                {
-                  q: "Is Scribe included?",
-                  a: `Scribe drafts a campaign from a page you choose and waits for you to schedule it. Free can try it for 3 months, with 1 creation a month. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
-                },
-                {
-                  q: "Can I buy more Scribe creations?",
-                  a: `Yes. Extra creations are ${AUTOPILOT_CREATION_PACKS.map((pack) => `${pack.label} for $${pack.cents / 100}`).join(", ")}. Buying a pack does not change your email plan.`,
-                },
-                {
-                  q: "How does SMS pricing work?",
-                  a: `Text messaging is a separate paid add-on. There is a ${formatCentsUsd(SMS_ACTIVATION_FEE_CENTS)} activation fee, then a monthly text plan starting at ${formatCentsUsd(SMS_PLANS.TEXT_ENTRY.monthlyPriceCents)} plus ${formatMicrosUsd(BigInt(SMS_PLANS.TEXT_ENTRY.outboundSegmentPriceMicros))} per outbound segment on Text Entry. A campaign can be Email, Text, or Both.`,
-                },
-                {
-                  q: "Can I cancel anytime?",
-                  a: "Yes. Cancel from Billing. Cancellation stops renewal at the end of the period you already paid for. Canceling is not the same as a refund.",
-                },
-              ]}
-            />
-          </div>
-        </section>
 
         <MarketingCta
           title="Your audience is ready."
