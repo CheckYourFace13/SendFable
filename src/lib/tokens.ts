@@ -9,7 +9,8 @@ export type TokenPurpose =
   | "form-confirm"
   | "form-issue"
   | "invite"
-  | "autopilot-action";
+  | "autopilot-action"
+  | "newsletter-pref";
 
 function secret(): Uint8Array {
   const s = process.env.NEXTAUTH_SECRET;
