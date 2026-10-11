@@ -183,7 +183,7 @@ export default function InternalWorkspaceDetailPage() {
       </section>
 
       <section className="rounded-xl border bg-white p-5">
-        <h2 className="font-semibold">Autopilot</h2>
+        <h2 className="font-semibold">Scribe</h2>
         {data.autopilot ? (
           <div className="mt-2 space-y-1 text-sm">
             <div>Enabled: {data.autopilot.enabled ? "yes" : "no"}</div>

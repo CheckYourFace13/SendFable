@@ -210,7 +210,7 @@ export default function InternalWorkspacesAdminPage() {
               <th className="px-3 py-2">Contacts</th>
               <th className="px-3 py-2">Email / mo</th>
               <th className="px-3 py-2">SMS / mo</th>
-              <th className="px-3 py-2">Autopilot</th>
+              <th className="px-3 py-2">Scribe</th>
               <th className="px-3 py-2">Last campaign</th>
               <th className="px-3 py-2">Sending</th>
               <th className="px-3 py-2">Health</th>

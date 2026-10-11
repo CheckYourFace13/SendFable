@@ -74,7 +74,7 @@ export async function createAutopilotCampaignDraft(opts: {
     showSendfableBadge: opts.choice.brandingRequired,
   });
 
-  const name = `Autopilot: ${opts.generated.headline.slice(0, 60)}`;
+  const name = `Scribe: ${opts.generated.headline.slice(0, 60)}`;
 
   const result = await prisma.$transaction(async (tx) => {
     await lockCreation(tx, opts.workspaceId, opts.choice.source, new Date());

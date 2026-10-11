@@ -42,7 +42,7 @@ const USE_CASES = [
   },
   {
     title: "Local service",
-    body: "Seasonal offer posts → Autopilot drafts, you approve.",
+    body: "Seasonal offer posts → Scribe drafts, you approve.",
   },
 ];
 
@@ -68,7 +68,7 @@ const FAQS = [
     a: `Free does not permanently include Scribe. You can start a 3-month trial with 1 creation per month. Unused trial creations do not roll over. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}. A draft is created only when the page meaningfully changes.`,
   },
   {
-    q: "Does Autopilot send texts too?",
+    q: "Does Scribe send texts too?",
     a: "Launch is email-first. Text/Both can be added later and would still require explicit enablement, SMS consent, and owner approval.",
   },
 ];
@@ -97,8 +97,8 @@ export default function AutomatedEmailMarketingPage() {
         Scribe — automated email marketing from your website content
       </h1>
       <p className="mt-4 text-lg text-ink/65">
-        Your website changes. SendFable builds the campaign. You choose when it sends. Try Marketing
-        Autopilot free for 3 months — 1 automatically created campaign per month.
+        Your website changes. SendFable builds the campaign. You choose when it sends. Try Scribe
+        free for 3 months — 1 automatically created campaign per month.
       </p>
 
       <div className="mt-8">
@@ -227,7 +227,7 @@ export default function AutomatedEmailMarketingPage() {
       <section className="mt-16">
         <h2 className="text-2xl font-semibold text-ink">Availability</h2>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-ink/70">
-          <li>Free — no permanent Autopilot. Optional 3-month trial: 1 creation per month.</li>
+          <li>Free — no permanent Scribe. Optional 3-month trial: 1 creation per month.</li>
           <li>
             Starter (${PLANS.STARTER.monthlyPrice}/mo) — {autopilotMaxDraftsPerMonth("STARTER")}{" "}
             creations a month
@@ -250,7 +250,7 @@ export default function AutomatedEmailMarketingPage() {
       <Faq items={FAQS} />
       <MarketingCta
         title="Fresh content in. A campaign ready for your review."
-        body="Start free. Point Autopilot at one page. Nothing sends until you schedule it."
+        body="Start free. Point Scribe at one page. Nothing sends until you schedule it."
         primaryLabel="Start free"
       />
     </div>

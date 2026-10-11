@@ -42,7 +42,7 @@ export const SOLUTION_RELATED_LINKS: Record<
   "/solutions/salons": [
     { href: "/solutions/retail", label: "Retail & boutique email" },
     { href: "/templates", label: "Appointment-style layouts" },
-    { href: "/features#forms", label: "Signup forms" },
+    { href: "/features#forms", label: "Signup tools" },
     { href: "/signup", label: "Try free" },
   ],
   "/solutions/local-events": [

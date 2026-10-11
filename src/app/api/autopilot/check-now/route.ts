@@ -12,7 +12,7 @@ export async function POST() {
     where: { workspaceId: ctx.workspace.id },
   });
   if (!config?.enabled) {
-    return NextResponse.json({ error: "Marketing Autopilot is not enabled" }, { status: 400 });
+    return NextResponse.json({ error: "Scribe is not turned on" }, { status: 400 });
   }
 
   await prisma.marketingAutopilotConfig.update({

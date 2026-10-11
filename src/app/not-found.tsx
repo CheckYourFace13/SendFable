@@ -11,7 +11,7 @@ const LINKS = [
   { href: "/pricing", label: "Pricing" },
   { href: "/features", label: "Features" },
   { href: "/templates", label: "Templates" },
-  { href: "/automated-email-marketing", label: "Marketing Autopilot" },
+  { href: "/automated-email-marketing", label: "Scribe" },
   { href: "/login", label: "Login" },
   { href: "/signup", label: "Start Free" },
 ] as const;

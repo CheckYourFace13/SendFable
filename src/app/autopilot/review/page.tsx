@@ -30,7 +30,7 @@ export default async function AutopilotReviewPage({
       invalid_token: "This link is invalid or expired. Nothing was sent. The draft stays waiting in SendFable if you have not decided yet.",
       not_found: "This campaign draft could not be found.",
       token_used: "This link was already used.",
-      expired: "This link is no longer active. Nothing was sent. Open Marketing Autopilot in SendFable if the draft is still waiting.",
+      expired: "This link is no longer active. Nothing was sent. Open Scribe in SendFable if the draft is still waiting.",
       already_decided: "This draft was already decided. Nothing else will send from this link.",
     };
     return (
@@ -67,7 +67,7 @@ export default async function AutopilotReviewPage({
   return (
     <Shell>
       <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">
-        Marketing Autopilot
+        Scribe
       </p>
       <h1 className="mt-2 text-xl font-semibold text-ink">{titles[action]}</h1>
 

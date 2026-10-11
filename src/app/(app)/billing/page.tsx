@@ -98,7 +98,7 @@ export default function BillingPage() {
         <div className="max-w-lg rounded-xl border bg-white p-6">
           <h3 className="font-semibold">{entitlementLabel || "Internal — Unlimited"}</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Contacts, email, forms, and Marketing Autopilot are not limited by a public plan.
+            Contacts, email, Signup Tools, and Scribe are not limited by a public plan.
             Outgoing emails still include the SendFable footer. Text messaging keeps real
             provider cost, consent, and usage tracking.
           </p>
