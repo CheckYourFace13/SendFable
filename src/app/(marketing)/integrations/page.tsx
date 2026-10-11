@@ -7,7 +7,7 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 export const metadata = marketingPageMeta({
   title: "Integrations",
   description:
-    "SendFable integrates Amazon SES for delivery, Stripe for billing, CSV for audiences, and hosted signup tools — without a bloated app marketplace.",
+    "SendFable integrates Amazon SES for delivery, Stripe for billing, CSV for audiences, and Signup Tools — a hosted page or an inline embed — without a bloated app marketplace.",
   path: "/integrations",
 });
 
@@ -28,9 +28,9 @@ const INTEGRATIONS = [
     body: "Bring contacts from almost any ESP or spreadsheet. Map columns, preview rows, and assign tags — the practical integration most teams need on day one.",
   },
   {
-    name: "Hosted signup tools",
+    name: "Signup Tools",
     role: "Growth",
-    body: "Publish a SendFable signup tool, optionally require double opt-in, and feed new subscribers into tags and segments.",
+    body: "Hosted signup page and an inline embed for your site. New subscribers land in your audience, with optional double opt-in. SMS consent stays a separate checkbox.",
   },
 ];
 
@@ -65,6 +65,35 @@ export default function IntegrationsPage() {
           </div>
         ))}
       </div>
+
+      <section className="mt-14 space-y-3 text-slate-700">
+        <h2 className="text-2xl font-semibold text-slate-900">Signup Tools</h2>
+        <p>
+          Two ways to collect permission-based subscribers. Both use the same form, the same
+          consent language, and the same audience.
+        </p>
+        <h3 className="pt-2 text-lg font-semibold text-slate-900">Hosted signup page</h3>
+        <p>
+          Each tool has a public link at <span className="font-medium">sendfable.com/f/your-form</span>.
+          Share it in a bio, a QR code, or an email. Open Signup Tools in the app, copy the hosted
+          link, and you are done.
+        </p>
+        <h3 className="pt-2 text-lg font-semibold text-slate-900">Inline embed</h3>
+        <p>
+          Paste two lines on your site. Replace <span className="font-medium">your-form</span> with
+          the slug shown in Signup Tools.
+        </p>
+        <pre className="overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-100">{`<div data-sendfable-form="your-form"></div>
+<script src="https://sendfable.com/embed/form.js" async></script>`}</pre>
+        <p className="text-sm">
+          The script works across domains. Email signup and SMS consent stay separate. After you
+          start free, open{" "}
+          <Link href="/forms" className="font-medium text-teal hover:underline">
+            Signup Tools
+          </Link>{" "}
+          to copy the exact snippet for each form.
+        </p>
+      </section>
 
       <section className="mt-14 space-y-3 text-slate-700">
         <h2 className="text-2xl font-semibold text-slate-900">Coming later vs available now</h2>

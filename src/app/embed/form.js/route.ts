@@ -89,13 +89,19 @@ const SCRIPT = `
         box.appendChild(button);
         if (form.showSendfableBadge) {
           var credit = document.createElement("p");
-          credit.style.cssText = "margin:10px 0 0;font-size:12px;line-height:1.4;";
+          credit.style.cssText = "margin:10px 0 0;font-size:12px;line-height:1.35;opacity:0.8;";
           var creditLink = document.createElement("a");
-          creditLink.href = origin + "/signup?utm_source=signup_tool&utm_medium=embed_badge&utm_campaign=free_plan";
+          var badgeQuery = "utm_source=signup_tool&utm_medium=embed_badge&utm_campaign=free_plan&utm_content=" + encodeURIComponent(form.hostedSlug || slug);
+          if (form.referralCode) badgeQuery = "ref=" + encodeURIComponent(form.referralCode) + "&" + badgeQuery;
+          creditLink.href = origin + "/signup?" + badgeQuery;
           creditLink.target = "_blank";
           creditLink.rel = "noopener";
           creditLink.textContent = "Powered by SendFable";
+          var creditLine = document.createElement("span");
+          creditLine.textContent = "We turn your content into emails ready to send.";
+          creditLine.style.cssText = "display:block;margin-top:2px;font-size:11px;opacity:0.75;";
           credit.appendChild(creditLink);
+          credit.appendChild(creditLine);
           box.appendChild(credit);
         }
         box.addEventListener("submit", function (event) {

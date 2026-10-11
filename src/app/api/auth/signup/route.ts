@@ -21,10 +21,20 @@ const signupSchema = z.object({
   utmSource: z.string().trim().max(80).optional(),
   utmMedium: z.string().trim().max(80).optional(),
   utmCampaign: z.string().trim().max(120).optional(),
+  utmContent: z.string().trim().max(80).optional(),
   acceptedPolicies: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the Terms, Acceptable Use, and Privacy Policy." }),
   }),
 });
+
+/** Public Signup Tool slug from a badge link. Rejects anything that is not a public slug. */
+function signupToolLabel(medium?: string, content?: string): string | undefined {
+  const normalized = (medium || "").toLowerCase();
+  if (normalized !== "embed_badge" && normalized !== "hosted_badge") return undefined;
+  const label = (content || "").trim();
+  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(label)) return undefined;
+  return label;
+}
 
 export async function POST(req: Request) {
   if (!publicSignupAllowed()) {
@@ -104,11 +114,13 @@ export async function POST(req: Request) {
   });
 
   if (referredByCode) {
+    const tool = signupToolLabel(parsed.data.utmMedium, parsed.data.utmContent);
     await prisma.referralAttribution.create({
       data: {
         referralCode: referredByCode,
         referredUserId: user.id,
         referredEmail: email,
+        sourceLabel: tool,
         status: "signed_up",
       },
     });
@@ -127,8 +139,21 @@ export async function POST(req: Request) {
     if (campaign.includes("autopilot") || source.includes("autopilot")) {
       trackEvent("autopilot_signup");
     }
-    if (medium === "footer_badge" || campaign === "free_plan") {
+    if (medium === "footer_badge" || (campaign === "free_plan" && medium !== "embed_badge" && medium !== "hosted_badge")) {
       trackEvent("free_footer_signup");
+    }
+    if (medium === "embed_badge" || medium === "hosted_badge") {
+      trackEvent(
+        "referral_attributed",
+        { tool: signupToolLabel(medium, parsed.data.utmContent) || "signup_tool" },
+        {
+          utmSource: source,
+          utmMedium: medium,
+          utmCampaign: campaign,
+          utmContent: signupToolLabel(medium, parsed.data.utmContent),
+          path: "/signup",
+        }
+      );
     }
   } catch {
     /* fail open */

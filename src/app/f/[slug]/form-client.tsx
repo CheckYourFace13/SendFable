@@ -4,6 +4,21 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Logo } from "@/components/logo";
 
+function signupToolHref(
+  form: { referralCode?: string | null; hostedSlug?: string },
+  slug: string,
+  medium: "hosted_badge" | "embed_badge"
+): string {
+  const params = new URLSearchParams({
+    utm_source: "signup_tool",
+    utm_medium: medium,
+    utm_campaign: "free_plan",
+    utm_content: form.hostedSlug || slug,
+  });
+  if (form.referralCode) params.set("ref", form.referralCode);
+  return `/signup?${params.toString()}`;
+}
+
 type PublicField = { key: string; label: string; type: string; required?: boolean };
 type PublicForm = {
   name: string;
@@ -15,6 +30,9 @@ type PublicForm = {
   primaryColor?: string;
   emailConsentText?: string;
   smsConsentDisclosure?: string;
+  showSendfableBadge?: boolean;
+  referralCode?: string | null;
+  hostedSlug?: string;
 };
 
 export function HostedFormClient({ slug }: { slug: string }) {
@@ -168,6 +186,21 @@ export function HostedFormClient({ slug }: { slug: string }) {
               >
                 {loading ? "Submitting…" : form.buttonLabel || "Subscribe"}
               </button>
+              {form.showSendfableBadge && (
+                <p className="text-center text-xs leading-snug opacity-80">
+                  <a
+                    className="underline"
+                    href={signupToolHref(form, slug, "hosted_badge")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Powered by SendFable
+                  </a>
+                  <span className="mt-0.5 block text-[11px] opacity-75">
+                    We turn your content into emails ready to send.
+                  </span>
+                </p>
+              )}
             </form>
           </>
         )}

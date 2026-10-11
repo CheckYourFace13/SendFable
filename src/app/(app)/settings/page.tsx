@@ -78,6 +78,9 @@ export default function SettingsPage() {
   const [referralCode, setReferralCode] = useState("");
   const [shareLink, setShareLink] = useState("");
   const [ledger, setLedger] = useState<any[]>([]);
+  const [attributions, setAttributions] = useState<
+    { id: string; referredEmail?: string | null; status: string; sourceLabel?: string | null; createdAt: string }[]
+  >([]);
 
   useEffect(() => {
     void (async () => {
@@ -96,6 +99,7 @@ export default function SettingsPage() {
         setReferralCode(r.referralCode || "");
         setShareLink(r.shareLink || "");
         setLedger(r.ledger || []);
+        setAttributions(r.attributions || []);
       }
 
       // Load workspace via dedicated endpoint — add GET if missing, use patch bootstrap
@@ -261,6 +265,28 @@ export default function SettingsPage() {
                   <span className="font-medium">
                     {entry.amount > 0 ? `+${entry.amount}` : entry.amount}
                   </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <h4 className="text-sm font-medium">Referred signups</h4>
+          {attributions.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">No referred signups yet.</p>
+          ) : (
+            <ul className="mt-2 divide-y text-sm">
+              {attributions.map((row) => (
+                <li key={row.id} className="py-2">
+                  <div className="flex justify-between gap-3">
+                    <span>{row.referredEmail || "Signup"}</span>
+                    <span className="text-muted-foreground">{row.status}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {row.sourceLabel ? `Signup tool ${row.sourceLabel}` : "Referral link"}
+                    {" · "}
+                    {new Date(row.createdAt).toLocaleDateString()}
+                  </p>
                 </li>
               ))}
             </ul>

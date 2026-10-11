@@ -107,6 +107,9 @@ function isAppPath(pathname: string): boolean {
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
+  if (pathname === "/marketing-autopilot") {
+    return NextResponse.redirect(new URL("/automated-email-marketing", req.nextUrl.origin), 301);
+  }
   // NextAuth may attach a truthy empty auth object — require a user id.
   const isLoggedIn = Boolean(req.auth?.user?.id || req.auth?.user?.email);
 

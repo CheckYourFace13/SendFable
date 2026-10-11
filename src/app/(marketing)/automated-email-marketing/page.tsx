@@ -69,7 +69,7 @@ const FAQS = [
   },
   {
     q: "Does Scribe send texts too?",
-    a: "Launch is email-first. Text/Both can be added later and would still require explicit enablement, SMS consent, and owner approval.",
+    a: "Scribe drafts email. Text messaging is a separate paid add-on for campaigns you create as Email, Text, or Both. Scribe does not send a text on its own, and nothing sends until you schedule it.",
   },
 ];
 

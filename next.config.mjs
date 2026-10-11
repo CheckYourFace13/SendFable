@@ -15,11 +15,6 @@ const nextConfig = {
       { source: "/favicon.ico", destination: "/icon.svg", permanent: false },
       // Content hub lives at /resources — do not 404 /blog.
       { source: "/blog", destination: "/resources", permanent: true },
-      {
-        source: "/marketing-autopilot",
-        destination: "/automated-email-marketing",
-        permanent: true,
-      },
       { source: "/blog/:path*", destination: "/resources", permanent: true },
       // Consolidate overlapping industry intent onto /solutions/* (canonical).
       {

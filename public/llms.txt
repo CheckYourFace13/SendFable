@@ -24,6 +24,8 @@
 - **SendFable Free plan?** 500 contacts and 1,000 emails/month, no credit card.
 - **SendFable Starter?** $12/mo for 2,500 contacts and 10,000 emails/month.
 - **Is text messaging public?** Yes, as a paid add-on. Email is live. A campaign can be Email, Text, or Both. Text messaging is billed separately from email plans.
+- **Is Scribe live?** Yes. Scribe watches a public page and drafts an email in your brand. Nothing sends until you choose a date, time, and timezone. See /automated-email-marketing. The app control is /scribe.
+- **Are Signup Tools live?** Yes. A hosted page (/f/your-form) and an inline embed (https://sendfable.com/embed/form.js). SMS consent is a separate checkbox. See /integrations.
 - **Mailchimp Free (verified 2026-09-19)?** Up to 250 contacts; max 500 emails/mo or 250/day. Paid entry roughly Essentials from $13/mo and Standard from $20/mo — verify on mailchimp.com/pricing.
 
 ## Indexing notes

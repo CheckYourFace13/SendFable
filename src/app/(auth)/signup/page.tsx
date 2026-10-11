@@ -24,6 +24,10 @@ function SignupForm() {
     () => searchParams.get("ref")?.trim() || undefined,
     [searchParams]
   );
+  const utmSource = useMemo(() => searchParams.get("utm_source")?.trim() || undefined, [searchParams]);
+  const utmMedium = useMemo(() => searchParams.get("utm_medium")?.trim() || undefined, [searchParams]);
+  const utmCampaign = useMemo(() => searchParams.get("utm_campaign")?.trim() || undefined, [searchParams]);
+  const utmContent = useMemo(() => searchParams.get("utm_content")?.trim() || undefined, [searchParams]);
   const resumeTemplate = useMemo(
     () => searchParams.get("template")?.trim() || undefined,
     [searchParams]
@@ -73,6 +77,10 @@ function SignupForm() {
           password,
           workspaceName: workspaceName || undefined,
           referralCode,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          utmContent,
           acceptedPolicies: true,
         }),
       });

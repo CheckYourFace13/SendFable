@@ -7,6 +7,7 @@ import { emailConsentText } from "@/lib/forms/fields";
 import { applyPublicFormCors, publicFormPreflight } from "@/lib/forms/cors";
 import { canAcceptPublicSignups, FORM_UNAVAILABLE } from "@/lib/forms/manage";
 import { showSendfableBadgeFor } from "@/lib/internal-entitlement";
+import { ensureReferralCodes } from "@/lib/referrals";
 import { getWorkspaceEntitlement } from "@/lib/workspace-owner";
 
 export function OPTIONS(req: Request) {
@@ -52,6 +53,7 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
   const privacyPolicyUrl = appUrl("/privacy");
   const smsTermsUrl = appUrl("/terms");
   let showSendfableBadge = true;
+  let referralCode: string | null = null;
   try {
     const entitlement = await getWorkspaceEntitlement(form.workspaceId);
     showSendfableBadge = showSendfableBadgeFor({
@@ -61,6 +63,16 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
     });
   } catch {
     showSendfableBadge = true;
+  }
+  if (showSendfableBadge) {
+    const owner = await prisma.membership.findFirst({
+      where: { workspaceId: form.workspaceId, role: "OWNER" },
+      select: { userId: true },
+    });
+    if (owner) {
+      const codes = await ensureReferralCodes(owner.userId, form.workspaceId);
+      referralCode = codes.workspaceCode;
+    }
   }
 
   return applyPublicFormCors(
@@ -85,6 +97,7 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
         smsConsentDisclosureVersion: SMS_CONSENT_DISCLOSURE_VERSION,
         smsConsentDisclosure: buildSmsConsentDisclosure({ brandName, privacyPolicyUrl, smsTermsUrl }),
         showSendfableBadge,
+        referralCode,
       },
       token,
     })

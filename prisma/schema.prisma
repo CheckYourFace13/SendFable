@@ -806,6 +806,8 @@ model ReferralAttribution {
   referralCode   String
   referredUserId String?  @unique
   referredEmail  String?
+  /// Public Signup Tool slug when the signup came from a badge link. Never a private id.
+  sourceLabel    String?
   status         String   @default("clicked") // clicked | signed_up | qualified
   createdAt      DateTime @default(now())
 
