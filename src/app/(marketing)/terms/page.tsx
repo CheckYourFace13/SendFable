@@ -8,14 +8,12 @@ import {
   PUBLIC_MAILBOXES,
 } from "@/lib/legal-policies";
 import { LegalA, LegalDoc, LegalH2, LegalH3, LegalUl } from "@/components/legal/legal-doc";
-import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = marketingPageMeta({
+export const metadata = {
   title: "Terms of Service",
   description:
     "SendFable Terms of Service: accounts, workspaces, acceptable use, billing, provider dependencies, and liability limits.",
-  path: "/terms",
-});
+};
 
 /*
  * NOTE (internal): technically tailored to the current product; not reviewed or

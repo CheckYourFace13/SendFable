@@ -7,14 +7,12 @@ import {
   PUBLIC_MAILBOXES,
 } from "@/lib/legal-policies";
 import { LegalA, LegalDoc, LegalH2, LegalH3, LegalUl } from "@/components/legal/legal-doc";
-import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = marketingPageMeta({
+export const metadata = {
   title: "Privacy Policy",
   description:
     "SendFable Privacy Policy: information collected, roles, subprocessors, cookies, retention, deletion, and how to make privacy requests.",
-  path: "/privacy",
-});
+};
 
 /*
  * NOTE (internal): technically tailored to the current product; not reviewed or

@@ -87,17 +87,6 @@ const SCRIPT = `
           button.style.cssText = "font:inherit;color:#fff;background:" + (form.primaryColor || "#1B4332") + ";border:0;border-radius:8px;padding:0.7rem 1rem;cursor:pointer;width:100%;";
         }
         box.appendChild(button);
-        if (form.showSendfableBadge) {
-          var credit = document.createElement("p");
-          credit.style.cssText = "margin:10px 0 0;font-size:12px;line-height:1.4;";
-          var creditLink = document.createElement("a");
-          creditLink.href = origin + "/signup?utm_source=signup_tool&utm_medium=embed_badge&utm_campaign=free_plan";
-          creditLink.target = "_blank";
-          creditLink.rel = "noopener";
-          creditLink.textContent = "Powered by SendFable";
-          credit.appendChild(creditLink);
-          box.appendChild(credit);
-        }
         box.addEventListener("submit", function (event) {
           event.preventDefault();
           error.textContent = "";
