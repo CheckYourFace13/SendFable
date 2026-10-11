@@ -25,6 +25,8 @@ ENV NEXTAUTH_URL=$NEXTAUTH_URL
 ENV EARLY_LAUNCH=$EARLY_LAUNCH
 ENV ALLOW_PUBLIC_SIGNUP=$ALLOW_PUBLIC_SIGNUP
 ENV NEXT_TELEMETRY_DISABLED=1
+# Fail closed if TDP newsletter automation is missing from the build context.
+RUN sh scripts/assert-tdp-newsletter.sh
 RUN npx prisma generate
 RUN npm run build
 
