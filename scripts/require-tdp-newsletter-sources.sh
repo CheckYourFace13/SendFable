@@ -38,7 +38,7 @@ case "$HEAD" in
   1b8b5475a7d9986392a16c88515e35097e110d0c|\
   cdfc6ff19127abf99ac0a279184bb6bf19dc9ac8|\
   e041a49e8c803847f88b20b0b9ba023d87c09257|\
-  a34e8a90905a91f82ba53a74937a23a22b1cf281|
+  a34e8a90905a91f82ba53a74937a23a22b1cf281|\
   22ad27c73bc3b54f9a271233bc6acf2be486bccf)
     fail "HEAD $HEAD is a known newsletter-wipe revision"
     ;;
