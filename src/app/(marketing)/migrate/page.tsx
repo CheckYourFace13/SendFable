@@ -42,7 +42,7 @@ const SOURCES = [
     steps: [
       "Export subscribers from your group or account export tools.",
       "Import into Sendfable and recreate groups as tags or segments.",
-      "Rebuild forms on Sendfable hosted forms if you rely on embed signups.",
+      "Use SendFable hosted signup tools if you rely on embed signups.",
     ],
   },
   {

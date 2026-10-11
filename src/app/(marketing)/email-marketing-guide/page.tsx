@@ -72,7 +72,7 @@ export default function EmailMarketingGuidePage() {
         </p>
         <p>
           Double opt-in is not required everywhere, but it helps when signup quality is uneven.
-          Sendfable hosted forms support confirmation flows when you want that extra step.
+          SendFable hosted signup tools support confirmation flows when you want that extra step.
         </p>
       </section>
 

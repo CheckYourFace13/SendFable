@@ -139,7 +139,7 @@ export default function TermsPage() {
       <LegalH2>7. Email features, tracking, and compliance controls</LegalH2>
       <p>Depending on plan and launch flags, the Service may include:</p>
       <LegalUl>
-        <li>Contacts, tags, segments, custom fields, CSV import/export, and signup forms</li>
+        <li>Contacts, tags, segments, custom fields, CSV import/export, and signup tools</li>
         <li>Sender identities and domain authentication workflows tied to Amazon SES</li>
         <li>Templates and an email builder</li>
         <li>Campaign drafting, scheduling, queueing, pausing, cancellation, and sending</li>

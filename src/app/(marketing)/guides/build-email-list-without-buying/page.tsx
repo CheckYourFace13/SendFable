@@ -38,8 +38,8 @@ export default function BuildListWithoutBuyingGuide() {
           a: "Only if customers consented to marketing email. Transactional receipts alone are not automatic marketing consent in every jurisdiction — when unsure, collect a fresh opt-in.",
         },
         {
-          q: "Does SendFable provide signup forms?",
-          a: "Yes. Hosted forms with optional double opt-in. See product features after you create an account.",
+          q: "Does SendFable provide signup tools?",
+          a: "Yes. Hosted signup tools with optional double opt-in. See product features after you create an account.",
         },
       ]}
       related={[

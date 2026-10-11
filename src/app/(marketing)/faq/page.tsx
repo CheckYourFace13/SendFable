@@ -49,8 +49,8 @@ export default function FaqPage() {
       a: "Yes. Import a CSV with field mapping, or use migration guides for common exports. Only import people you have permission to email. Purchased lists are not allowed.",
     },
     {
-      q: "Can I collect contacts with forms?",
-      a: "Yes. Hosted signup forms can grow a consented list, with optional double opt-in. Forms can collect email and, when Text is enabled, phone with proper consent.",
+      q: "Can I collect contacts with signup tools?",
+      a: "Yes. Hosted signup tools can grow a consented list, with optional double opt-in. They can collect email and, when Text is enabled, phone with proper consent.",
     },
     {
       q: "Can I use my own sending domain?",

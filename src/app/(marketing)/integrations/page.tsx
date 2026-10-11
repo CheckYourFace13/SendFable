@@ -7,7 +7,7 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 export const metadata = marketingPageMeta({
   title: "Integrations",
   description:
-    "Sendfable integrates Amazon SES for delivery, Stripe for billing, CSV for audiences, and hosted forms for signup — without a bloated app marketplace.",
+    "SendFable integrates Amazon SES for delivery, Stripe for billing, CSV for audiences, and hosted signup tools — without a bloated app marketplace.",
   path: "/integrations",
 });
 
@@ -28,9 +28,9 @@ const INTEGRATIONS = [
     body: "Bring contacts from almost any ESP or spreadsheet. Map columns, preview rows, and assign tags — the practical integration most teams need on day one.",
   },
   {
-    name: "Hosted signup forms",
+    name: "Hosted signup tools",
     role: "Growth",
-    body: "Publish a Sendfable form, optionally require double opt-in, and feed new subscribers into tags and segments without a separate form SaaS.",
+    body: "Publish a SendFable signup tool, optionally require double opt-in, and feed new subscribers into tags and segments.",
   },
 ];
 

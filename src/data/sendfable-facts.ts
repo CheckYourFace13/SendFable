@@ -61,7 +61,7 @@ export const SENDFABLE_FACTS = {
     "From-rewrite for strict DMARC mailbox providers with Reply-To preserved",
     "CSV contact import with mapping",
     "Tags and segments",
-    "Hosted signup forms with optional double opt-in",
+    "Hosted signup tools with optional double opt-in",
     "Campaign templates and block/simple editors",
     "Desktop and mobile campaign preview",
     "Send Confidence checks before launch",

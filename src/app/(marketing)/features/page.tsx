@@ -49,7 +49,7 @@ export default function FeaturesPage() {
     {
       id: "forms",
       title: "Signup tools",
-      body: "Hosted signup forms grow a consented list without leaving your brand. Optional double opt-in when you want extra confirmation.",
+      body: "Hosted signup tools grow a consented list without leaving your brand. Optional double opt-in when you want extra confirmation.",
       href: "/features#forms",
     },
     {
