@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleHardBounceOrComplaint, suppressGlobal } from "@/lib/suppression";
-import { checkAutoPause } from "@/lib/campaign-send";
+import { checkAutoPause, reevaluateCampaignDeliveryOutcome } from "@/lib/campaign-send";
 import { verifySnsSignature, type SnsSignedMessage } from "@/lib/sns-verify";
 
 export const dynamic = "force-dynamic";
@@ -207,12 +207,34 @@ export async function POST(req: Request) {
           }),
         ]);
         await checkAutoPause(recip.campaignId);
+        await reevaluateCampaignDeliveryOutcome(recip.campaignId);
       }
     } else {
-      await prisma.campaignRecipient.update({
-        where: { id: recip.id },
-        data: { error: `Soft bounce (${bounceType})` },
-      });
+      // Transient soft bounce — still count toward campaign bounce metrics so
+      // COMPLETED + bounceCount:0 cannot conceal all-recipient delivery failure.
+      if (!recip.bouncedAt) {
+        await prisma.$transaction([
+          prisma.campaignRecipient.update({
+            where: { id: recip.id },
+            data: {
+              bouncedAt: new Date(),
+              status: "FAILED",
+              error: `Soft bounce (${bounceType})`,
+            },
+          }),
+          prisma.campaign.update({
+            where: { id: recip.campaignId },
+            data: { bounceCount: { increment: 1 } },
+          }),
+        ]);
+        await checkAutoPause(recip.campaignId);
+        await reevaluateCampaignDeliveryOutcome(recip.campaignId);
+      } else {
+        await prisma.campaignRecipient.update({
+          where: { id: recip.id },
+          data: { error: `Soft bounce (${bounceType})` },
+        });
+      }
     }
     return NextResponse.json({ ok: true });
   }

@@ -10,6 +10,7 @@ import {
   ensureAudienceTag,
   requireIntegrationAuth,
 } from "@/lib/integration-auth";
+import { isReservedExampleEmail } from "@/lib/reserved-email";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,16 @@ export async function POST(req: Request) {
   const email = normalizeEmail(parsed.data.email);
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+  }
+
+  // Reserved example.* domains must not join production Brief audience.
+  if (isReservedExampleEmail(email)) {
+    return NextResponse.json({
+      ok: true,
+      created: false,
+      reserved: true,
+      tag: parsed.data.tagName || BRIEF_AUDIENCE_TAG,
+    });
   }
 
   if (await isSuppressed(auth.workspace.id, email)) {

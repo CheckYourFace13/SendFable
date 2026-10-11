@@ -302,15 +302,23 @@ export async function maybeCompleteCampaign(campaignId: string): Promise<void> {
   const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
   if (!campaign || campaign.status !== "SENDING") return;
 
+  const allFailed = isAllRecipientDeliveryFailure(campaign);
+
   await prisma.campaign.update({
     where: { id: campaignId },
-    data: { status: "COMPLETED", completedAt: new Date() },
+    data: {
+      status: allFailed ? "FAILED" : "COMPLETED",
+      completedAt: new Date(),
+      pauseReason: allFailed ? "auto-bounce" : campaign.pauseReason,
+    },
   });
 
+  if (allFailed) return;
+
   // Ramp up on clean campaigns
-  const sent = Math.max(1, campaign.sentCount);
-  const bounceRate = campaign.bounceCount / sent;
-  const complaintRate = campaign.complaintCount / sent;
+  const denom = Math.max(1, campaign.sentCount);
+  const bounceRate = campaign.bounceCount / denom;
+  const complaintRate = campaign.complaintCount / denom;
   if (bounceRate < BOUNCE_PAUSE_THRESHOLD && complaintRate < COMPLAINT_PAUSE_THRESHOLD) {
     const owner = await getWorkspaceOwner(campaign.workspaceId);
     const max = maxRampLevel(owner.plan);
@@ -321,6 +329,42 @@ export async function maybeCompleteCampaign(campaignId: string): Promise<void> {
       });
     }
   }
+}
+
+function isAllRecipientDeliveryFailure(campaign: {
+  sentCount: number;
+  deliveredCount: number;
+  bounceCount: number;
+  failedCount: number;
+}): boolean {
+  const sent = Math.max(0, campaign.sentCount);
+  return (
+    sent > 0 &&
+    campaign.deliveredCount === 0 &&
+    campaign.bounceCount + campaign.failedCount >= sent
+  );
+}
+
+/**
+ * After late bounce/complaint webhooks, flip COMPLETED → FAILED when every
+ * accepted recipient failed and none delivered. Does not reopen sends.
+ */
+export async function reevaluateCampaignDeliveryOutcome(
+  campaignId: string
+): Promise<void> {
+  const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
+  if (!campaign) return;
+  if (campaign.status !== "COMPLETED" && campaign.status !== "SENDING") return;
+  if (!isAllRecipientDeliveryFailure(campaign)) return;
+
+  await prisma.campaign.update({
+    where: { id: campaignId },
+    data: {
+      status: "FAILED",
+      pauseReason: "auto-bounce",
+      completedAt: campaign.completedAt ?? new Date(),
+    },
+  });
 }
 
 export async function pauseCampaign(

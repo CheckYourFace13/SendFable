@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { parseSegmentRules, resolveSegmentContactIds } from "@/lib/segments";
+import { isReservedExampleEmail } from "@/lib/reserved-email";
 import { normalizeEmail } from "@/lib/utils";
 
 export interface AudienceSelector {
@@ -85,7 +86,13 @@ export async function resolveAudienceContacts(
     ...globalSupp.map((s) => s.email),
   ]);
 
-  return contacts.filter((c) => !suppressed.has(normalizeEmail(c.email)));
+  return contacts.filter((c) => {
+    const email = normalizeEmail(c.email);
+    if (suppressed.has(email)) return false;
+    // Never production-send to IETF reserved example domains
+    if (isReservedExampleEmail(email)) return false;
+    return true;
+  });
 }
 
 export async function countAudience(

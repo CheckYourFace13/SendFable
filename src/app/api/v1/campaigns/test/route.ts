@@ -96,19 +96,75 @@ export async function POST(req: Request) {
     { businessDisplayName: auth.workspace.name }
   );
 
-  await sendEmail({
+  // Use the SES configuration set so Delivery/Bounce events are attributed.
+  const result = await sendEmail({
     from,
     to: email,
     replyTo,
     subject,
     html,
-    noConfigurationSet: true,
+    tags: {
+      campaignId: campaign.id,
+      kind: "brief-test",
+    },
+  });
+
+  // Snapshot a recipient row so SES webhooks can prove inbox delivery (or bounce).
+  let contact = await prisma.contact.findFirst({
+    where: { workspaceId: auth.workspace.id, email },
+  });
+  if (!contact) {
+    contact = await prisma.contact.create({
+      data: {
+        workspaceId: auth.workspace.id,
+        email,
+        status: "SUBSCRIBED",
+        source: "api:brief-test",
+      },
+    });
+  }
+  const existingRecip = await prisma.campaignRecipient.findUnique({
+    where: {
+      campaignId_contactId: { campaignId: campaign.id, contactId: contact.id },
+    },
+  });
+  await prisma.campaignRecipient.upsert({
+    where: {
+      campaignId_contactId: { campaignId: campaign.id, contactId: contact.id },
+    },
+    create: {
+      campaignId: campaign.id,
+      contactId: contact.id,
+      email,
+      status: "SENT",
+      sesMessageId: result.messageId || `test-${campaign.id}`,
+      sentAt: new Date(),
+      attemptCount: 1,
+    },
+    update: {
+      status: "SENT",
+      sesMessageId: result.messageId || `test-${campaign.id}`,
+      sentAt: new Date(),
+      error: null,
+      bouncedAt: null,
+      deliveredAt: null,
+    },
   });
 
   await prisma.campaign.update({
     where: { id: campaign.id },
-    data: { testSentAt: new Date() },
+    data: {
+      testSentAt: new Date(),
+      ...(existingRecip
+        ? {}
+        : { sentCount: { increment: 1 }, recipientCount: { increment: 1 } }),
+    },
   });
 
-  return NextResponse.json({ ok: true, testEmail: email, campaignId: campaign.id });
+  return NextResponse.json({
+    ok: true,
+    testEmail: email,
+    campaignId: campaign.id,
+    messageId: result.messageId || null,
+  });
 }

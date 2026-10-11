@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { compileEmailHtml, type EmailDesign } from "@/lib/email-compiler";
 import { randomToken } from "@/lib/utils";
@@ -9,6 +11,12 @@ import {
   CAMPAIGN_SEND_DISABLED_MESSAGE,
   isCampaignSendEnabled,
 } from "@/lib/campaign-send-gate";
+import {
+  briefIssueIdempotencyKey,
+  briefIssueSlotKey,
+  isActiveBriefSlotStatus,
+  isRecoverableBriefSlotStatus,
+} from "@/lib/brief-issue-slot";
 import {
   BRIEF_AUDIENCE_TAG,
   ensureAudienceTag,
@@ -29,6 +37,8 @@ const schema = z.object({
   /** If true and scheduledAt omitted, leave as DRAFT */
   draftOnly: z.boolean().optional(),
   senderIdentityId: z.string().cuid().optional(),
+  /** Optional client-supplied slot; server derives canonical key from scheduledAt when scheduling Brief. */
+  issueSlotKey: z.string().trim().min(8).max(120).optional().nullable(),
 });
 
 function designFromHtmlBody(htmlBody: string): EmailDesign {
@@ -55,9 +65,35 @@ function designFromHtmlBody(htmlBody: string): EmailDesign {
   };
 }
 
+function requestHash(input: unknown): string {
+  return createHash("sha256").update(JSON.stringify(input)).digest("hex").slice(0, 32);
+}
+
+function campaignResponse(campaign: {
+  id: string;
+  status: string;
+  scheduledAt: Date | null;
+  issueSlotKey: string | null;
+}, badge: boolean, tagName: string, already = false) {
+  return {
+    ok: true,
+    campaignId: campaign.id,
+    status: campaign.status,
+    scheduledAt: campaign.scheduledAt,
+    issueSlotKey: campaign.issueSlotKey,
+    tag: tagName,
+    badge,
+    alreadyScheduled: already,
+  };
+}
+
 /**
  * Create a Brief campaign (and optionally schedule it).
  * POST /api/v1/campaigns
+ *
+ * When scheduling a non-test Brief, acquires an atomic America/Chicago issue-slot
+ * lock via IntegrationIdempotency + Campaign.issueSlotKey uniqueness so cron and
+ * owner schedule cannot double-queue the same Thursday.
  */
 export async function POST(req: Request) {
   const auth = await requireIntegrationAuth(req);
@@ -111,15 +147,16 @@ export async function POST(req: Request) {
   }
 
   const owner = await getWorkspaceOwner(auth.workspace.id);
+  const badge = showSendfableBadgeFor({
+    isInternal: auth.workspace.isInternal,
+    disabledAt: auth.workspace.disabledAt,
+    plan: owner.plan,
+  });
   const design = designFromHtmlBody(parsed.data.htmlBody);
   const compiledHtml = compileEmailHtml(design, {
     businessName: auth.workspace.name,
     mailingAddress: auth.workspace.mailingAddress,
-    showSendfableBadge: showSendfableBadgeFor({
-      isInternal: auth.workspace.isInternal,
-      disabledAt: auth.workspace.disabledAt,
-      plan: owner.plan,
-    }),
+    showSendfableBadge: badge,
     previewText: parsed.data.previewText || undefined,
   });
 
@@ -136,37 +173,202 @@ export async function POST(req: Request) {
     );
   }
 
-  const campaign = await prisma.campaign.create({
-    data: {
-      workspaceId: auth.workspace.id,
+  const isBrief =
+    /Boating Brief/i.test(parsed.data.name) && !/\[TEST\]/i.test(parsed.data.name);
+  const issueSlotKey =
+    wantSchedule && isBrief && scheduledAt
+      ? parsed.data.issueSlotKey?.trim() || briefIssueSlotKey(scheduledAt)
+      : null;
+  const idemKey =
+    wantSchedule && isBrief && scheduledAt
+      ? briefIssueIdempotencyKey(scheduledAt)
+      : null;
+
+  if (idemKey && issueSlotKey && scheduledAt) {
+    const existingBySlot = await prisma.campaign.findFirst({
+      where: {
+        workspaceId: auth.workspace.id,
+        issueSlotKey,
+        status: { in: ["SCHEDULED", "SENDING", "PAUSED", "COMPLETED"] },
+      },
+      select: {
+        id: true,
+        status: true,
+        scheduledAt: true,
+        issueSlotKey: true,
+      },
+    });
+    if (existingBySlot) {
+      return NextResponse.json(
+        campaignResponse(existingBySlot, badge, audienceTag.name, true)
+      );
+    }
+
+    const hash = requestHash({
       name: parsed.data.name,
       subject: parsed.data.subject,
-      previewText: parsed.data.previewText || null,
-      goal: "news",
-      simpleMode: true,
-      rawHtmlMode: false,
-      designJson: design as object,
-      compiledHtml,
-      senderIdentityId,
-      audienceType: "tags",
-      audienceTagIds: [audienceTag.id],
-      status: wantSchedule ? "SCHEDULED" : "DRAFT",
-      scheduledAt,
-    },
-  });
+      scheduledAt: scheduledAt.toISOString(),
+      issueSlotKey,
+    });
 
-  return NextResponse.json({
-    ok: true,
-    campaignId: campaign.id,
-    status: campaign.status,
-    scheduledAt: campaign.scheduledAt,
-    tag: audienceTag.name,
-    badge: showSendfableBadgeFor({
-      isInternal: auth.workspace.isInternal,
-      disabledAt: auth.workspace.disabledAt,
-      plan: owner.plan,
-    }),
-  });
+    try {
+      await prisma.integrationIdempotency.create({
+        data: {
+          workspaceId: auth.workspace.id,
+          key: idemKey,
+          requestHash: hash,
+          statusCode: 202,
+          responseJson: { pending: true, issueSlotKey },
+        },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
+        const lock = await prisma.integrationIdempotency.findUnique({
+          where: {
+            workspaceId_key: {
+              workspaceId: auth.workspace.id,
+              key: idemKey,
+            },
+          },
+        });
+        if (lock?.campaignId) {
+          const existing = await prisma.campaign.findFirst({
+            where: { id: lock.campaignId, workspaceId: auth.workspace.id },
+            select: {
+              id: true,
+              status: true,
+              scheduledAt: true,
+              issueSlotKey: true,
+            },
+          });
+          if (existing && isActiveBriefSlotStatus(existing.status)) {
+            return NextResponse.json(
+              campaignResponse(existing, badge, audienceTag.name, true)
+            );
+          }
+          if (existing && isRecoverableBriefSlotStatus(existing.status)) {
+            await prisma.campaign.update({
+              where: { id: existing.id },
+              data: { issueSlotKey: null },
+            });
+            await prisma.integrationIdempotency.delete({
+              where: { id: lock.id },
+            });
+            // Fall through to create a fresh campaign for this slot
+          } else if (!existing) {
+            await prisma.integrationIdempotency.delete({
+              where: { id: lock.id },
+            });
+          } else {
+            return NextResponse.json(
+              campaignResponse(existing, badge, audienceTag.name, true)
+            );
+          }
+        } else if (lock) {
+          // Lock held without campaign yet — another request in flight
+          return NextResponse.json(
+            {
+              error: "Brief issue slot is being scheduled; retry shortly",
+              issueSlotKey,
+            },
+            { status: 409 }
+          );
+        }
+        // Retry lock after recoverable cleanup
+        try {
+          await prisma.integrationIdempotency.create({
+            data: {
+              workspaceId: auth.workspace.id,
+              key: idemKey,
+              requestHash: hash,
+              statusCode: 202,
+              responseJson: { pending: true, issueSlotKey },
+            },
+          });
+        } catch {
+          return NextResponse.json(
+            {
+              error: "Brief issue slot is being scheduled; retry shortly",
+              issueSlotKey,
+            },
+            { status: 409 }
+          );
+        }
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  let campaign;
+  try {
+    campaign = await prisma.campaign.create({
+      data: {
+        workspaceId: auth.workspace.id,
+        name: parsed.data.name,
+        subject: parsed.data.subject,
+        previewText: parsed.data.previewText || null,
+        goal: "news",
+        simpleMode: true,
+        rawHtmlMode: false,
+        designJson: design as object,
+        compiledHtml,
+        senderIdentityId,
+        audienceType: "tags",
+        audienceTagIds: [audienceTag.id],
+        status: wantSchedule ? "SCHEDULED" : "DRAFT",
+        scheduledAt,
+        issueSlotKey,
+      },
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002" &&
+      issueSlotKey
+    ) {
+      const existing = await prisma.campaign.findFirst({
+        where: { workspaceId: auth.workspace.id, issueSlotKey },
+        select: {
+          id: true,
+          status: true,
+          scheduledAt: true,
+          issueSlotKey: true,
+        },
+      });
+      if (existing) {
+        return NextResponse.json(
+          campaignResponse(existing, badge, audienceTag.name, true)
+        );
+      }
+    }
+    if (idemKey) {
+      await prisma.integrationIdempotency
+        .deleteMany({
+          where: { workspaceId: auth.workspace.id, key: idemKey, campaignId: null },
+        })
+        .catch(() => undefined);
+    }
+    throw err;
+  }
+
+  if (idemKey) {
+    await prisma.integrationIdempotency.update({
+      where: {
+        workspaceId_key: { workspaceId: auth.workspace.id, key: idemKey },
+      },
+      data: {
+        campaignId: campaign.id,
+        statusCode: 200,
+        responseJson: campaignResponse(campaign, badge, audienceTag.name),
+      },
+    });
+  }
+
+  return NextResponse.json(campaignResponse(campaign, badge, audienceTag.name));
 }
 
 /** List recent Brief campaigns for owner status. */
@@ -192,11 +394,14 @@ export async function GET(req: Request) {
       scheduledAt: true,
       sentAt: true,
       completedAt: true,
+      issueSlotKey: true,
       recipientCount: true,
       sentCount: true,
+      deliveredCount: true,
       openCount: true,
       clickCount: true,
       bounceCount: true,
+      failedCount: true,
       unsubscribeCount: true,
       createdAt: true,
     },
