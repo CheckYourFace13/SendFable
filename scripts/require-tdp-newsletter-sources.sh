@@ -46,7 +46,11 @@ if grep -q 'REFUSING_DEPLOY: newsletter auto-send files are present' scripts/dep
   fail "deploy-production.sh is an inverted wipe deploy"
 fi
 
-! grep -q 'clearWelcomeLedgerOnUnsubscribe' src/lib/newsletter/*.ts 2>/dev/null || fail "clearWelcomeLedgerOnUnsubscribe must not be wired"
+# Function may exist for ops, but must not be wired into unsubscribe/accept paths.
+if grep -R --include='*.ts' --include='*.tsx' -l 'clearWelcomeLedgerOnUnsubscribe' src 2>/dev/null \
+  | grep -v 'src/lib/newsletter/ledger.ts' | grep -q .; then
+  fail "clearWelcomeLedgerOnUnsubscribe is wired outside ledger.ts"
+fi
 
 sh scripts/assert-tdp-newsletter.sh
 echo "require-tdp-newsletter-sources: OK"
