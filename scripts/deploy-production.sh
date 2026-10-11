@@ -43,8 +43,8 @@ if grep -R -n enqueueAutopilotAutoSend src/lib src/worker >/dev/null 2>&1; then
   exit 2
 fi
 
-docker compose -p sendfable -f docker-compose.prod.yml build app worke
-docker compose -p sendfable -f docker-compose.prod.yml up -d --no-deps app worke
+docker compose -p sendfable -f docker-compose.prod.yml build app worker
+docker compose -p sendfable -f docker-compose.prod.yml up -d --no-deps app worker
 sleep 12
 docker exec sendfable-worker sh -c 'test ! -d /app/src/lib/newsletter && ! grep -q enqueueAutopilotAutoSend /app/src/lib/autopilot/tick.ts /app/src/worker/index.ts'
 curl -sf -o /dev/null -w 'health:%{http_code}\n' http://127.0.0.1:3010/api/health
