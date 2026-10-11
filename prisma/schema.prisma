@@ -323,6 +323,8 @@ model Workspace {
   internalLabel        String?
   /// Per-workspace Autopilot approval mailbox. Falls back to the workspace owner.
   approvalEmail        String?
+  /// Opt-in automatic welcome.
+  autoWelcomeEnabled   Boolean   @default(false)
   disabledAt           DateTime?
 
   createdAt DateTime @default(now())
@@ -361,6 +363,8 @@ model Workspace {
   /// Marketing Autopilot (website → campaign draft → owner approval)
   marketingAutopilotConfig MarketingAutopilotConfig?
   marketingAutopilotDrafts MarketingAutopilotDraft[]
+  integrationIdempotency IntegrationIdempotency[]
+  automationSendLedger   AutomationSendLedger[]
   autopilotCommercial      AutopilotCommercial?
   autopilotCreditGrants    AutopilotCreditGrant[]
 }
@@ -1521,6 +1525,48 @@ model AcquisitionSuppression {
 // ─── Marketing Autopilot ────────────────────────────────────────────────────
 
 /// Per-workspace page watcher config (one watched page in v1).
+
+/// Durable opt-in automation sends (welcome / autopilot auto-send).
+
+model IntegrationIdempotency {
+  id          String   @id @default(cuid())
+  workspaceId String
+  key         String
+  requestHash String
+  campaignId  String?
+  statusCode  Int
+  responseJson Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, key])
+  @@index([workspaceId, createdAt])
+}
+
+model AutomationSendLedger {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  kind           String
+  idempotencyKey String
+  contactId      String?
+  draftId        String?
+  campaignId     String?
+  status         String   @default("PENDING")
+  attempts       Int      @default(0)
+  nextAttemptAt  DateTime @default(now())
+  lastError      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, kind, idempotencyKey])
+  @@index([status, nextAttemptAt])
+  @@index([workspaceId, createdAt])
+}
+
 model MarketingAutopilotConfig {
   id          String                  @id @default(cuid())
   workspaceId String                  @unique
@@ -1532,6 +1578,9 @@ model MarketingAutopilotConfig {
   audienceSegmentId String?
   checkFrequency    AutopilotCheckFrequency @default(DAILY)
   remindersEnabled  Boolean @default(true)
+  /// Opt-in auto-send via ledger.
+  autoSendEnabled   Boolean @default(false)
+  lastAutoSentAt    DateTime?
   /// EMAIL only in v1; TEXT/BOTH require explicit future enable
   channel           String  @default("EMAIL")
 

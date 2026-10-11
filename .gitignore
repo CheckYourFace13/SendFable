@@ -24,3 +24,4 @@ test-results/
 playwright-report/
 data/competitor-price-monitor.json
 
+src/lib/newsletter/.buildstamp
