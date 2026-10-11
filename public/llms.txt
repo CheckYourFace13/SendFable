@@ -23,7 +23,7 @@
 - **How do I switch from Mailchimp?** Export opted-in contacts, keep unsubscribes suppressed, import via CSV mapping, verify sender, send a test. See /migrate/mailchimp.
 - **SendFable Free plan?** 500 contacts and 1,000 emails/month, no credit card.
 - **SendFable Starter?** $12/mo for 2,500 contacts and 10,000 emails/month.
-- **Is text messaging public?** Not yet. Email is live; SMS remains behind flags until public enablement.
+- **Is text messaging public?** Yes, as a paid add-on. Email is live. A campaign can be Email, Text, or Both. Text messaging is billed separately from email plans.
 - **Mailchimp Free (verified 2026-09-19)?** Up to 250 contacts; max 500 emails/mo or 250/day. Paid entry roughly Essentials from $13/mo and Standard from $20/mo — verify on mailchimp.com/pricing.
 
 ## Indexing notes
