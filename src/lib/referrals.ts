@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { randomToken } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
+import { Prisma } from "@prisma/client";
 
 export const REFERRAL_SIGNUP_REASON = "REFERRAL_SIGNUP";
 export const REFERRAL_PAID_REASON = "REFERRAL_PAID_CREDIT";
@@ -54,16 +55,33 @@ export async function ensureReferralCodes(userId: string, workspaceId?: string):
     if (ws) {
       workspaceCode = ws.referralCode;
       if (!workspaceCode) {
-        workspaceCode = userCode;
-        await prisma.workspace.update({
-          where: { id: workspaceId },
-          data: { referralCode: workspaceCode },
-        });
+        workspaceCode = await assignWorkspaceReferralCode(workspaceId, userCode);
       }
     }
   }
 
   return { userCode, workspaceCode };
+}
+
+/** Workspace codes are unique. A second workspace cannot reuse the owner's user code. */
+async function assignWorkspaceReferralCode(workspaceId: string, preferred: string): Promise<string> {
+  const candidates = [preferred, ...Array.from({ length: 4 }, () => randomToken(6).slice(0, 8))];
+  let lastError: unknown;
+  for (const code of candidates) {
+    try {
+      await prisma.workspace.update({
+        where: { id: workspaceId },
+        data: { referralCode: code },
+      });
+      return code;
+    } catch (err) {
+      lastError = err;
+      const retry =
+        err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+      if (!retry) throw err;
+    }
+  }
+  throw lastError;
 }
 
 /** Resolve a referral code to the referring user (user code or workspace code → owner). */

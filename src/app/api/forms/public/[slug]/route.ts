@@ -65,13 +65,18 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
     showSendfableBadge = true;
   }
   if (showSendfableBadge) {
-    const owner = await prisma.membership.findFirst({
-      where: { workspaceId: form.workspaceId, role: "OWNER" },
-      select: { userId: true },
-    });
-    if (owner) {
-      const codes = await ensureReferralCodes(owner.userId, form.workspaceId);
-      referralCode = codes.workspaceCode;
+    try {
+      const owner = await prisma.membership.findFirst({
+        where: { workspaceId: form.workspaceId, role: "OWNER" },
+        select: { userId: true },
+      });
+      if (owner) {
+        const codes = await ensureReferralCodes(owner.userId, form.workspaceId);
+        referralCode = codes.workspaceCode;
+      }
+    } catch (err) {
+      console.error("[forms/public] referral code unavailable", err);
+      referralCode = null;
     }
   }
 
