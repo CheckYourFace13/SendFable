@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { UtmLink } from "@/components/marketing/utm-link";
 
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
@@ -107,12 +108,12 @@ export function SiteFooter() {
               <span className="text-ink/30" aria-hidden>
                 ·
               </span>
-              <Link
+              <UtmLink
                 href="/signup"
                 className="font-medium text-coral underline-offset-2 hover:underline"
               >
                 Start writing free
-              </Link>
+              </UtmLink>
             </div>
             {/* Social links intentionally omitted until official channels exist. */}
           </div>
@@ -124,12 +125,21 @@ export function SiteFooter() {
                 <ul className="mt-3 space-y-2.5 text-sm text-ink/65">
                   {col.links.map((link) => (
                     <li key={link.href + link.label}>
-                      <Link
-                        href={link.href}
-                        className="transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
-                      >
-                        {link.label}
-                      </Link>
+                      {link.href === "/signup" ? (
+                        <UtmLink
+                          href={link.href}
+                          className="transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                        >
+                          {link.label}
+                        </UtmLink>
+                      ) : (
+                        <Link
+                          href={link.href}
+                          className="transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                        >
+                          {link.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>

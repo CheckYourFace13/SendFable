@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { UtmLink } from "@/components/marketing/utm-link";
 import { PLANS } from "@/lib/plans";
 
 export function AnnouncementBar() {
@@ -7,12 +7,12 @@ export function AnnouncementBar() {
       <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 py-2.5 text-center text-sm sm:px-6">
         <p className="text-page/90">
           Start free — {PLANS.FREE.contactCap.toLocaleString()} contacts, no credit card.{" "}
-          <Link
+          <UtmLink
             href="/signup"
             className="font-medium text-[#FFB4A4] underline decoration-[#FFB4A4]/40 underline-offset-2 transition-colors hover:text-page hover:decoration-page"
           >
             Create your account
-          </Link>
+          </UtmLink>
           .
         </p>
       </div>
