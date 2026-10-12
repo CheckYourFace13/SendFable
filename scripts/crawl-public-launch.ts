@@ -81,8 +81,13 @@ async function main() {
     for (const re of FORBIDDEN) {
       if (re.test(text)) failures.push(`${path} contains ${re}`);
     }
-    if (/Text Entry|Text Essentials|Text Advantage|text messaging plans/i.test(text) && path === "/pricing") {
-      failures.push(`${path} exposes SMS pricing while SMS should stay dark`);
+    if (path === "/pricing") {
+      if (!/text messaging plans/i.test(text) || !/Text Entry/i.test(text)) {
+        failures.push(`${path} missing public SMS add-on pricing`);
+      }
+      if (/not publicly available/i.test(text)) {
+        failures.push(`${path} still says SMS is not publicly available`);
+      }
     }
     // Pricing sanity on homepage/pricing
     if (path === "/pricing" || path === "/") {
@@ -102,8 +107,11 @@ async function main() {
       }
     }
     if (path === "/about" || path === "/how-sendfable-works") {
-      if (!/not publicly available/i.test(text)) {
-        failures.push(`${path} missing honest SMS status`);
+      if (!/Text messaging is available/i.test(text)) {
+        failures.push(`${path} missing live SMS status`);
+      }
+      if (/not publicly available/i.test(text)) {
+        failures.push(`${path} still says SMS is not publicly available`);
       }
     }
     console.log(JSON.stringify({ path, status: res.status, ok: okStatus && !failures.some((f) => f.startsWith(path)) }));
