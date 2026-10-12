@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UtmLink } from "@/components/marketing/utm-link";
 import { cn } from "@/lib/utils";
 
 type NavLink = { href: string; label: string; description?: string };
@@ -345,12 +346,12 @@ export function SiteHeader() {
           >
             Log in
           </Link>
-          <Link
+          <UtmLink
             href="/signup"
             className="hidden min-h-11 items-center justify-center rounded-md bg-coral-solid px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-coral-hover lg:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
           >
             Start writing free
-          </Link>
+          </UtmLink>
           <button
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-md text-ink transition hover:bg-parchment lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
@@ -458,13 +459,13 @@ export function SiteHeader() {
               >
                 Log in
               </Link>
-              <Link
+              <UtmLink
                 href="/signup"
                 className="flex min-h-11 items-center justify-center rounded-md bg-coral-solid text-sm font-semibold text-white hover:bg-coral-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
                 onClick={closeMobile}
               >
                 Start writing free
-              </Link>
+              </UtmLink>
             </div>
           </div>
         </div>

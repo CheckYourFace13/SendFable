@@ -329,10 +329,10 @@ describe("acquisition continuous discovery (OSM)", () => {
   });
 
   it("requires 25 delivered INITIAL before conversion cohort strategy changes", async () => {
-    const { COHORT_SIZE, diagnoseBottleneck, formatCohortReport } = await import(
-      "@/lib/acquisition/conversion-optimize"
-    );
+    const { COHORT_SIZE, MIN_CLICKS_BEFORE_LANDING, diagnoseBottleneck, formatCohortReport } =
+      await import("@/lib/acquisition/conversion-optimize");
     assert.equal(COHORT_SIZE, 25);
+    assert.equal(MIN_CLICKS_BEFORE_LANDING, 8);
     const empty = {
       delivered: 5,
       clicked: 0,
@@ -351,18 +351,58 @@ describe("acquisition continuous discovery (OSM)", () => {
     assert.equal(diagnoseBottleneck(empty), "NONE");
     const cold = { ...empty, delivered: 25, clickPct: 0, replyPct: 0 };
     assert.equal(diagnoseBottleneck(cold), "A");
-    const clicksNoSignup = {
+    const oneClick = {
       ...empty,
       delivered: 25,
+      clicked: 1,
       clickPct: 4,
       replyPct: 0,
       signupPct: 0,
     };
-    assert.equal(diagnoseBottleneck(clicksNoSignup), "B");
+    assert.equal(diagnoseBottleneck(oneClick), "EARLY");
+    const earlyReport = formatCohortReport(oneClick, "EARLY", "hold: keep collecting");
+    assert.match(earlyReport, /CLICKTHROUGH — NEEDS MORE DATA/);
+    assert.doesNotMatch(earlyReport, /LANDING \/ SIGNUP/);
+    const enoughClicks = {
+      ...empty,
+      delivered: 25,
+      clicked: 8,
+      clickPct: 32,
+      replyPct: 0,
+      signupPct: 0,
+    };
+    assert.equal(diagnoseBottleneck(enoughClicks), "B");
     const report = formatCohortReport(cold, "A", "copy_ab: test");
     assert.match(report, /DELIVERED: 25/);
     assert.match(report, /PRIMARY BOTTLENECK: A\. MESSAGE/);
     assert.match(report, /OWNER ACTION: NONE/);
+  });
+
+  it("stores reply text in owner alerts and treats ticket receipts as automatic", async () => {
+    const { classifyReplyBody, extractReplyText, formatAcquisitionReplyAlert, looksLikeAutomaticReceipt } =
+      await import("@/lib/acquisition/reply-imap");
+    const raw =
+      "Subject: Ticket Received\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n" +
+      "Content-Type: text/plain; charset=UTF-8\r\n\r\n" +
+      "Dear Casey, Thank you for reaching out to us. One of our support team members will be reviewing your request.\r\n";
+    const text = extractReplyText(raw);
+    assert.match(text, /Thank you for reaching out/);
+    assert.equal(looksLikeAutomaticReceipt(text), true);
+    assert.equal(classifyReplyBody(`What if the marketing mostly wrote itself?\n${text}`), "OTHER");
+    const alert = formatAcquisitionReplyAlert({
+      businessName: "Kriser's",
+      replyText: text,
+      reviewUrl: "https://sendfable.com/admin/acquisition/example",
+    });
+    assert.match(alert, /Kriser's replied/);
+    assert.match(alert, /Thank you for reaching out/);
+    assert.match(alert, /\[Review & Reply\]/);
+    assert.match(alert, /Do not auto-reply/);
+    assert.doesNotMatch(alert, /sesMessageId/);
+    const poll = await import("node:fs").then((fs) =>
+      fs.readFileSync("src/lib/acquisition/reply-imap.ts", "utf8")
+    );
+    assert.doesNotMatch(poll, /sendCaseyOwnerReply/);
   });
 
   it("appendUtmParams preserves casey UTMs onto signup", async () => {

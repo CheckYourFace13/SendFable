@@ -147,6 +147,8 @@ export type ReplyClass =
 export async function recordAcquisitionReply(opts: {
   prospectId: string;
   replyClass: ReplyClass;
+  replyText?: string;
+  fromEmail?: string;
 }): Promise<void> {
   const status =
     opts.replyClass === "UNSUBSCRIBE"
@@ -181,7 +183,11 @@ export async function recordAcquisitionReply(opts: {
     data: {
       prospectId: opts.prospectId,
       type: "reply",
-      meta: { replyClass: opts.replyClass },
+      meta: {
+        replyClass: opts.replyClass,
+        ...(opts.replyText ? { replyText: opts.replyText.slice(0, 4000) } : {}),
+        ...(opts.fromEmail ? { fromEmail: opts.fromEmail } : {}),
+      },
     },
   });
 }

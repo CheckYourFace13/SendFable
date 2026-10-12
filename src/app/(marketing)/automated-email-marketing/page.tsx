@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
+import { UtmLink } from "@/components/marketing/utm-link";
 import { marketingPageMeta, JsonLd } from "@/components/marketing/json-ld";
 import { WebsiteToEmailProof } from "@/components/marketing/website-to-email-proof";
 import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
@@ -149,10 +150,10 @@ export default function AutomatedEmailMarketingPage() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
-          <Link href="/signup">Start free</Link>
+          <UtmLink href="/signup">Start free</UtmLink>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/signup">Turn on Scribe</Link>
+          <UtmLink href="/signup">Turn on Scribe</UtmLink>
         </Button>
       </div>
 

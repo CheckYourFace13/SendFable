@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { suppressProspect } from "@/lib/acquisition/suppression";
 import { recordAcquisitionReply, type ReplyClass } from "@/lib/acquisition/lifecycle";
 import { draftMessageForProspect } from "@/lib/acquisition/send";
+import { sendCaseyOwnerReply } from "@/lib/acquisition/owner-reply";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -36,11 +37,14 @@ const patchSchema = z.object({
     "mark_converted",
     "mark_reply",
     "redraft",
+    "reply_as_casey",
   ]),
   replyClass: z
     .enum(["POSITIVE", "QUESTION", "NOT_NOW", "NOT_INTERESTED", "UNSUBSCRIBE", "OTHER"])
     .optional(),
   reason: z.string().max(200).optional(),
+  subject: z.string().max(200).optional(),
+  body: z.string().max(8000).optional(),
 });
 
 export async function PATCH(
@@ -104,6 +108,17 @@ export async function PATCH(
     case "redraft":
       await draftMessageForProspect(id, "INITIAL", { dryRun: true });
       break;
+    case "reply_as_casey": {
+      const sent = await sendCaseyOwnerReply({
+        prospectId: id,
+        subject: parsed.data.subject || "",
+        body: parsed.data.body || "",
+      });
+      if (!sent.ok) {
+        return NextResponse.json({ error: sent.reason }, { status: 400 });
+      }
+      break;
+    }
   }
 
   const updated = await prisma.acquisitionProspect.findUnique({

@@ -21,6 +21,7 @@ import {
 import { recordAcquisitionReply, type ReplyClass } from "@/lib/acquisition/lifecycle";
 import { normalizeEmail } from "@/lib/utils";
 import { alertOwnerException } from "@/lib/acquisition/notify";
+import { appUrl } from "@/lib/utils";
 
 const PLATFORM_IGNORE_SENDERS = new Set([
   ACQUISITION_SENDER_EMAIL,
@@ -31,7 +32,60 @@ const PLATFORM_IGNORE_SENDERS = new Set([
   "chris@sendfable.com",
 ]);
 
+export function looksLikeAutomaticReceipt(text: string): boolean {
+  return /\b(ticket received|thank you for reaching out|automatic reply|auto-?reply|out of office|will send you a personal response|one of our support team members)\b/i.test(
+    text
+  );
+}
+
+/** Decode quoted-printable, including UTF-8 bytes, and keep the plain sentence. */
+export function extractReplyText(raw: string): string {
+  const unfolded = raw.replace(/=\r?\n/g, "");
+  const bytes: number[] = [];
+  for (let i = 0; i < unfolded.length; i++) {
+    if (unfolded[i] === "=" && /^[0-9A-Fa-f]{2}$/.test(unfolded.slice(i + 1, i + 3))) {
+      bytes.push(parseInt(unfolded.slice(i + 1, i + 3), 16));
+      i += 2;
+    } else {
+      bytes.push(unfolded.charCodeAt(i) & 0xff);
+    }
+  }
+  const decoded = Buffer.from(bytes).toString("utf8");
+  const plain = decoded.match(
+    /Content-Type:\s*text\/plain[^\n]*\r?\n(?:[^\r\n]+\r?\n)*\r?\n([\s\S]*?)(?:\r?\n----|$)/i
+  );
+  let body = plain?.[1] || decoded.split(/\r?\n\r?\n/).slice(1).join("\n");
+  body = body
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&#8212;|&mdash;/gi, "—")
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+  return body.slice(0, 4000);
+}
+
+export function formatAcquisitionReplyAlert(opts: {
+  businessName: string;
+  replyText: string;
+  reviewUrl: string;
+}): string {
+  const quote = opts.replyText.replace(/\s+/g, " ").trim().slice(0, 1200);
+  return [
+    `${opts.businessName} replied`,
+    "",
+    `“${quote || "(no message text)"}”`,
+    "",
+    `[Review & Reply] ${opts.reviewUrl}`,
+    "",
+    "Do not auto-reply — respond personally as Casey.",
+  ].join("\n");
+}
+
 export function classifyReplyBody(text: string): ReplyClass {
+  if (looksLikeAutomaticReceipt(text)) return "OTHER";
   const t = text.toLowerCase().slice(0, 4000);
   if (
     /\b(unsubscribe|remove me|opt[- ]?out|stop emailing|no thanks|don't contact)\b/.test(t)
@@ -208,7 +262,8 @@ export async function pollAcquisitionReplies(): Promise<{
         }
 
         const bodyMatch = raw.split(/\r?\n\r?\n/).slice(1).join("\n").slice(0, 8000);
-        const prospect = await matchProspectFromReply(fromAddr, subject, bodyMatch);
+        const replyText = extractReplyText(raw);
+        const prospect = await matchProspectFromReply(fromAddr, subject, replyText || bodyMatch);
         if (!prospect) continue;
 
         if (
@@ -219,14 +274,23 @@ export async function pollAcquisitionReplies(): Promise<{
           continue;
         }
 
-        const replyClass = classifyReplyBody(`${subject}\n${bodyMatch}`);
-        await recordAcquisitionReply({ prospectId: prospect.id, replyClass });
+        const replyClass = classifyReplyBody(`${subject}\n${replyText || bodyMatch}`);
+        await recordAcquisitionReply({
+          prospectId: prospect.id,
+          replyClass,
+          replyText: replyText || undefined,
+          fromEmail: fromAddr,
+        });
         processed++;
 
         if (replyClass === "POSITIVE" || replyClass === "QUESTION") {
           await alertOwnerException(
-            `SendFable acquisition reply: ${replyClass} — ${prospect.businessName}`,
-            `Prospect: ${prospect.businessName}\nDomain: ${prospect.domain}\nClass: ${replyClass}\nFrom: ${fromAddr}\n\nReview: /admin/acquisition/${prospect.id}\n\nDo not auto-reply — respond personally as Casey.`
+            `${prospect.businessName} replied`,
+            formatAcquisitionReplyAlert({
+              businessName: prospect.businessName,
+              replyText,
+              reviewUrl: appUrl(`/admin/acquisition/${prospect.id}`),
+            })
           );
         }
 

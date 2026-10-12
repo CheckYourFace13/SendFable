@@ -15,7 +15,10 @@ import { alertOwnerException } from "@/lib/acquisition/notify";
 
 export const COHORT_SIZE = 25;
 
-export type Bottleneck = "A" | "B" | "C" | "D" | "NONE";
+/** Clicks required before a signup rate can be called a landing problem. */
+export const MIN_CLICKS_BEFORE_LANDING = 8;
+
+export type Bottleneck = "A" | "B" | "C" | "D" | "EARLY" | "NONE";
 
 export type CohortRates = {
   delivered: number;
@@ -220,6 +223,8 @@ export function diagnoseBottleneck(rates: CohortRates): Bottleneck {
   const engage = rates.clickPct + rates.replyPct;
   // Near-zero engagement → message/targeting
   if (engage < 2) return "A";
+  // One click (or a handful) cannot prove the landing page is the problem.
+  if (rates.clicked < MIN_CLICKS_BEFORE_LANDING) return "EARLY";
   // Clicks happen but signups weak
   if (rates.clickPct >= 2 && rates.signupPct < 1) return "B";
   // Signups happen but first sends weak
@@ -237,6 +242,8 @@ export function formatCohortReport(
   const label =
     bottleneck === "A"
       ? "A. MESSAGE / TARGETING"
+      : bottleneck === "EARLY"
+        ? "CLICKTHROUGH — NEEDS MORE DATA"
       : bottleneck === "B"
         ? "B. LANDING / SIGNUP"
         : bottleneck === "C"
@@ -273,6 +280,9 @@ function nextActionText(
 ): string {
   if (rates.delivered < COHORT_SIZE) {
     return `Hold all copy/targeting/ramp changes until ${COHORT_SIZE} delivered INITIAL (now ${rates.delivered}).`;
+  }
+  if (bottleneck === "EARLY") {
+    return "Early data — keep collecting. No copy, landing, or Casey A/B change.";
   }
   if (bottleneck === "A") {
     return `A/B test Autopilot v1b (subject/lead) against ${copyVersion || "v1a"} — 50/50 on new INITIAL drafts.`;
@@ -460,17 +470,24 @@ export async function evaluateConversionCohort(now = new Date()): Promise<{
   let reason = "no_bottleneck_hold";
   const state: OptState = {
     ...prevState,
-    preferredCategories: [],
-    preferredSignals: [],
     bottleneck,
     bestSegmentKey: best?.key,
     worstSegmentKey: worst?.key,
-    // Clear prior single-fix flags — only one may be set below
-    abTest: { control: "v1a", variant: "v1b", enabled: false },
-    fixLandingUtm: false,
-    fixOnboardingReturn: false,
-    fixBillingBadgeValue: false,
   };
+
+  if (bottleneck === "EARLY") {
+    reason = "CLICKTHROUGH — NEEDS MORE DATA";
+    if (!state.abTest) {
+      state.abTest = { control: "v1a", variant: "v1b", enabled: true };
+    }
+  } else {
+  state.preferredCategories = [];
+  state.preferredSignals = [];
+  // Clear prior single-fix flags — only one may be set below
+  state.abTest = { control: "v1a", variant: "v1b", enabled: false };
+  state.fixLandingUtm = false;
+  state.fixOnboardingReturn = false;
+  state.fixBillingBadgeValue = false;
 
   // Exactly one change
   if (bottleneck === "A") {
@@ -494,6 +511,7 @@ export async function evaluateConversionCohort(now = new Date()): Promise<{
     state.preferredSignals = [best.signal];
     action = "bias_segments";
     reason = `prefer ${best.key} with exploration; soft-deprioritize ${worst?.key || "n/a"}`;
+  }
   }
 
   state.lastAction = action;
