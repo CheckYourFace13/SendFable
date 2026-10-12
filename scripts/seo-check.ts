@@ -28,6 +28,22 @@ const MARKETING_PAGES: Array<{ route: string; file: string }> = [
   { route: "/status", file: path.join(MARKETING_ROOT, "status", "page.tsx") },
   { route: "/integrations", file: path.join(MARKETING_ROOT, "integrations", "page.tsx") },
   {
+    route: "/integrations/wordpress",
+    file: path.join(MARKETING_ROOT, "integrations", "wordpress", "page.tsx"),
+  },
+  {
+    route: "/integrations/wix",
+    file: path.join(MARKETING_ROOT, "integrations", "wix", "page.tsx"),
+  },
+  {
+    route: "/integrations/webflow",
+    file: path.join(MARKETING_ROOT, "integrations", "webflow", "page.tsx"),
+  },
+  {
+    route: "/integrations/squarespace",
+    file: path.join(MARKETING_ROOT, "integrations", "squarespace", "page.tsx"),
+  },
+  {
     route: "/email-marketing-guide",
     file: path.join(MARKETING_ROOT, "email-marketing-guide", "page.tsx"),
   },

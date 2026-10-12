@@ -53,6 +53,7 @@ const PUBLIC_PREFIXES = [
   "/alternatives/",
   "/migrate/",
   "/guides/",
+  "/integrations/",
   "/f/",
   "/a/",
   "/unsubscribe/",
