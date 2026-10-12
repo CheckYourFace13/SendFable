@@ -4,6 +4,7 @@ import test from "node:test";
 import { normalizeFormFields, requirementModeFor } from "../forms/fields";
 import { audienceIds, canAcceptPublicSignups, fieldSummary } from "../forms/manage";
 import { developerInstructions, embedSnippet } from "../forms/install";
+import { parsePresentation, popupFrequencyAllows } from "../forms/presentation";
 import {
   emailRejoinDecision,
   fillTimingOk,
@@ -43,6 +44,40 @@ test("embed snippet is a script, not a cross-site iframe", () => {
   assert.match(snippet, /data-sendfable-form="drinkknird-newsletter"/);
   assert.match(snippet, /\/embed\/form\.js/);
   assert.equal(snippet.includes("<iframe"), false);
+  assert.equal(snippet.includes("data-display"), false);
+  const popup = embedSnippet("https://sendfable.com", "drinkknird-newsletter", {
+    display: "popup",
+    trigger: "delay",
+    delaySeconds: 10,
+    scrollPercent: 50,
+    frequency: "7d",
+  });
+  assert.match(popup, /data-display="popup"/);
+  assert.match(popup, /data-delay="10"/);
+  assert.match(popup, /data-frequency="7d"/);
+  assert.match(popup, /\/embed\/form\.js/);
+  assert.equal(popup.includes("<iframe"), false);
+  const scroll = embedSnippet("https://sendfable.com", "drinkknird-newsletter", {
+    display: "popup",
+    trigger: "scroll",
+    delaySeconds: 10,
+    scrollPercent: 50,
+    frequency: "once",
+  });
+  assert.match(scroll, /data-scroll="50"/);
+  assert.equal(parsePresentation({}).display, "inline");
+  const week = 7 * 24 * 60 * 60 * 1000;
+  assert.equal(popupFrequencyAllows(null, "once", 1_000), true);
+  assert.equal(popupFrequencyAllows(1_000, "once", 1_000 + week), false);
+  assert.equal(popupFrequencyAllows(1_000, "7d", 1_000 + week - 1), false);
+  assert.equal(popupFrequencyAllows(1_000, "7d", 1_000 + week), true);
+  const script = readFileSync("src/app/embed/form.js/route.ts", "utf8");
+  assert.match(script, /data-display/);
+  assert.match(script, /sf-popup:/);
+  assert.match(script, /aria-modal/);
+  assert.match(script, /Powered by SendFable/);
+  assert.match(script, /utm_term=/);
+  assert.match(script, /showSendfableBadge/);
   const page = readFileSync("src/app/(app)/forms/page.tsx", "utf8");
   assert.equal(page.includes("?embed=1"), false);
 });

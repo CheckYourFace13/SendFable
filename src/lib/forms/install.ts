@@ -1,9 +1,19 @@
 import type { FormFieldDef } from "@/lib/forms/fields";
 import { emailConsentText } from "@/lib/forms/fields";
+import { parsePresentation, type FormPresentation } from "@/lib/forms/presentation";
 
-export function embedSnippet(origin: string, slug: string): string {
+export function embedSnippet(origin: string, slug: string, presentation?: FormPresentation | unknown): string {
   const base = origin.replace(/\/$/, "");
-  return `<div data-sendfable-form="${slug}"></div>\n<script src="${base}/embed/form.js" async></script>`;
+  const script = `<script src="${base}/embed/form.js" async></script>`;
+  const settings = presentation ? parsePresentation(presentation) : null;
+  if (!settings || settings.display !== "popup") {
+    return `<div data-sendfable-form="${slug}"></div>\n${script}`;
+  }
+  const timing =
+    settings.trigger === "scroll"
+      ? `data-trigger="scroll" data-scroll="${settings.scrollPercent}"`
+      : `data-trigger="delay" data-delay="${settings.delaySeconds}"`;
+  return `<div data-sendfable-form="${slug}" data-display="popup" ${timing} data-frequency="${settings.frequency}"></div>\n${script}`;
 }
 
 export function developerInstructions(input: {

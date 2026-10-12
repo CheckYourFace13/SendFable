@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/session";
 import { appUrl } from "@/lib/utils";
 import { normalizeFormFields, requirementModeFor } from "@/lib/forms/fields";
 import { developerInstructions, embedSnippet } from "@/lib/forms/install";
+import { parsePresentation } from "@/lib/forms/presentation";
 import { AUDIENCE_REQUIRED, audienceIds } from "@/lib/forms/manage";
 
 const patchSchema = z.object({
@@ -22,6 +23,15 @@ const patchSchema = z.object({
   successMessage: z.string().trim().min(1).max(240).optional(),
   theme: z.enum(["light", "dark", "inherit"]).optional(),
   status: z.enum(["ACTIVE", "PAUSED"]).optional(),
+  presentation: z
+    .object({
+      display: z.enum(["inline", "popup"]),
+      trigger: z.enum(["delay", "scroll"]),
+      delaySeconds: z.union([z.literal(5), z.literal(10), z.literal(20), z.literal(30)]),
+      scrollPercent: z.union([z.literal(25), z.literal(50), z.literal(75)]),
+      frequency: z.enum(["once", "7d", "30d"]),
+    })
+    .optional(),
   hostedSlug: z
     .string()
     .trim()
@@ -42,7 +52,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
   const hostedUrl = appUrl(`/f/${form.hostedSlug}`);
   const origin = new URL(hostedUrl).origin;
-  const embedCode = embedSnippet(origin, form.hostedSlug);
+  const embedCode = embedSnippet(origin, form.hostedSlug, form.presentation);
   const tags = await prisma.tag.findMany({
     where: { workspaceId: ctx.workspace.id },
     select: { id: true, name: true },
@@ -133,6 +143,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       successMessage: parsed.data.successMessage,
       theme: parsed.data.theme,
       status,
+      presentation: parsed.data.presentation
+        ? parsePresentation(parsed.data.presentation)
+        : undefined,
     },
   });
 

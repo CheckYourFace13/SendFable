@@ -142,6 +142,7 @@ export type ReplyClass =
   | "NOT_NOW"
   | "NOT_INTERESTED"
   | "UNSUBSCRIBE"
+  | "AUTO_REPLY"
   | "OTHER";
 
 export async function recordAcquisitionReply(opts: {
@@ -150,6 +151,25 @@ export async function recordAcquisitionReply(opts: {
   replyText?: string;
   fromEmail?: string;
 }): Promise<void> {
+  if (opts.replyClass === "AUTO_REPLY") {
+    await prisma.acquisitionProspect.update({
+      where: { id: opts.prospectId },
+      data: { replyClass: "AUTO_REPLY" },
+    });
+    await prisma.acquisitionEvent.create({
+      data: {
+        prospectId: opts.prospectId,
+        type: "reply",
+        meta: {
+          replyClass: "AUTO_REPLY",
+          ...(opts.replyText ? { replyText: opts.replyText.slice(0, 4000) } : {}),
+          ...(opts.fromEmail ? { fromEmail: opts.fromEmail } : {}),
+        },
+      },
+    });
+    return;
+  }
+
   const status =
     opts.replyClass === "UNSUBSCRIBE"
       ? "UNSUBSCRIBED"

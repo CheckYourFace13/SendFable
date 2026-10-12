@@ -536,11 +536,29 @@ model SignupForm {
   emailDisclosureVersion String @default("email-consent-2026-10-10")
   /// ACTIVE forms accept submissions.
   status            String  @default("ACTIVE")
+  /// { display, trigger, delaySeconds, scrollPercent, frequency }.
+  /// Missing or inline leaves existing embeds unchanged.
+  presentation      Json    @default("{}")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  events    SignupFormEvent[]
+}
+
+model SignupFormEvent {
+  id          String   @id @default(cuid())
+  workspaceId String
+  formId      String
+  type        String
+  display     String   @default("inline")
+  createdAt   DateTime @default(now())
+
+  form SignupForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId, type, createdAt])
+  @@index([workspaceId, createdAt])
 }
 
 // ─── Content ────────────────────────────────────────────────────────────────

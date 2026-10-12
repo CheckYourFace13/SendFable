@@ -27,10 +27,112 @@ const SCRIPT = `
     wrap.appendChild(input);
     return wrap;
   }
+  function track(slug, type, display) {
+    fetch(origin + "/api/forms/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: slug, type: type, display: display }),
+      keepalive: true,
+      mode: "cors"
+    }).catch(function () {});
+  }
+  function popupConfig(el) {
+    if (el.getAttribute("data-display") !== "popup") return null;
+    var trigger = el.getAttribute("data-trigger") === "scroll" ? "scroll" : "delay";
+    var delay = parseInt(el.getAttribute("data-delay") || "10", 10);
+    if ([5, 10, 20, 30].indexOf(delay) < 0) delay = 10;
+    var scroll = parseInt(el.getAttribute("data-scroll") || "50", 10);
+    if ([25, 50, 75].indexOf(scroll) < 0) scroll = 50;
+    var frequency = el.getAttribute("data-frequency") || "7d";
+    if (["once", "7d", "30d"].indexOf(frequency) < 0) frequency = "7d";
+    return { trigger: trigger, delay: delay, scroll: scroll, frequency: frequency };
+  }
+  function frequencyAllows(slug, frequency) {
+    try {
+      var raw = localStorage.getItem("sf-popup:" + slug);
+      if (!raw) return true;
+      var at = parseInt(raw, 10);
+      if (!at) return true;
+      if (frequency === "once") return false;
+      var days = frequency === "30d" ? 30 : 7;
+      return Date.now() - at >= days * 86400000;
+    } catch (err) {
+      return true;
+    }
+  }
+  function markShown(slug) {
+    try { localStorage.setItem("sf-popup:" + slug, String(Date.now())); } catch (err) {}
+  }
+  function openPopup(slug, draw) {
+    var backdrop = document.createElement("div");
+    backdrop.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:rgba(28,25,23,0.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;box-sizing:border-box;overflow:auto;";
+    if (window.innerWidth >= 640) backdrop.style.alignItems = "center";
+    var dialog = document.createElement("div");
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.setAttribute("aria-label", "Signup");
+    dialog.style.cssText = "position:relative;width:100%;max-width:28rem;max-height:min(90vh,640px);overflow:auto;background:#fff;color:#1c1917;border-radius:16px;padding:48px 16px 16px;box-sizing:border-box;";
+    var close = document.createElement("button");
+    close.type = "button";
+    close.setAttribute("aria-label", "Close");
+    close.textContent = "Close";
+    close.style.cssText = "position:absolute;top:8px;right:8px;min-width:44px;min-height:44px;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;";
+    var slot = document.createElement("div");
+    dialog.appendChild(close);
+    dialog.appendChild(slot);
+    backdrop.appendChild(dialog);
+    var previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.body.appendChild(backdrop);
+    draw(slot);
+    function nodes() {
+      return Array.prototype.filter.call(dialog.querySelectorAll("button, input, a, textarea, select"), function (node) {
+        return !node.disabled && node.getAttribute("aria-hidden") !== "true";
+      });
+    }
+    function finish(closed) {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", onKey);
+      if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+      if (closed) track(slug, "popup_closed", "popup");
+    }
+    function onKey(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        finish(true);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      var list = nodes();
+      if (!list.length) return;
+      var first = list[0];
+      var last = list[list.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    close.addEventListener("click", function () { finish(true); });
+    backdrop.addEventListener("click", function (event) {
+      if (event.target === backdrop) finish(true);
+    });
+    close.focus();
+    markShown(slug);
+    track(slug, "popup_shown", "popup");
+  }
   function mount(el) {
     var slug = el.getAttribute("data-sendfable-form");
     if (!slug || el.getAttribute("data-sendfable-ready")) return;
     el.setAttribute("data-sendfable-ready", "1");
+    var popup = popupConfig(el);
+    var display = popup ? "popup" : "inline";
+    if (popup && !frequencyAllows(slug, popup.frequency)) return;
+    if (popup) el.style.display = "none";
+    function begin() {
     fetch(origin + "/api/forms/public/" + encodeURIComponent(slug))
       .then(function (res) { return res.json(); })
       .then(function (data) {
@@ -91,9 +193,11 @@ const SCRIPT = `
           var credit = document.createElement("p");
           credit.style.cssText = "margin:10px 0 0;font-size:12px;line-height:1.35;opacity:0.8;";
           var creditLink = document.createElement("a");
-          var badgeQuery = "utm_source=signup_tool&utm_medium=embed_badge&utm_campaign=free_plan&utm_content=" + encodeURIComponent(form.hostedSlug || slug);
+          var medium = display === "popup" ? "popup" : "embed_badge";
+          var badgeQuery = "utm_source=signup_tool&utm_medium=" + medium + "&utm_campaign=free_plan&utm_content=" + encodeURIComponent(form.hostedSlug || slug) + "&utm_term=" + display;
           if (form.referralCode) badgeQuery = "ref=" + encodeURIComponent(form.referralCode) + "&" + badgeQuery;
           creditLink.href = origin + "/signup?" + badgeQuery;
+          creditLink.addEventListener("click", function () { track(slug, "badge_clicked", display); });
           creditLink.target = "_blank";
           creditLink.rel = "noopener";
           creditLink.textContent = "Powered by SendFable";
@@ -104,6 +208,12 @@ const SCRIPT = `
           credit.appendChild(creditLine);
           box.appendChild(credit);
         }
+        var started = false;
+        box.addEventListener("input", function () {
+          if (started) return;
+          started = true;
+          track(slug, "form_started", display);
+        });
         box.addEventListener("submit", function (event) {
           event.preventDefault();
           error.textContent = "";
@@ -142,16 +252,34 @@ const SCRIPT = `
             title.style.fontWeight = "600";
             title.textContent = result.body.pendingConfirm ? "Check your email" : (form.successMessage || "You're subscribed");
             box.appendChild(title);
+            track(slug, "form_submitted", display);
           }).catch(function () {
             button.disabled = false;
             error.textContent = "Something went wrong";
           });
         });
-        el.appendChild(box);
+        if (display === "popup") openPopup(slug, function (slot) { slot.appendChild(box); });
+        else el.appendChild(box);
       })
       .catch(function () {
-        el.textContent = "This form is unavailable.";
+        if (display !== "popup") el.textContent = "This form is unavailable.";
       });
+    }
+    if (!popup) begin();
+    else if (popup.trigger === "scroll") {
+      function onScroll() {
+        var doc = document.documentElement;
+        var max = doc.scrollHeight - window.innerHeight;
+        var pct = max <= 0 ? 0 : (window.scrollY / max) * 100;
+        if (pct >= popup.scroll) {
+          window.removeEventListener("scroll", onScroll);
+          begin();
+        }
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+    } else {
+      window.setTimeout(begin, popup.delay * 1000);
+    }
   }
   ready(function () {
     Array.prototype.forEach.call(document.querySelectorAll("[data-sendfable-form]"), mount);

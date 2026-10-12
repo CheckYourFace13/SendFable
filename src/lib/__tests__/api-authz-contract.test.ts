@@ -22,6 +22,7 @@ const PUBLIC_BY_DESIGN = new Set([
   "support", // public form, honeypot + rate limit
   "forms/public/[slug]", // public form definition
   "forms/submit", // public form submission, rate-limited
+  "forms/event", // public embed beacon; rate-limited; no PII
   "forms/confirm", // double-opt-in token
   "autopilot/action", // signed Marketing Autopilot approve/reject/edit; POST+confirm only (GET never sends)
   "health", // health check

@@ -30,7 +30,14 @@ const signupSchema = z.object({
 /** Public Signup Tool slug from a badge link. Rejects anything that is not a public slug. */
 function signupToolLabel(medium?: string, content?: string): string | undefined {
   const normalized = (medium || "").toLowerCase();
-  if (normalized !== "embed_badge" && normalized !== "hosted_badge") return undefined;
+  if (
+    normalized !== "embed_badge" &&
+    normalized !== "hosted_badge" &&
+    normalized !== "inline" &&
+    normalized !== "popup"
+  ) {
+    return undefined;
+  }
   const label = (content || "").trim();
   if (!/^[a-zA-Z0-9_-]{1,80}$/.test(label)) return undefined;
   return label;
@@ -139,10 +146,17 @@ export async function POST(req: Request) {
     if (campaign.includes("autopilot") || source.includes("autopilot")) {
       trackEvent("autopilot_signup");
     }
-    if (medium === "footer_badge" || (campaign === "free_plan" && medium !== "embed_badge" && medium !== "hosted_badge")) {
+    if (
+      medium === "footer_badge" ||
+      (campaign === "free_plan" &&
+        medium !== "embed_badge" &&
+        medium !== "hosted_badge" &&
+        medium !== "inline" &&
+        medium !== "popup")
+    ) {
       trackEvent("free_footer_signup");
     }
-    if (medium === "embed_badge" || medium === "hosted_badge") {
+    if (medium === "embed_badge" || medium === "hosted_badge" || medium === "inline" || medium === "popup") {
       trackEvent(
         "referral_attributed",
         { tool: signupToolLabel(medium, parsed.data.utmContent) || "signup_tool" },

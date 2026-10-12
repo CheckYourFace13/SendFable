@@ -210,12 +210,9 @@ export default function AdminAcquisitionDetailPage() {
               <pre className="whitespace-pre-wrap rounded-lg bg-parchment p-3 text-sm text-ink">
                 {e.meta?.replyText || "The reply text was not stored with this event."}
               </pre>
-              {e.meta?.replyText &&
-                /thank you for reaching out|ticket received|support team members/i.test(e.meta.replyText) && (
-                  <p>
-                    This reads as an automatic receipt, not a question. Leave the reply box empty unless you still want to write back.
-                  </p>
-                )}
+              {(e.meta?.replyClass === "AUTO_REPLY" || prospect.replyClass === "AUTO_REPLY") && (
+                <p>Automatic receipt. No reply needed.</p>
+              )}
             </div>
           ))}
         {(prospect.events || []).filter((e: { type?: string }) => e.type === "reply").length === 0 && (
@@ -223,6 +220,12 @@ export default function AdminAcquisitionDetailPage() {
         )}
       </section>
 
+      {prospect.replyClass === "AUTO_REPLY" ? (
+        <section className="rounded-xl border bg-white p-5 text-sm">
+          <h2 className="font-semibold">Reply as Casey</h2>
+          <p className="mt-2 text-muted-foreground">No reply needed. This was an automatic receipt.</p>
+        </section>
+      ) : (
       <section className="rounded-xl border bg-white p-5 text-sm space-y-3">
         <h2 className="font-semibold">Reply as Casey</h2>
         <p className="text-muted-foreground">
@@ -263,6 +266,7 @@ export default function AdminAcquisitionDetailPage() {
         </button>
         {sendNote && <p>{sendNote}</p>}
       </section>
+      )}
 
       <section className="rounded-xl border bg-white p-5">
         <h2 className="font-semibold">Messages</h2>

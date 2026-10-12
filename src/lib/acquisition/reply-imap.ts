@@ -32,9 +32,25 @@ const PLATFORM_IGNORE_SENDERS = new Set([
   "chris@sendfable.com",
 ]);
 
+const AUTOMATIC_RECEIPT =
+  /\b(ticket received|request received|out of (the )?office|automatic reply|auto-?reply|automated response|this is an automated|do[- ]?not[- ]?reply|mailbox (is full|acknowledgement|acknowledgment)|we have received your (email|message|request|inquiry)|support team (will|members)|will send you a personal response|one of our (support|customer care) team)\b/i;
+
+/** Strong automated-receipt language. Polite thanks alone is not enough. */
 export function looksLikeAutomaticReceipt(text: string): boolean {
-  return /\b(ticket received|thank you for reaching out|automatic reply|auto-?reply|out of office|will send you a personal response|one of our support team members)\b/i.test(
-    text
+  return AUTOMATIC_RECEIPT.test(text);
+}
+
+function replyBody(text: string): string {
+  const parts = text.split("\n");
+  return (parts.length > 1 ? parts.slice(1).join("\n") : text).trim();
+}
+
+/** A real question in the message body, not the echoed outreach subject. */
+export function hasHumanQuestion(body: string): boolean {
+  const t = body.toLowerCase();
+  if (/\?/.test(t)) return true;
+  return /\b(how much|how do|how can|what is|what are|what does|when can|where (is|do|can)|can you|could you|do you|would you)\b/.test(
+    t
   );
 }
 
@@ -85,7 +101,6 @@ export function formatAcquisitionReplyAlert(opts: {
 }
 
 export function classifyReplyBody(text: string): ReplyClass {
-  if (looksLikeAutomaticReceipt(text)) return "OTHER";
   const t = text.toLowerCase().slice(0, 4000);
   if (
     /\b(unsubscribe|remove me|opt[- ]?out|stop emailing|no thanks|don't contact)\b/.test(t)
@@ -100,6 +115,8 @@ export function classifyReplyBody(text: string): ReplyClass {
   if (/\b(not now|maybe later|next quarter|busy right now|try again later)\b/.test(t)) {
     return "NOT_NOW";
   }
+  const body = replyBody(text);
+  if (looksLikeAutomaticReceipt(body) && !hasHumanQuestion(body)) return "AUTO_REPLY";
   if (/\?/.test(t) || /\b(how|what|when|where|can you|do you)\b/.test(t)) {
     return "QUESTION";
   }

@@ -388,7 +388,16 @@ describe("acquisition continuous discovery (OSM)", () => {
     const text = extractReplyText(raw);
     assert.match(text, /Thank you for reaching out/);
     assert.equal(looksLikeAutomaticReceipt(text), true);
-    assert.equal(classifyReplyBody(`What if the marketing mostly wrote itself?\n${text}`), "OTHER");
+    assert.equal(classifyReplyBody(`What if the marketing mostly wrote itself?\n${text}`), "AUTO_REPLY");
+    assert.equal(
+      classifyReplyBody("Thank you for reaching out. What are your prices?"),
+      "QUESTION"
+    );
+    assert.equal(
+      classifyReplyBody("Out of office until Monday.\\nCan you send pricing?"),
+      "QUESTION"
+    );
+    assert.equal(classifyReplyBody("Ticket received. Please unsubscribe me."), "UNSUBSCRIBE");
     const alert = formatAcquisitionReplyAlert({
       businessName: "Kriser's",
       replyText: text,

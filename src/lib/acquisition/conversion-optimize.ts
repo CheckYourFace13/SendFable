@@ -138,7 +138,9 @@ function ratesFromMessages(
 ): CohortRates {
   const delivered = msgs.length;
   const clicked = msgs.filter((m) => m.clickedAt).length;
-  const replied = msgs.filter((m) => Boolean(m.prospect.replyClass)).length;
+  const replied = msgs.filter(
+    (m) => Boolean(m.prospect.replyClass) && m.prospect.replyClass !== "AUTO_REPLY"
+  ).length;
   const positiveReplied = msgs.filter(
     (m) => m.prospect.replyClass === "POSITIVE" || m.prospect.replyClass === "QUESTION"
   ).length;

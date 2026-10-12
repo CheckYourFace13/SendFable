@@ -20,6 +20,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { FIELD_CATALOG, emailConsentText, type CatalogKey, type FormFieldDef } from "@/lib/forms/fields";
+import { embedSnippet } from "@/lib/forms/install";
+import {
+  DEFAULT_PRESENTATION,
+  frequencyLabel,
+  parsePresentation,
+  POPUP_DELAYS,
+  POPUP_FREQUENCIES,
+  POPUP_SCROLLS,
+  type FormPresentation,
+} from "@/lib/forms/presentation";
 
 type Tag = { id: string; name: string };
 type InstallTab = "hosted" | "embed" | "developer";
@@ -38,7 +48,6 @@ export default function FormDetailPage() {
   const router = useRouter();
   const [form, setForm] = useState<any>(null);
   const [hostedUrl, setHostedUrl] = useState("");
-  const [embedCode, setEmbedCode] = useState("");
   const [instructions, setInstructions] = useState("");
   const [tags, setTags] = useState<Tag[]>([]);
   const [audienceId, setAudienceId] = useState("");
@@ -51,6 +60,8 @@ export default function FormDetailPage() {
   const [testEmail, setTestEmail] = useState("");
   const [testResult, setTestResult] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [presentation, setPresentation] = useState<FormPresentation>(DEFAULT_PRESENTATION);
+  const [previewPopup, setPreviewPopup] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -59,12 +70,12 @@ export default function FormDetailPage() {
       if (!res.ok) return toast.error(data.error || "Not found");
       setForm(data.form);
       setHostedUrl(data.hostedUrl);
-      setEmbedCode(data.embedCode);
       setInstructions(data.instructions || "");
       setTags(data.tags || []);
       const ids = (data.form.tagIds || []) as string[];
       setAudienceId(ids[0] || "");
       setSmsConsent(Boolean(data.form.smsConsentEnabled));
+      setPresentation(parsePresentation(data.form.presentation));
       const next = { ...CATALOG_DEFAULTS };
       for (const key of Object.keys(next) as CatalogKey[]) next[key] = { on: false, required: false };
       const nextLabels: Record<string, string> = {};
@@ -130,6 +141,7 @@ export default function FormDetailPage() {
         successMessage: form.successMessage,
         theme: form.theme,
         doubleOptIn: form.doubleOptIn,
+        presentation,
       }),
     });
     const data = await res.json();
@@ -139,9 +151,9 @@ export default function FormDetailPage() {
     const freshData = await fresh.json();
     if (fresh.ok) {
       setForm(freshData.form);
-      setEmbedCode(freshData.embedCode);
       setInstructions(freshData.instructions || "");
       setHostedUrl(freshData.hostedUrl);
+      setPresentation(parsePresentation(freshData.form.presentation));
     }
   }
 
@@ -190,6 +202,9 @@ export default function FormDetailPage() {
   }
 
   if (!form) return <div className="text-sm text-muted-foreground">Loading…</div>;
+
+  const snippetOrigin = hostedUrl ? new URL(hostedUrl).origin : "https://sendfable.com";
+  const snippet = embedSnippet(snippetOrigin, form.hostedSlug, presentation);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -340,7 +355,7 @@ export default function FormDetailPage() {
         </div>
       </section>
 
-      <section className="mb-6 rounded-xl border bg-white p-6">
+      <section id="form-inline-preview" className="mb-6 rounded-xl border bg-white p-6">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-semibold">Preview</h2>
           <Button type="button" variant="outline" size="sm" onClick={() => setShowSuccess((v) => !v)}>
@@ -375,6 +390,78 @@ export default function FormDetailPage() {
       </section>
 
       <section className="mb-6 rounded-xl border bg-white p-6">
+        <h2 className="text-lg font-semibold">How should it appear?</h2>
+        <div className="mt-4 flex gap-2">
+          <Button type="button" size="sm" variant={presentation.display === "inline" ? "default" : "outline"} onClick={() => setPresentation((current) => ({ ...current, display: "inline" }))}>
+            Inline
+          </Button>
+          <Button type="button" size="sm" variant={presentation.display === "popup" ? "default" : "outline"} onClick={() => setPresentation((current) => ({ ...current, display: "popup" }))}>
+            Popup
+          </Button>
+        </div>
+        {presentation.display === "popup" && (
+          <div className="mt-4 space-y-4">
+            <label className="block text-sm">
+              <span className="font-medium">When should it appear?</span>
+              <select
+                className="mt-1 w-full max-w-xs rounded-md border bg-white px-3 py-2"
+                value={presentation.trigger === "scroll" ? `scroll-${presentation.scrollPercent}` : `delay-${presentation.delaySeconds}`}
+                onChange={(event) => {
+                  const [kind, amount] = event.target.value.split("-");
+                  setPresentation((current) =>
+                    kind === "scroll"
+                      ? { ...current, trigger: "scroll", scrollPercent: Number(amount) as FormPresentation["scrollPercent"] }
+                      : { ...current, trigger: "delay", delaySeconds: Number(amount) as FormPresentation["delaySeconds"] }
+                  );
+                }}
+              >
+                {POPUP_DELAYS.map((seconds) => (
+                  <option key={seconds} value={`delay-${seconds}`}>{seconds} seconds</option>
+                ))}
+                {POPUP_SCROLLS.map((percent) => (
+                  <option key={percent} value={`scroll-${percent}`}>After scrolling {percent}%</option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">How often?</span>
+              <select
+                className="mt-1 w-full max-w-xs rounded-md border bg-white px-3 py-2"
+                value={presentation.frequency}
+                onChange={(event) =>
+                  setPresentation((current) => ({
+                    ...current,
+                    frequency: event.target.value as FormPresentation["frequency"],
+                  }))
+                }
+              >
+                {POPUP_FREQUENCIES.map((frequency) => (
+                  <option key={frequency} value={frequency}>{frequencyLabel(frequency)}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              if (presentation.display === "popup") setPreviewPopup(true);
+              else document.getElementById("form-inline-preview")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Preview
+          </Button>
+          <Button type="button" variant="outline" onClick={() => copy(snippet, "Code copied")}>
+            Copy code
+          </Button>
+        </div>
+        <Textarea readOnly rows={4} value={snippet} className="mt-3 font-mono text-xs" />
+        <p className="mt-2 text-sm text-muted-foreground">Save the form so this choice is kept. Existing inline embeds stay inline until you replace the code.</p>
+      </section>
+
+      <section className="mb-6 rounded-xl border bg-white p-6">
         <h2 className="text-lg font-semibold">Put this form on your website</h2>
         <div className="mt-4 flex gap-2">
           {(["hosted", "embed", "developer"] as InstallTab[]).map((item) => (
@@ -396,8 +483,8 @@ export default function FormDetailPage() {
         {tab === "embed" && (
           <div className="mt-4 space-y-3">
             <p className="text-sm text-muted-foreground">Paste this where the form should appear. It uses your site’s type. Save the form first so this matches your fields.</p>
-            <Textarea readOnly rows={4} value={embedCode} className="font-mono text-xs" />
-            <Button type="button" variant="outline" onClick={() => copy(embedCode, "Embed code copied")}>Copy embed code</Button>
+            <Textarea readOnly rows={4} value={snippet} className="font-mono text-xs" />
+            <Button type="button" variant="outline" onClick={() => copy(snippet, "Embed code copied")}>Copy embed code</Button>
           </div>
         )}
         {tab === "developer" && (
@@ -432,6 +519,35 @@ export default function FormDetailPage() {
           Delete form
         </Button>
       </section>
+
+      {previewPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center overflow-auto bg-ink/40 p-4 sm:items-center"
+          onClick={() => setPreviewPopup(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Signup preview"
+            className="relative box-border w-full max-w-md overflow-auto rounded-2xl bg-white p-4 pt-12 text-ink"
+            style={{ maxHeight: "min(90vh, 640px)" }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" className="absolute right-2 top-2 min-h-11 min-w-11" aria-label="Close" onClick={() => setPreviewPopup(false)}>
+              Close
+            </button>
+            <p className="text-sm text-muted-foreground">Preview only. This does not add a contact.</p>
+            <p className="mt-3 font-semibold">{form.name}</p>
+            {fields.map((field) => (
+              <div key={field.key} className="mt-3 text-sm">
+                <div>{field.label}{field.required ? " *" : ""}</div>
+                <div className="mt-1 h-9 rounded-md border" />
+              </div>
+            ))}
+            <div className="mt-4 rounded-md bg-ink px-3 py-2 text-center text-white">{form.buttonLabel || "Subscribe"}</div>
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

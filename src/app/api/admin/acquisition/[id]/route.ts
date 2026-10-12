@@ -40,7 +40,7 @@ const patchSchema = z.object({
     "reply_as_casey",
   ]),
   replyClass: z
-    .enum(["POSITIVE", "QUESTION", "NOT_NOW", "NOT_INTERESTED", "UNSUBSCRIBE", "OTHER"])
+    .enum(["POSITIVE", "QUESTION", "NOT_NOW", "NOT_INTERESTED", "UNSUBSCRIBE", "AUTO_REPLY", "OTHER"])
     .optional(),
   reason: z.string().max(200).optional(),
   subject: z.string().max(200).optional(),
