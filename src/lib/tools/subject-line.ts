@@ -82,7 +82,7 @@ export function assessSubjectLine(raw: string): SubjectAssessment {
   }
 
   score = Math.max(0, Math.min(100, score));
-  const rating: SubjectRating = score >= 80 ? "Clear" : score >= 55 ? "Usable" : "Needs a rewrite";
+  const rating: SubjectRating = score >= 80 ? "Clear" : score >= 70 ? "Usable" : "Needs a rewrite";
 
   return { score, rating, notes, examples: examplesFor(subject, shouty) };
 }

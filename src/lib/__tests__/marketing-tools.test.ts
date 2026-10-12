@@ -14,6 +14,7 @@ test("subject line checklist does not invent an open rate", () => {
   assert.ok(vague.examples.length >= 1);
 
   const shout = assessSubjectLine("FREE BEER THIS WEEKEND ONLY!!!");
+  assert.equal(shout.rating, "Needs a rewrite");
   assert.ok(shout.score < clear.score);
   assert.match(shout.notes.join(" "), /capital|exclamation/i);
 });
