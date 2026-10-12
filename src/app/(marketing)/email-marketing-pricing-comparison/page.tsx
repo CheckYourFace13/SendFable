@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { PricingComparisonCalculator } from "@/components/marketing/pricing-comparison-calculator";
 import { PricingMatrixTable } from "@/components/marketing/pricing-matrix-table";
 import {
   marketingPageMeta,
@@ -16,7 +15,6 @@ import {
   LIST_SIZE_PAGES,
 } from "@/data/competitors/pricing-matrix";
 import { PLANS } from "@/lib/plans";
-import { isSmsPublicEnabled } from "@/lib/sms/flags";
 import { Text20Hint } from "@/components/marketing/text20-hint";
 
 const year = new Date().getFullYear();
@@ -95,10 +93,20 @@ export default function EmailMarketingPricingComparisonPage() {
 
       <p className="mt-4 text-xs text-ink/55">{matrixDisclaimer()}</p>
 
-      <div className="mt-14">
+      <section className="mt-14 rounded-2xl border border-ink/10 bg-white p-6">
         <Text20Hint />
-        <PricingComparisonCalculator smsPublic={isSmsPublicEnabled()} />
-      </div>
+        <h2 className="font-display text-2xl font-bold text-ink">Estimate a monthly cost</h2>
+        <p className="mt-2 max-w-2xl text-sm text-ink/70">
+          The calculator is its own page. This one stays the comparison: the table, the dated
+          snapshots, and where each tool fits.
+        </p>
+        <Link
+          href="/tools/email-pricing-calculator"
+          className="mt-4 inline-flex rounded-lg bg-coral-solid px-5 py-2.5 text-sm font-semibold text-white hover:bg-coral-hover"
+        >
+          Open the email pricing calculator
+        </Link>
+      </section>
 
       <section className="mt-14">
         <h2 className="font-display text-2xl font-bold text-ink">Cost by list size</h2>

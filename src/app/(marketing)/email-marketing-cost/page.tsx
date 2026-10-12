@@ -85,11 +85,15 @@ export default function EmailMarketingCostPage() {
         <h2 className="text-xl font-semibold text-ink">Compared with big-name ESPs</h2>
         <p>
           Mailchimp, Constant Contact, and similar tools often look fine at a few hundred contacts
-          and then jump when you cross a tier. Use our dated{" "}
+          and then jump when you cross a tier. Estimate a list size with the{" "}
+          <Link className="text-coral hover:underline" href="/tools/email-pricing-calculator">
+            email pricing calculator
+          </Link>
+          , read the dated{" "}
           <Link className="text-coral hover:underline" href="/compare/mailchimp">
             Mailchimp comparison
-          </Link>{" "}
-          and verify every vendor’s live calculator before you decide.
+          </Link>
+          , and verify every vendor’s live calculator before you decide.
         </p>
         <p>
           Also see{" "}

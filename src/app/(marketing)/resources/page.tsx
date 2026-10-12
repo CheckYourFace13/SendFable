@@ -13,6 +13,11 @@ export const metadata = marketingPageMeta({
 
 const LINKS = [
   {
+    title: "Free email tools",
+    href: "/tools",
+    body: "Subject line checker, spam-word checklist, and an email pricing calculator. No account.",
+  },
+  {
     title: "How SendFable works",
     href: "/how-sendfable-works",
     body: "From free signup to sender verification, import, campaign, and results.",

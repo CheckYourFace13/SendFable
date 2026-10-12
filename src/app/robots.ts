@@ -17,6 +17,8 @@ export default function robots(): MetadataRoute.Robots {
           "/status",
           "/integrations",
           "/integrations/",
+          "/tools",
+          "/tools/",
           "/email-marketing-guide",
           "/resources",
           "/changelog",

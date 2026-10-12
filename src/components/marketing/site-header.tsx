@@ -68,6 +68,7 @@ const SOLUTION_LINKS: NavLink[] = [
 ];
 
 const RESOURCE_LINKS: NavLink[] = [
+  { href: "/tools", label: "Free tools" },
   { href: "/faq", label: "FAQ" },
   { href: "/guides", label: "Guides" },
   { href: "/email-marketing-guide", label: "Email marketing guide" },

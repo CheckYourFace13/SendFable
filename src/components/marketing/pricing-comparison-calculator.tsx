@@ -76,7 +76,7 @@ export function PricingComparisonCalculator({ smsPublic = false }: { smsPublic?:
         <label className="block text-sm">
           <span className="font-medium text-ink">Contacts</span>
           <select
-            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2"
+            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
             value={contacts}
             onChange={(e) => setContacts(Number(e.target.value))}
           >
@@ -92,7 +92,7 @@ export function PricingComparisonCalculator({ smsPublic = false }: { smsPublic?:
           <input
             type="number"
             min={0}
-            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2"
+            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
             value={emails}
             onChange={(e) => setEmails(Number(e.target.value) || 0)}
           />
@@ -100,18 +100,20 @@ export function PricingComparisonCalculator({ smsPublic = false }: { smsPublic?:
         <label className="block text-sm">
           <span className="font-medium text-ink">Text messaging</span>
           <select
-            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2"
+            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
             value={sms}
             onChange={(e) => setSms(e.target.value as "yes" | "no")}
           >
             <option value="no">No</option>
-            <option value="yes">Yes (note: SendFable SMS not public yet)</option>
+            <option value="yes">
+              {smsPublic ? "Yes — separate text add-on" : "Yes (note: SendFable SMS not public yet)"}
+            </option>
           </select>
         </label>
         <label className="block text-sm">
           <span className="font-medium text-ink">Billing</span>
           <select
-            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2"
+            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
             value={billing}
             onChange={(e) => setBilling(e.target.value as "monthly" | "annual")}
           >
@@ -122,7 +124,7 @@ export function PricingComparisonCalculator({ smsPublic = false }: { smsPublic?:
         <label className="block text-sm sm:col-span-2">
           <span className="font-medium text-ink">Primary need</span>
           <select
-            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2"
+            className="mt-1 w-full rounded-lg border border-ink/15 bg-page px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
             value={needs}
             onChange={(e) => setNeeds(e.target.value as Needs)}
           >
@@ -162,8 +164,17 @@ export function PricingComparisonCalculator({ smsPublic = false }: { smsPublic?:
         </Link>
       </div>
 
-      <div className="mt-8 overflow-x-auto">
-        <table className="w-full min-w-[640px] text-left text-sm">
+      <ul className="mt-8 space-y-3 md:hidden">
+        {comparisons.map(({ row, est, monthlyDiff }) => (
+          <li key={row.id} className="rounded-xl border border-ink/10 p-4 text-sm">
+            <div className="font-medium text-ink">{row.name}</div>
+            <p className="mt-1 text-ink/80">{est.label}</p>
+            <p className="mt-1 text-ink/70">{diffLabel(monthlyDiff)}</p>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-8 hidden overflow-x-auto md:block">
+        <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-ink/10 text-ink/60">
               <th className="py-2 pr-3 font-medium">Provider</th>
@@ -181,6 +192,13 @@ export function PricingComparisonCalculator({ smsPublic = false }: { smsPublic?:
       </div>
     </div>
   );
+}
+
+function diffLabel(monthlyDiff: number | null): string {
+  if (monthlyDiff === null) return "Difference not claimed";
+  if (monthlyDiff > 0) return `About $${monthlyDiff.toFixed(0)}/mo more than SendFable`;
+  if (monthlyDiff < 0) return `About $${Math.abs(monthlyDiff).toFixed(0)}/mo less than SendFable`;
+  return "Similar";
 }
 
 function ComparisonRow({

@@ -50,6 +50,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: "Resources",
     links: [
+      { href: "/tools", label: "Free tools" },
       { href: "/resources", label: "Resources hub" },
       { href: "/about", label: "About" },
       { href: "/how-sendfable-works", label: "How it works" },

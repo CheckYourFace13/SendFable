@@ -12,6 +12,16 @@ export const metadata = marketingPageMeta({
 
 const GUIDE_GROUPS = [
   {
+    title: "Free tools",
+    items: [
+      {
+        href: "/tools",
+        title: "Email marketing tools",
+        body: "Subject lines, risky copy, and a pricing calculator. No account.",
+      },
+    ],
+  },
+  {
     title: "Getting started",
     items: [
       {

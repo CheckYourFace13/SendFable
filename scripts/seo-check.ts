@@ -27,6 +27,19 @@ const MARKETING_PAGES: Array<{ route: string; file: string }> = [
   { route: "/security", file: path.join(MARKETING_ROOT, "security", "page.tsx") },
   { route: "/status", file: path.join(MARKETING_ROOT, "status", "page.tsx") },
   { route: "/integrations", file: path.join(MARKETING_ROOT, "integrations", "page.tsx") },
+  { route: "/tools", file: path.join(MARKETING_ROOT, "tools", "page.tsx") },
+  {
+    route: "/tools/email-pricing-calculator",
+    file: path.join(MARKETING_ROOT, "tools", "email-pricing-calculator", "page.tsx"),
+  },
+  {
+    route: "/tools/subject-line-tester",
+    file: path.join(MARKETING_ROOT, "tools", "subject-line-tester", "page.tsx"),
+  },
+  {
+    route: "/tools/spam-word-checker",
+    file: path.join(MARKETING_ROOT, "tools", "spam-word-checker", "page.tsx"),
+  },
   {
     route: "/integrations/wordpress",
     file: path.join(MARKETING_ROOT, "integrations", "wordpress", "page.tsx"),
