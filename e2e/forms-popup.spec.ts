@@ -59,12 +59,15 @@ test("popup scroll trigger and frequency cap", async ({ page }) => {
 
 test("a once-per-visitor popup does not return after it has been shown", async ({ page }) => {
   await page.clock.install();
-  await page.setContent("<!doctype html><html><body></body></html>");
-  await page.evaluate((key) => localStorage.setItem(key, String(Date.now())), `sf-popup:${slug}`);
-  await page.setContent(
-    pageHtml(`data-sendfable-form="${slug}" data-display="popup" data-trigger="delay" data-delay="5" data-frequency="once"`),
-    { waitUntil: "load" }
+  const html = pageHtml(
+    `data-sendfable-form="${slug}" data-display="popup" data-trigger="delay" data-delay="5" data-frequency="once"`
   );
+  await page.route(origin + "/popup-qa", (route) =>
+    route.fulfill({ status: 200, contentType: "text/html", body: html })
+  );
+  await page.goto(origin + "/popup-qa");
+  await page.evaluate((key) => localStorage.setItem(key, String(Date.now())), `sf-popup:${slug}`);
+  await page.goto(origin + "/popup-qa");
   await page.clock.fastForward(6000);
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
