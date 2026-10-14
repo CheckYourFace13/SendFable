@@ -41,6 +41,10 @@ const MARKETING_PAGES: Array<{ route: string; file: string }> = [
     file: path.join(MARKETING_ROOT, "tools", "spam-word-checker", "page.tsx"),
   },
   {
+    route: "/tools/send-time-planner",
+    file: path.join(MARKETING_ROOT, "tools", "send-time-planner", "page.tsx"),
+  },
+  {
     route: "/integrations/wordpress",
     file: path.join(MARKETING_ROOT, "integrations", "wordpress", "page.tsx"),
   },

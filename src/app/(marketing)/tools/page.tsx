@@ -28,6 +28,12 @@ const TOOLS = [
     body: "Paste a subject and body. See pressure phrases and formatting issues, with a clear limit on what a word can prove.",
     cta: "Check the copy",
   },
+  {
+    href: "/tools/send-time-planner",
+    title: "Send time planner",
+    body: "A few reasonable windows for your audience and timezone. A place to start testing — not a guaranteed best time.",
+    cta: "Plan a window",
+  },
 ] as const;
 
 export default function ToolsHubPage() {

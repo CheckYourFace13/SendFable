@@ -10,6 +10,8 @@
 - https://sendfable.com/mailchimp-pricing-alternative — Mailchimp pricing vs SendFable
 - https://sendfable.com/migrate/mailchimp — leave Mailchimp with a CSV-first path
 - https://sendfable.com/migrate — migration overview
+- https://sendfable.com/tools — free subject, copy, pricing, and send-time tools
+- https://sendfable.com/automated-email-marketing — Scribe drafts an email; nothing sends until you schedule it
 - https://sendfable.com/email-marketing-for-small-business — small-business email playbook
 - https://sendfable.com/deliverability — SPF/DKIM/DMARC and a send checklist (no inbox guarantees)
 - https://sendfable.com/features — product capabilities

@@ -5,6 +5,7 @@ const TOOLS = [
   "/tools/email-pricing-calculator",
   "/tools/subject-line-tester",
   "/tools/spam-word-checker",
+  "/tools/send-time-planner",
 ];
 
 const PHONES = [
@@ -13,7 +14,7 @@ const PHONES = [
   { width: 393, height: 852 },
 ];
 
-test("tools hub lists the three tools and does not require login", async ({ page }) => {
+test("tools hub lists the tools and does not require login", async ({ page }) => {
   const response = await page.goto("/tools");
   expect(response?.status()).toBe(200);
   expect(page.url()).not.toContain("/login");
@@ -21,6 +22,7 @@ test("tools hub lists the three tools and does not require login", async ({ page
   await expect(page.getByRole("link", { name: "Compare costs" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Check a subject" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Check the copy" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Plan a window" })).toBeVisible();
   const canonical = page.locator('link[rel="canonical"]');
   await expect(canonical).toHaveAttribute("href", /\/tools$/);
 });
@@ -53,6 +55,23 @@ test("spam checker explains a phrase is not an automatic block", async ({ page }
   await expect(page.getByText("does not mean a filter will reject")).toBeVisible();
   await expect(page.getByText("act now", { exact: false }).first()).toBeVisible();
   expect(leaked).toEqual([]);
+});
+
+test("send time planner offers windows without storing the choice", async ({ page }) => {
+  const posted: string[] = [];
+  page.on("request", (req) => {
+    if (req.method() !== "GET") posted.push(req.url());
+  });
+  const response = await page.goto("/tools/send-time-planner");
+  expect(response?.status()).toBe(200);
+  expect(page.url()).not.toContain("/login");
+  await expect(page.getByRole("heading", { level: 1, name: "Send time planner" })).toBeVisible();
+  await expect(page.getByText("not a best time")).toBeVisible();
+  await page.getByLabel("Business type (optional)").selectOption("restaurant");
+  await expect(page.getByText("Thursday–Saturday, 3:00–5:00pm")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start free with SendFable" })).toBeVisible();
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /send-time-planner$/);
+  expect(posted).toEqual([]);
 });
 
 test("pricing calculator shows a SendFable fit without login", async ({ page }) => {

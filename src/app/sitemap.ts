@@ -30,6 +30,7 @@ export const SITEMAP_PATHS = [
   "/tools/email-pricing-calculator",
   "/tools/subject-line-tester",
   "/tools/spam-word-checker",
+  "/tools/send-time-planner",
   "/integrations/wordpress",
   "/integrations/wix",
   "/integrations/webflow",

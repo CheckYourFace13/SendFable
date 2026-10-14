@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta } from "@/components/marketing/json-ld";
+import { marketingPageMeta, JsonLd, howToJsonLd } from "@/components/marketing/json-ld";
 
 export const metadata = marketingPageMeta({
   title: "Migrate to Sendfable from Mailchimp and others",
@@ -63,6 +63,41 @@ const SOURCES = [
   },
 ];
 
+const CHECKLIST = [
+  {
+    name: "Export contacts",
+    text: "Download a CSV of people who asked to hear from you. Keep the old account until a test send looks right.",
+  },
+  {
+    name: "Map CSV fields",
+    text: "Keep email, first name, and last name. Groups or tags can become SendFable tags when you import.",
+  },
+  {
+    name: "Preserve unsubscribe and suppression lists",
+    text: "Export unsubscribed, complained, and hard-bounced addresses separately. Do not import them as active contacts.",
+  },
+  {
+    name: "Import contacts",
+    text: "In SendFable, open Contacts and choose Import CSV. Map the columns, preview the rows, then confirm.",
+  },
+  {
+    name: "Verify a sender",
+    text: "Confirm the From address people already recognize before the first campaign.",
+  },
+  {
+    name: "Check SPF, DKIM, and DMARC",
+    text: "Authentication is on the domain. The deliverability page explains what those records do. SendFable does not guarantee the inbox.",
+  },
+  {
+    name: "Start carefully with the imported audience",
+    text: "Mail a small, recent slice first. Watch bounces and complaints before you write to the whole list.",
+  },
+  {
+    name: "Create and send the first campaign",
+    text: "Write one clear email, send a test to yourself, then send or schedule the real one.",
+  },
+] as const;
+
 const FAQS = [
   {
     q: "Will Sendfable import my full campaign history?",
@@ -81,6 +116,14 @@ const FAQS = [
 export default function MigratePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+      <JsonLd
+        data={howToJsonLd({
+          name: "Migrate a contact list to SendFable",
+          description: "Export, clean suppressions, import a CSV, verify a sender, and send a careful first campaign.",
+          path: "/migrate",
+          steps: CHECKLIST.map((step) => ({ name: step.name, text: step.text })),
+        })}
+      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
@@ -94,15 +137,30 @@ export default function MigratePage() {
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild>
+          <Link href="/contacts/import">Import CSV</Link>
+        </Button>
+        <Button asChild variant="outline">
           <Link href="/signup">Start free</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/migrate/mailchimp">Leave Mailchimp guide</Link>
         </Button>
-        <Button asChild variant="outline">
-          <Link href="/deliverability">Read deliverability notes</Link>
-        </Button>
       </div>
+      <p className="mt-3 text-sm text-ink/60">
+        Import CSV opens the real importer. Sign in if you already have an account. New accounts start
+        at Start free, then import from Contacts.
+      </p>
+
+      <section className="mt-12">
+        <h2 className="text-2xl font-bold tracking-tight">Migration checklist</h2>
+        <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm text-slate-700">
+          {CHECKLIST.map((step) => (
+            <li key={step.name}>
+              <span className="font-medium text-ink">{step.name}.</span> {step.text}
+            </li>
+          ))}
+        </ol>
+      </section>
 
       <section className="mt-14 space-y-8">
         {SOURCES.map((s) => (
