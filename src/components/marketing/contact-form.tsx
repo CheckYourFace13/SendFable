@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { inquiryEmailProblem } from "@/lib/inquiry/email-syntax";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,23 +24,33 @@ const TOPICS = [
   { value: "legal", label: "Legal" },
 ] as const;
 
-export function ContactForm() {
+export function ContactForm({ formToken }: { formToken: string }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [name, setName] = useState("");
   const [topic, setTopic] = useState("general");
   const [message, setMessage] = useState("");
   const [websiteTrap, setWebsiteTrap] = useState("");
 
+  function emailFeedback(value: string): string {
+    const problem = inquiryEmailProblem(value);
+    if (!problem) return "";
+    return "Enter a valid email address.";
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const nextEmailError = emailFeedback(email);
+    setEmailError(nextEmailError);
+    if (nextEmailError) return;
     setLoading(true);
     try {
       const res = await fetch("/api/support", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name: name || null, topic, message, websiteTrap }),
+        body: JSON.stringify({ email, name: name || null, topic, message, websiteTrap, formToken }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not send your message");
@@ -65,6 +76,7 @@ export function ContactForm() {
 
   return (
     <form
+      noValidate
       onSubmit={(e) => void submit(e)}
       className="relative space-y-4 rounded-xl border border-ink/10 bg-page p-6 shadow-sm"
     >
@@ -77,9 +89,20 @@ export function ContactForm() {
             required
             className="mt-1"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError(emailFeedback(e.target.value));
+            }}
+            onBlur={() => setEmailError(emailFeedback(email))}
+            aria-invalid={emailError ? true : undefined}
+            aria-describedby={emailError ? "ct-email-error" : undefined}
             autoComplete="email"
           />
+          {emailError ? (
+            <p id="ct-email-error" className="mt-1 text-sm text-red-700">
+              {emailError}
+            </p>
+          ) : null}
         </div>
         <div>
           <Label htmlFor="ct-name">Name</Label>

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { ContactForm } from "@/components/marketing/contact-form";
+import { issueInquiryToken } from "@/lib/inquiry/guard";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Contact & support",
@@ -18,7 +21,7 @@ export default function ContactPage() {
       </p>
 
       <div className="mt-10">
-        <ContactForm />
+        <ContactForm formToken={issueInquiryToken("support")} />
       </div>
 
       <div className="mt-10 space-y-3 text-sm text-ink/70">

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { inquiryEmailProblem } from "@/lib/inquiry/email-syntax";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function PartnerApplyForm() {
+export function PartnerApplyForm({ formToken }: { formToken: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -13,6 +14,12 @@ export function PartnerApplyForm() {
     e.preventDefault();
     setStatus("loading");
     const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email") || "");
+    if (inquiryEmailProblem(email)) {
+      setStatus("error");
+      setMessage("Enter a valid email address.");
+      return;
+    }
     const res = await fetch("/api/partners/apply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -24,6 +31,7 @@ export function PartnerApplyForm() {
         partnerType: fd.get("partnerType"),
         audienceNote: fd.get("audienceNote"),
         website_url: fd.get("website_url"), // honeypot
+        formToken,
       }),
     });
     const json = await res.json().catch(() => ({}));
@@ -38,7 +46,7 @@ export function PartnerApplyForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 rounded-xl border bg-white p-5">
+    <form noValidate onSubmit={onSubmit} className="space-y-4 rounded-xl border bg-white p-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="name">Name</Label>

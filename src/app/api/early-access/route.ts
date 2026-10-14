@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { isValidEmail, normalizeEmail } from "@/lib/utils";
+import { validateInquiryEmail } from "@/lib/inquiry/email";
 
 const schema = z.object({
-  email: z.string().email(),
+  email: z.string().max(254),
   firstName: z.string().trim().max(100).optional().nullable(),
   businessName: z.string().trim().max(200).optional().nullable(),
   website: z.string().trim().max(300).optional().nullable(),
@@ -41,10 +41,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, duplicate: false });
   }
 
-  const email = normalizeEmail(parsed.data.email);
-  if (!isValidEmail(email)) {
-    return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+  const emailCheck = await validateInquiryEmail(parsed.data.email);
+  if (!emailCheck.ok) {
+    return NextResponse.json({ error: emailCheck.error }, { status: 400 });
   }
+  const email = emailCheck.email;
 
   const existing = await prisma.earlyAccessLead.findUnique({ where: { email } });
   if (existing) {

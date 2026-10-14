@@ -4,6 +4,9 @@ import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { marketingPageMeta, JsonLd, breadcrumbJsonLd, faqJsonLd } from "@/components/marketing/json-ld";
 import { PartnerApplyForm } from "@/components/marketing/partner-apply-form";
+import { issueInquiryToken } from "@/lib/inquiry/guard";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = marketingPageMeta({
   title: "Partners — designers, agencies, and local advisors",
@@ -84,7 +87,7 @@ export default function PartnersPage() {
         <h2 className="text-2xl font-bold text-ink">Apply</h2>
         <p className="mt-2 text-sm text-ink/70">We do not scrape directories. Outreach stays off until you approve sends.</p>
         <div className="mt-6">
-          <PartnerApplyForm />
+          <PartnerApplyForm formToken={issueInquiryToken("partners")} />
         </div>
       </section>
 
