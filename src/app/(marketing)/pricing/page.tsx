@@ -1,3 +1,4 @@
+import { applyManagedMetadata } from "@/lib/gravyblock-managed";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { PricingPreview } from "@/components/marketing/home/pricing-preview";
@@ -9,12 +10,16 @@ import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { AUTOPILOT_CREATION_PACKS } from "@/lib/autopilot/commercial";
 import { SMS_ACTIVATION_FEE_CENTS, SMS_PLANS, formatCentsUsd, formatMicrosUsd } from "@/lib/sms/pricing";
 
-export const metadata = marketingPageMeta({
+const baseMetadata = marketingPageMeta({
   title: "Pricing — Free to Pro Plus",
   description: `Simple SendFable plans: Free (${PLANS.FREE.contactCap} contacts), Starter $${PLANS.STARTER.monthlyPrice}/mo, Growth $${PLANS.GROWTH.monthlyPrice}/mo, Pro $${PLANS.PRO.monthlyPrice}/mo, Pro Plus $${PLANS.PRO_PLUS.monthlyPrice}/mo. Clear limits. Annual saves two months.`,
   path: "/pricing",
 });
+
 
+export async function generateMetadata() {
+  return applyManagedMetadata("/pricing", baseMetadata);
+}
 export default function PricingPage() {
   return (
     <div className="editorial-bg">

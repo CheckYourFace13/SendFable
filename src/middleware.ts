@@ -40,6 +40,7 @@ const PUBLIC_EXACT = new Set([
   "/sitemap.xml",
   "/feed.xml",
   "/llms.txt",
+  "/.well-known/gravyblock.json",
   "/early-access",
   "/early-access/thanks",
 ]);

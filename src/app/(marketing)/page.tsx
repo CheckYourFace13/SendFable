@@ -1,3 +1,4 @@
+import { applyManagedMetadata } from "@/lib/gravyblock-managed";
 import { Hero } from "@/components/marketing/home/hero";
 import { ChannelTrio } from "@/components/marketing/home/channel-trio";
 import { ThreeSteps } from "@/components/marketing/home/three-steps";
@@ -15,12 +16,16 @@ import { FinalCta } from "@/components/marketing/home/final-cta";
 import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { PLANS } from "@/lib/plans";
 
-export const metadata = marketingPageMeta({
+const baseMetadata = marketingPageMeta({
   title: "SendFable — Email and text marketing without the headache",
   description: `Email marketing for small businesses. Free ${PLANS.FREE.contactCap} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month. Starter $${PLANS.STARTER.monthlyPrice}/mo. No credit card.`,
   path: "/",
 });
 
+
+export async function generateMetadata() {
+  return applyManagedMetadata("/", baseMetadata);
+}
 export default function HomePage() {
   return (
     <>

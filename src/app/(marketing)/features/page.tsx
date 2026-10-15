@@ -1,3 +1,4 @@
+import { applyManagedMetadata } from "@/lib/gravyblock-managed";
 import Link from "next/link";
 import Image from "next/image";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
@@ -7,14 +8,18 @@ import { PLANS } from "@/lib/plans";
 import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
-export const metadata = marketingPageMeta({
+const baseMetadata = marketingPageMeta({
   title: "Email, Text & Marketing Automation Features",
   description:
     "SendFable features: Email, Text, or Both, signup tools, templates, Scribe, scheduling, audience, reports, and Send Confidence.",
   path: "/features",
   image: "/product/autopilot-feature-page.webp",
 });
+
 
+export async function generateMetadata() {
+  return applyManagedMetadata("/features", baseMetadata);
+}
 type Feature = {
   id: string;
   title: string;

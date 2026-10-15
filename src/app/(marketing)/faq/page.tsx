@@ -1,3 +1,4 @@
+import { applyManagedMetadata } from "@/lib/gravyblock-managed";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
@@ -8,13 +9,17 @@ import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { isSmsPublicEnabled } from "@/lib/sms/flags";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 
-export const metadata = marketingPageMeta({
+const baseMetadata = marketingPageMeta({
   title: "FAQ — Email, text, and Scribe",
   description:
     "Answers about SendFable’s free plan, Email/Text/Both, Scribe, signup tools, domains, limits, and cancellation.",
   path: "/faq",
 });
 
+
+export async function generateMetadata() {
+  return applyManagedMetadata("/faq", baseMetadata);
+}
 export default function FaqPage() {
   const smsPublic = isSmsPublicEnabled();
   const items = [
