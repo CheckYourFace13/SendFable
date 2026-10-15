@@ -15,7 +15,7 @@ const baseMetadata = marketingPageMeta({
   description: `Simple SendFable plans: Free (${PLANS.FREE.contactCap} contacts), Starter $${PLANS.STARTER.monthlyPrice}/mo, Growth $${PLANS.GROWTH.monthlyPrice}/mo, Pro $${PLANS.PRO.monthlyPrice}/mo, Pro Plus $${PLANS.PRO_PLUS.monthlyPrice}/mo. Clear limits. Annual saves two months.`,
   path: "/pricing",
 });
-
+
 
 export async function generateMetadata() {
   return applyManagedMetadata("/pricing", baseMetadata);

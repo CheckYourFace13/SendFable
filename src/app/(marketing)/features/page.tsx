@@ -15,7 +15,7 @@ const baseMetadata = marketingPageMeta({
   path: "/features",
   image: "/product/autopilot-feature-page.webp",
 });
-
+
 
 export async function generateMetadata() {
   return applyManagedMetadata("/features", baseMetadata);
