@@ -103,7 +103,7 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
 
     // Auto-approve throughout the hour when discovery is on
     if (acquisitionDiscoveryEnabled() && minute < 5) {
-      const ap = await autoApproveAndQueue({ limit: 25 });
+      const ap = await autoApproveAndQueue({ limit: 40 });
       actions.push(`auto_approve:${ap.approved}`);
     }
 

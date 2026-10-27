@@ -7,7 +7,7 @@ export const metadata = guideMetadata(
   "Dated, approximate Mailchimp Standard snapshots compared with SendFable’s published Free–Pro Plus plans."
 );
 
-export default function MailchimpVsSendfablePricingGuide() {
+export default function MailchimpVsSendFablePricingGuide() {
   return (
     <GuidePage
       path="/guides/mailchimp-vs-sendfable-pricing"

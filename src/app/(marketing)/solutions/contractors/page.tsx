@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for contractors",
-  description: "Email for contractors and trades: seasonal reminders, project updates, and referral asks with Sendfable.",
+  description: "Email for contractors and trades: seasonal reminders, project updates, and referral asks with SendFable.",
   path: "/solutions/contractors",
 });
 
@@ -13,7 +13,7 @@ export default function ContractorsSolutionPage() {
       industry="Contractors"
       path="/solutions/contractors"
       title="Email marketing for contractors & trades"
-      intro="Homeowners hire people they remember. Sendfable helps HVAC, roofing, landscaping, and remodel teams stay in touch between jobs — without a marketing department."
+      intro="Homeowners hire people they remember. SendFable helps HVAC, roofing, landscaping, and remodel teams stay in touch between jobs — without a marketing department."
       challenges={[
         {
           title: "Seasonal demand swings",

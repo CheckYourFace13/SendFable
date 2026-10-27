@@ -88,7 +88,7 @@ function LoginForm() {
     <Card className={cardClass}>
       <CardHeader>
         <CardTitle className="text-ink">Welcome back</CardTitle>
-        <CardDescription>Sign in to your Sendfable account.</CardDescription>
+        <CardDescription>Sign in to your SendFable account.</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="password">
@@ -134,7 +134,7 @@ function LoginForm() {
           </TabsContent>
         </Tabs>
         <p className="mt-6 text-center text-sm text-ink/60">
-          New to Sendfable?{" "}
+          New to SendFable?{" "}
           <Link href="/signup" className="font-medium text-coral hover:underline">
             Create an account
           </Link>

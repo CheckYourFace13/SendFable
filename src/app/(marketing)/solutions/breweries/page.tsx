@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for breweries",
-  description: "Email for breweries and taprooms: release alerts, tasting events, and membership updates on Sendfable.",
+  description: "Email for breweries and taprooms: release alerts, tasting events, and membership updates on SendFable.",
   path: "/solutions/breweries",
 });
 
@@ -13,7 +13,7 @@ export default function BreweriesSolutionPage() {
       industry="Breweries"
       path="/solutions/breweries"
       title="Email marketing for breweries & taprooms"
-      intro="Taproom regulars want drop times and event details — not endless brand fluff. Sendfable keeps release notes and membership updates straightforward and affordable."
+      intro="Taproom regulars want drop times and event details — not endless brand fluff. SendFable keeps release notes and membership updates straightforward and affordable."
       challenges={[
         {
           title: "Drops sell out in hours",

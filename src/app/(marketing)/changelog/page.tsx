@@ -7,7 +7,7 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 export const metadata = marketingPageMeta({
   title: "Changelog",
   description:
-    "Sendfable product changelog with dated entries for shipped features — authentication, sending, billing, and list protection.",
+    "SendFable product changelog with dated entries for shipped features — authentication, sending, billing, and list protection.",
   path: "/changelog",
 });
 

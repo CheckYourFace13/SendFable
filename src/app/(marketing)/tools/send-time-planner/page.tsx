@@ -32,6 +32,22 @@ export default function SendTimePlannerPage() {
       <div className="mt-8">
         <SendTimePlanner />
       </div>
+      <section className="mt-10 space-y-4 text-sm text-slate-700">
+        <h2 className="text-xl font-semibold text-ink">How it works</h2>
+        <p>
+          You pick an audience type and timezone. The planner suggests two windows that are commonly
+          reasonable for that mix.
+        </p>
+        <h2 className="text-xl font-semibold text-ink">Example</h2>
+        <p>
+          A local restaurant list often does better late morning or mid-afternoon local time than
+          midnight.
+        </p>
+        <h2 className="text-xl font-semibold text-ink">What the result means</h2>
+        <p>
+          Treat the windows as a first test. Your own opens and clicks beat any general rule.
+        </p>
+      </section>
     </div>
   );
 }

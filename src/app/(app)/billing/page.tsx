@@ -184,8 +184,8 @@ export default function BillingPage() {
           Privacy
         </a>
         , and{" "}
-        <a className="underline" href="mailto:support@sendfable.com">
-          support@sendfable.com
+        <a className="underline" href="/contact">
+          the contact form
         </a>
         . Public checkout may be temporarily unavailable during maintenance. Owner-controlled
         Checkout remains available when configured.

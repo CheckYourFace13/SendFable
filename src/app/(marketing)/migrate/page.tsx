@@ -6,7 +6,7 @@ import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { marketingPageMeta, JsonLd, howToJsonLd } from "@/components/marketing/json-ld";
 
 export const metadata = marketingPageMeta({
-  title: "Migrate to Sendfable from Mailchimp and others",
+  title: "Migrate to SendFable from Mailchimp and others",
   description:
     "Move your list from Mailchimp, Constant Contact, Brevo, MailerLite, Kit, or a CSV export. Practical migration steps without locking you into OAuth signup.",
   path: "/migrate",
@@ -17,8 +17,8 @@ const SOURCES = [
     name: "Mailchimp",
     steps: [
       "Export your audience as CSV from Audience → All contacts → Export.",
-      "Include tags or groups if you use them — map them to Sendfable tags on import.",
-      "Pause or cancel overlapping automations in Mailchimp before your first Sendfable campaign.",
+      "Include tags or groups if you use them — map them to SendFable tags on import.",
+      "Pause or cancel overlapping automations in Mailchimp before your first SendFable campaign.",
     ],
   },
   {
@@ -26,22 +26,22 @@ const SOURCES = [
     steps: [
       "Export contacts from Contacts → Export.",
       "Bring consent status carefully — only import people who opted in to hear from you.",
-      "Recreate key lists as tags or segments in Sendfable.",
+      "Recreate key lists as tags or segments in SendFable.",
     ],
   },
   {
     name: "Brevo",
     steps: [
       "Export your contact list (CSV) from Contacts.",
-      "Map email, name, and any custom attributes during Sendfable CSV import.",
-      "Re-verify sending domains or identities in Sendfable before large campaigns.",
+      "Map email, name, and any custom attributes during SendFable CSV import.",
+      "Re-verify sending domains or identities in SendFable before large campaigns.",
     ],
   },
   {
     name: "MailerLite",
     steps: [
       "Export subscribers from your group or account export tools.",
-      "Import into Sendfable and recreate groups as tags or segments.",
+      "Import into SendFable and recreate groups as tags or segments.",
       "Use SendFable hosted signup tools if you rely on embed signups.",
     ],
   },
@@ -49,7 +49,7 @@ const SOURCES = [
     name: "Kit (ConvertKit)",
     steps: [
       "Export subscribers from Grow → Subscribers → Export.",
-      "Map forms/tags to Sendfable tags; sequences become campaigns or a simple drip you rebuild.",
+      "Map forms/tags to SendFable tags; sequences become campaigns or a simple drip you rebuild.",
       "Update any checkout or landing-page embeds to point at your new forms.",
     ],
   },
@@ -57,7 +57,7 @@ const SOURCES = [
     name: "Generic CSV",
     steps: [
       "Export email, first name, last name, and any columns you want as tags or fields.",
-      "Use Sendfable CSV import with column mapping — preview before confirming.",
+      "Use SendFable CSV import with column mapping — preview before confirming.",
       "Suppress known hard bounces and unsubscribes; never import purchased lists.",
     ],
   },
@@ -100,8 +100,8 @@ const CHECKLIST = [
 
 const FAQS = [
   {
-    q: "Will Sendfable import my full campaign history?",
-    a: "No. Migration focuses on contacts (and tags you map). Rebuild important campaigns in the Sendfable builder — often faster than fighting a brittle history import.",
+    q: "Will SendFable import my full campaign history?",
+    a: "No. Migration focuses on contacts (and tags you map). Rebuild important campaigns in the SendFable builder — often faster than fighting a brittle history import.",
   },
   {
     q: "Do I need to keep paying my old ESP during migration?",
@@ -130,7 +130,7 @@ export default function MigratePage() {
           { label: "Migrate", href: "/migrate", current: true },
         ]}
       />
-      <h1 className="text-4xl font-bold tracking-tight">Migrate to Sendfable</h1>
+      <h1 className="text-4xl font-bold tracking-tight">Migrate to SendFable</h1>
       <p className="mt-3 text-lg text-muted-foreground">
         Moving ESPs is mostly a careful CSV export, a clean import, and re-checking authentication.
         Here is an honest path from common tools — no fake “one-click migrator” claims.
@@ -174,7 +174,7 @@ export default function MigratePage() {
             {s.name === "Mailchimp" && (
               <p className="mt-4 text-sm">
                 <Link href="/migrate/mailchimp" className="font-medium text-coral underline-offset-4 hover:underline">
-                  Full Mailchimp → Sendfable walkthrough
+                  Full Mailchimp → SendFable walkthrough
                 </Link>
               </p>
             )}

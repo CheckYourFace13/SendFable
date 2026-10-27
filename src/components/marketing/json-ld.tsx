@@ -44,7 +44,7 @@ export function marketingPageMeta(opts: {
       description: opts.description,
       url,
       type: "website",
-      siteName: "Sendfable",
+      siteName: "SendFable",
       images: [image],
     },
     twitter: {
@@ -60,7 +60,7 @@ export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Sendfable",
+    name: "SendFable",
     url: appUrl("/"),
     logo: appUrl("/brand/sendfable-mark.svg"),
     description:
@@ -73,13 +73,13 @@ export function websiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Sendfable",
+    name: "SendFable",
     url: appUrl("/"),
     description:
       "Email marketing for small businesses: contacts, campaigns, templates, and deliverability — without Mailchimp complexity.",
     publisher: {
       "@type": "Organization",
-      name: "Sendfable",
+      name: "SendFable",
       url: appUrl("/"),
     },
   };
@@ -134,11 +134,11 @@ export function articleJsonLd(opts: {
     dateModified: opts.dateModified ?? opts.datePublished ?? "2026-07-23",
     author: {
       "@type": "Organization",
-      name: "Sendfable",
+      name: "SendFable",
     },
     publisher: {
       "@type": "Organization",
-      name: "Sendfable",
+      name: "SendFable",
       url: appUrl("/"),
       logo: {
         "@type": "ImageObject",

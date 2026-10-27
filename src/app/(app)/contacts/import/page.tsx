@@ -406,7 +406,7 @@ export default function ImportContactsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm list quality</AlertDialogTitle>
             <AlertDialogDescription>
-              You&apos;re importing more than 1,000 contacts on a new account. Sendfable strictly
+              You&apos;re importing more than 1,000 contacts on a new account. SendFable strictly
               prohibits purchased, rented, or scraped lists. Confirm these contacts opted in to hear
               from you. Violations can result in immediate account termination.
             </AlertDialogDescription>

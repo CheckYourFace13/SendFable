@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Brand gallery (internal)",
-  description: "Internal Sendfable brand review gallery. Not for public indexing.",
+  description: "Internal SendFable brand review gallery. Not for public indexing.",
   robots: { index: false, follow: false },
 };
 
@@ -126,7 +126,7 @@ export default function BrandGalleryPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-ink/45">Sans · body</p>
             <p className="mt-2 max-w-xl text-base leading-relaxed text-ink/75">
-              Sendfable is email marketing with Amazon SES delivery, any-email signup, drag-and-drop
+              SendFable is email marketing with Amazon SES delivery, any-email signup, drag-and-drop
               campaigns, and plans priced for small teams.
             </p>
           </div>

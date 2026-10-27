@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for restaurants",
-  description: "Sendfable for restaurants and cafés: specials, events, and reserved-list updates with affordable plans and clean list tools.",
+  description: "SendFable for restaurants and cafés: specials, events, and reserved-list updates with affordable plans and clean list tools.",
   path: "/solutions/restaurants",
 });
 
@@ -13,7 +13,7 @@ export default function RestaurantsSolutionPage() {
       industry="Restaurants"
       path="/solutions/restaurants"
       title="Email marketing for restaurants"
-      intro="Fill slower nights and announce specials without another expensive social boost. Sendfable helps restaurants mail guests who already asked for updates — menus, events, and loyalty notes."
+      intro="Fill slower nights and announce specials without another expensive social boost. SendFable helps restaurants mail guests who already asked for updates — menus, events, and loyalty notes."
       challenges={[
         {
           title: "Guests ignore generic blasts",
@@ -41,7 +41,7 @@ export default function RestaurantsSolutionPage() {
         },
         {
           q: "Do you integrate with our POS?",
-          a: "Not as a native POS sync today. Export consented emails to CSV or collect new guests via a Sendfable form.",
+          a: "Not as a native POS sync today. Export consented emails to CSV or collect new guests via a SendFable form.",
         },
         {
           q: "Is this only for fine dining?",

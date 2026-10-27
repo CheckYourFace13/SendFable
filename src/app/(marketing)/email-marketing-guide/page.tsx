@@ -10,7 +10,7 @@ import { MarketingCta } from "@/components/marketing/marketing-cta";
 export const metadata = marketingPageMeta({
   title: "Email marketing guide for small businesses",
   description:
-    "A practical Sendfable guide to building a consented list, authenticating mail, writing campaigns, and reading results without hype.",
+    "A practical SendFable guide to building a consented list, authenticating mail, writing campaigns, and reading results without hype.",
   path: "/email-marketing-guide",
 });
 
@@ -47,7 +47,7 @@ export default function EmailMarketingGuidePage() {
       </h1>
       <p className="mt-3 text-lg text-muted-foreground">
         A straightforward playbook for operators who want email that people asked for — not
-        growth hacks that burn domains. Written for Sendfable users, useful on any ESP.
+        growth hacks that burn domains. Written for SendFable users, useful on any ESP.
       </p>
 
       <nav className="mt-10 rounded-2xl border bg-slate-50/80 p-6" aria-label="Table of contents">
@@ -135,7 +135,7 @@ export default function EmailMarketingGuidePage() {
         <p>
           Opens are noisy (privacy features and image blocking distort them). Treat them as
           directional. Clicks, unsubscribes, bounces, and complaints tell you more about list fit.
-          If complaint or bounce rates spike, pause and fix the list or offer — Sendfable will
+          If complaint or bounce rates spike, pause and fix the list or offer — SendFable will
           auto-pause campaigns that cross safety thresholds.
         </p>
       </section>
@@ -144,7 +144,7 @@ export default function EmailMarketingGuidePage() {
         <h2 className="text-2xl font-semibold text-slate-900">6. Choosing tools</h2>
         <p>
           Pick an ESP for list quality controls, clear pricing, and authentication that matches how
-          you send — not for vanity dashboards. Compare Sendfable with{" "}
+          you send — not for vanity dashboards. Compare SendFable with{" "}
           <Link href="/compare/mailchimp" className="text-teal hover:underline">
             Mailchimp
           </Link>
@@ -162,7 +162,7 @@ export default function EmailMarketingGuidePage() {
 
       <MarketingCta
         title="Put the guide into practice"
-        body="Create a free Sendfable account, import a consented CSV, and send a small first campaign."
+        body="Create a free SendFable account, import a consented CSV, and send a small first campaign."
         secondaryHref="/resources"
         secondaryLabel="More resources"
       />

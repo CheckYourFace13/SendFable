@@ -15,7 +15,7 @@ const INTEGRATIONS = [
   {
     name: "Amazon SES",
     role: "Delivery",
-    body: "Campaigns send through Sendfable’s platform SES infrastructure. You do not paste your own SMTP keys — we operate sending, reputation ramp, and event handling.",
+    body: "Campaigns send through SendFable’s platform SES infrastructure. You do not paste your own SMTP keys — we operate sending, reputation ramp, and event handling.",
   },
   {
     name: "Stripe",
@@ -45,7 +45,7 @@ export default function IntegrationsPage() {
       />
       <h1 className="text-4xl font-bold tracking-tight">Integrations</h1>
       <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-        Sendfable keeps the stack small on purpose: reliable sending, honest billing, CSV, and
+        SendFable keeps the stack small on purpose: reliable sending, honest billing, CSV, and
         forms. We are not claiming hundreds of one-click marketplace apps we do not ship.
       </p>
       <div className="mt-8">

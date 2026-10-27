@@ -34,7 +34,7 @@ const FAQS = [
     a: "Usually no. A welcome note, a weekly update, and occasional offers cover most needs. Add automation later only when a manual step becomes painful.",
   },
   {
-    q: "Is Sendfable built for small businesses?",
+    q: "Is SendFable built for small businesses?",
     a: "Yes. The product journey is add people → create an email → send → understand results. Advanced tools stay available, but Simple Mode is the default.",
   },
 ];
@@ -170,9 +170,9 @@ export default async function EmailMarketingForSmallBusinessPage({
       </section>
 
       <section className="mt-12 space-y-4 text-ink/80">
-        <h2 className="text-2xl font-semibold text-ink">How Sendfable keeps this simple</h2>
+        <h2 className="text-2xl font-semibold text-ink">How SendFable keeps this simple</h2>
         <p>
-          Sendfable is built around{" "}
+          SendFable is built around{" "}
           <strong>add people → create an email → send → understand results</strong>. Simple Mode is
           the default. You do not configure Amazon SES yourself. Import contacts from a spreadsheet,
           pick a goal or template, and use the send-confidence checklist before you launch.

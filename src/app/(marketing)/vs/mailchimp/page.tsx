@@ -6,9 +6,9 @@ import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { marketingPageMeta } from "@/components/marketing/json-ld";
 
 export const metadata = marketingPageMeta({
-  title: "Sendfable vs Mailchimp",
+  title: "SendFable vs Mailchimp",
   description:
-    "Side-by-side Sendfable vs Mailchimp: pricing estimates, From-rewrite for Gmail/Yahoo, free plan limits, and honest trade-offs. Verify Mailchimp pricing on their site.",
+    "Side-by-side SendFable vs Mailchimp: pricing estimates, From-rewrite for Gmail/Yahoo, free plan limits, and honest trade-offs. Verify Mailchimp pricing on their site.",
   path: "/vs/mailchimp",
 });
 
@@ -35,9 +35,9 @@ export default function VsMailchimpPage() {
           { label: "vs Mailchimp", href: "/vs/mailchimp", current: true },
         ]}
       />
-      <h1 className="text-4xl font-bold tracking-tight">Sendfable vs Mailchimp</h1>
+      <h1 className="text-4xl font-bold tracking-tight">SendFable vs Mailchimp</h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Mailchimp is a mature platform with a large app marketplace. Sendfable is narrower: contacts,
+        Mailchimp is a mature platform with a large app marketplace. SendFable is narrower: contacts,
         campaigns, and managed SES delivery at a lower list price for many small-business tiers.
       </p>
       <div className="mt-6 flex flex-wrap gap-3">
@@ -54,7 +54,7 @@ export default function VsMailchimpPage() {
           <thead className="border-b bg-slate-50">
             <tr>
               <th className="px-4 py-3 font-semibold">Capability</th>
-              <th className="px-4 py-3 font-semibold text-ink">Sendfable</th>
+              <th className="px-4 py-3 font-semibold text-ink">SendFable</th>
               <th className="px-4 py-3 font-semibold">Mailchimp</th>
             </tr>
           </thead>
@@ -82,7 +82,7 @@ export default function VsMailchimpPage() {
         .
       </p>
       <MarketingCta
-        title="Try Sendfable on your list size"
+        title="Try SendFable on your list size"
         body="Free plan: 500 contacts and 1,000 emails/month. Upgrade when you outgrow it."
         secondaryHref="/pricing"
         secondaryLabel="See all plans"

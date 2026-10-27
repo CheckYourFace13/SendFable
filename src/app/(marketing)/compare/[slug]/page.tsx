@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ComparePageFromRecord } from "@/components/marketing/compare-page";
-import { getCompetitor, listPublicCompetitors } from "@/data/competitors";
+import { capabilityLabel, getCompetitor, listPublicCompetitors } from "@/data/competitors";
 import { pairComparisons, TRADEMARK_DISCLAIMER } from "@/data/competitors/pricing-matrix";
 import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
@@ -90,6 +90,42 @@ function PairPage({ slug }: { slug: string }) {
           <p className="mt-2 text-sm text-ink/70">{b.whoCompetitorIsFor}</p>
         </div>
       </div>
+      <h2 className="mt-10 text-xl font-semibold">Email, Text, and signup tools</h2>
+      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-ink/80">
+        <li>
+          <strong>Email:</strong> {a.name} — {a.emailLimitsSummary} {b.name} — {b.emailLimitsSummary}{" "}
+          SendFable uses published contact and monthly email caps.
+        </li>
+        <li>
+          <strong>Text / SMS:</strong> {a.name} — {capabilityLabel(a.sms)}. {b.name} —{" "}
+          {capabilityLabel(b.sms)}. SendFable shows Email, Text, or Both in the product; public SMS
+          availability follows the live product flags.
+        </li>
+        <li>
+          <strong>Signup tools:</strong> {a.formsNote}
+        </li>
+        <li>
+          <strong>Scribe / automation:</strong> SendFable drafts from a watched page and waits for
+          you to schedule. {a.name} automation: {capabilityLabel(a.automation)}. {b.name}:{" "}
+          {capabilityLabel(b.automation)}.
+        </li>
+        <li>
+          <strong>Migration:</strong> {a.migrationNote}
+        </li>
+      </ul>
+      <h2 className="mt-10 text-xl font-semibold">Key tradeoffs</h2>
+      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-ink/80">
+        <li>
+          {a.name} is stronger when you need {a.competitorStronger[0] || a.whoCompetitorIsFor}.
+        </li>
+        <li>
+          {b.name} is stronger when you need {b.competitorStronger[0] || b.whoCompetitorIsFor}.
+        </li>
+        <li>
+          SendFable fits when you want a simpler campaign-first path
+          {a.sendfableStronger[0] ? ` — ${a.sendfableStronger[0]}` : ""}.
+        </li>
+      </ul>
       <h2 className="mt-10 text-xl font-semibold">Pricing posture</h2>
       <p className="mt-2 text-sm text-ink/75">
         {a.name} ({a.pricingLastChecked}): {a.paidPlanSummary}{" "}

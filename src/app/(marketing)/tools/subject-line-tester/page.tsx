@@ -33,6 +33,22 @@ export default function SubjectLineTesterPage() {
       <div className="mt-8">
         <SubjectLineTester />
       </div>
+      <section className="mt-10 space-y-4 text-sm text-slate-700">
+        <h2 className="text-xl font-semibold text-ink">How it works</h2>
+        <p>
+          The tester scores length, vague words, extra punctuation, and all-caps shouting. It does
+          not predict opens.
+        </p>
+        <h2 className="text-xl font-semibold text-ink">Example</h2>
+        <p>
+          “Friday specials at the taproom” is specific. “AMAZING!!! Deal inside” is loud and vague.
+        </p>
+        <h2 className="text-xl font-semibold text-ink">What the result means</h2>
+        <p>
+          A higher checklist score means the line is easier to read. Your list still decides what
+          gets opened.
+        </p>
+      </section>
       <MarketingCta
         title="Want help writing the whole campaign?"
         body="Start free with SendFable. Write the email, preview it, and send when you are ready."

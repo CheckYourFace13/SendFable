@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for professional services",
-  description: "Email for consultants, agencies, and advisors: newsletters, tip series, and client check-ins with Sendfable.",
+  description: "Email for consultants, agencies, and advisors: newsletters, tip series, and client check-ins with SendFable.",
   path: "/solutions/professional-services",
 });
 
@@ -13,7 +13,7 @@ export default function ProfessionalServicesSolutionPage() {
       industry="Professional services"
       path="/solutions/professional-services"
       title="Email marketing for professional services"
-      intro="Accountants, agencies, coaches, and consultants win with steady usefulness. Sendfable supports newsletters and client updates without locking you into Google signup or bloated suites."
+      intro="Accountants, agencies, coaches, and consultants win with steady usefulness. SendFable supports newsletters and client updates without locking you into Google signup or bloated suites."
       challenges={[
         {
           title: "Saying something worth opening",
@@ -41,7 +41,7 @@ export default function ProfessionalServicesSolutionPage() {
         },
         {
           q: "Is this a replacement for our CRM?",
-          a: "No. Use Sendfable for broadcast and nurture email alongside your CRM.",
+          a: "No. Use SendFable for broadcast and nurture email alongside your CRM.",
         },
         {
           q: "Do you support multiple brands?",

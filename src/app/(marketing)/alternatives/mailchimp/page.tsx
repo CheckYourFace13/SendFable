@@ -10,7 +10,7 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 export const metadata = marketingPageMeta({
   title: "Mailchimp alternative for simple sending",
   description:
-    "Looking for a Mailchimp alternative? Sendfable offers lower typical pricing, any-email signup, and SES delivery — with an honest comparison of trade-offs.",
+    "Looking for a Mailchimp alternative? SendFable offers lower typical pricing, any-email signup, and SES delivery — with an honest comparison of trade-offs.",
   path: "/alternatives/mailchimp",
 });
 
@@ -18,7 +18,7 @@ const mc = competitorPricing("mailchimp");
 
 const FAQS = [
   {
-    q: "Is Sendfable a full Mailchimp replacement?",
+    q: "Is SendFable a full Mailchimp replacement?",
     a: "For campaigns, lists, forms, and analytics — often yes for small teams. Mailchimp still has a larger ecosystem of CRM-style and marketplace features we do not claim to match.",
   },
   {
@@ -43,13 +43,13 @@ export default function MailchimpAlternativePage() {
       />
       <h1 className="text-4xl font-bold tracking-tight">Mailchimp alternative</h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Mailchimp is a capable, mature ESP. Sendfable is a focused alternative if you want lower
+        Mailchimp is a capable, mature ESP. SendFable is a focused alternative if you want lower
         typical monthly cost, signup with any email, and clear handling of Gmail/Yahoo From
         addresses — not if you need Mailchimp&apos;s entire ecosystem.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild>
-          <Link href="/signup">Try Sendfable free</Link>
+          <Link href="/signup">Try SendFable free</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/compare/mailchimp">Full comparison</Link>
@@ -57,7 +57,7 @@ export default function MailchimpAlternativePage() {
       </div>
 
       <section className="mt-12 space-y-3 text-slate-700">
-        <h2 className="text-2xl font-semibold text-slate-900">When Sendfable is a good fit</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">When SendFable is a good fit</h2>
         <ul className="list-disc space-y-2 pl-5">
           <li>You send newsletters and promotions to a consented list under ~30k contacts</li>
           <li>You want Starter at ${PLANS.STARTER.monthlyPrice}/mo instead of Mailchimp Standard rates near ${mc.tiers.find((t) => t.contacts === 2_500)?.monthlyPrice}/mo at ~2.5k contacts (as of {PRICING_LAST_CHECKED})</li>
@@ -73,7 +73,7 @@ export default function MailchimpAlternativePage() {
       <section className="mt-12 space-y-3 text-slate-700">
         <h2 className="text-2xl font-semibold text-slate-900">Trade-offs to expect</h2>
         <p>
-          Mailchimp offers broader integrations and longer-established brand recognition. Sendfable
+          Mailchimp offers broader integrations and longer-established brand recognition. SendFable
           prioritizes core sending, CSV/forms, SES delivery, and transparent plan limits. Pricing
           snapshots and sources: {mc.sources.join(", ")}. {mc.disclaimer}
         </p>

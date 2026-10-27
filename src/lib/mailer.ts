@@ -159,7 +159,7 @@ export function isTransientSesError(err: unknown): boolean {
 }
 
 /** Default platform From used for transactional mail. */
-export function platformFrom(displayName = "Sendfable"): string {
+export function platformFrom(displayName = "SendFable"): string {
   const domain = process.env.PLATFORM_SEND_DOMAIN || "send.sendfable.com";
   return `${displayName} <no-reply@${domain}>`;
 }

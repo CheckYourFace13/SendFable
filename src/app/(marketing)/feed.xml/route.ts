@@ -32,7 +32,7 @@ const RESOURCES = [
     date: "2026-07-18",
   },
   {
-    title: "Migrate to Sendfable",
+    title: "Migrate to SendFable",
     description: "CSV-first migration paths from common ESPs.",
     path: "/migrate",
     date: "2026-07-18",
@@ -75,9 +75,9 @@ export function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Sendfable — Changelog &amp; resources</title>
+    <title>SendFable — Changelog &amp; resources</title>
     <link>${escapeXml(appUrl("/"))}</link>
-    <description>Product changelog entries and key marketing resources from Sendfable.</description>
+    <description>Product changelog entries and key marketing resources from SendFable.</description>
     <language>en-us</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 ${items

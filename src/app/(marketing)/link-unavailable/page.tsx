@@ -21,7 +21,7 @@ export default function LinkUnavailablePage() {
         href="/"
         className="mt-6 rounded-md bg-coral-solid px-4 py-2 text-sm font-medium text-white hover:bg-coral-hover"
       >
-        Go to Sendfable
+        Go to SendFable
       </Link>
     </div>
   );

@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for real estate agents",
-  description: "Sendfable for real estate: listing alerts, open houses, and market notes with professional From addresses and simple segments.",
+  description: "SendFable for real estate: listing alerts, open houses, and market notes with professional From addresses and simple segments.",
   path: "/solutions/real-estate",
 });
 
@@ -13,7 +13,7 @@ export default function RealEstateSolutionPage() {
       industry="Real estate"
       path="/solutions/real-estate"
       title="Email marketing for real estate"
-      intro="Stay useful between transactions. Sendfable helps agents and small teams send listing alerts and market notes without enterprise CRM pricing."
+      intro="Stay useful between transactions. SendFable helps agents and small teams send listing alerts and market notes without enterprise CRM pricing."
       challenges={[
         {
           title: "Sphere fatigue",
@@ -37,7 +37,7 @@ export default function RealEstateSolutionPage() {
       faqs={[
         {
           q: "Is this a full CRM?",
-          a: "No. Sendfable is email marketing. Keep your CRM; sync via CSV or forms when needed.",
+          a: "No. SendFable is email marketing. Keep your CRM; sync via CSV or forms when needed.",
         },
         {
           q: "Can my team share a workspace?",

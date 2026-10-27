@@ -31,7 +31,7 @@ export function Logo({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
-      alt="sendfable"
+      alt="SendFable"
       width={variant === "mark" ? 32 : 168}
       height={variant === "mark" ? 32 : 36}
       className={cn(

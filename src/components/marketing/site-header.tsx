@@ -73,7 +73,7 @@ const RESOURCE_LINKS: NavLink[] = [
   { href: "/guides", label: "Guides" },
   { href: "/email-marketing-guide", label: "Email marketing guide" },
   { href: "/deliverability", label: "Deliverability" },
-  { href: "/migrate", label: "Migrate to Sendfable" },
+      { href: "/migrate", label: "Migrate to SendFable" },
   { href: "/changelog", label: "Changelog" },
   { href: "/resources", label: "Resources hub" },
 ];

@@ -159,7 +159,7 @@ export function EarlyAccessForm() {
           onChange={(e) => setConsent(e.target.checked)}
         />
         <span>
-          I agree Sendfable may email me about early access using the address I provided. I can ask
+          I agree SendFable may email me about early access using the address I provided. I can ask
           to be removed anytime.
         </span>
       </label>

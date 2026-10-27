@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for salons and spas",
-  description: "Salon and spa email marketing: booking prompts, membership renewals, and new-service announcements on Sendfable.",
+  description: "Salon and spa email marketing: booking prompts, membership renewals, and new-service announcements on SendFable.",
   path: "/solutions/salons",
 });
 
@@ -13,7 +13,7 @@ export default function SalonsSolutionPage() {
       industry="Salons"
       path="/solutions/salons"
       title="Email marketing for salons & spas"
-      intro="Fill gaps in the book and announce new services without another discounted deal site. Sendfable keeps client email simple for salons, barbershops, and spas."
+      intro="Fill gaps in the book and announce new services without another discounted deal site. SendFable keeps client email simple for salons, barbershops, and spas."
       challenges={[
         {
           title: "No-shows and lapses",
@@ -37,7 +37,7 @@ export default function SalonsSolutionPage() {
       faqs={[
         {
           q: "Will this sync with our booking app?",
-          a: "Native booking sync is not listed as shipped. Export consented clients or grow via a Sendfable form.",
+          a: "Native booking sync is not listed as shipped. Export consented clients or grow via a SendFable form.",
         },
         {
           q: "Can each stylist have their own From name?",

@@ -24,11 +24,11 @@ const bingVerification = process.env.BING_SITE_VERIFICATION?.trim();
 export const metadata: Metadata = {
   metadataBase: new URL(publicOrigin()),
   title: {
-    default: "Sendfable — Simple Email Marketing for Small Businesses",
-    template: "%s · Sendfable",
+    default: "SendFable — Simple Email Marketing for Small Businesses",
+    template: "%s · SendFable",
   },
   description: `Simple email marketing for small businesses. Start free with ${PLANS.FREE.contactCap} contacts — no credit card required.`,
-  applicationName: "Sendfable",
+  applicationName: "SendFable",
   manifest: "/manifest.webmanifest",
   verification: {
     ...(googleVerification ? { google: googleVerification } : {}),
@@ -38,8 +38,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: "Sendfable",
-    title: "Sendfable — Simple Email Marketing for Small Businesses",
+    siteName: "SendFable",
+    title: "SendFable — Simple Email Marketing for Small Businesses",
     description: `Create and send email campaigns without the complexity. Free plan includes ${PLANS.FREE.contactCap} contacts — no credit card.`,
     images: [
       {
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sendfable — Simple Email Marketing for Small Businesses",
+    title: "SendFable — Simple Email Marketing for Small Businesses",
     description: `Simple email marketing for small businesses. Start free — ${PLANS.FREE.contactCap} contacts, no credit card.`,
     images: ["/brand/sendfable-social-card.jpg"],
   },

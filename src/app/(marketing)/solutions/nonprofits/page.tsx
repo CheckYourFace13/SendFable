@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for nonprofits",
-  description: "Affordable email for nonprofits: appeals, events, and impact updates with compliant footers and list hygiene on Sendfable.",
+  description: "Affordable email for nonprofits: appeals, events, and impact updates with compliant footers and list hygiene on SendFable.",
   path: "/solutions/nonprofits",
 });
 
@@ -13,7 +13,7 @@ export default function NonprofitsSolutionPage() {
       industry="Nonprofits"
       path="/solutions/nonprofits"
       title="Email marketing for nonprofits"
-      intro="Donors and volunteers already care — they need clarity, not flash. Sendfable keeps nonprofit email affordable with honest plan limits and required unsubscribe footers on every send."
+      intro="Donors and volunteers already care — they need clarity, not flash. SendFable keeps nonprofit email affordable with honest plan limits and required unsubscribe footers on every send."
       challenges={[
         {
           title: "Budget pressure",

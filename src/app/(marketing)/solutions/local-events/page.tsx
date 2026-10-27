@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for local events",
-  description: "Email for venues and local event organizers: lineup reveals, ticket reminders, and day-of logistics with Sendfable.",
+  description: "Email for venues and local event organizers: lineup reveals, ticket reminders, and day-of logistics with SendFable.",
   path: "/solutions/local-events",
 });
 
@@ -13,7 +13,7 @@ export default function LocalEventsSolutionPage() {
       industry="Local events"
       path="/solutions/local-events"
       title="Email marketing for local events"
-      intro="Venues, festivals, and community organizers need timely logistics more than vanity metrics. Sendfable helps you announce lineups and remind ticket holders without enterprise pricing."
+      intro="Venues, festivals, and community organizers need timely logistics more than vanity metrics. SendFable helps you announce lineups and remind ticket holders without enterprise pricing."
       challenges={[
         {
           title: "Short attention windows",

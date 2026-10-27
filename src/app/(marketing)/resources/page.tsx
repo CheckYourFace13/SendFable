@@ -7,7 +7,7 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 export const metadata = marketingPageMeta({
   title: "Resources",
   description:
-    "Sendfable resource hub: email marketing for small business, deliverability, Mailchimp migration, templates, comparisons, and product updates.",
+    "SendFable resource hub: email marketing for small business, deliverability, Mailchimp migration, templates, comparisons, and product updates.",
   path: "/resources",
 });
 

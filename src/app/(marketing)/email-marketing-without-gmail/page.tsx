@@ -7,17 +7,17 @@ import { MarketingCta } from "@/components/marketing/marketing-cta";
 export const metadata = {
   title: "Email marketing without a Gmail account",
   description:
-    "Run email marketing with any work email on Sendfable — no Google login required. Send from Gmail addresses via From-rewrite, or authenticate your own domain.",
+    "Run email marketing with any work email on SendFable — no Google login required. Send from Gmail addresses via From-rewrite, or authenticate your own domain.",
 };
 
 const FAQS = [
   {
     q: "Can I still send to customers who use Gmail?",
-    a: "Yes. “Without Gmail” means you do not need a Google account to use Sendfable. Recipients can use any mailbox.",
+    a: "Yes. “Without Gmail” means you do not need a Google account to use SendFable. Recipients can use any mailbox.",
   },
   {
     q: "What if my From address is @gmail.com?",
-    a: "You can verify it. Because Gmail publishes strict DMARC, Sendfable sends from an authenticated platform address with your display name and sets Reply-To to your Gmail so replies reach you.",
+    a: "You can verify it. Because Gmail publishes strict DMARC, SendFable sends from an authenticated platform address with your display name and sets Reply-To to your Gmail so replies reach you.",
   },
   {
     q: "Do you support Microsoft login only?",
@@ -42,7 +42,7 @@ export default function EmailMarketingWithoutGmailPage() {
         Email marketing without a Gmail account
       </h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Many tools push “Sign in with Google.” Sendfable does not. Use a work address, a custom
+        Many tools push “Sign in with Google.” SendFable does not. Use a work address, a custom
         domain, or another mailbox — your choice.
       </p>
 
@@ -67,7 +67,7 @@ export default function EmailMarketingWithoutGmailPage() {
       <section className="mt-12 space-y-3 text-slate-700">
         <h2 className="text-2xl font-semibold text-slate-900">Sending options</h2>
         <p>
-          <strong>Any verified From</strong> — confirm the address, then send through Sendfable&apos;s
+          <strong>Any verified From</strong> — confirm the address, then send through SendFable&apos;s
           SES pipeline.
         </p>
         <p>

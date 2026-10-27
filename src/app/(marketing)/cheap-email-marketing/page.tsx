@@ -10,7 +10,7 @@ import { PRICING_DISCLAIMER, PRICING_LAST_CHECKED } from "@/data/competitor-pric
 export const metadata = marketingPageMeta({
   title: "Cheap email marketing that still delivers",
   description:
-    "Lower-cost email marketing with Sendfable: free plan, Starter from $12/mo, and clear limits — not race-to-the-bottom spam tools.",
+    "Lower-cost email marketing with SendFable: free plan, Starter from $12/mo, and clear limits — not race-to-the-bottom spam tools.",
   path: "/cheap-email-marketing",
 });
 
@@ -20,7 +20,7 @@ const FAQS = [
     a: "No. Extremely cheap tools that ignore list hygiene can cost you domain reputation. Look for clear contact caps, bounce/complaint controls, and authentication support.",
   },
   {
-    q: "How does Sendfable stay affordable?",
+    q: "How does SendFable stay affordable?",
     a: `We focus on core sending, audience tools, and SES delivery — not a sprawling suite of unused add-ons. Free includes up to ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month; paid plans scale by contacts and volume.`,
   },
   {
@@ -55,7 +55,7 @@ export default function CheapEmailMarketingPage() {
       </div>
 
       <section className="mt-12 space-y-3 text-slate-700">
-        <h2 className="text-2xl font-semibold text-slate-900">What “cheap” looks like on Sendfable</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">What “cheap” looks like on SendFable</h2>
         <ul className="list-disc space-y-2 pl-5">
           <li>
             Free: {PLANS.FREE.emailsPerMonth.toLocaleString()} emails/mo,{" "}
@@ -75,7 +75,7 @@ export default function CheapEmailMarketingPage() {
           </li>
         </ul>
         <p className="text-sm text-muted-foreground">
-          At common contact tiers, paid Sendfable plans are often about half of typical Mailchimp
+          At common contact tiers, paid SendFable plans are often about half of typical Mailchimp
           Standard list prices — verify with the calculator on{" "}
           <Link href="/pricing" className="text-teal hover:underline">
             pricing

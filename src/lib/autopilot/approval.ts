@@ -8,35 +8,9 @@ import type { AutopilotAction } from "@/lib/autopilot/types";
 import { formatScheduledWhen, parseAutopilotSchedule } from "@/lib/autopilot/schedule";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
+import { humanizeScribeChange, renderAutopilotApprovalEmail } from "@/lib/autopilot/approval-copy";
 
-function shell(title: string, bodyHtml: string): string {
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
-<body style="margin:0;padding:0;background-color:#f8fafc;font-family:Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;padding:32px 16px;">
-<tr><td align="center">
-<table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;">
-<tr><td style="padding-bottom:24px;text-align:center;">
-  <span style="font-size:20px;font-weight:700;color:#111827;letter-spacing:-0.02em;">Send<span style="color:#4F46E5;">fable</span></span>
-</td></tr>
-<tr><td style="background-color:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;">
-  <h1 style="margin:0 0 16px;font-size:18px;font-weight:600;color:#111827;">${title}</h1>
-  ${bodyHtml}
-</td></tr>
-<tr><td style="padding-top:24px;text-align:center;font-size:12px;color:#9ca3af;">
-  If you do nothing, nothing sends. The draft stays waiting for you.
-</td></tr>
-</table>
-</td></tr>
-</table>
-</body></html>`;
-}
-
-function actionBtn(href: string, label: string, bg: string): string {
-  return `<td style="padding:0 6px 12px 0;">
-  <a href="${href}" style="display:inline-block;padding:12px 18px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;background-color:${bg};">${label}</a>
-</td>`;
-}
+export { humanizeScribeChange, renderAutopilotApprovalEmail } from "@/lib/autopilot/approval-copy";
 
 export async function signAutopilotActionToken(opts: {
   draftId: string;
@@ -127,31 +101,30 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
     .trim()
     .slice(0, 220);
 
-  const body =
-    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;"><strong>What changed:</strong> ${escape(
-      draft.explanation || draft.changeSummary
-    )}</p>` +
-    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;"><strong>Campaign subject:</strong> ${escape(
-      draft.subject || "(no subject)"
-    )}</p>` +
-    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;"><strong>Audience:</strong> ${escape(
-      draft.campaign.audienceType === "all" ? "Everyone subscribed" : draft.campaign.audienceType
-    )} · <strong>Estimated recipients:</strong> ${recipients}</p>` +
-    `<p style="margin:0 0 16px;font-size:13px;line-height:1.5;color:#6b7280;background:#f9fafb;border-radius:8px;padding:12px;">${escape(
-      previewSnippet
-    )}…</p>` +
-    `<table role="presentation" cellpadding="0" cellspacing="0"><tr>` +
-    actionBtn(approveUrl, "Approve &amp; schedule", "#059669") +
-    actionBtn(editUrl, "Edit", "#4F46E5") +
-    actionBtn(rejectUrl, "Skip this campaign", "#6b7280") +
-    `</tr></table>` +
-    `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">Nothing sends until you choose the date and time. Opening a link does not send the campaign. If you do nothing, the draft stays waiting.</p>`;
+  const changeLine = humanizeScribeChange(
+    draft.explanation || draft.changeSummary,
+    draft.subject || draft.campaign.subject
+  );
+  const brandName = draft.workspace.name?.trim() || "your workspace";
+  const rendered = renderAutopilotApprovalEmail({
+    brandName,
+    changeLine,
+    subject: draft.subject || "(no subject)",
+    audienceLabel:
+      draft.campaign.audienceType === "all" ? "Everyone subscribed" : draft.campaign.audienceType,
+    recipients,
+    previewSnippet,
+    approveUrl,
+    editUrl,
+    rejectUrl,
+  });
 
   await sendEmail({
-    from: platformFrom(),
+    from: platformFrom("SendFable"),
     to: draft.workspace.approvalEmail?.trim() || owner.email,
     subject: "Your next campaign is ready to review",
-    html: shell("Your next campaign is ready to review", body),
+    html: rendered.html,
+    text: rendered.text,
   });
 
   await prisma.marketingAutopilotDraft.update({
@@ -168,14 +141,6 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
   } catch {
     /* fail open */
   }
-}
-
-function escape(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 export async function loadAutopilotReview(token: string) {

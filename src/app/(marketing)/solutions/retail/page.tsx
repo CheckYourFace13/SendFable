@@ -3,7 +3,7 @@ import { SolutionPage } from "@/components/marketing/solution-page";
 
 export const metadata = marketingPageMeta({
   title: "Email marketing for retail stores",
-  description: "Retail email marketing with Sendfable: product drops, seasonal promos, and win-back campaigns for shops that want simple tools.",
+  description: "Retail email marketing with SendFable: product drops, seasonal promos, and win-back campaigns for shops that want simple tools.",
   path: "/solutions/retail",
 });
 
@@ -13,7 +13,7 @@ export default function RetailSolutionPage() {
       industry="Retail"
       path="/solutions/retail"
       title="Email marketing for retail"
-      intro="Whether you sell online, in-store, or both, email remains a direct line to people who opted in. Sendfable covers promos and drops without forcing a heavyweight e‑commerce suite."
+      intro="Whether you sell online, in-store, or both, email remains a direct line to people who opted in. SendFable covers promos and drops without forcing a heavyweight e‑commerce suite."
       challenges={[
         {
           title: "Promo blindness",

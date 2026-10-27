@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   const fromName =
     parsed.data.fromName?.trim() ||
     auth.workspace.name?.trim() ||
-    "Sendfable";
+    "SendFable";
 
   const html = parsed.data.html?.trim() || textToHtml(parsed.data.text);
 

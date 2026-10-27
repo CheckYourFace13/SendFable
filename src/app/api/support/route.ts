@@ -104,10 +104,10 @@ export async function POST(req: Request) {
         .replace(/>/g, "&gt;")
         .replace(/\n/g, "<br/>");
       await sendEmail({
-        from: platformFrom("Sendfable Support"),
+        from: platformFrom("SendFable Support"),
         to: notifyTo,
         replyTo: email,
-        subject: `[Sendfable ${topic}] → ${destination} (#${row.id.slice(-8)})`,
+        subject: `[SendFable ${topic}] → ${destination} (#${row.id.slice(-8)})`,
         text: [
           `Topic: ${topic}`,
           `Route to: ${destination}`,

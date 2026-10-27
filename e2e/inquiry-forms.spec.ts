@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("contact form rejects an invalid email before sending", async ({ page }) => {
   await page.goto("/contact");
-  await expect(page.getByRole("heading", { name: "Contact Sendfable" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Contact SendFable" })).toBeVisible();
   await page.getByLabel("Your email *").fill("not-an-email");
   await page.getByLabel("Message *").fill("This is a real question about my account.");
   await page.getByRole("button", { name: "Send message" }).click();

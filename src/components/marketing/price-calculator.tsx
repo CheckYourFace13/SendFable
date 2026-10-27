@@ -35,7 +35,7 @@ export function PriceCalculator() {
       />
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl bg-parchment p-5">
-          <div className="text-sm font-medium text-indigo-900">Sendfable</div>
+          <div className="text-sm font-medium text-indigo-900">SendFable</div>
           <div className="mt-1 text-3xl font-bold text-indigo-950">
             ${comparison.sf.price}
             <span className="text-base font-normal text-ink">/mo</span>

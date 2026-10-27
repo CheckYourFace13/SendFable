@@ -390,7 +390,7 @@ export default function MigratePage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm list quality</AlertDialogTitle>
             <AlertDialogDescription>
-              You&apos;re importing more than 1,000 contacts. Sendfable prohibits purchased,
+              You&apos;re importing more than 1,000 contacts. SendFable prohibits purchased,
               rented, or scraped lists. Confirm these contacts opted in to hear from you.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -60,16 +60,16 @@ const CHECKLIST = [
 
 const FAQS = [
   {
-    q: "Can Sendfable guarantee inbox placement?",
-    a: "No honest provider can. Inbox placement depends on authentication, list quality, engagement, and each mailbox provider’s filters. Sendfable focuses on the parts you can control.",
+    q: "Can SendFable guarantee inbox placement?",
+    a: "No honest provider can. Inbox placement depends on authentication, list quality, engagement, and each mailbox provider’s filters. SendFable focuses on the parts you can control.",
   },
   {
     q: "Why might my Gmail From address be rewritten?",
-    a: "Gmail publishes a strict DMARC policy. Mail that claims to be from @gmail.com but originates on Sendfable’s servers would fail authentication. We send via an authenticated platform domain and set Reply-To to your real address so replies still reach you.",
+    a: "Gmail publishes a strict DMARC policy. Mail that claims to be from @gmail.com but originates on SendFable’s servers would fail authentication. We send via an authenticated platform domain and set Reply-To to your real address so replies still reach you.",
   },
   {
     q: "Do I need to set up Amazon SES myself?",
-    a: "No. Normal Sendfable customers do not configure AWS. Delivery infrastructure is managed for you.",
+    a: "No. Normal SendFable customers do not configure AWS. Delivery infrastructure is managed for you.",
   },
 ];
 
@@ -126,7 +126,7 @@ export default function DeliverabilityPage() {
         <p>
           If you verify <code className="rounded bg-parchment px-1">you@gmail.com</code> as a
           sender, we cannot honestly send mail that passes Gmail&apos;s DMARC when the message
-          originates from Sendfable&apos;s servers. So we send as an address on our authenticated
+          originates from SendFable&apos;s servers. So we send as an address on our authenticated
           platform domain, keep your display name, and set <strong>Reply-To</strong> to your real
           address. Replies still reach you.
         </p>
@@ -163,7 +163,7 @@ export default function DeliverabilityPage() {
       <section className="mt-12 space-y-4 text-ink/80">
         <h2 className="text-2xl font-semibold text-ink">List quality & auto-protection</h2>
         <p>
-          Sendfable does not allow purchased lists. Campaigns that exceed bounce or complaint
+          SendFable does not allow purchased lists. Campaigns that exceed bounce or complaint
           thresholds can be auto-paused. Clean lists beat clever copy every time.
         </p>
         <p className="text-sm">

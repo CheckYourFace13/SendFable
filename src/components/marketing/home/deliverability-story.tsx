@@ -10,7 +10,7 @@ const STEPS = [
     body: "On Growth and Pro, add DNS records so inboxes can trust your domain.",
   },
   {
-    title: "Sendfable handles delivery",
+    title: "SendFable handles delivery",
     body: "We send through our Amazon SES infrastructure — you don’t bring SMTP keys.",
   },
   {

@@ -10,11 +10,11 @@ import { PLANS } from "@/lib/plans";
 const FAQS = [
   {
     q: "Do I need Gmail or Outlook?",
-    a: "No. Sign up with any email address and a password — or a magic link. Sendfable never requires Google or Microsoft OAuth.",
+    a: "No. Sign up with any email address and a password — or a magic link. SendFable never requires Google or Microsoft OAuth.",
   },
   {
-    q: "Does Sendfable send the emails for me?",
-    a: "Yes. Campaigns are delivered through Sendfable’s own Amazon SES infrastructure. You design and launch; we handle the send path.",
+    q: "Does SendFable send the emails for me?",
+    a: "Yes. Campaigns are delivered through SendFable’s own Amazon SES infrastructure. You design and launch; we handle the send path.",
   },
   {
     q: "Can I bring my contacts from another service?",
@@ -22,7 +22,7 @@ const FAQS = [
   },
   {
     q: "Can I use my own From address?",
-    a: "Yes. Verify the address you send as. On Growth and Pro you can authenticate your own domain. Some providers with strict DMARC policies may use a Sendfable From with Reply-To set to your real address.",
+    a: "Yes. Verify the address you send as. On Growth and Pro you can authenticate your own domain. Some providers with strict DMARC policies may use a SendFable From with Reply-To set to your real address.",
   },
   {
     q: "What happens when someone unsubscribes?",
@@ -30,14 +30,14 @@ const FAQS = [
   },
   {
     q: "Do I need to understand Amazon SES?",
-    a: "No. Sendfable manages the delivery infrastructure for you. Normal customers do not configure AWS accounts, SES credentials, or SMTP keys.",
+    a: "No. SendFable manages the delivery infrastructure for you. Normal customers do not configure AWS accounts, SES credentials, or SMTP keys.",
   },
   {
     q: "Is there a free plan?",
     a: `Yes. Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and up to ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails per month, with a “Powered by SendFable” footer. No credit card required to start.`,
   },
   {
-    q: "Can Sendfable help me design the email?",
+    q: "Can SendFable help me design the email?",
     a: "Yes. Start from a goal or template, use Simple Mode or the drag-and-drop builder, import brand colors from your site, and preview on mobile and desktop before you send.",
   },
 ];

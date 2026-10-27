@@ -5,7 +5,7 @@ import { MarketingCta } from "@/components/marketing/marketing-cta";
 export const metadata = {
   title: "Service status",
   description:
-    "How Sendfable plans to communicate platform status — a static foundation without fabricated uptime percentages.",
+    "How SendFable plans to communicate platform status — a static foundation without fabricated uptime percentages.",
 };
 
 export default function StatusPage() {
@@ -55,7 +55,7 @@ export default function StatusPage() {
       <h2 className="pt-4 text-2xl font-semibold text-slate-900">Dependencies we do not control</h2>
       <p>
         Inbox placement and Amazon SES regional availability can affect delivery even when
-        Sendfable&apos;s app is healthy. We will distinguish product incidents from upstream provider
+        SendFable&apos;s app is healthy. We will distinguish product incidents from upstream provider
         issues whenever we post updates.
       </p>
 
@@ -78,7 +78,7 @@ export default function StatusPage() {
 
       <MarketingCta
         title="Build on a clear foundation"
-        body="Create a free Sendfable account while we expand live status reporting."
+        body="Create a free SendFable account while we expand live status reporting."
       />
     </div>
   );

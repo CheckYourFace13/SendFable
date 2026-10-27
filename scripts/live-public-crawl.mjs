@@ -84,6 +84,37 @@ async function main() {
     for (const r of bad) console.log(`${r.status} ${r.path} ${r.error || ""}`);
   }
 
+  // Public mailbox scan — legal/compliance pages may keep required addresses.
+  const EMAIL_SCAN = ["/", "/contact", "/templates", "/migrate", "/solutions", "/pricing", "/faq"];
+  const LEGAL_KEEP = new Set([
+    "/privacy",
+    "/terms",
+    "/security",
+    "/cookies",
+    "/acceptable-use",
+    "/refund-policy",
+  ]);
+  let emailHits = 0;
+  for (const p of EMAIL_SCAN) {
+    const res = await fetch(`${BASE}${p}`);
+    const html = await res.text();
+    const hasMailto = /mailto:/i.test(html);
+    const hasMailbox = /(?:support|hello|security|privacy|chris)@[a-z0-9.-]+/i.test(html);
+    if (hasMailto || hasMailbox) {
+      emailHits += 1;
+      console.log(`EMAIL_HIT ${p} mailto=${hasMailto} mailbox=${hasMailbox}`);
+    } else {
+      console.log(`EMAIL_CLEAN ${p}`);
+    }
+  }
+  for (const p of LEGAL_KEEP) {
+    console.log(`EMAIL_LEGAL_EXCEPTION ${p}`);
+  }
+  if (emailHits) {
+    console.log(`EMAIL_SCAN_FAIL ${emailHits}`);
+    process.exit(1);
+  }
+
   // Pricing / Free plan spot checks on homepage + pricing HTML
   for (const p of ["/", "/pricing", "/solutions"]) {
     const res = await fetch(`${BASE}${p}`);

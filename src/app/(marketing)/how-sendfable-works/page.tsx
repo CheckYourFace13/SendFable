@@ -45,7 +45,7 @@ export const metadata = marketingPageMeta({
   path: "/how-sendfable-works",
 });
 
-export default function HowSendfableWorksPage() {
+export default function HowSendFableWorksPage() {
   const faqs = SENDFABLE_FACTS.faqs.filter((f) =>
     /import|sender|Gmail|cost|free|SMS/i.test(f.q)
   );

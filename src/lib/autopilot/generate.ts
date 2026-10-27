@@ -119,7 +119,7 @@ export function generateExtractive(opts: {
     ctaHref: sourceUrl,
     goal,
     templateSlug: pickTemplate(goal, cleaned),
-    explanation: `Detected a page change (${reason}): “${headline.slice(0, 80)}”`,
+    explanation: `New content found: ${headline.slice(0, 80)}`,
     model: "extractive-v1",
     costMicros: 0,
   };
