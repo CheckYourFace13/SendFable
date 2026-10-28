@@ -144,8 +144,7 @@ export default function AutomatedEmailMarketingPage() {
         ))}
       </div>
       <p className="mt-3 text-xs text-ink/55">
-        Real SendFable UI from controlled demo data — no stock photos, no fake testimonials, no
-        customer PII.
+        Screenshots from a controlled SendFable demo.
       </p>
 
       <div className="mt-8 flex flex-wrap gap-3">

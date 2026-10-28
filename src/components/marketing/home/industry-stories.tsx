@@ -66,7 +66,7 @@ export function IndustryStories() {
             Stories that fit your kind of business
           </h2>
           <p className="mt-3 text-charcoal/75">
-            Example campaigns and subjects — starting points, not invented customer results.
+            Example campaigns and subjects you can start from.
           </p>
         </div>
 

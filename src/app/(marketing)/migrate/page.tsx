@@ -133,7 +133,7 @@ export default function MigratePage() {
       <h1 className="text-4xl font-bold tracking-tight">Migrate to SendFable</h1>
       <p className="mt-3 text-lg text-muted-foreground">
         Moving ESPs is mostly a careful CSV export, a clean import, and re-checking authentication.
-        Here is an honest path from common tools — no fake “one-click migrator” claims.
+        SendFable does not offer a one-click migrator.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild>

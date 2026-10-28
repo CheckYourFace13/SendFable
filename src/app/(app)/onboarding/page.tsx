@@ -30,6 +30,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [displayName, setDisplayName] = useState("");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
@@ -48,7 +49,8 @@ export default function OnboardingPage() {
       const rawStep = typeof data.step === "number" ? data.step : 0;
       // Migrate users mid-old flows into the shorter path.
       setStep(Math.min(Math.max(0, rawStep > 3 ? 3 : rawStep), TOTAL_STEPS - 1));
-      setName(data.workspace?.name || "");
+      setDisplayName(data.userName || "");
+      setName(data.workspace?.name && data.workspace.name !== "My workspace" ? data.workspace.name : "");
       setAddress(data.workspace?.mailingAddress || "");
       setDescription(data.workspace?.businessDescription || "");
       setProgress(data.progress || { verifiedSenders: 0, contacts: 0, campaigns: 0 });
@@ -82,17 +84,22 @@ export default function OnboardingPage() {
 
   async function next() {
     const workspace = {
-      name,
+      name: name.trim() || undefined,
       mailingAddress: address || null,
       businessDescription: description || null,
     };
+    if (step === 0 && !displayName.trim()) {
+      toast.error("Add a first name or display name so we know what to call you.");
+      return;
+    }
     if (step === 0 && !address.trim()) {
-      toast.error("Add a physical mailing address — it's required in every email footer.");
+      toast.error("Add a physical mailing address. It's required in every email footer.");
       return;
     }
     const ok = await save({
       step: Math.min(step + 1, TOTAL_STEPS - 1),
       data: { goal },
+      userName: displayName.trim() || undefined,
       workspace,
     });
     if (ok) {
@@ -139,11 +146,25 @@ export default function OnboardingPage() {
         {step === 0 && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Just the basics for your email footer — you can refine branding later.
+              Just the basics for your email footer. You can refine branding later.
             </p>
             <div>
-              <Label>Business name</Label>
+              <Label htmlFor="display-name">What should we call you?</Label>
               <Input
+                id="display-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="First name or display name"
+                className="min-h-11"
+                autoComplete="given-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="business-name">
+                Business name <span className="text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="business-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Acme Bakery"

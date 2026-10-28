@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Email marketing without a Gmail account",
   description:
     "Run email marketing with any work email on SendFable — no Google login required. Send from Gmail addresses via From-rewrite, or authenticate your own domain.",
-};
+  path: "/email-marketing-without-gmail",
+});
 
 const FAQS = [
   {

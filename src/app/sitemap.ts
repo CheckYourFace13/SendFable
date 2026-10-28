@@ -85,7 +85,6 @@ export const SITEMAP_PATHS = [
   "/acceptable-use",
   "/refund-policy",
   "/contact",
-  "/feed.xml",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -111,7 +110,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency:
       path === "/"
         ? "weekly"
-        : path === "/changelog" || path === "/feed.xml"
+        : path === "/changelog"
           ? "weekly"
           : "monthly",
     priority:

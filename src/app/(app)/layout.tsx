@@ -26,6 +26,7 @@ import {
   workspaceSwitcherModel,
 } from "@/lib/internal-entitlement";
 import { WorkspaceSwitcher } from "@/components/app/workspace-switcher";
+import { TrySignupResume } from "@/components/app/try-signup-resume";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -134,6 +135,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <UserMenu name={user.name} email={user.email} />
         </header>
         <main className="relative min-h-0 flex-1 overflow-auto bg-parchment/40 p-4 lg:p-8">
+          <TrySignupResume />
           {children}
           {showIssueReporter && <ReportProductIssue />}
         </main>

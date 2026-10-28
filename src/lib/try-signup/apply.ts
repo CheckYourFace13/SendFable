@@ -68,6 +68,11 @@ export async function applyTrySignupDraft(opts: {
       onboardingData: {
         ...onboarding,
         scribePreferredAudienceTagId: primary.id,
+        tryBusinessType: config.businessType,
+        tryAudienceName: config.audienceName,
+        trySignupFormId: form.id,
+        tryPlatform: config.platform,
+        tryDisplay: config.display,
       } as Prisma.InputJsonValue,
     },
   });

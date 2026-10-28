@@ -78,7 +78,7 @@ export function MarketingAutopilotHome() {
                 <source srcSet={s.webp} type="image/webp" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/product/autopilot-flow.svg"
+                  src={s.webp}
                   alt={s.alt}
                   width={640}
                   height={420}

@@ -114,8 +114,10 @@ test.describe("AUTH gates", () => {
 
   test("signup form exposes email, password, and policy controls", async ({ page }) => {
     await page.goto(`${BASE}/signup`);
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
     await expect(page.getByLabel(/email/i).first()).toBeVisible();
-    await expect(page.getByLabel(/name/i).first()).toBeVisible();
+    await expect(page.getByLabel(/^your name$/i)).toHaveCount(0);
+    await expect(page.getByLabel(/business or project name/i)).toHaveCount(0);
     await expect(page.locator('input[type="password"]').first()).toBeVisible();
     await expect(page.locator('input[type="checkbox"]').first()).toBeVisible();
     await expect(page.getByRole("button", { name: /create|start|sign up|continue/i }).first()).toBeVisible();

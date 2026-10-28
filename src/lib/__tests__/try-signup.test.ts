@@ -87,6 +87,9 @@ describe("try signup builder", () => {
     const apply = readFileSync(join(process.cwd(), "src/lib/try-signup/apply.ts"), "utf8");
     assert.match(apply, /claimedAt/);
     assert.match(apply, /scribePreferredAudienceTagId/);
+    assert.match(apply, /tryBusinessType/);
+    assert.match(apply, /tryAudienceName/);
+    assert.match(apply, /trySignupFormId/);
     assert.match(apply, /hostedSlug/);
     assert.doesNotMatch(apply, /enabled:\s*true/);
     const signup = readFileSync(join(process.cwd(), "src/app/api/auth/signup/route.ts"), "utf8");

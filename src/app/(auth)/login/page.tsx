@@ -41,12 +41,39 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     const res = await signIn("credentials", { email, password, redirect: false });
-    setLoading(false);
     if (res?.error) {
+      setLoading(false);
       toast.error("Invalid email or password.");
       return;
     }
-    router.push(callbackUrl);
+    let next = callbackUrl;
+    let tryToken = params.get("try")?.trim() || "";
+    if (!tryToken) {
+      try {
+        tryToken = localStorage.getItem("sf_try_signup")?.trim() || "";
+      } catch {
+        tryToken = "";
+      }
+    }
+    if (tryToken) {
+      const claimed = await fetch("/api/try/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: tryToken }),
+      });
+      const data = await claimed.json().catch(() => null);
+      try {
+        localStorage.removeItem("sf_try_signup");
+      } catch {
+        /* ignore */
+      }
+      if (claimed.ok && typeof data?.formId === "string" && data.formId) {
+        const platform = typeof data.platform === "string" ? data.platform : "wordpress";
+        next = `/forms/${data.formId}?live=1&platform=${encodeURIComponent(platform)}`;
+      }
+    }
+    setLoading(false);
+    router.push(next);
     router.refresh();
   }
 

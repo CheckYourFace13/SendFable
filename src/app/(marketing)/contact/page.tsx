@@ -1,14 +1,15 @@
-import type { Metadata } from "next";
 import { ContactForm } from "@/components/marketing/contact-form";
 import { issueInquiryToken } from "@/lib/inquiry/guard";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata = marketingPageMeta({
   title: "Contact & support",
   description:
     "Contact SendFable support with questions about your account, billing, privacy requests, or to report abuse. Use the form — we do not publish mailbox addresses.",
-};
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

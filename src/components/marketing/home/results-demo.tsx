@@ -11,7 +11,7 @@ export function ResultsDemo() {
               See what your campaign can tell you.
             </h2>
             <p className="mt-3 text-charcoal/75">
-              Illustrative product data — not real customer statistics.
+              Illustrative demo.
             </p>
           </div>
           <span className="rounded-full border border-coral/40 bg-coral/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-coral-solid">

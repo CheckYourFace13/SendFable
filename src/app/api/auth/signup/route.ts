@@ -13,7 +13,7 @@ import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
 const signupSchema = z.object({
-  name: z.string().trim().min(1).max(80),
+  name: z.string().trim().min(1).max(80).optional(),
   email: z.string().email().max(254),
   password: z.string().min(8).max(128),
   workspaceName: z.string().trim().min(1).max(80).optional(),
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
-  const workspaceName = parsed.data.workspaceName || `${parsed.data.name}'s workspace`;
+  const workspaceName = parsed.data.workspaceName?.trim() || "My workspace";
   const ownCode = randomToken(6).slice(0, 8);
 
   let referredByCode: string | null = null;
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
   const user = await prisma.user.create({
     data: {
       email,
-      name: parsed.data.name,
+      name: parsed.data.name?.trim() || null,
       passwordHash,
       referralCode: ownCode,
       referredByCode,

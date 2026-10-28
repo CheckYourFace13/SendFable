@@ -35,6 +35,20 @@ test("try builder make-live link goes to free signup", async ({ page }) => {
   await page.goto("/try/signup-tool");
   const href = await page.getByRole("link", { name: "MAKE THIS LIVE — FREE" }).getAttribute("href");
   expect(href).toMatch(/^\/signup/);
+  expect(href).toMatch(/try=/);
+  expect(href).toMatch(/type=/);
+});
+
+test("try-builder signup is email, password, and terms only", async ({ page }) => {
+  await page.goto("/try/signup-tool?type=band");
+  await page.getByRole("link", { name: "MAKE THIS LIVE — FREE" }).click();
+  await expect(page).toHaveURL(/\/signup/);
+  await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+  await expect(page.getByLabel(/^email$/i)).toBeVisible();
+  await expect(page.locator('input[type="password"]')).toBeVisible();
+  await expect(page.getByLabel(/your name/i)).toHaveCount(0);
+  await expect(page.getByLabel(/business or project name/i)).toHaveCount(0);
+  expect(page.url()).toMatch(/try=/);
 });
 
 test("try builder can switch inline and popup without an account", async ({ page }) => {

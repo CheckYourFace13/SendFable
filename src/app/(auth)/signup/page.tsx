@@ -58,22 +58,24 @@ function SignupForm() {
     }
   }, [tryToken]);
   const loginHref = useMemo(() => {
+    const q = new URLSearchParams();
     if (resumeTemplate) {
-      const q = new URLSearchParams();
       q.set(
         "callbackUrl",
         `/campaigns/new?template=${encodeURIComponent(resumeTemplate)}${
           resumeGoal ? `&goal=${encodeURIComponent(resumeGoal)}` : ""
         }`
       );
-      return `/login?${q.toString()}`;
+    } else if (tryToken) {
+      q.set("try", tryToken);
+      q.set("callbackUrl", "/forms");
+    } else {
+      q.set("callbackUrl", "/onboarding");
     }
-    return "/login";
-  }, [resumeTemplate, resumeGoal]);
-  const [name, setName] = useState("");
+    return `/login?${q.toString()}`;
+  }, [resumeTemplate, resumeGoal, tryToken]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [workspaceName, setWorkspaceName] = useState("");
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -95,10 +97,8 @@ function SignupForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
           email,
           password,
-          workspaceName: workspaceName || undefined,
           referralCode,
           utmSource,
           utmMedium,
@@ -133,6 +133,13 @@ function SignupForm() {
         setLivePlatform(data.platform);
       }
       if (data.display === "popup") setLiveDisplay("popup");
+      if (data.formId) {
+        try {
+          localStorage.removeItem("sf_try_signup");
+        } catch {
+          /* ignore */
+        }
+      }
       trackClientEvent("signup_completed");
       if (data.formId) trackClientEvent("real_signup_tool_created");
       setDone(true);
@@ -226,20 +233,17 @@ function SignupForm() {
   return (
     <Card className={cardClass}>
       <CardHeader>
-        <CardTitle className="text-ink">
-          {tryToken ? "Make this signup live — free" : "Create your account"}
-        </CardTitle>
+        <h1 className="font-semibold leading-none tracking-tight text-ink">
+          Create your account
+        </h1>
         <CardDescription>
-          {freePlanPromise()}. Any email address works. No credit card required.
+          {tryToken
+            ? `Make this signup live. ${freePlanPromise()} Any email address works. No credit card required.`
+            : `${freePlanPromise()} Any email address works. No credit card required.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="name">Your name</Label>
-            <Input id="name" required maxLength={80} value={name}
-              onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
-          </div>
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" required autoComplete="email" value={email}
@@ -249,13 +253,6 @@ function SignupForm() {
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" required minLength={8} autoComplete="new-password"
               value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="workspace">
-              Business or project name <span className="text-ink/45">(optional)</span>
-            </Label>
-            <Input id="workspace" maxLength={80} value={workspaceName}
-              onChange={(e) => setWorkspaceName(e.target.value)} placeholder="Acme Bakery" />
           </div>
           <div className="flex items-start gap-3 rounded-lg border border-ink/10 bg-parchment/50 p-3">
             <Checkbox

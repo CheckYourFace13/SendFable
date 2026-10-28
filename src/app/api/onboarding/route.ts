@@ -11,6 +11,7 @@ const patchSchema = z.object({
   data: z.record(z.unknown()).optional(),
   complete: z.boolean().optional(),
   skip: z.boolean().optional(),
+  userName: z.string().trim().min(1).max(80).optional(),
   workspace: z
     .object({
       name: z.string().trim().min(1).max(80).optional(),
@@ -51,6 +52,7 @@ export async function GET() {
     step: ws.onboardingStep,
     completedAt: ws.onboardingCompletedAt,
     data: ws.onboardingData,
+    userName: ctx.user.name || "",
     workspace: {
       name: ws.name,
       websiteUrl: ws.websiteUrl,
@@ -80,6 +82,13 @@ export async function PATCH(req: Request) {
     ...((existing.onboardingData as Record<string, unknown>) || {}),
     ...(parsed.data.data || {}),
   };
+
+  if (parsed.data.userName) {
+    await prisma.user.update({
+      where: { id: ctx.user.id },
+      data: { name: parsed.data.userName },
+    });
+  }
 
   const workspace = await prisma.workspace.update({
     where: { id: ctx.workspace.id },

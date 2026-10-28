@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
-export const metadata = {
+export const metadata = marketingPageMeta({
   title: "Service status",
   description:
-    "How SendFable plans to communicate platform status — a static foundation without fabricated uptime percentages.",
-};
+    "How SendFable plans to communicate platform status. This page is a static foundation until live monitoring is connected.",
+  path: "/status",
+});
 
 export default function StatusPage() {
   return (
@@ -19,8 +21,8 @@ export default function StatusPage() {
       />
       <h1 className="text-4xl font-bold tracking-tight text-slate-900">Status</h1>
       <p className="text-lg text-muted-foreground">
-        This is a static status foundation — not a live monitor and not a page of invented uptime
-        charts. When we publish real-time components, they will replace this explanation.
+        This page is a static status note. Live incident monitoring is not connected yet. When it
+        is, it will replace this explanation.
       </p>
 
       <div className="rounded-2xl border bg-slate-50 p-6">
@@ -31,8 +33,12 @@ export default function StatusPage() {
           No automated status feed is connected on this page yet.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          If you are experiencing an issue, check your workspace dashboards first (sends, bounces,
-          billing), then email support. We will not invent a green checkmark to look “always up.”
+          If something looks wrong, check your workspace dashboards first (sends, bounces, billing),
+          then use the{" "}
+          <Link href="/contact" className="text-teal hover:underline">
+            contact form
+          </Link>
+          .
         </p>
       </div>
 
@@ -72,8 +78,11 @@ export default function StatusPage() {
       </ol>
 
       <p className="pt-2 text-sm text-muted-foreground">
-        Prefer email updates? Contact support from your account email once you are signed up — we
-        are not collecting a fake status-subscriber count on this page.
+        Prefer a written update? Once you have an account, use the{" "}
+        <Link href="/contact" className="text-teal hover:underline">
+          contact form
+        </Link>
+        .
       </p>
 
       <MarketingCta
