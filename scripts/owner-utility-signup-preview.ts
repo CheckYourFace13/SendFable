@@ -14,7 +14,7 @@ async function main() {
   if (!sender.ok) throw new Error(`sender_not_verified:${sender.detail}`);
 
   const cta =
-    "https://sendfable.com/try/signup-tool?utm_source=casey&utm_medium=email&utm_campaign=acquisition&utm_content=utility_signup&utm_term=owner_test";
+    "https://sendfable.com/try/signup-tool?utm_source=casey&utm_medium=email&utm_campaign=acquisition&utm_content=utility_signup&utm_term=band&type=band";
   const unsubUrl = "https://sendfable.com/api/acquisition/unsubscribe?owner_test=1";
   const mail = renderUtilitySignupEmail({
     businessName: "KarPool Band",

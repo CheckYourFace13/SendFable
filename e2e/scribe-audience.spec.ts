@@ -10,5 +10,5 @@ test("try-builder still suggests Fans as the primary audience", async ({ page })
   await page.goto("/try/signup-tool");
   await page.getByLabel("Business").selectOption("band");
   await expect(page.getByLabel("Audience name")).toHaveValue("Fans");
-  await expect(page.getByText("Nothing sends until you choose the date and time.")).toBeVisible();
+  await expect(page.getByText("Join the fan list")).toBeVisible();
 });

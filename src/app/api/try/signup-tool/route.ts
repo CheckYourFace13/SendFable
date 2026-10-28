@@ -24,7 +24,8 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token")?.trim();
   if (!token) {
-    return NextResponse.json({ config: defaultTryConfig(), token: null });
+    const type = categoryToTryType(url.searchParams.get("type") || url.searchParams.get("category"));
+    return NextResponse.json({ config: defaultTryConfig(type), token: null });
   }
   const draft = await prisma.trySignupDraft.findUnique({ where: { token } });
   if (!draft) return NextResponse.json({ error: "Not found" }, { status: 404 });

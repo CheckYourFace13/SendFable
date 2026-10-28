@@ -50,10 +50,12 @@ export async function GET(req: Request) {
   const version = payload.v || msg?.copyVersion || "v1a";
   let landingPath = path;
   let tryToken: string | null = null;
+  let tryType: string | null = null;
   if (path.startsWith("/try/signup-tool") && msg?.prospect.id) {
     try {
       const { defaultTryConfig, categoryToTryType } = await import("@/lib/try-signup/config");
       const { randomToken } = await import("@/lib/utils");
+      tryType = categoryToTryType(msg.prospect.category);
       const existing = await prisma.trySignupDraft.findFirst({
         where: { prospectId: msg.prospect.id, claimedAt: null },
         orderBy: { createdAt: "desc" },
@@ -83,6 +85,7 @@ export async function GET(req: Request) {
     utm_term: msg?.prospect.category || "smb",
   });
   if (tryToken) qs.set("try", tryToken);
+  if (tryType) qs.set("type", tryType);
   const targetRaw = appUrl(`${landingPath}?${qs.toString()}`);
   const target = safeClickRedirectUrl(targetRaw) || fallback;
 

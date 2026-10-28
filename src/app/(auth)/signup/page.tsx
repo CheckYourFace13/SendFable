@@ -75,6 +75,7 @@ function SignupForm() {
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [activatedFormId, setActivatedFormId] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -116,6 +117,9 @@ function SignupForm() {
           /* ignore */
         }
       }
+      if (typeof data.formId === "string" && data.formId) {
+        setActivatedFormId(data.formId);
+      }
       setDone(true);
     } finally {
       setLoading(false);
@@ -134,13 +138,23 @@ function SignupForm() {
             We sent a verification link to <strong>{email}</strong>. You can sign in right away —
             verifying unlocks sending.
             {tryToken
-              ? " Your signup tool and audiences will be waiting in Signup Tools."
+              ? " Your signup tool and audiences are ready. Sign in to copy the working code."
               : null}
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
           <Button asChild className={cn("w-full", ctaClass)}>
-            <Link href={loginHref}>Continue to sign in</Link>
+            <Link
+              href={
+                tryToken
+                  ? `/login?callbackUrl=${encodeURIComponent(
+                      activatedFormId ? `/forms/${activatedFormId}` : "/forms"
+                    )}`
+                  : loginHref
+              }
+            >
+              Continue to sign in
+            </Link>
           </Button>
         </CardContent>
       </Card>
@@ -150,7 +164,9 @@ function SignupForm() {
   return (
     <Card className={cardClass}>
       <CardHeader>
-        <CardTitle className="text-ink">Create your account</CardTitle>
+        <CardTitle className="text-ink">
+          {tryToken ? "Create your free account to activate this signup." : "Create your account"}
+        </CardTitle>
         <CardDescription>
           {freePlanPromise()}. Any email address works. No credit card required.
         </CardDescription>

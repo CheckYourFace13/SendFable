@@ -43,7 +43,7 @@ const EXAMPLES: Record<
     label: "Band / music",
     audience: "Fans",
     extra: "Venues",
-    headline: "Join the list",
+    headline: "Join the fan list",
     pitch:
       "Put a signup on your site for fans. Keep a separate audience for venues. When you post a new show, Scribe can prepare the email for you.",
   },

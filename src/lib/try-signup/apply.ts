@@ -18,7 +18,13 @@ export async function applyTrySignupDraft(opts: {
     return { ok: false, reason: "already_claimed" };
   }
   if (draft.claimedAt && draft.workspaceId === opts.workspaceId) {
-    return { ok: true };
+    const config = sanitizeTryConfig(draft.config);
+    const existingForm = await prisma.signupForm.findFirst({
+      where: { workspaceId: opts.workspaceId, name: config.audienceName },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+    return { ok: true, formId: existingForm?.id };
   }
 
   const config = sanitizeTryConfig(draft.config);

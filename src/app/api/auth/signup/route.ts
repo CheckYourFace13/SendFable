@@ -174,12 +174,14 @@ export async function POST(req: Request) {
     /* fail open */
   }
 
+  let activatedFormId: string | undefined;
   try {
     const { matchSignupToAcquisition } = await import("@/lib/acquisition/lifecycle");
     const matched = await matchSignupToAcquisition({ userId: user.id, email });
     if (workspaceId && parsed.data.tryToken) {
       const { applyTrySignupDraft } = await import("@/lib/try-signup/apply");
-      await applyTrySignupDraft({ workspaceId, token: parsed.data.tryToken });
+      const applied = await applyTrySignupDraft({ workspaceId, token: parsed.data.tryToken });
+      if (applied.formId) activatedFormId = applied.formId;
     } else if (workspaceId && matched.prospectId) {
       const draft = await prisma.trySignupDraft.findFirst({
         where: { prospectId: matched.prospectId, claimedAt: null },
@@ -187,12 +189,13 @@ export async function POST(req: Request) {
       });
       if (draft) {
         const { applyTrySignupDraft } = await import("@/lib/try-signup/apply");
-        await applyTrySignupDraft({ workspaceId, token: draft.token });
+        const applied = await applyTrySignupDraft({ workspaceId, token: draft.token });
+        if (applied.formId) activatedFormId = applied.formId;
       }
     }
   } catch {
     /* fail open — acquisition matching must not block signup */
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, formId: activatedFormId });
 }

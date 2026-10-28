@@ -67,13 +67,30 @@ describe("try signup builder", () => {
   it("does not create a live public form from the preview page", () => {
     const src = readFileSync(join(process.cwd(), "src/components/marketing/try-signup-builder.tsx"), "utf8");
     assert.doesNotMatch(src, /\/api\/forms\/submit/);
-    assert.match(src, /Use this on my website/);
+    assert.match(src, /Activate this signup/);
+    assert.match(src, /Create your free account to activate this signup/);
+    assert.match(src, /Preview only/);
+    assert.match(src, /TRY_PREVIEW_SNIPPET/);
+    assert.doesNotMatch(src, /\/api\/forms\/submit/);
     const apply = readFileSync(join(process.cwd(), "src/lib/try-signup/apply.ts"), "utf8");
     assert.match(apply, /claimedAt/);
     assert.match(apply, /scribePreferredAudienceTagId/);
     assert.doesNotMatch(apply, /enabled:\s*true/);
     const signup = readFileSync(join(process.cwd(), "src/app/api/auth/signup/route.ts"), "utf8");
     assert.match(signup, /applyTrySignupDraft/);
+    assert.match(signup, /formId: activatedFormId/);
+  });
+
+  it("shows concise platform install steps and preview-only code", async () => {
+    const { TRY_PREVIEW_SLUG, TRY_PREVIEW_SNIPPET, tryInstallPlatforms, tryInstallSteps } =
+      await import("@/lib/try-signup/install");
+    assert.equal(TRY_PREVIEW_SLUG, "preview-only");
+    assert.match(TRY_PREVIEW_SNIPPET, /Preview only/);
+    assert.doesNotMatch(TRY_PREVIEW_SNIPPET, /data-sendfable-form="fans"/i);
+    const labels = tryInstallPlatforms().map((p) => p.label);
+    assert.deepEqual(labels, ["WordPress", "Wix", "Squarespace", "Webflow", "Other website"]);
+    assert.equal(tryInstallSteps("wordpress")[0], "Add a Custom HTML block.");
+    assert.equal(tryInstallSteps("other")[0], "Paste the snippet where you want the signup to appear.");
   });
 
   it("exports audience columns and keeps the utility CTA on the try builder", () => {
