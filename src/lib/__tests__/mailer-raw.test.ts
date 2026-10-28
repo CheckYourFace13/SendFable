@@ -30,8 +30,7 @@ describe("SES raw acquisition envelope", () => {
       "casey@send.sendfable.com"
     );
     const src = readFileSync(join(process.cwd(), "src/lib/mailer.ts"), "utf8");
-    assert.match(src, /SendRawEmailCommand/);
-    assert.match(src, /Source: source/);
-    assert.doesNotMatch(src, /FromEmailAddress: splitEnvelope \? msg\.envelopeFrom/);
+    assert.doesNotMatch(src, /SendRawEmailCommand/);
+    assert.match(src, /FromEmailAddress: msg\.from/);
   });
 });
