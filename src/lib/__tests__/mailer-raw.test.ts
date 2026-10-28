@@ -1,6 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { buildSesRawMessage, parseRfc5322Email } from "@/lib/mailer";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { buildSesRawMessage, envelopeSourceAddress, parseRfc5322Email } from "@/lib/mailer";
 
 describe("SES raw acquisition envelope", () => {
   it("keeps the visible From while listing unsubscribe headers", () => {
@@ -23,5 +25,13 @@ describe("SES raw acquisition envelope", () => {
     assert.match(raw, /List-Unsubscribe: <https:\/\/sendfable.com\/u>/);
     assert.match(raw, /multipart\/alternative/);
     assert.equal(parseRfc5322Email("Casey at SendFable <casey@sendfable.com>"), "casey@sendfable.com");
+    assert.equal(
+      envelopeSourceAddress("Casey at SendFable <casey@send.sendfable.com>"),
+      "casey@send.sendfable.com"
+    );
+    const src = readFileSync(join(process.cwd(), "src/lib/mailer.ts"), "utf8");
+    assert.match(src, /SendRawEmailCommand/);
+    assert.match(src, /Source: source/);
+    assert.doesNotMatch(src, /FromEmailAddress: splitEnvelope \? msg\.envelopeFrom/);
   });
 });

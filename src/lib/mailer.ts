@@ -1,3 +1,4 @@
+import { SESClient, SendRawEmailCommand } from "@aws-sdk/client-ses";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { promises as fs } from "fs";
 import os from "os";
@@ -28,6 +29,7 @@ export interface SendResult {
 }
 
 let sesClient: SESv2Client | null | undefined;
+let sesV1Client: SESClient | null | undefined;
 
 export function isDevMailMode(): boolean {
   return !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY;
@@ -41,6 +43,21 @@ function getSes(): SESv2Client | null {
   }
   sesClient = new SESv2Client({ region: process.env.AWS_REGION || "us-east-1" });
   return sesClient;
+}
+
+function getSesV1(): SESClient | null {
+  if (sesV1Client !== undefined) return sesV1Client;
+  if (isDevMailMode()) {
+    sesV1Client = null;
+    return null;
+  }
+  sesV1Client = new SESClient({ region: process.env.AWS_REGION || "us-east-1" });
+  return sesV1Client;
+}
+
+/** Envelope identity only — never the display-name form SES would show as From. */
+export function envelopeSourceAddress(envelopeFrom: string): string | null {
+  return parseRfc5322Email(envelopeFrom);
 }
 
 function outboxDir(): string {
@@ -185,29 +202,52 @@ export async function sendEmail(msg: OutgoingEmail): Promise<SendResult> {
     Value,
   }));
   const splitEnvelope = usesSeparateEnvelope(msg);
+  const configurationSetName = msg.noConfigurationSet
+    ? undefined
+    : process.env.SES_CONFIGURATION_SET || undefined;
+
+  /**
+   * SES v2 SendEmail copies FromEmailAddress over the MIME From, so a
+   * send.sendfable.com envelope would become the address the recipient sees.
+   * v1 SendRawEmail keeps Source as the signing identity and leaves MIME From.
+   */
+  if (splitEnvelope) {
+    const source = envelopeSourceAddress(msg.envelopeFrom || "");
+    if (!source) throw new Error("invalid_envelope_from");
+    const v1 = getSesV1();
+    if (!v1) throw new Error("ses_unavailable");
+    const res = await v1.send(
+      new SendRawEmailCommand({
+        Source: source,
+        Destinations: [msg.to],
+        RawMessage: { Data: buildSesRawMessage(msg) },
+        ConfigurationSetName: configurationSetName,
+        Tags: msg.tags
+          ? Object.entries(msg.tags).map(([Name, Value]) => ({ Name, Value }))
+          : undefined,
+      })
+    );
+    return { messageId: res.MessageId ?? "", dev: false };
+  }
 
   const command = new SendEmailCommand({
-    FromEmailAddress: splitEnvelope ? msg.envelopeFrom : msg.from,
+    FromEmailAddress: msg.from,
     Destination: { ToAddresses: [msg.to] },
     ReplyToAddresses: msg.replyTo ? [msg.replyTo] : undefined,
-    ConfigurationSetName: msg.noConfigurationSet
-      ? undefined
-      : process.env.SES_CONFIGURATION_SET || undefined,
+    ConfigurationSetName: configurationSetName,
     EmailTags: msg.tags
       ? Object.entries(msg.tags).map(([Name, Value]) => ({ Name, Value }))
       : undefined,
-    Content: splitEnvelope
-      ? { Raw: { Data: buildSesRawMessage(msg) } }
-      : {
-          Simple: {
-            Subject: { Data: msg.subject, Charset: "UTF-8" },
-            Headers: headers.length ? headers : undefined,
-            Body: {
-              Html: { Data: msg.html, Charset: "UTF-8" },
-              Text: { Data: msg.text ?? htmlToText(msg.html), Charset: "UTF-8" },
-            },
-          },
+    Content: {
+      Simple: {
+        Subject: { Data: msg.subject, Charset: "UTF-8" },
+        Headers: headers.length ? headers : undefined,
+        Body: {
+          Html: { Data: msg.html, Charset: "UTF-8" },
+          Text: { Data: msg.text ?? htmlToText(msg.html), Charset: "UTF-8" },
         },
+      },
+    },
   });
 
   const res = await ses.send(command);
