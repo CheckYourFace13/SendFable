@@ -33,15 +33,16 @@ test("public try builder does not require an account and does not collect emails
 
 test("try builder make-live link goes to free signup", async ({ page }) => {
   await page.goto("/try/signup-tool");
-  const href = await page.getByRole("link", { name: "MAKE THIS LIVE — FREE" }).getAttribute("href");
-  expect(href).toMatch(/^\/signup/);
-  expect(href).toMatch(/try=/);
-  expect(href).toMatch(/type=/);
+  const link = page.getByRole("link", { name: "MAKE THIS LIVE — FREE" });
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute("href", /\/signup\?.*try=/);
 });
 
 test("try-builder signup is email, password, and terms only", async ({ page }) => {
   await page.goto("/try/signup-tool?type=band");
-  await page.getByRole("link", { name: "MAKE THIS LIVE — FREE" }).click();
+  const link = page.getByRole("link", { name: "MAKE THIS LIVE — FREE" });
+  await expect(link).toHaveAttribute("href", /try=/);
+  await link.click();
   await expect(page).toHaveURL(/\/signup/);
   await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
   await expect(page.getByLabel(/^email$/i)).toBeVisible();

@@ -302,18 +302,27 @@ function BuilderInner() {
         </section>
 
       <section className="rounded-xl border border-ink/10 bg-white p-5">
-        <Button asChild className="h-12 w-full bg-coral-solid text-base text-white hover:bg-coral-hover">
-          <Link
-            href={signupHref}
-            onClick={() => {
-              trackClientEvent("make_live_clicked");
-              trackClientEvent("signup_started");
-              void save({ event: "make_live_clicked" });
-            }}
+        {token ? (
+          <Button asChild className="h-12 w-full bg-coral-solid text-base text-white hover:bg-coral-hover">
+            <Link
+              href={signupHref}
+              onClick={() => {
+                trackClientEvent("make_live_clicked");
+                trackClientEvent("signup_started");
+                void save({ event: "make_live_clicked" });
+              }}
+            >
+              {LIVE_CTA}
+            </Link>
+          </Button>
+        ) : (
+          <Button
+            className="h-12 w-full bg-coral-solid text-base text-white hover:bg-coral-hover"
+            disabled
           >
             {LIVE_CTA}
-          </Link>
-        </Button>
+          </Button>
+        )}
         <p className="mt-3 text-center text-sm text-ink/60">
           Up to {PLANS.FREE.contactCap.toLocaleString()} contacts and{" "}
           {PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month.
