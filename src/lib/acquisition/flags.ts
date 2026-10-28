@@ -27,9 +27,12 @@ export const ACQUISITION_MIN_BUSINESS_DAYS_PER_STAGE = 3;
  * Prefer Casey at SendFable as the intentional acquisition persona.
  * Envelope is casey@ (SES-verified); Reply-To may be support@.
  */
-export const ACQUISITION_PREFERRED_FROM = "Casey at SendFable <casey@sendfable.com>";
-/** Outbound address used for acquisition (alias may deliver into support@). */
+/** Visible display name stays Casey. Envelope must use the SES-aligned send domain. */
+export const ACQUISITION_PREFERRED_FROM = "Casey at SendFable <casey@send.sendfable.com>";
+/** Reply/IMAP identity. Apex casey@ is a Hostinger alias into support@. */
 export const ACQUISITION_SENDER_EMAIL = "casey@sendfable.com";
+/** Aligned SES From local-part on PLATFORM_SEND_DOMAIN. */
+export const ACQUISITION_ALIGNED_FROM_EMAIL = "casey@send.sendfable.com";
 /** IMAP mailbox that receives Casey replies (Hostinger alias target). */
 export const ACQUISITION_IMAP_MAILBOX_HINT = "support@sendfable.com";
 

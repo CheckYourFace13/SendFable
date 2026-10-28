@@ -4,12 +4,8 @@
  */
 
 import { PLANS } from "@/lib/plans";
-import {
-  tryBusinessPitch,
-  categoryToTryType,
-  UTILITY_SIGNUP_COPY_VERSION,
-  UTILITY_SIGNUP_LANDING,
-} from "@/lib/try-signup/config";
+import { UTILITY_SIGNUP_COPY_VERSION, UTILITY_SIGNUP_LANDING } from "@/lib/try-signup/config";
+import { renderUtilitySignupEmail } from "@/lib/acquisition/utility-email";
 
 export type PersonalizationInput = {
   businessName: string;
@@ -94,36 +90,14 @@ export function buildInitialEmail(
   const opener = input.claim.trim();
 
   if (version === UTILITY_SIGNUP_COPY_VERSION) {
-    const type = categoryToTryType(input.category);
-    const subject = `A signup list for ${biz}`;
-    const body = [
-      greeting(input.firstName, biz),
-      "",
-      `${biz} could use SendFable for something pretty simple:`,
-      "",
-      tryBusinessPitch(type),
-      "",
-      "For example:",
-      type === "band"
-        ? "Fans can join one audience.\nVenues can go in another."
-        : "Keep different people in different audiences.",
-      "Your contacts stay yours and can be exported anytime.",
-      "",
-      "When your website changes, Scribe can prepare the next campaign for you.",
-      "Nothing sends until you schedule it.",
-      "",
-      "Build your signup tool:",
-      cta,
-      "",
-      "Start free.",
-      "",
-      "Casey at SendFable",
-      "",
-      freePlanLine(),
-      "",
-      `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
-    ].join("\n");
-    return { subject, bodyText: body, opener };
+    const rendered = renderUtilitySignupEmail({
+      businessName: biz,
+      firstName: input.firstName,
+      category: input.category,
+      ctaUrl: cta,
+      unsubUrl: opts.unsubUrl,
+    });
+    return { subject: rendered.subject, bodyText: rendered.text, opener };
   }
 
   if (version === "v1b") {

@@ -153,7 +153,7 @@ async function main() {
   // Live Casey samples (platform From)
   const caseyFrom =
     process.env.SENDFABLE_ACQUISITION_FROM ||
-    "Casey at SendFable <casey@sendfable.com>";
+    "Casey at SendFable <casey@send.sendfable.com>";
   try {
     await sendEmail({
       from: caseyFrom,

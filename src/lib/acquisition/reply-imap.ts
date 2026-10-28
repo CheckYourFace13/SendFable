@@ -12,6 +12,7 @@
 
 import { prisma } from "@/lib/prisma";
 import {
+  ACQUISITION_ALIGNED_FROM_EMAIL,
   ACQUISITION_IMAP_MAILBOX_HINT,
   ACQUISITION_SENDER_EMAIL,
   acquisitionImapConfigured,
@@ -25,6 +26,7 @@ import { appUrl } from "@/lib/utils";
 
 const PLATFORM_IGNORE_SENDERS = new Set([
   ACQUISITION_SENDER_EMAIL,
+  ACQUISITION_ALIGNED_FROM_EMAIL,
   ACQUISITION_IMAP_MAILBOX_HINT,
   "support@sendfable.com",
   "noreply@send.sendfable.com",
@@ -157,7 +159,8 @@ export function isAcquisitionInbound(opts: {
   // Only treat historical casey@ envelope as acquisition-addressed.
   // support@ receives general mail — do not classify all support inbox as acquisition.
   const casey = normalizeEmail(ACQUISITION_SENDER_EMAIL);
-  const addressedToAcquisition = opts.toRecipients.some((r) => r === casey);
+  const aligned = normalizeEmail(ACQUISITION_ALIGNED_FROM_EMAIL);
+  const addressedToAcquisition = opts.toRecipients.some((r) => r === casey || r === aligned);
   const acquisitionSubject =
     /quick question about/i.test(opts.subject) ||
     /a simpler email tool for/i.test(opts.subject) ||

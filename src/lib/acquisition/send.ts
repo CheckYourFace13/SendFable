@@ -11,6 +11,7 @@ import {
   isCopyVersionId,
   openerTypeFromProspect,
 } from "@/lib/acquisition/personalize";
+import { renderUtilitySignupEmail } from "@/lib/acquisition/utility-email";
 import { getActiveCopyVersion } from "@/lib/acquisition/conversion-optimize";
 import { bodyHasUnsubscribe, runQualityGate } from "@/lib/acquisition/quality-gate";
 import {
@@ -363,20 +364,33 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
 
   try {
     const demo = msg.copyVersion === WEBSITE_DEMO_COPY_VERSION;
+    const utility = msg.copyVersion === "utility_signup";
+    const urls = msg.bodyText.match(/https?:\/\/\S+/g) || [];
+    const ctaFromBody = urls.find((url) => !/unsubscribe/i.test(url)) || "";
+    const unsub = await unsubUrlFor(p.id, p.contactEmail!);
+    const utilityMail = utility
+      ? renderUtilitySignupEmail({
+          businessName: p.businessName,
+          firstName: p.firstName,
+          category: p.category,
+          ctaUrl: ctaFromBody || appUrl("/try/signup-tool"),
+          unsubUrl: unsub,
+        })
+      : null;
     const result = await sendEmail({
       from,
       to: p.contactEmail!,
       replyTo: acquisitionReplyTo(),
       subject: msg.subject,
-      text: demo ? htmlToPlain(msg.bodyText) : msg.bodyText,
-      html: demo ? msg.bodyText : plainToHtml(msg.bodyText),
+      text: demo ? htmlToPlain(msg.bodyText) : utilityMail?.text || msg.bodyText,
+      html: demo ? msg.bodyText : utilityMail?.html || plainToHtml(msg.bodyText),
       tags: {
         kind: "acquisition",
         prospectId: p.id.slice(0, 64),
         step: msg.step,
       },
       headers: {
-        "List-Unsubscribe": `<${await unsubUrlFor(p.id, p.contactEmail!)}>`,
+        "List-Unsubscribe": `<${unsub}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
       },
     });
