@@ -91,7 +91,10 @@ export default function FormsPage() {
 
   return (
     <div>
-      <PageHeader title="Signup tools" description="Give people an easy way to join your audience.">
+      <PageHeader
+        title="Signup tools"
+        description="Attach each tool to one audience. People who join go only there. Export that audience anytime."
+      >
         <div className="flex gap-2">
           <Input
             placeholder="Newsletter signup"

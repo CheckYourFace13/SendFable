@@ -113,6 +113,27 @@ describe("acquisition queue policy", () => {
       ),
       "keep"
     );
+    assert.equal(
+      planStaleInitial(
+        {
+          step: "INITIAL",
+          subject: "A signup list for Harbor Lights",
+          ctaPath: "/try/signup-tool",
+          copyVersion: "utility_signup",
+        },
+        false
+      ),
+      "keep"
+    );
+    assert.equal(
+      isCurrentAutopilotInitial({
+        step: "INITIAL",
+        subject: "A signup list for Harbor Lights",
+        ctaPath: "/try/signup-tool",
+        copyVersion: "utility_signup",
+      }),
+      true
+    );
   });
 
   it("assigns a stable A/B variant", () => {

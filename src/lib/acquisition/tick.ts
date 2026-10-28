@@ -35,6 +35,7 @@ import { alertOwnerException } from "@/lib/acquisition/notify";
 import { checkAcquisitionDeliveryAttribution } from "@/lib/acquisition/delivery-health";
 import { evaluateConversionCohort } from "@/lib/acquisition/conversion-optimize";
 import { sendDailyAcquisitionReportIfDue } from "@/lib/acquisition/report";
+import { sendDueTryFollowUps } from "@/lib/try-signup/follow-up";
 
 /**
  * Autonomous acquisition tick — discovery autofill, approve, send, replies, ramp.
@@ -139,6 +140,9 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
             `queue:regen${queue.regenerated}/retire${queue.retired}/cancel${queue.cancelled}`
           );
         }
+
+        const tryFollow = await sendDueTryFollowUps(now);
+        if (tryFollow) actions.push(`try_followup:${tryFollow}`);
 
         const due = await prisma.acquisitionProspect.findMany({
           where: {

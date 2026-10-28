@@ -33,7 +33,7 @@ export default function TagsPage() {
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.error || "Failed");
-    toast.success("Tag created");
+    toast.success("Audience created");
     setName("");
     void load();
   }
@@ -47,27 +47,30 @@ export default function TagsPage() {
 
   return (
     <div>
-      <PageHeader title="Tags" description="Organize contacts for targeting." />
+      <PageHeader
+        title="Audiences"
+        description="Keep different groups — fans and venues, customers and leads. Signup Tools and campaigns use these names."
+      />
 
       <div className="mb-8 grid max-w-md gap-3 rounded-xl border bg-white p-6">
         <div>
           <Label>Name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="VIP" />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Fans" />
         </div>
         <div>
           <Label>Color</Label>
           <Input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-20 p-1" />
         </div>
         <Button onClick={() => void create()} disabled={!name.trim()}>
-          Create tag
+          Create audience
         </Button>
       </div>
 
       {tags.length === 0 ? (
         <EmptyState
           icon={<Tags />}
-          title="No tags yet"
-          description="Create tags to segment your audience for campaigns."
+          title="No audiences yet"
+          description="Create an audience like Fans or Venues, then attach a Signup Tool to it."
         />
       ) : (
         <ul className="divide-y rounded-xl border bg-white">

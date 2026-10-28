@@ -34,6 +34,7 @@ const PUBLIC_BY_DESIGN = new Set([
   "unsubscribe/one-click", // RFC 8058 one-click
   "acquisition/unsubscribe", // signed acquisition outreach opt-out
   "acquisition/c", // signed Casey CTA click tracker
+  "try/signup-tool", // public preview draft; rate-limited; no live form
   "webhooks/ses", // SNS signature verified
   "webhooks/stripe", // Stripe signature verified
   "webhooks/telnyx", // Telnyx signature verified; 404 while inbound flag off

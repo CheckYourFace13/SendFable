@@ -26,7 +26,7 @@ const STEPS = [
   },
   {
     name: "Import or collect contacts",
-    text: "Import a consented CSV or publish a hosted signup form. Purchased lists are not allowed.",
+    text: "Import a consented CSV or publish a hosted signup form. Keep separate audiences for different people. Your contacts are yours — export them anytime. Purchased lists are not allowed.",
   },
   {
     name: "Create and send a campaign",
@@ -85,6 +85,24 @@ export default function HowSendFableWorksPage() {
       <p className="mt-4 text-sm text-slate-700">
         <strong>SMS status:</strong> {SENDFABLE_FACTS.smsStatus.publicAnswer}
       </p>
+
+      <section className="mt-10 rounded-xl border border-ink/10 bg-white p-6">
+        <h2 className="text-xl font-semibold text-ink">The simple loop</h2>
+        <ol className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+          <li>
+            <strong>Collect.</strong> People join from your website.
+          </li>
+          <li>
+            <strong>Organize.</strong> Keep different audiences for different people.
+          </li>
+          <li>
+            <strong>Create.</strong> Scribe turns new website content into a draft.
+          </li>
+          <li>
+            <strong>Schedule.</strong> You choose when it goes out.
+          </li>
+        </ol>
+      </section>
 
       <ol className="mt-10 space-y-8">
         {STEPS.map((step, i) => (

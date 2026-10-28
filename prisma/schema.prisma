@@ -1546,6 +1546,26 @@ model AcquisitionSuppression {
   @@index([reason, createdAt])
 }
 
+/// Anonymous Signup Tool preview from acquisition. Not a live form until claimed.
+model TrySignupDraft {
+  id                  String    @id @default(cuid())
+  token               String    @unique
+  config              Json
+  prospectId          String?
+  events              Json      @default("{}")
+  followUpAt          DateTime?
+  followUpSentAt      DateTime?
+  followUpCancelledAt DateTime?
+  claimedAt           DateTime?
+  workspaceId         String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([prospectId])
+  @@index([followUpAt])
+  @@index([workspaceId])
+}
+
 // ─── Marketing Autopilot ────────────────────────────────────────────────────
 
 /// Per-workspace page watcher config (one watched page in v1).

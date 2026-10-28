@@ -95,9 +95,12 @@ export async function draftMessageForProspect(
       ? requested
       : step === "INITIAL"
         ? await getActiveCopyVersion()
-        : null;
+        : requested || null;
   const openerType = openerTypeFromProspect(p);
-  const ctaPath = opts?.landingPath || p.landingPagePath || "/automated-email-marketing";
+  const ctaPath =
+    copyVersion === "utility_signup"
+      ? opts?.landingPath || "/try/signup-tool"
+      : opts?.landingPath || p.landingPagePath || "/automated-email-marketing";
 
   let built;
   if (step === "INITIAL") {
@@ -112,6 +115,7 @@ export async function draftMessageForProspect(
         claim: p.personalizationClaim,
         evidence: p.personalizationEvidence,
         sourceUrl: p.personalizationSourceUrl,
+        category: p.category,
       },
       {
         unsubUrl: unsub,
@@ -394,6 +398,10 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
       nextStatus = "CONTACTED";
       nextFollowUpAt = addDays(now, FOLLOW_UP_1_DAYS);
     } else if (msg.step === "FOLLOW_UP_1") {
+      if (msg.copyVersion === "utility_signup") {
+        nextStatus = "OUTREACH_COMPLETE";
+        nextFollowUpAt = null;
+      } else {
       nextStatus = "FOLLOW_UP_1";
       nextFollowUpAt = addDays(p.lastContactedAt || now, FOLLOW_UP_2_DAYS - FOLLOW_UP_1_DAYS);
       // Align FU2 to day 10 from initial: use first INITIAL sentAt if present
@@ -403,6 +411,7 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
       });
       if (initial?.sentAt) {
         nextFollowUpAt = addDays(initial.sentAt, FOLLOW_UP_2_DAYS);
+      }
       }
     } else {
       nextStatus = "OUTREACH_COMPLETE";

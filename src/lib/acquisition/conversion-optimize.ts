@@ -320,7 +320,7 @@ export async function getActiveCopyVersion(): Promise<CopyVersionId> {
   if (state.abTest?.enabled === false) {
     return isCopyVersionId(copyVersion) ? copyVersion : DEFAULT_COPY_VERSION;
   }
-  return Math.random() < 0.5 ? "v1a" : "v1b";
+  return Math.random() < 0.5 ? "v1a" : "utility_signup";
 }
 
 export async function getPreferredDiscoveryBias(): Promise<{

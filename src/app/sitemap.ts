@@ -67,6 +67,7 @@ export const SITEMAP_PATHS = [
   "/guides/can-spam-checklist-for-small-businesses",
   "/compare",
   "/automated-email-marketing",
+  "/try/signup-tool",
   "/solutions/restaurants",
   "/solutions/breweries",
   "/solutions/real-estate",

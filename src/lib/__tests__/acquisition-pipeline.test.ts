@@ -326,6 +326,21 @@ describe("acquisition continuous discovery (OSM)", () => {
     assert.doesNotMatch(a.bodyText, /I built SendFable/);
     assert.equal(DEFAULT_COPY_VERSION, "v1a");
     assert.equal(nextCopyVersion("v1a"), "v1b");
+    const u = buildInitialEmail(
+      {
+        businessName: "Harbor Lights",
+        claim: "I came across your band site.",
+        evidence: "public website",
+        sourceUrl: "https://harborlights.example",
+        category: "band",
+      },
+      { unsubUrl: "https://sendfable.com/u", copyVersion: "utility_signup" }
+    );
+    assert.match(u.subject, /signup list for Harbor Lights/i);
+    assert.match(u.bodyText, /Fans can join one audience/);
+    assert.match(u.bodyText, /Nothing sends until you schedule it/);
+    assert.match(u.bodyText, /Build your signup tool/);
+    assert.doesNotMatch(u.bodyText, /automatically emails your customers/i);
   });
 
   it("requires 25 delivered INITIAL before conversion cohort strategy changes", async () => {

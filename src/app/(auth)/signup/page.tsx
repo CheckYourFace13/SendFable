@@ -36,9 +36,25 @@ function SignupForm() {
     () => searchParams.get("goal")?.trim() || undefined,
     [searchParams]
   );
+  const tryToken = useMemo(() => {
+    const fromQuery = searchParams.get("try")?.trim();
+    if (fromQuery) return fromQuery;
+    try {
+      return localStorage.getItem("sf_try_signup")?.trim() || undefined;
+    } catch {
+      return undefined;
+    }
+  }, [searchParams]);
   useEffect(() => {
     trackClientEvent("signup_start");
-  }, []);
+    if (tryToken) {
+      void fetch("/api/try/signup-tool", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: tryToken, event: "signup_started" }),
+      }).catch(() => undefined);
+    }
+  }, [tryToken]);
   const loginHref = useMemo(() => {
     if (resumeTemplate) {
       const q = new URLSearchParams();
@@ -81,6 +97,7 @@ function SignupForm() {
           utmMedium,
           utmCampaign,
           utmContent,
+          tryToken,
           acceptedPolicies: true,
         }),
       });
@@ -116,6 +133,9 @@ function SignupForm() {
           <CardDescription>
             We sent a verification link to <strong>{email}</strong>. You can sign in right away —
             verifying unlocks sending.
+            {tryToken
+              ? " Your signup tool and audiences will be waiting in Signup Tools."
+              : null}
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">

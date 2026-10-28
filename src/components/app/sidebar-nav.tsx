@@ -23,7 +23,7 @@ const NAV = [
   { href: "/contacts", label: "Audience", icon: Users },
   { href: "/contacts/migrate", label: "Migrate", icon: ArrowRightLeft },
   { href: "/segments", label: "Segments", icon: BarChart3 },
-  { href: "/tags", label: "Tags", icon: Tags },
+  { href: "/tags", label: "Audiences", icon: Tags },
   { href: "/forms", label: "Signup Tools", icon: ListChecks },
   { href: "/library", label: "Templates", icon: FileText },
   { href: "/scribe", label: "Scribe", icon: Feather },

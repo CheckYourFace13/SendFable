@@ -48,9 +48,42 @@ export async function GET(req: Request) {
     "/automated-email-marketing";
 
   const version = payload.v || msg?.copyVersion || "v1a";
-  const targetRaw = appUrl(
-    `${path}?utm_source=casey&utm_medium=email&utm_campaign=acquisition&utm_content=${encodeURIComponent(version)}&utm_term=${encodeURIComponent(msg?.prospect.category || "smb")}`
-  );
+  let landingPath = path;
+  let tryToken: string | null = null;
+  if (path.startsWith("/try/signup-tool") && msg?.prospect.id) {
+    try {
+      const { defaultTryConfig, categoryToTryType } = await import("@/lib/try-signup/config");
+      const { randomToken } = await import("@/lib/utils");
+      const existing = await prisma.trySignupDraft.findFirst({
+        where: { prospectId: msg.prospect.id, claimedAt: null },
+        orderBy: { createdAt: "desc" },
+      });
+      if (existing) {
+        tryToken = existing.token;
+      } else {
+        const created = await prisma.trySignupDraft.create({
+          data: {
+            token: randomToken(18),
+            prospectId: msg.prospect.id,
+            config: defaultTryConfig(categoryToTryType(msg.prospect.category)),
+          },
+        });
+        tryToken = created.token;
+      }
+      landingPath = "/try/signup-tool";
+    } catch {
+      /* fail open to the original landing */
+    }
+  }
+  const qs = new URLSearchParams({
+    utm_source: "casey",
+    utm_medium: "email",
+    utm_campaign: "acquisition",
+    utm_content: version,
+    utm_term: msg?.prospect.category || "smb",
+  });
+  if (tryToken) qs.set("try", tryToken);
+  const targetRaw = appUrl(`${landingPath}?${qs.toString()}`);
   const target = safeClickRedirectUrl(targetRaw) || fallback;
 
   if (rl.ok && msg) {

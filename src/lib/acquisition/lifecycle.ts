@@ -45,6 +45,13 @@ export async function matchSignupToAcquisition(opts: {
     data: { status: "CANCELLED" },
   });
 
+  try {
+    const { cancelTryFollowUpsForProspect } = await import("@/lib/try-signup/follow-up");
+    await cancelTryFollowUpsForProspect(prospect.id);
+  } catch {
+    /* fail open */
+  }
+
   await prisma.acquisitionEvent.create({
     data: {
       prospectId: prospect.id,

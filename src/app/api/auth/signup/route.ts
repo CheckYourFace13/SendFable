@@ -22,6 +22,7 @@ const signupSchema = z.object({
   utmMedium: z.string().trim().max(80).optional(),
   utmCampaign: z.string().trim().max(120).optional(),
   utmContent: z.string().trim().max(80).optional(),
+  tryToken: z.string().trim().min(8).max(64).optional(),
   acceptedPolicies: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the Terms, Acceptable Use, and Privacy Policy." }),
   }),
@@ -175,7 +176,20 @@ export async function POST(req: Request) {
 
   try {
     const { matchSignupToAcquisition } = await import("@/lib/acquisition/lifecycle");
-    await matchSignupToAcquisition({ userId: user.id, email });
+    const matched = await matchSignupToAcquisition({ userId: user.id, email });
+    if (workspaceId && parsed.data.tryToken) {
+      const { applyTrySignupDraft } = await import("@/lib/try-signup/apply");
+      await applyTrySignupDraft({ workspaceId, token: parsed.data.tryToken });
+    } else if (workspaceId && matched.prospectId) {
+      const draft = await prisma.trySignupDraft.findFirst({
+        where: { prospectId: matched.prospectId, claimedAt: null },
+        orderBy: { createdAt: "desc" },
+      });
+      if (draft) {
+        const { applyTrySignupDraft } = await import("@/lib/try-signup/apply");
+        await applyTrySignupDraft({ workspaceId, token: draft.token });
+      }
+    }
   } catch {
     /* fail open — acquisition matching must not block signup */
   }

@@ -38,13 +38,27 @@ export async function GET(req: Request) {
     take: 50_000,
   });
 
-  const header = ["email", "first_name", "last_name", "status", "tags", "source", "created_at"];
+  const header = [
+    "email",
+    "first_name",
+    "last_name",
+    "phone",
+    "email_status",
+    "text_status",
+    "audiences",
+    "tags",
+    "source",
+    "created_at",
+  ];
   const rows = contacts.map((c) =>
     [
-      c.email,
+      c.email ?? "",
       c.firstName ?? "",
       c.lastName ?? "",
+      c.phoneE164 ?? "",
       c.status,
+      c.smsStatus ?? "",
+      c.tags.map((t) => t.tag.name).join(";"),
       c.tags.map((t) => t.tag.name).join(";"),
       c.source ?? "",
       c.createdAt.toISOString(),

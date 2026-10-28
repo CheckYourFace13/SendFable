@@ -6,6 +6,7 @@
  */
 
 import { ACQUISITION_AUTOPILOT_LANDING } from "@/lib/acquisition/personalize";
+import { UTILITY_SIGNUP_COPY_VERSION, UTILITY_SIGNUP_LANDING } from "@/lib/try-signup/config";
 
 export const WEBSITE_DEMO_COPY_VERSION = "personalized_website_demo";
 
@@ -45,7 +46,9 @@ export function isCurrentAutopilotInitial(msg: {
 }): boolean {
   if (msg.step !== "INITIAL") return false;
   if (msg.copyVersion === WEBSITE_DEMO_COPY_VERSION) return false;
+  if (msg.copyVersion === UTILITY_SIGNUP_COPY_VERSION) return true;
   const path = (msg.ctaPath || "").split("?")[0].replace(/\/$/, "");
+  if (path === UTILITY_SIGNUP_LANDING) return true;
   if (path !== ACQUISITION_AUTOPILOT_LANDING) return false;
   const subject = msg.subject.trim();
   if (subject === "Could your website write your marketing emails?") return true;
@@ -70,6 +73,7 @@ export function planStaleInitial(
 ): StalePlan {
   if (msg.step !== "INITIAL") return "keep";
   if (msg.copyVersion === WEBSITE_DEMO_COPY_VERSION) return "keep";
+  if (msg.copyVersion === UTILITY_SIGNUP_COPY_VERSION) return "keep";
   if (isCurrentAutopilotInitial(msg)) return "keep";
   if (hasSentInitial) return "retire_duplicate";
   return "regenerate";

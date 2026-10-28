@@ -4,6 +4,12 @@
  */
 
 import { PLANS } from "@/lib/plans";
+import {
+  tryBusinessPitch,
+  categoryToTryType,
+  UTILITY_SIGNUP_COPY_VERSION,
+  UTILITY_SIGNUP_LANDING,
+} from "@/lib/try-signup/config";
 
 export type PersonalizationInput = {
   businessName: string;
@@ -11,6 +17,7 @@ export type PersonalizationInput = {
   claim: string;
   evidence: string;
   sourceUrl: string;
+  category?: string | null;
 };
 
 export type BuiltOutreach = {
@@ -19,8 +26,8 @@ export type BuiltOutreach = {
   opener: string;
 };
 
-/** Stable controlled variants. v1a/v1b = Marketing Autopilot A/B. */
-export const COPY_VERSIONS = ["v1a", "v1b", "v2a"] as const;
+/** Stable controlled variants. v1a = current Casey control. utility_signup = try-builder. */
+export const COPY_VERSIONS = ["v1a", "v1b", "v2a", "utility_signup"] as const;
 export type CopyVersionId = (typeof COPY_VERSIONS)[number];
 
 export const DEFAULT_COPY_VERSION: CopyVersionId = "v1a";
@@ -74,13 +81,50 @@ export function buildInitialEmail(
     ? opts.copyVersion
     : DEFAULT_COPY_VERSION;
   const site = opts.siteUrl || "https://sendfable.com";
-  const path = opts.landingPath || ACQUISITION_AUTOPILOT_LANDING;
+  const path =
+    opts.landingPath ||
+    (version === UTILITY_SIGNUP_COPY_VERSION
+      ? UTILITY_SIGNUP_LANDING
+      : ACQUISITION_AUTOPILOT_LANDING);
   const cta =
     opts.ctaUrl ||
     `${site}${path.startsWith("/") ? path : `/${path}`}?utm_source=casey&utm_medium=email&utm_campaign=acquisition&utm_content=${version}`;
 
   const biz = input.businessName.trim() || "your business";
   const opener = input.claim.trim();
+
+  if (version === UTILITY_SIGNUP_COPY_VERSION) {
+    const type = categoryToTryType(input.category);
+    const subject = `A signup list for ${biz}`;
+    const body = [
+      greeting(input.firstName, biz),
+      "",
+      `${biz} could use SendFable for something pretty simple:`,
+      "",
+      tryBusinessPitch(type),
+      "",
+      "For example:",
+      type === "band"
+        ? "Fans can join one audience.\nVenues can go in another."
+        : "Keep different people in different audiences.",
+      "Your contacts stay yours and can be exported anytime.",
+      "",
+      "When your website changes, Scribe can prepare the next campaign for you.",
+      "Nothing sends until you schedule it.",
+      "",
+      "Build your signup tool:",
+      cta,
+      "",
+      "Start free.",
+      "",
+      "Casey at SendFable",
+      "",
+      freePlanLine(),
+      "",
+      `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
+    ].join("\n");
+    return { subject, bodyText: body, opener };
+  }
 
   if (version === "v1b") {
     const subject = `What if ${biz}'s marketing mostly wrote itself?`;
@@ -156,6 +200,30 @@ export function buildFollowUp1(
   const cta =
     opts.ctaUrl ||
     `${site}${path.startsWith("/") ? path : `/${path}`}?utm_source=casey&utm_medium=email&utm_campaign=acquisition_fu1&utm_content=${version}`;
+
+  if (version === UTILITY_SIGNUP_COPY_VERSION) {
+    const body = [
+      greeting(input.firstName, input.businessName),
+      "",
+      "You already built the first part.",
+      "",
+      "Create your free SendFable account and we'll save it so you can put it on your website.",
+      "",
+      "Your audiences stay separate, your contacts are exportable, and nothing sends unless you choose to send it.",
+      "",
+      "Finish setup:",
+      cta,
+      "",
+      "Casey at SendFable",
+      "",
+      `If you'd rather not hear from me again, reply "no thanks" or unsubscribe: ${opts.unsubUrl}`,
+    ].join("\n");
+    return {
+      subject: "Your signup tool is ready",
+      bodyText: body,
+      opener: "try_follow_up",
+    };
+  }
 
   const body = [
     greeting(input.firstName, input.businessName),

@@ -2,7 +2,7 @@ const STEPS = [
   {
     n: "01",
     title: "Add your readers",
-    body: "Import a CSV, paste a list, or publish a signup form. Tag people so the right story reaches the right inbox.",
+    body: "Import a CSV or add a signup to your site. Keep audiences separate — fans and venues, customers and leads. Your contacts are yours; export them anytime.",
     visual: "readers" as const,
   },
   {

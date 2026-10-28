@@ -156,10 +156,14 @@ export default function ContactsPage() {
 
   return (
     <div>
-      <PageHeader title="Contacts" description={`${total.toLocaleString()} in your audience`}>
+      <PageHeader
+        title="Contacts"
+        description={`${total.toLocaleString()} in your audience. Your contacts are yours — export them anytime.`}
+      >
         <Button asChild variant="outline" size="sm">
           <a href={exportUrl}>
-            <Download className="mr-2 h-4 w-4" /> Export
+            <Download className="mr-2 h-4 w-4" />{" "}
+            {tagId !== "all" ? "Export this audience" : "Export CSV"}
           </a>
         </Button>
         <Button asChild variant="outline" size="sm">

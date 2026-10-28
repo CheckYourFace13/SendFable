@@ -125,7 +125,7 @@ export default function FeaturesPage() {
     {
       id: "audience",
       title: "Audience tools",
-      body: "Tags, visual segments, and clean imports so the right people get the right story.",
+      body: "Keep different audiences for different people. Attach a Signup Tool to one audience, export that group anytime, and send only to the people you choose.",
     },
     {
       id: "builder",
