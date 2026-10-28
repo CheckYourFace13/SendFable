@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ function BuilderInner() {
   const typeHint = categoryToTryType(search.get("type") || search.get("utm_term"));
   const [token, setToken] = useState(search.get("try")?.trim() || "");
   const [config, setConfig] = useState<TrySignupConfig>(() => defaultTryConfig(typeHint));
+  const dirty = useRef(false);
   const [demoEmail, setDemoEmail] = useState("");
   const [demoFirst, setDemoFirst] = useState("");
   const [demoPhone, setDemoPhone] = useState("");
@@ -50,7 +51,7 @@ function BuilderInner() {
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        if (data.config) setConfig(sanitizeTryConfig(data.config));
+        if (data.config && !dirty.current) setConfig(sanitizeTryConfig(data.config));
         if (data.token) setToken(data.token);
         void save({ event: "try_page_view", tokenOverride: data.token, next: data.config });
       })
@@ -90,6 +91,7 @@ function BuilderInner() {
   }
 
   function update(patch: Partial<TrySignupConfig>) {
+    dirty.current = true;
     const next = sanitizeTryConfig({ ...config, ...patch });
     setConfig(next);
     setDemoJoined(false);
@@ -173,6 +175,7 @@ function BuilderInner() {
             className="h-11 w-full rounded-lg border border-ink/15 bg-white px-3 text-base"
             value={config.businessType}
             onChange={(e) => {
+              dirty.current = true;
               const type = e.target.value as TrySignupConfig["businessType"];
               const next = defaultTryConfig(type);
               next.platform = config.platform;
@@ -279,6 +282,7 @@ function BuilderInner() {
                     : "border-ink/15 bg-white text-ink/70"
                 }`}
                 onClick={() => {
+                  dirty.current = true;
                   const next = sanitizeTryConfig({ ...config, platform: p.id });
                   setConfig(next);
                   trackClientEvent("platform_selected", { platform: p.id });
