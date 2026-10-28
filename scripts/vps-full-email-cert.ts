@@ -22,6 +22,7 @@ import {
   acquisitionSendingEnabled,
   acquisitionEnabled,
   ACQUISITION_PREFERRED_FROM,
+  acquisitionEnvelopeFrom,
 } from "../src/lib/acquisition/flags";
 import { SESv2Client, GetEmailIdentityCommand } from "@aws-sdk/client-sesv2";
 
@@ -133,6 +134,7 @@ async function main() {
     try {
       await sendEmail({
         from: caseyFrom,
+        envelopeFrom: acquisitionEnvelopeFrom(),
         to: certTo,
         replyTo: "casey@sendfable.com",
         subject: `[FULLCERT ${stamp}] ${built.subject}`,

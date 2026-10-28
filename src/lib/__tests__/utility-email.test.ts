@@ -35,7 +35,9 @@ describe("utility signup email", () => {
     assert.match(mail.html, /Build your signup tool/);
     assert.match(mail.html, /https:\/\/sendfable.com\/try\/signup-tool/);
     assert.match(mail.html, />Unsubscribe</);
-    assert.match(mail.html, /Legal: iScream Studio INC/);
+    assert.match(mail.html, /SendFable is operated by iScream Studio INC/);
+    assert.match(mail.html, /1364 Patriot Blvd/);
+    assert.doesNotMatch(mail.html, /Legal: iScream Studio INC/);
     assert.doesNotMatch(mail.html, /iScream Studio INC · SendFable/);
     assert.doesNotMatch(mail.html, /FREE!!!/i);
     assert.match(mail.text, /Unsubscribe:/);
@@ -43,10 +45,11 @@ describe("utility signup email", () => {
   });
 
   it("keeps Casey From on the aligned send domain", () => {
-    assert.equal(ACQUISITION_PREFERRED_FROM, "Casey at SendFable <casey@send.sendfable.com>");
+    assert.equal(ACQUISITION_PREFERRED_FROM, "Casey at SendFable <casey@sendfable.com>");
     const send = readFileSync(join(process.cwd(), "src/lib/acquisition/send.ts"), "utf8");
     assert.match(send, /renderUtilitySignupEmail/);
     assert.match(send, /List-Unsubscribe-Post/);
+    assert.match(send, /envelopeFrom: sender\.envelopeFrom/);
     const built = buildInitialEmail(
       {
         businessName: "KarPool Band",

@@ -23,16 +23,14 @@ export const ACQUISITION_RAMP_STAGES: Record<number, { newPerDay: number; totalP
 
 export const ACQUISITION_MAX_STAGE = 4;
 export const ACQUISITION_MIN_BUSINESS_DAYS_PER_STAGE = 3;
-/**
- * Prefer Casey at SendFable as the intentional acquisition persona.
- * Envelope is casey@ (SES-verified); Reply-To may be support@.
- */
-/** Visible display name stays Casey. Envelope must use the SES-aligned send domain. */
-export const ACQUISITION_PREFERRED_FROM = "Casey at SendFable <casey@send.sendfable.com>";
+/** Visible Casey From. SES envelope/DKIM stay on the aligned send domain. */
+export const ACQUISITION_PREFERRED_FROM = "Casey at SendFable <casey@sendfable.com>";
 /** Reply/IMAP identity. Apex casey@ is a Hostinger alias into support@. */
 export const ACQUISITION_SENDER_EMAIL = "casey@sendfable.com";
-/** Aligned SES From local-part on PLATFORM_SEND_DOMAIN. */
+/** Aligned SES envelope / Easy DKIM identity on PLATFORM_SEND_DOMAIN. */
 export const ACQUISITION_ALIGNED_FROM_EMAIL = "casey@send.sendfable.com";
+/** CAN-SPAM postal line used with the legal operator statement. */
+export const ACQUISITION_DEFAULT_POSTAL_ADDRESS = "1364 Patriot Blvd, Glenview, IL 60026";
 /** IMAP mailbox that receives Casey replies (Hostinger alias target). */
 export const ACQUISITION_IMAP_MAILBOX_HINT = "support@sendfable.com";
 
@@ -109,6 +107,13 @@ export function acquisitionFromAddress(): string {
   return raw || ACQUISITION_PREFERRED_FROM;
 }
 
+/** SES identity for MAIL FROM + Easy DKIM (send.sendfable.com). */
+export function acquisitionEnvelopeFrom(): string {
+  const raw = (process.env.SENDFABLE_ACQUISITION_ENVELOPE_FROM || "").trim();
+  if (raw) return raw.includes("<") ? raw : `Casey at SendFable <${raw}>`;
+  return `Casey at SendFable <${ACQUISITION_ALIGNED_FROM_EMAIL}>`;
+}
+
 export function parseFromEmail(fromHeader: string): string | null {
   const m = fromHeader.match(/<([^>]+)>/);
   const email = (m ? m[1] : fromHeader).trim().toLowerCase();
@@ -129,11 +134,17 @@ export function acquisitionOwnerAlertEmail(): string | null {
   return e || null;
 }
 
+export function acquisitionPostalAddress(): string {
+  const raw = (process.env.SENDFABLE_PHYSICAL_ADDRESS || "").trim().replace(/\s+/g, " ");
+  if (!raw || /^iScream Studio INC\s*[·|]\s*SendFable$/i.test(raw)) {
+    return ACQUISITION_DEFAULT_POSTAL_ADDRESS;
+  }
+  return raw;
+}
+
+/** Subdued CAN-SPAM / operator line — not a second brand. */
 export function acquisitionPhysicalAddress(): string {
-  return (
-    (process.env.SENDFABLE_PHYSICAL_ADDRESS || "").trim() ||
-    "iScream Studio INC · SendFable"
-  );
+  return `SendFable is operated by iScream Studio INC · ${acquisitionPostalAddress()}`;
 }
 
 export function acquisitionImapConfigured(): boolean {
@@ -169,6 +180,7 @@ export function reportAcquisitionFlags(): Record<string, string | number | boole
     SENDFABLE_ACQUISITION_DAILY_TOTAL_LIMIT: acquisitionDailyTotalLimit(),
     SENDFABLE_ACQUISITION_MIN_SCORE: acquisitionMinScore(),
     SENDFABLE_ACQUISITION_FROM: acquisitionFromAddress(),
+    SENDFABLE_ACQUISITION_ENVELOPE_FROM: acquisitionEnvelopeFrom(),
     SENDFABLE_ACQUISITION_REPLY_TO: acquisitionReplyTo(),
     imapConfigured: acquisitionImapConfigured(),
     imapMailboxHint: ACQUISITION_IMAP_MAILBOX_HINT,

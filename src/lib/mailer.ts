@@ -4,7 +4,12 @@ import os from "os";
 import path from "path";
 
 export interface OutgoingEmail {
-  from: string; // RFC 5322, e.g. `Jane Doe <jane@send.sendfable.com>`
+  from: string; // RFC 5322 visible From, e.g. `Casey at SendFable <casey@sendfable.com>`
+  /**
+   * SES identity used for MAIL FROM / Easy DKIM when it differs from `from`.
+   * Required for a visible apex From while signing with send.sendfable.com.
+   */
+  envelopeFrom?: string;
   to: string;
   replyTo?: string;
   subject: string;
@@ -44,6 +49,72 @@ function outboxDir(): string {
   return process.platform === "win32"
     ? path.join(os.tmpdir(), "outbox")
     : "/tmp/outbox";
+}
+
+export function parseRfc5322Email(header: string): string | null {
+  const m = header.match(/<([^>]+)>/);
+  const email = (m ? m[1] : header).trim().toLowerCase();
+  return email.includes("@") ? email : null;
+}
+
+function assertHeaderSafe(name: string, value: string): string {
+  if (/[\r\n]/.test(value)) {
+    throw new Error(`invalid_header:${name}`);
+  }
+  return value;
+}
+
+function encodeUtf8Header(value: string): string {
+  if (/^[\x20-\x7e]*$/.test(value)) return value;
+  return `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`;
+}
+
+function base64Mime(data: string): string {
+  return Buffer.from(data, "utf8")
+    .toString("base64")
+    .replace(/(.{76})/g, "$1\r\n");
+}
+
+/** Visible From in the MIME; envelope identity stays on FromEmailAddress. */
+export function buildSesRawMessage(msg: OutgoingEmail): Uint8Array {
+  const boundary = `sf${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  const extra = Object.entries(msg.headers ?? {})
+    .map(([k, v]) => `${assertHeaderSafe("header", k)}: ${assertHeaderSafe(k, v)}`)
+    .join("\r\n");
+  const text = msg.text ?? htmlToText(msg.html);
+  const parts = [
+    `From: ${assertHeaderSafe("from", msg.from)}`,
+    `To: ${assertHeaderSafe("to", msg.to)}`,
+    msg.replyTo ? `Reply-To: ${assertHeaderSafe("replyTo", msg.replyTo)}` : null,
+    `Subject: ${encodeUtf8Header(assertHeaderSafe("subject", msg.subject))}`,
+    extra || null,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    base64Mime(text),
+    `--${boundary}`,
+    "Content-Type: text/html; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    base64Mime(msg.html),
+    `--${boundary}--`,
+    "",
+  ]
+    .filter((l): l is string => l !== null)
+    .join("\r\n");
+  return Buffer.from(parts, "utf8");
+}
+
+function usesSeparateEnvelope(msg: OutgoingEmail): boolean {
+  const envelope = (msg.envelopeFrom || "").trim();
+  if (!envelope) return false;
+  const visible = parseRfc5322Email(msg.from);
+  const env = parseRfc5322Email(envelope);
+  return Boolean(visible && env && visible !== env);
 }
 
 function htmlToText(html: string): string {
@@ -113,9 +184,10 @@ export async function sendEmail(msg: OutgoingEmail): Promise<SendResult> {
     Name,
     Value,
   }));
+  const splitEnvelope = usesSeparateEnvelope(msg);
 
   const command = new SendEmailCommand({
-    FromEmailAddress: msg.from,
+    FromEmailAddress: splitEnvelope ? msg.envelopeFrom : msg.from,
     Destination: { ToAddresses: [msg.to] },
     ReplyToAddresses: msg.replyTo ? [msg.replyTo] : undefined,
     ConfigurationSetName: msg.noConfigurationSet
@@ -124,16 +196,18 @@ export async function sendEmail(msg: OutgoingEmail): Promise<SendResult> {
     EmailTags: msg.tags
       ? Object.entries(msg.tags).map(([Name, Value]) => ({ Name, Value }))
       : undefined,
-    Content: {
-      Simple: {
-        Subject: { Data: msg.subject, Charset: "UTF-8" },
-        Headers: headers.length ? headers : undefined,
-        Body: {
-          Html: { Data: msg.html, Charset: "UTF-8" },
-          Text: { Data: msg.text ?? htmlToText(msg.html), Charset: "UTF-8" },
+    Content: splitEnvelope
+      ? { Raw: { Data: buildSesRawMessage(msg) } }
+      : {
+          Simple: {
+            Subject: { Data: msg.subject, Charset: "UTF-8" },
+            Headers: headers.length ? headers : undefined,
+            Body: {
+              Html: { Data: msg.html, Charset: "UTF-8" },
+              Text: { Data: msg.text ?? htmlToText(msg.html), Charset: "UTF-8" },
+            },
+          },
         },
-      },
-    },
   });
 
   const res = await ses.send(command);

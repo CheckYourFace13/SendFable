@@ -1,3 +1,4 @@
+import { acquisitionPhysicalAddress } from "@/lib/acquisition/flags";
 import { PLANS } from "@/lib/plans";
 import { categoryToTryType, type TryBusinessType } from "@/lib/try-signup/config";
 
@@ -176,6 +177,8 @@ export function renderUtilitySignupEmail(opts: {
     "SendFable",
     "",
     `Unsubscribe: ${opts.unsubUrl}`,
+    "",
+    acquisitionPhysicalAddress(),
   ].join("\n");
 
   const html = `<!DOCTYPE html>
@@ -205,7 +208,9 @@ export function renderUtilitySignupEmail(opts: {
   <p style="margin:0 0 10px;font-size:12px;line-height:1.5;color:#6b7280;"><a href="${esc(
     opts.unsubUrl
   )}" style="color:#6b7280;">Unsubscribe</a></p>
-  <p style="margin:0;font-size:11px;line-height:1.45;color:#9ca3af;">Legal: iScream Studio INC</p>
+  <p style="margin:0;font-size:11px;line-height:1.45;color:#9ca3af;">${esc(
+    acquisitionPhysicalAddress()
+  )}</p>
 </td></tr>
 </table>
 </td></tr>

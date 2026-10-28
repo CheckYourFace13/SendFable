@@ -379,6 +379,7 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
       : null;
     const result = await sendEmail({
       from,
+      envelopeFrom: sender.envelopeFrom,
       to: p.contactEmail!,
       replyTo: acquisitionReplyTo(),
       subject: msg.subject,

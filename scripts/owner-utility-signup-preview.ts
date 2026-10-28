@@ -25,6 +25,7 @@ async function main() {
 
   const result = await sendEmail({
     from: sender.from,
+    envelopeFrom: sender.envelopeFrom,
     to: OWNER,
     replyTo: acquisitionReplyTo(),
     subject: mail.subject,
@@ -44,6 +45,7 @@ async function main() {
         sentTo: OWNER,
         subject: mail.subject,
         from: sender.from,
+        envelopeFrom: sender.envelopeFrom,
         replyTo: acquisitionReplyTo(),
         variant: "utility_signup",
         cta,

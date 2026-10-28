@@ -23,6 +23,7 @@ import { getInventoryHealth } from "../src/lib/acquisition/discovery/inventory";
 import {
   acquisitionSendingEnabled,
   acquisitionEnabled,
+  acquisitionEnvelopeFrom,
 } from "../src/lib/acquisition/flags";
 
 const prisma = new PrismaClient();
@@ -153,10 +154,11 @@ async function main() {
   // Live Casey samples (platform From)
   const caseyFrom =
     process.env.SENDFABLE_ACQUISITION_FROM ||
-    "Casey at SendFable <casey@send.sendfable.com>";
+    "Casey at SendFable <casey@sendfable.com>";
   try {
     await sendEmail({
       from: caseyFrom,
+      envelopeFrom: acquisitionEnvelopeFrom(),
       to: certTo,
       replyTo: "casey@sendfable.com",
       subject: `[CERT A] ${v1a.subject}`,
@@ -172,6 +174,7 @@ async function main() {
   try {
     await sendEmail({
       from: caseyFrom,
+      envelopeFrom: acquisitionEnvelopeFrom(),
       to: certTo,
       replyTo: "casey@sendfable.com",
       subject: `[CERT B] ${v1b.subject}`,
@@ -187,6 +190,7 @@ async function main() {
   try {
     await sendEmail({
       from: caseyFrom,
+      envelopeFrom: acquisitionEnvelopeFrom(),
       to: certTo,
       replyTo: "casey@sendfable.com",
       subject: `[CERT FU] ${fu1.subject}`,

@@ -38,6 +38,7 @@ export async function sendCaseyOwnerReply(opts: {
 
   await sendEmail({
     from: sender.from,
+    envelopeFrom: sender.envelopeFrom,
     to: prospect.contactEmail,
     replyTo: acquisitionReplyTo(),
     subject,

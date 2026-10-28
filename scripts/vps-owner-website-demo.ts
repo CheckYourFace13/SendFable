@@ -8,7 +8,11 @@
 import { writeFileSync } from "fs";
 import { PrismaClient } from "@prisma/client";
 import { sendEmail } from "@/lib/mailer";
-import { ACQUISITION_PREFERRED_FROM, acquisitionReplyTo } from "@/lib/acquisition/flags";
+import {
+  ACQUISITION_PREFERRED_FROM,
+  acquisitionEnvelopeFrom,
+  acquisitionReplyTo,
+} from "@/lib/acquisition/flags";
 import { buildWebsiteDemo } from "@/lib/acquisition/website-demo/build";
 import { buildWebsiteDemoEmail } from "@/lib/acquisition/website-demo/email";
 import { confirmSameSiteImage } from "@/lib/acquisition/website-demo/image";
@@ -66,6 +70,7 @@ async function main() {
 
     const result = await sendEmail({
       from: ACQUISITION_PREFERRED_FROM,
+      envelopeFrom: acquisitionEnvelopeFrom(),
       to: OWNER,
       replyTo: acquisitionReplyTo(),
       subject,
