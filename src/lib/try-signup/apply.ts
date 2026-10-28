@@ -11,7 +11,14 @@ import {
 export async function applyTrySignupDraft(opts: {
   workspaceId: string;
   token: string;
-}): Promise<{ ok: boolean; formId?: string; reason?: string }> {
+}): Promise<{
+  ok: boolean;
+  formId?: string;
+  hostedSlug?: string;
+  platform?: TrySignupConfig["platform"];
+  display?: TrySignupConfig["display"];
+  reason?: string;
+}> {
   const draft = await prisma.trySignupDraft.findUnique({ where: { token: opts.token } });
   if (!draft) return { ok: false, reason: "not_found" };
   if (draft.claimedAt && draft.workspaceId && draft.workspaceId !== opts.workspaceId) {
@@ -22,9 +29,15 @@ export async function applyTrySignupDraft(opts: {
     const existingForm = await prisma.signupForm.findFirst({
       where: { workspaceId: opts.workspaceId, name: config.audienceName },
       orderBy: { createdAt: "desc" },
-      select: { id: true },
+      select: { id: true, hostedSlug: true },
     });
-    return { ok: true, formId: existingForm?.id };
+    return {
+      ok: true,
+      formId: existingForm?.id,
+      hostedSlug: existingForm?.hostedSlug,
+      platform: config.platform,
+      display: config.display,
+    };
   }
 
   const config = sanitizeTryConfig(draft.config);
@@ -93,7 +106,13 @@ export async function applyTrySignupDraft(opts: {
     });
   }
 
-  return { ok: true, formId: form.id };
+  return {
+    ok: true,
+    formId: form.id,
+    hostedSlug: form.hostedSlug,
+    platform: config.platform,
+    display: config.display,
+  };
 }
 
 async function upsertAudience(workspaceId: string, name: string) {

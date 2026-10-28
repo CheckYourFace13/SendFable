@@ -28,6 +28,14 @@ export const ANALYTICS_EVENTS = [
   "signup_cta_click",
   "signup_start",
   "signup_complete",
+  "try_page_view",
+  "demo_signup_submitted",
+  "demo_signup_success",
+  "customization_changed",
+  "platform_selected",
+  "make_live_clicked",
+  "real_signup_tool_created",
+  "code_copied",
   "login_clicked",
   "plan_cta_clicked",
   // Activation
@@ -218,6 +226,7 @@ export function trackEvent(
 
 export const FUNNEL_STAGES: { id: string; events: AnalyticsEvent[] }[] = [
   { id: "organic_landing", events: ["homepage_view", "pricing_view", "comparison_view", "guide_view", "industry_page_view", "template_page_view", "referral_badge_click"] },
+  { id: "try_signup", events: ["try_page_view", "demo_signup_success", "make_live_clicked", "real_signup_tool_created"] },
   { id: "signup", events: ["signup_start", "signup_complete"] },
   { id: "workspace", events: ["workspace_created", "onboarding_completed"] },
   { id: "sender_verified", events: ["sender_verified"] },

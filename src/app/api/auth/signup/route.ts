@@ -175,6 +175,9 @@ export async function POST(req: Request) {
   }
 
   let activatedFormId: string | undefined;
+  let activatedSlug: string | undefined;
+  let activatedPlatform: string | undefined;
+  let activatedDisplay: string | undefined;
   try {
     const { matchSignupToAcquisition } = await import("@/lib/acquisition/lifecycle");
     const matched = await matchSignupToAcquisition({ userId: user.id, email });
@@ -182,6 +185,10 @@ export async function POST(req: Request) {
       const { applyTrySignupDraft } = await import("@/lib/try-signup/apply");
       const applied = await applyTrySignupDraft({ workspaceId, token: parsed.data.tryToken });
       if (applied.formId) activatedFormId = applied.formId;
+      if (applied.hostedSlug) activatedSlug = applied.hostedSlug;
+      if (applied.platform) activatedPlatform = applied.platform;
+      if (applied.display) activatedDisplay = applied.display;
+      if (applied.formId) trackEvent("real_signup_tool_created", { formId: applied.formId });
     } else if (workspaceId && matched.prospectId) {
       const draft = await prisma.trySignupDraft.findFirst({
         where: { prospectId: matched.prospectId, claimedAt: null },
@@ -191,11 +198,21 @@ export async function POST(req: Request) {
         const { applyTrySignupDraft } = await import("@/lib/try-signup/apply");
         const applied = await applyTrySignupDraft({ workspaceId, token: draft.token });
         if (applied.formId) activatedFormId = applied.formId;
+        if (applied.hostedSlug) activatedSlug = applied.hostedSlug;
+        if (applied.platform) activatedPlatform = applied.platform;
+        if (applied.display) activatedDisplay = applied.display;
+        if (applied.formId) trackEvent("real_signup_tool_created", { formId: applied.formId });
       }
     }
   } catch {
     /* fail open — acquisition matching must not block signup */
   }
 
-  return NextResponse.json({ ok: true, formId: activatedFormId });
+  return NextResponse.json({
+    ok: true,
+    formId: activatedFormId,
+    hostedSlug: activatedSlug,
+    platform: activatedPlatform,
+    display: activatedDisplay,
+  });
 }

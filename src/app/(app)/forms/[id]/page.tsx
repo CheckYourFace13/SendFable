@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FIELD_CATALOG, emailConsentText, type CatalogKey, type FormFieldDef } from "@/lib/forms/fields";
 import { embedSnippet } from "@/lib/forms/install";
+import { tryInstallSteps, type TryInstallPlatform } from "@/lib/try-signup/install";
+import { trackClientEvent } from "@/components/marketing/marketing-analytics";
 import {
   DEFAULT_PRESENTATION,
   frequencyLabel,
@@ -46,6 +48,8 @@ const CATALOG_DEFAULTS: Record<CatalogKey, { on: boolean; required: boolean }> =
 export default function FormDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const [justLive, setJustLive] = useState(false);
+  const [livePlatform, setLivePlatform] = useState<TryInstallPlatform>("wordpress");
   const [form, setForm] = useState<any>(null);
   const [hostedUrl, setHostedUrl] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -62,6 +66,19 @@ export default function FormDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [presentation, setPresentation] = useState<FormPresentation>(DEFAULT_PRESENTATION);
   const [previewPopup, setPreviewPopup] = useState(false);
+
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      setJustLive(q.get("live") === "1");
+      const platform = q.get("platform");
+      if (platform === "wix" || platform === "squarespace" || platform === "webflow" || platform === "other") {
+        setLivePlatform(platform);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -199,6 +216,7 @@ export default function FormDetailPage() {
   function copy(value: string, label: string) {
     void navigator.clipboard.writeText(value);
     toast.success(label);
+    if (label.toLowerCase().includes("code")) trackClientEvent("code_copied");
   }
 
   if (!form) return <div className="text-sm text-muted-foreground">Loading…</div>;
@@ -208,6 +226,25 @@ export default function FormDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      {justLive ? (
+        <section className="mb-6 rounded-xl border border-teal/30 bg-teal/10 p-5">
+          <h2 className="text-lg font-semibold">Your signup is live.</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Copy the code and paste it on your website.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" onClick={() => copy(snippet, "Code copied")}>
+              Copy code
+            </Button>
+            <Button type="button" variant="outline" asChild>
+              <a href="/tags">Create another audience</a>
+            </Button>
+          </div>
+          <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm">
+            {tryInstallSteps(livePlatform).map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
       <PageHeader title={form.name} description="Choose what to collect, then share the link or the embed.">
         <Button onClick={() => void save()}>Save</Button>
       </PageHeader>

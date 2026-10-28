@@ -8,15 +8,14 @@ import {
   defaultTryConfig,
   sanitizeTryConfig,
   TRY_BUSINESS_TYPES,
+  TRY_INTENT_EVENTS,
 } from "@/lib/try-signup/config";
 import { markTryIntent } from "@/lib/try-signup/follow-up";
 
 const saveSchema = z.object({
   token: z.string().trim().min(8).max(64).optional(),
   config: z.record(z.unknown()).optional(),
-  event: z
-    .enum(["builder_started", "builder_previewed", "activation_clicked", "signup_started"])
-    .optional(),
+  event: z.enum(TRY_INTENT_EVENTS).optional(),
   category: z.string().trim().max(40).optional(),
 });
 

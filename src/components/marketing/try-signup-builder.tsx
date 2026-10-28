@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,20 +10,19 @@ import {
   defaultTryConfig,
   sanitizeTryConfig,
   tryBusinessLabel,
-  type TryBusinessType,
+  trySiteChrome,
+  type TryIntentEvent,
   type TrySignupConfig,
 } from "@/lib/try-signup/config";
-import {
-  TRY_PREVIEW_SNIPPET,
-  tryInstallPlatforms,
-  type TryInstallPlatform,
-} from "@/lib/try-signup/install";
+import { tryInstallPlatforms } from "@/lib/try-signup/install";
 import { PLANS } from "@/lib/plans";
 import { trackClientEvent } from "@/components/marketing/marketing-analytics";
 
+const LIVE_CTA = "MAKE THIS LIVE — FREE";
+
 export function TrySignupBuilder() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto max-w-xl px-4 py-8 sm:px-6 sm:py-12">
       <BuilderInner />
     </div>
   );
@@ -34,14 +33,16 @@ function BuilderInner() {
   const typeHint = categoryToTryType(search.get("type") || search.get("utm_term"));
   const [token, setToken] = useState(search.get("try")?.trim() || "");
   const [config, setConfig] = useState<TrySignupConfig>(() => defaultTryConfig(typeHint));
-  const [ready, setReady] = useState(false);
-  const [platform, setPlatform] = useState<TryInstallPlatform>("wordpress");
-  const [copied, setCopied] = useState(false);
+  const [demoEmail, setDemoEmail] = useState("");
+  const [demoFirst, setDemoFirst] = useState("");
+  const [demoPhone, setDemoPhone] = useState("");
+  const [demoJoined, setDemoJoined] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const existing = search.get("try")?.trim();
-    trackClientEvent("builder_started");
+    trackClientEvent("try_page_view");
     const url = existing
       ? `/api/try/signup-tool?token=${encodeURIComponent(existing)}`
       : `/api/try/signup-tool?type=${encodeURIComponent(typeHint)}`;
@@ -51,13 +52,9 @@ function BuilderInner() {
         if (cancelled) return;
         if (data.config) setConfig(sanitizeTryConfig(data.config));
         if (data.token) setToken(data.token);
+        void save({ event: "try_page_view", tokenOverride: data.token, next: data.config });
       })
-      .finally(() => {
-        if (!cancelled) {
-          setReady(true);
-          void save({ event: "builder_started" });
-        }
-      });
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -65,11 +62,12 @@ function BuilderInner() {
   }, []);
 
   async function save(opts?: {
-    event?: "builder_started" | "builder_previewed" | "activation_clicked" | "signup_started";
+    event?: TryIntentEvent;
     next?: TrySignupConfig;
+    tokenOverride?: string;
   }) {
     const body = {
-      token: token || undefined,
+      token: opts?.tokenOverride || token || undefined,
       config: opts?.next || config,
       event: opts?.event,
       category: typeHint,
@@ -79,8 +77,8 @@ function BuilderInner() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const data = await res.json().catch(() => null);
-    if (data?.token) {
+    const data = await res.json().catch(() => ({}));
+    if (typeof data.token === "string" && data.token) {
       setToken(data.token);
       try {
         localStorage.setItem("sf_try_signup", data.token);
@@ -88,185 +86,370 @@ function BuilderInner() {
         /* ignore */
       }
     }
-    return data?.token as string | undefined;
+    return data;
   }
 
   function update(patch: Partial<TrySignupConfig>) {
-    setConfig((prev) => {
-      let next = { ...prev, ...patch };
-      if (patch.businessType && patch.businessType !== prev.businessType) {
-        next = {
-          ...defaultTryConfig(patch.businessType),
-          display: prev.display,
-          firstName: prev.firstName,
-          phone: prev.phone,
-        };
-      }
-      if (patch.phone === false) next.smsConsent = false;
-      void save({ next, event: "builder_previewed" });
-      return next;
-    });
+    const next = sanitizeTryConfig({ ...config, ...patch });
+    setConfig(next);
+    setDemoJoined(false);
+    setDemoEmail("");
+    setDemoFirst("");
+    setDemoPhone("");
+    if (next.display !== "popup") setPopupOpen(false);
+    trackClientEvent("customization_changed");
+    void save({ next, event: "customization_changed" });
   }
 
-  const activateHref = useMemo(() => {
+  function joinDemo(e: React.FormEvent) {
+    e.preventDefault();
+    trackClientEvent("demo_signup_submitted");
+    setDemoJoined(true);
+    setDemoEmail("");
+    setDemoFirst("");
+    setDemoPhone("");
+    trackClientEvent("demo_signup_success");
+  }
+
+  const chrome = trySiteChrome(config.businessType);
+  const signupHref = (() => {
     const q = new URLSearchParams();
     if (token) q.set("try", token);
-    const utmSource = search.get("utm_source");
-    const utmMedium = search.get("utm_medium");
-    const utmCampaign = search.get("utm_campaign");
-    const utmContent = search.get("utm_content");
-    if (utmSource) q.set("utm_source", utmSource);
-    if (utmMedium) q.set("utm_medium", utmMedium);
-    if (utmCampaign) q.set("utm_campaign", utmCampaign);
-    if (utmContent) q.set("utm_content", utmContent);
-    if (!utmCampaign) q.set("utm_campaign", "try_signup");
+    const utm = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+    for (const key of utm) {
+      const v = search.get(key);
+      if (v) q.set(key, v);
+    }
     q.set("type", config.businessType);
     return `/signup?${q.toString()}`;
-  }, [token, search, config.businessType]);
-
-  const platforms = tryInstallPlatforms();
-  const selected = platforms.find((p) => p.id === platform) || platforms[0]!;
-
-  async function copyPreview() {
-    try {
-      await navigator.clipboard.writeText(TRY_PREVIEW_SNIPPET);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  }
+  })();
+  const platform = tryInstallPlatforms().find((p) => p.id === config.platform) || tryInstallPlatforms()[0];
 
   return (
-    <div>
-      <h1 className="font-display text-4xl font-bold tracking-tight text-ink">Your signup tool</h1>
-      <p className="mt-2 max-w-xl text-ink/70">Preview what you can put on your website.</p>
-
-      <div className="mt-8">
-        <Preview config={config} />
-        {!ready ? <p className="mt-3 text-sm text-ink/50">Loading preview…</p> : null}
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">See it working.</h1>
+        <p className="mt-2 text-sm text-ink/60">This is a demo. Nothing is saved or sent.</p>
       </div>
 
-      <form className="mt-8 grid gap-4 sm:grid-cols-2" onSubmit={(e) => e.preventDefault()}>
-        <label className="block text-sm font-medium text-ink">
-          Business
+      <WebsitePreview
+        siteName={chrome.siteName}
+        tagline={chrome.tagline}
+        config={config}
+        demoEmail={demoEmail}
+        demoFirst={demoFirst}
+        demoPhone={demoPhone}
+        demoJoined={demoJoined}
+        popupOpen={popupOpen}
+        onEmail={setDemoEmail}
+        onFirst={setDemoFirst}
+        onPhone={setDemoPhone}
+        onJoin={joinDemo}
+        onOpenPopup={() => setPopupOpen(true)}
+        onClosePopup={() => setPopupOpen(false)}
+      />
+
+      {demoJoined ? (
+        <section className="rounded-xl border border-ink/10 bg-white p-5">
+          <h2 className="text-lg font-semibold text-ink">Your audience</h2>
+          <ul className="mt-3 space-y-1 text-sm text-ink">
+            <li>
+              {config.audienceName} — 1 subscriber
+            </li>
+            <li>
+              {config.extraAudienceName} — 0 subscribers
+            </li>
+          </ul>
+          <p className="mt-3 text-sm text-ink/60">Create as many audiences as you need.</p>
+        </section>
+      ) : null}
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-ink">Make it yours</h2>
+        <label className="block text-sm">
+          <span className="mb-1 block text-ink/70">Business type</span>
           <select
-            className="mt-1 w-full rounded-md border border-ink/15 bg-white px-3 py-2"
+            aria-label="Business type"
+            className="h-11 w-full rounded-lg border border-ink/15 bg-white px-3 text-base"
             value={config.businessType}
-            onChange={(e) => update({ businessType: e.target.value as TryBusinessType })}
+            onChange={(e) => {
+              const type = e.target.value as TrySignupConfig["businessType"];
+              const next = defaultTryConfig(type);
+              next.platform = config.platform;
+              next.display = config.display;
+              setConfig(next);
+              setDemoJoined(false);
+              trackClientEvent("customization_changed");
+              void save({ next, event: "customization_changed" });
+            }}
           >
-            {TRY_BUSINESS_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {tryBusinessLabel(t)}
+            {TRY_BUSINESS_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {tryBusinessLabel(type)}
               </option>
             ))}
           </select>
         </label>
-        <label className="block text-sm font-medium text-ink">
-          Audience name
+        <label className="block text-sm">
+          <span className="mb-1 block text-ink/70">Audience name</span>
           <input
-            className="mt-1 w-full rounded-md border border-ink/15 px-3 py-2"
+            aria-label="Audience name"
+            className="h-11 w-full rounded-lg border border-ink/15 bg-white px-3 text-base"
             value={config.audienceName}
+            maxLength={40}
             onChange={(e) => update({ audienceName: e.target.value })}
           />
         </label>
-        <label className="block text-sm font-medium text-ink sm:col-span-2">
-          Another audience you can add later
+        <label className="block text-sm">
+          <span className="mb-1 block text-ink/70">Headline</span>
           <input
-            className="mt-1 w-full rounded-md border border-ink/15 px-3 py-2"
-            value={config.extraAudienceName}
-            onChange={(e) => update({ extraAudienceName: e.target.value })}
+            className="h-11 w-full rounded-lg border border-ink/15 bg-white px-3 text-base"
+            value={config.headline}
+            maxLength={80}
+            onChange={(e) => update({ headline: e.target.value })}
           />
         </label>
-      </form>
-
-      <section className="mt-10">
-        <h2 className="font-display text-2xl font-semibold text-ink">Add it to your website</h2>
-        <p className="mt-2 text-sm text-ink/70">Choose your website:</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {platforms.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setPlatform(p.id)}
-              className={`rounded-full border px-3 py-1.5 text-sm ${
-                platform === p.id
-                  ? "border-ink bg-ink text-white"
-                  : "border-ink/20 bg-white text-ink hover:border-ink/40"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+        <label className="block text-sm">
+          <span className="mb-1 block text-ink/70">Button text</span>
+          <input
+            className="h-11 w-full rounded-lg border border-ink/15 bg-white px-3 text-base"
+            value={config.buttonLabel}
+            maxLength={32}
+            onChange={(e) => update({ buttonLabel: e.target.value })}
+          />
+        </label>
+        <div className="flex flex-wrap gap-4 text-sm">
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              className="h-5 w-5"
+              checked={config.firstName}
+              onChange={(e) => update({ firstName: e.target.checked })}
+            />
+            First name field
+          </label>
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              className="h-5 w-5"
+              checked={config.phone}
+              onChange={(e) => update({ phone: e.target.checked, smsConsent: false })}
+            />
+            Phone field
+          </label>
         </div>
-        <ol className="mt-4 list-decimal space-y-1 pl-5 text-sm text-ink/80">
-          {selected.steps.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ol>
-        {selected.fullGuide ? (
-          <p className="mt-2 text-sm">
-            <Link href={selected.fullGuide} className="text-teal hover:underline">
-              Full {selected.label} instructions
-            </Link>
-          </p>
+        {config.phone ? (
+          <label className="flex items-start gap-2 text-sm text-ink/60">
+            <input type="checkbox" className="mt-0.5 h-5 w-5" checked={false} disabled readOnly />
+            SMS consent stays off. You can turn it on later.
+          </label>
         ) : null}
+
+        <div>
+          <p className="mb-2 text-sm text-ink/70">How it appears</p>
+          <div className="grid grid-cols-2 gap-2">
+            {(["inline", "popup"] as const).map((display) => (
+              <button
+                key={display}
+                type="button"
+                className={`h-11 rounded-lg border text-sm font-medium ${
+                  config.display === display
+                    ? "border-coral bg-coral/10 text-ink"
+                    : "border-ink/15 bg-white text-ink/70"
+                }`}
+                onClick={() => update({ display })}
+              >
+                {display === "inline" ? "Inline" : "Popup"}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <section className="mt-8">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink/50">Preview only</p>
-        <p className="mt-1 text-sm text-ink/70">
-          This snippet is a preview. It will not collect signups until you activate it.
-        </p>
-        <pre className="mt-3 overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs text-slate-100">
-          {TRY_PREVIEW_SNIPPET}
-        </pre>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button type="button" variant="outline" onClick={() => void copyPreview()}>
-            {copied ? "Copied preview code" : "Copy preview code"}
-          </Button>
-          <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
-            <Link
-              href={activateHref}
-              onClick={() => {
-                trackClientEvent("activation_clicked");
-                void save({ event: "activation_clicked" });
-              }}
-            >
-              Activate this signup
-            </Link>
-          </Button>
-        </div>
-        <p className="mt-3 text-sm text-ink/70">Create your free account to activate this signup.</p>
-        <p className="mt-2 text-sm text-ink/60">
-          Free to start — up to {PLANS.FREE.contactCap.toLocaleString()} contacts and{" "}
+      <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-ink">Put this on your website</h2>
+          <div className="flex flex-wrap gap-2">
+            {tryInstallPlatforms().map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`h-11 rounded-lg border px-3 text-sm font-medium ${
+                  config.platform === p.id
+                    ? "border-coral bg-coral/10 text-ink"
+                    : "border-ink/15 bg-white text-ink/70"
+                }`}
+                onClick={() => {
+                  const next = sanitizeTryConfig({ ...config, platform: p.id });
+                  setConfig(next);
+                  trackClientEvent("platform_selected", { platform: p.id });
+                  void save({ next, event: "platform_selected" });
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <ol className="list-decimal space-y-1 pl-5 text-sm text-ink">
+            {platform.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          <p className="text-sm text-ink/60">Your code will be ready when you make this signup live.</p>
+        </section>
+
+      <section className="rounded-xl border border-ink/10 bg-white p-5">
+        <Button asChild className="h-12 w-full bg-coral-solid text-base text-white hover:bg-coral-hover">
+          <Link
+            href={signupHref}
+            onClick={() => {
+              trackClientEvent("make_live_clicked");
+              trackClientEvent("signup_started");
+              void save({ event: "make_live_clicked" });
+            }}
+          >
+            {LIVE_CTA}
+          </Link>
+        </Button>
+        <p className="mt-3 text-center text-sm text-ink/60">
+          Up to {PLANS.FREE.contactCap.toLocaleString()} contacts and{" "}
           {PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month.
         </p>
+        <p className="mt-1 text-center text-sm text-ink/60">No credit card required.</p>
       </section>
     </div>
   );
 }
 
-function Preview({ config }: { config: TrySignupConfig }) {
+function WebsitePreview(props: {
+  siteName: string;
+  tagline: string;
+  config: TrySignupConfig;
+  demoEmail: string;
+  demoFirst: string;
+  demoPhone: string;
+  demoJoined: boolean;
+  popupOpen: boolean;
+  onEmail: (v: string) => void;
+  onFirst: (v: string) => void;
+  onPhone: (v: string) => void;
+  onJoin: (e: React.FormEvent) => void;
+  onOpenPopup: () => void;
+  onClosePopup: () => void;
+}) {
+  const form = (
+    <SignupBox
+      config={props.config}
+      demoEmail={props.demoEmail}
+      demoFirst={props.demoFirst}
+      demoPhone={props.demoPhone}
+      demoJoined={props.demoJoined}
+      onEmail={props.onEmail}
+      onFirst={props.onFirst}
+      onPhone={props.onPhone}
+      onJoin={props.onJoin}
+    />
+  );
+
   return (
-    <div className="rounded-xl border border-ink/10 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink/50">Preview</p>
-      <h2 className="mt-2 font-display text-2xl text-ink">{config.headline}</h2>
-      <div className="mt-4 space-y-3">
-        <label className="block text-sm">
-          Email
-          <span className="mt-1 block rounded-md border border-ink/15 bg-parchment/40 px-3 py-2 text-ink/40">
-            you@example.com
-          </span>
-        </label>
-        <div className="inline-block rounded-md bg-coral-solid px-4 py-2 text-sm font-semibold text-white">
-          {config.buttonLabel}
-        </div>
+    <div className="overflow-hidden rounded-xl border border-ink/15 bg-[#eef1f4] shadow-sm">
+      <div className="flex items-center gap-1.5 border-b border-ink/10 bg-[#e5e7eb] px-3 py-2">
+        <span className="h-2 w-2 rounded-full bg-[#f9a8a8]" />
+        <span className="h-2 w-2 rounded-full bg-[#fde68a]" />
+        <span className="h-2 w-2 rounded-full bg-[#86efac]" />
+        <span className="ml-2 truncate text-xs text-ink/50">yoursite.com</span>
       </div>
-      <p className="mt-4 flex flex-wrap gap-2 text-xs text-ink/70">
-        <span className="rounded-full border border-ink/15 px-2 py-1">{config.audienceName}</span>
-        <span className="rounded-full border border-ink/15 px-2 py-1">{config.extraAudienceName}</span>
-      </p>
+      <div className="relative min-h-[280px] bg-[#f8f4ea] p-5 sm:p-6">
+        <p className="text-2xl font-semibold text-ink">{props.siteName}</p>
+        <p className="mt-1 text-sm text-ink/60">{props.tagline}</p>
+        {props.config.display === "inline" ? <div className="mt-5">{form}</div> : (
+          <div className="mt-5">
+            <button
+              type="button"
+              className="h-11 rounded-lg bg-coral-solid px-4 text-sm font-semibold text-white"
+              onClick={props.onOpenPopup}
+            >
+              Open signup
+            </button>
+            {props.popupOpen ? (
+              <div className="absolute inset-0 flex items-end justify-center bg-ink/40 p-4 sm:items-center">
+                <div className="w-full max-w-sm">
+                  <button
+                    type="button"
+                    className="mb-2 ml-auto block text-sm text-white"
+                    onClick={props.onClosePopup}
+                  >
+                    Close
+                  </button>
+                  {form}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+function SignupBox(props: {
+  config: TrySignupConfig;
+  demoEmail: string;
+  demoFirst: string;
+  demoPhone: string;
+  demoJoined: boolean;
+  onEmail: (v: string) => void;
+  onFirst: (v: string) => void;
+  onPhone: (v: string) => void;
+  onJoin: (e: React.FormEvent) => void;
+}) {
+  if (props.demoJoined) {
+    return (
+      <div className="rounded-lg border border-ink/10 bg-white p-4">
+        <p className="text-base font-semibold text-ink">✓ Added to {props.config.audienceName}</p>
+        <p className="mt-2 text-sm text-ink/60">That's what your visitors will see.</p>
+      </div>
+    );
+  }
+  return (
+    <form onSubmit={props.onJoin} className="space-y-3 rounded-lg border border-ink/10 bg-white p-4">
+      {props.config.headline ? (
+        <p className="text-base font-semibold text-ink">{props.config.headline}</p>
+      ) : null}
+      {props.config.firstName ? (
+        <input
+          type="text"
+          autoComplete="off"
+          placeholder="First name"
+          value={props.demoFirst}
+          onChange={(e) => props.onFirst(e.target.value)}
+          className="h-11 w-full rounded-md border border-ink/15 px-3 text-base"
+        />
+      ) : null}
+      <input
+        type="email"
+        required
+        autoComplete="off"
+        name="demo-email"
+        aria-label="Email"
+        placeholder="chris@example.com"
+        value={props.demoEmail}
+        onChange={(e) => props.onEmail(e.target.value)}
+        className="h-11 w-full rounded-md border border-ink/15 px-3 text-base"
+      />
+      {props.config.phone ? (
+        <input
+          type="tel"
+          autoComplete="off"
+          placeholder="Phone"
+          value={props.demoPhone}
+          onChange={(e) => props.onPhone(e.target.value)}
+          className="h-11 w-full rounded-md border border-ink/15 px-3 text-base"
+        />
+      ) : null}
+      <button type="submit" className="h-11 w-full rounded-md bg-coral-solid text-sm font-semibold text-white">
+        {props.config.buttonLabel}
+      </button>
+      <p className="text-xs text-ink/50">No spam. Unsubscribe anytime.</p>
+    </form>
   );
 }

@@ -9,6 +9,7 @@ import {
   sanitizeTryConfig,
   tryBusinessPitch,
   tryConfigMeaningful,
+  trySiteChrome,
   UTILITY_SIGNUP_COPY_VERSION,
   UTILITY_SIGNUP_LANDING,
 } from "@/lib/try-signup/config";
@@ -20,6 +21,9 @@ describe("try signup builder", () => {
     assert.equal(categoryToTryType("brewery"), "brewery");
     assert.equal(defaultTryConfig("band").audienceName, "Fans");
     assert.equal(defaultTryConfig("band").extraAudienceName, "Venues");
+    assert.equal(defaultTryConfig("band").firstName, false);
+    assert.equal(defaultTryConfig("band").platform, "wordpress");
+    assert.equal(trySiteChrome("band", "KarPool Band").siteName, "KarPool Band");
     assert.match(tryBusinessPitch("restaurant"), /private-event/i);
   });
 
@@ -28,6 +32,7 @@ describe("try signup builder", () => {
       businessType: "band",
       audienceName: "Fans",
       extraAudienceName: "Venues",
+      firstName: true,
       phone: true,
       smsConsent: true,
     });
@@ -62,35 +67,48 @@ describe("try signup builder", () => {
     const at = scheduleTryFollowUpAt(now, "America/Chicago");
     assert.ok(at.getTime() > now.getTime());
     assert.ok(tryConfigMeaningful(defaultTryConfig("band"), { builder_previewed: now.toISOString() }));
+    assert.ok(tryConfigMeaningful(defaultTryConfig("band"), { make_live_clicked: now.toISOString() }));
   });
 
-  it("does not create a live public form from the preview page", () => {
+  it("keeps the public demo off the live form API and account-first CTAs", () => {
     const src = readFileSync(join(process.cwd(), "src/components/marketing/try-signup-builder.tsx"), "utf8");
     assert.doesNotMatch(src, /\/api\/forms\/submit/);
-    assert.match(src, /Activate this signup/);
-    assert.match(src, /Create your free account to activate this signup/);
-    assert.match(src, /Preview only/);
-    assert.match(src, /TRY_PREVIEW_SNIPPET/);
-    assert.doesNotMatch(src, /\/api\/forms\/submit/);
+    assert.match(src, /MAKE THIS LIVE — FREE/);
+    assert.match(src, /See it working/);
+    assert.match(src, /That's what your visitors will see/);
+    assert.match(src, /Your code will be ready when you make this signup live/);
+    assert.match(src, /demo_signup_submitted/);
+    assert.match(src, /demo_signup_success/);
+    assert.doesNotMatch(src, /Activate this signup/);
+    assert.doesNotMatch(src, /Create your free account to activate this signup/);
+    assert.doesNotMatch(src, /TRY_PREVIEW_SNIPPET/);
+    assert.doesNotMatch(src, /Preview only/);
+    assert.doesNotMatch(src, /Copy preview code/);
     const apply = readFileSync(join(process.cwd(), "src/lib/try-signup/apply.ts"), "utf8");
     assert.match(apply, /claimedAt/);
     assert.match(apply, /scribePreferredAudienceTagId/);
+    assert.match(apply, /hostedSlug/);
     assert.doesNotMatch(apply, /enabled:\s*true/);
     const signup = readFileSync(join(process.cwd(), "src/app/api/auth/signup/route.ts"), "utf8");
     assert.match(signup, /applyTrySignupDraft/);
     assert.match(signup, /formId: activatedFormId/);
+    assert.match(signup, /hostedSlug: activatedSlug/);
+    assert.match(signup, /real_signup_tool_created/);
+    const layout = readFileSync(join(process.cwd(), "src/app/(try)/layout.tsx"), "utf8");
+    assert.match(layout, /Logo/);
+    assert.doesNotMatch(layout, /SiteHeader/);
+    assert.doesNotMatch(layout, /SiteFooter/);
+    assert.doesNotMatch(layout, /AnnouncementBar/);
   });
 
-  it("shows concise platform install steps and preview-only code", async () => {
-    const { TRY_PREVIEW_SLUG, TRY_PREVIEW_SNIPPET, tryInstallPlatforms, tryInstallSteps } =
-      await import("@/lib/try-signup/install");
-    assert.equal(TRY_PREVIEW_SLUG, "preview-only");
-    assert.match(TRY_PREVIEW_SNIPPET, /Preview only/);
-    assert.doesNotMatch(TRY_PREVIEW_SNIPPET, /data-sendfable-form="fans"/i);
+  it("shows concise platform install steps without fake working code", async () => {
+    const { tryInstallPlatforms, tryInstallSteps } = await import("@/lib/try-signup/install");
     const labels = tryInstallPlatforms().map((p) => p.label);
     assert.deepEqual(labels, ["WordPress", "Wix", "Squarespace", "Webflow", "Other website"]);
     assert.equal(tryInstallSteps("wordpress")[0], "Add a Custom HTML block.");
     assert.equal(tryInstallSteps("other")[0], "Paste the snippet where you want the signup to appear.");
+    const src = readFileSync(join(process.cwd(), "src/components/marketing/try-signup-builder.tsx"), "utf8");
+    assert.doesNotMatch(src, /data-sendfable-form=/);
   });
 
   it("exports audience columns and keeps the utility CTA on the try builder", () => {

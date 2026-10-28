@@ -337,10 +337,10 @@ describe("acquisition continuous discovery (OSM)", () => {
       { unsubUrl: "https://sendfable.com/u", copyVersion: "utility_signup" }
     );
     assert.equal(u.subject, "Put your fan signup on your website");
-    assert.match(u.bodyText, /Build your fan list from your website/);
-    assert.match(u.bodyText, /venues another/i);
-    assert.match(u.bodyText, /Nothing sends until you schedule it/);
-    assert.match(u.bodyText, /Add this signup to your website/);
+    assert.match(u.bodyText, /Put a fan signup right on your website/);
+    assert.match(u.bodyText, /Venues can have another/);
+    assert.match(u.bodyText, /Nothing sends unless you schedule it/);
+    assert.match(u.bodyText, /Try it on your website/);
     assert.doesNotMatch(u.bodyText, /automatically emails your customers/i);
     assert.doesNotMatch(u.bodyText, /iScream Studio INC · SendFable/);
   });

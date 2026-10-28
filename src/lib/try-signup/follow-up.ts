@@ -7,11 +7,12 @@ import {
   scheduleTryFollowUpAt,
   UTILITY_SIGNUP_COPY_VERSION,
   UTILITY_SIGNUP_LANDING,
+  type TryIntentEvent,
 } from "@/lib/try-signup/config";
 
 export async function markTryIntent(opts: {
   token: string;
-  event: "builder_started" | "builder_previewed" | "activation_clicked" | "signup_started";
+  event: TryIntentEvent;
 }): Promise<void> {
   const draft = await prisma.trySignupDraft.findUnique({ where: { token: opts.token } });
   if (!draft || draft.claimedAt) return;
@@ -25,7 +26,9 @@ export async function markTryIntent(opts: {
     !draft.followUpSentAt &&
     !draft.followUpCancelledAt &&
     (opts.event === "activation_clicked" ||
+      opts.event === "make_live_clicked" ||
       opts.event === "builder_previewed" ||
+      opts.event === "customization_changed" ||
       opts.event === "signup_started");
 
   let followUpAt = draft.followUpAt;

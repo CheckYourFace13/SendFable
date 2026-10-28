@@ -1,8 +1,8 @@
 import { acquisitionPhysicalAddress } from "@/lib/acquisition/flags";
 import { PLANS } from "@/lib/plans";
-import { categoryToTryType, type TryBusinessType } from "@/lib/try-signup/config";
+import { categoryToTryType, trySiteChrome, type TryBusinessType } from "@/lib/try-signup/config";
 
-export const UTILITY_EMAIL_CTA = "Add this signup to your website";
+export const UTILITY_EMAIL_CTA = "Try it on your website";
 
 export type UtilityEmailCopy = {
   subject: string;
@@ -23,32 +23,31 @@ function esc(s: string): string {
 }
 
 export function utilityEmailCopy(category?: string | null): UtilityEmailCopy {
-  const type = categoryToTryType(category);
-  return copyForType(type);
+  return copyForType(categoryToTryType(category));
 }
 
 function copyForType(type: TryBusinessType): UtilityEmailCopy {
   if (type === "band") {
     return {
       subject: "Put your fan signup on your website",
-      headline: "Build your fan list from your website.",
+      headline: "Put a fan signup right on your website.",
       body: [
-        "Fans can join one audience, venues another. Your contacts stay yours, and SendFable can prepare future campaigns when your site changes.",
-        "Nothing sends until you schedule it.",
+        "Fans join one audience. Venues can have another.",
+        "Your contacts stay yours.",
       ],
       audiencePrimary: "Fans",
       audienceSecondary: "Venues",
       formHeadline: "Join the fan list",
-      buttonLabel: "Join",
+      buttonLabel: "Join the fan list",
     };
   }
   if (type === "restaurant") {
     return {
       subject: "Turn website visitors into regulars",
-      headline: "Collect regulars from your website.",
+      headline: "Put a signup right on your website.",
       body: [
-        "Customers can join one audience, private events another. Your contacts stay yours, and SendFable can prepare future campaigns when your site changes.",
-        "Nothing sends until you schedule it.",
+        "Customers join one audience. Private events can have another.",
+        "Your contacts stay yours.",
       ],
       audiencePrimary: "Customers",
       audienceSecondary: "Private Events",
@@ -59,10 +58,10 @@ function copyForType(type: TryBusinessType): UtilityEmailCopy {
   if (type === "brewery") {
     return {
       subject: "Build your taproom list",
-      headline: "Build your taproom list from your website.",
+      headline: "Put a taproom signup right on your website.",
       body: [
-        "Taproom guests can join one audience, releases another. Your contacts stay yours, and SendFable can prepare future campaigns when your site changes.",
-        "Nothing sends until you schedule it.",
+        "Taproom guests join one audience. Releases can have another.",
+        "Your contacts stay yours.",
       ],
       audiencePrimary: "Taproom",
       audienceSecondary: "Beer Releases",
@@ -73,10 +72,10 @@ function copyForType(type: TryBusinessType): UtilityEmailCopy {
   if (type === "contractor") {
     return {
       subject: "Keep website leads in one place",
-      headline: "Keep website leads in one place.",
+      headline: "Put a signup right on your website.",
       body: [
-        "Customers can join one audience, leads another. Your contacts stay yours, and SendFable can prepare future campaigns when your site changes.",
-        "Nothing sends until you schedule it.",
+        "Customers join one audience. Leads can have another.",
+        "Your contacts stay yours.",
       ],
       audiencePrimary: "Customers",
       audienceSecondary: "Leads",
@@ -86,10 +85,10 @@ function copyForType(type: TryBusinessType): UtilityEmailCopy {
   }
   return {
     subject: "Collect people from your website",
-    headline: "Collect people from your website.",
+    headline: "Put a signup right on your website.",
     body: [
-      "People can join one audience and stay in another. Your contacts stay yours, and SendFable can prepare future campaigns when your site changes.",
-      "Nothing sends until you schedule it.",
+      "People join one audience. Another group can have its own.",
+      "Your contacts stay yours.",
     ],
     audiencePrimary: "Customers",
     audienceSecondary: "Leads",
@@ -109,7 +108,7 @@ export function freePlanLine(): string {
 }
 
 export function coreMarketingWordCount(copy: UtilityEmailCopy): number {
-  const words = [copy.headline, ...copy.body, UTILITY_EMAIL_CTA, freePlanLine()]
+  const words = [copy.headline, ...copy.body, UTILITY_EMAIL_CTA, "Free to start.", "Nothing sends unless you schedule it."]
     .join(" ")
     .trim()
     .split(/\s+/)
@@ -117,26 +116,37 @@ export function coreMarketingWordCount(copy: UtilityEmailCopy): number {
   return words.length;
 }
 
-/** Email-safe recreation of the public Signup Tool preview card. */
-export function signupToolPreviewHtml(copy: UtilityEmailCopy): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;">
-<tr><td style="padding:18px 18px 16px;">
-  <p style="margin:0 0 4px;font-size:22px;line-height:1.3;color:#17213B;font-family:Georgia,'Times New Roman',serif;">${esc(
-    copy.formHeadline
+/** Email-safe fictional website with an embedded signup box. */
+export function signupToolPreviewHtml(
+  copy: UtilityEmailCopy,
+  businessName?: string | null,
+  category?: string | null
+): string {
+  const chrome = trySiteChrome(categoryToTryType(category), businessName);
+  const siteName = businessName?.trim() || chrome.siteName;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #d1d5db;border-radius:12px;background:#eef1f4;">
+<tr><td style="padding:8px 10px;background:#e5e7eb;border-radius:12px 12px 0 0;">
+  <span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:#f9a8a8;"></span>
+  <span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:#fde68a;margin-left:4px;"></span>
+  <span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:#86efac;margin-left:4px;"></span>
+  <span style="font-size:11px;color:#6b7280;font-family:Inter,-apple-system,'Segoe UI',sans-serif;margin-left:8px;">yoursite.com</span>
+</td></tr>
+<tr><td style="padding:22px 20px 20px;background:#f8f4ea;">
+  <p style="margin:0 0 4px;font-size:22px;line-height:1.25;color:#17213B;font-family:Georgia,'Times New Roman',serif;">${esc(
+    siteName
   )}</p>
-  <p style="margin:0 0 6px;font-size:13px;color:#17213B;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">Email</p>
-  <p style="margin:0 0 14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;background:#f8f4ea;font-size:14px;color:#9ca3af;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">you@example.com</p>
-  <p style="margin:0 0 16px;"><span style="display:inline-block;padding:10px 16px;background:#e11d48;color:#ffffff;border-radius:6px;font-size:14px;font-weight:600;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">${esc(
-    copy.buttonLabel
-  )}</span></p>
-  <p style="margin:0;font-size:12px;color:#4b5563;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">
-    <span style="display:inline-block;margin-right:8px;padding:4px 8px;border:1px solid #d1d5db;border-radius:999px;">${esc(
-      copy.audiencePrimary
-    )}</span>
-    <span style="display:inline-block;padding:4px 8px;border:1px solid #d1d5db;border-radius:999px;">${esc(
-      copy.audienceSecondary
-    )}</span>
-  </p>
+  <p style="margin:0 0 16px;font-size:14px;line-height:1.45;color:#4b5563;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">${esc(
+    chrome.tagline
+  )}</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;">
+  <tr><td style="padding:16px;">
+    <p style="margin:0 0 8px;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;background:#f9fafb;font-size:14px;color:#9ca3af;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">email address</p>
+    <p style="margin:0 0 10px;"><span style="display:inline-block;padding:10px 16px;background:#e11d48;color:#ffffff;border-radius:6px;font-size:14px;font-weight:600;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">${esc(
+      copy.buttonLabel
+    )}</span></p>
+    <p style="margin:0;font-size:11px;color:#6b7280;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">No spam. Unsubscribe anytime.</p>
+  </td></tr>
+  </table>
 </td></tr>
 </table>`;
 }
@@ -150,23 +160,26 @@ export function renderUtilitySignupEmail(opts: {
 }): { subject: string; html: string; text: string; copy: UtilityEmailCopy } {
   const copy = utilityEmailCopy(opts.category);
   const hello = greeting(opts.firstName);
-  const free = freePlanLine();
+  const chrome = trySiteChrome(categoryToTryType(opts.category), opts.businessName);
   const text = [
     hello,
     "",
     copy.headline,
     "",
-    `${copy.formHeadline}`,
-    "Email: you@example.com",
+    chrome.siteName,
+    chrome.tagline,
+    "email address",
     copy.buttonLabel,
-    `${copy.audiencePrimary} · ${copy.audienceSecondary}`,
+    "No spam. Unsubscribe anytime.",
     "",
     ...copy.body,
     "",
     `${UTILITY_EMAIL_CTA}:`,
     opts.ctaUrl,
     "",
-    free,
+    "Free to start.",
+    "",
+    "Nothing sends unless you schedule it.",
     "",
     "Casey",
     "SendFable",
@@ -190,15 +203,16 @@ export function renderUtilitySignupEmail(opts: {
   <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;font-weight:600;color:#17213B;font-family:Georgia,'Times New Roman',serif;">${esc(
     copy.headline
   )}</h1>
-  ${signupToolPreviewHtml(copy)}
-  <p style="margin:18px 0 10px;font-size:15px;line-height:1.6;color:#374151;">${esc(copy.body[0] || "")}</p>
+  ${signupToolPreviewHtml(copy, opts.businessName, opts.category)}
+  <p style="margin:18px 0 8px;font-size:15px;line-height:1.6;color:#374151;">${esc(copy.body[0] || "")}</p>
   <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#374151;">${esc(copy.body[1] || "")}</p>
   <p style="margin:0;">
     <a href="${esc(opts.ctaUrl)}" style="display:inline-block;padding:12px 18px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;background-color:#e11d48;">${esc(
       UTILITY_EMAIL_CTA
     )}</a>
   </p>
-  <p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#6b7280;">${esc(free)}</p>
+  <p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#6b7280;">Free to start.</p>
+  <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#6b7280;">Nothing sends unless you schedule it.</p>
 </td></tr>
 <tr><td style="padding-top:18px;">
   <p style="margin:0 0 6px;font-size:13px;color:#17213B;">SendFable</p>

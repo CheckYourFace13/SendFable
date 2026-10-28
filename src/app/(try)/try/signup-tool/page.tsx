@@ -4,8 +4,8 @@ import { TrySignupBuilder } from "@/components/marketing/try-signup-builder";
 import { PLANS } from "@/lib/plans";
 
 export const metadata = marketingPageMeta({
-  title: "Your signup tool",
-  description: `Preview a SendFable signup for your site, then start free (${PLANS.FREE.contactCap} contacts). No account required to try.`,
+  title: "See it working",
+  description: `Try a SendFable signup on a sample website. Free to start (${PLANS.FREE.contactCap} contacts). No account required to try.`,
   path: "/try/signup-tool",
 });
 

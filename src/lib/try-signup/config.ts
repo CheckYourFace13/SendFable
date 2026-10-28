@@ -26,24 +26,45 @@ export type TrySignupConfig = {
   firstName: boolean;
   phone: boolean;
   smsConsent: boolean;
+  platform: "wordpress" | "wix" | "squarespace" | "webflow" | "other";
 };
 
-export type TrySignupEvents = {
-  builder_started?: string;
-  builder_previewed?: string;
-  activation_clicked?: string;
-  signup_started?: string;
-};
+export const TRY_INTENT_EVENTS = [
+  "builder_started",
+  "builder_previewed",
+  "activation_clicked",
+  "signup_started",
+  "try_page_view",
+  "customization_changed",
+  "platform_selected",
+  "make_live_clicked",
+] as const;
+
+export type TryIntentEvent = (typeof TRY_INTENT_EVENTS)[number];
+
+export type TrySignupEvents = Partial<Record<TryIntentEvent, string>>;
 
 const EXAMPLES: Record<
   TryBusinessType,
-  { label: string; audience: string; extra: string; headline: string; pitch: string }
+  {
+    label: string;
+    audience: string;
+    extra: string;
+    headline: string;
+    button: string;
+    siteName: string;
+    tagline: string;
+    pitch: string;
+  }
 > = {
   band: {
     label: "Band / music",
     audience: "Fans",
     extra: "Venues",
     headline: "Join the fan list",
+    button: "Join the fan list",
+    siteName: "KarPool Band",
+    tagline: "Get show dates & band news.",
     pitch:
       "Put a signup on your site for fans. Keep a separate audience for venues. When you post a new show, Scribe can prepare the email for you.",
   },
@@ -52,6 +73,9 @@ const EXAMPLES: Record<
     audience: "Customers",
     extra: "Private Events",
     headline: "Get the specials",
+    button: "Join",
+    siteName: "Your restaurant",
+    tagline: "Tonight's specials, in your inbox.",
     pitch:
       "Collect regulars from your website. Keep private-event inquiries separate. When you post a special, Scribe can prepare the campaign.",
   },
@@ -60,6 +84,9 @@ const EXAMPLES: Record<
     audience: "Taproom",
     extra: "Beer Releases",
     headline: "Get release notes",
+    button: "Join",
+    siteName: "Your taproom",
+    tagline: "New pours and events.",
     pitch:
       "Build a taproom list and a release list. Add a signup to your site. When a new beer or event appears, Scribe can draft the announcement.",
   },
@@ -68,6 +95,9 @@ const EXAMPLES: Record<
     audience: "Customers",
     extra: "Leads",
     headline: "Request a reminder",
+    button: "Join",
+    siteName: "Your business",
+    tagline: "Updates from the shop.",
     pitch:
       "Collect interested customers from your site, keep leads in another audience, and send seasonal reminders without building a CRM.",
   },
@@ -76,6 +106,9 @@ const EXAMPLES: Record<
     audience: "Customers",
     extra: "VIP",
     headline: "Get new arrivals",
+    button: "Join",
+    siteName: "Your shop",
+    tagline: "New arrivals, first.",
     pitch:
       "Collect customers, announce new products or promotions, and keep the list exportable.",
   },
@@ -84,6 +117,9 @@ const EXAMPLES: Record<
     audience: "Attendees",
     extra: "Partners",
     headline: "Stay in the loop",
+    button: "Join",
+    siteName: "Your events",
+    tagline: "Dates, doors, and updates.",
     pitch:
       "Keep attendees and partners in separate audiences. When your site lists a new date, Scribe can draft the update.",
   },
@@ -92,6 +128,9 @@ const EXAMPLES: Record<
     audience: "Customers",
     extra: "Leads",
     headline: "Join the list",
+    button: "Join",
+    siteName: "Your website",
+    tagline: "Stay in the loop.",
     pitch:
       "Collect people from your website, keep groups separate, and let Scribe prepare campaigns from new content.",
   },
@@ -105,6 +144,17 @@ export function tryBusinessPitch(type: TryBusinessType): string {
   return EXAMPLES[type].pitch;
 }
 
+export function trySiteChrome(
+  type: TryBusinessType,
+  businessName?: string | null
+): { siteName: string; tagline: string } {
+  const ex = EXAMPLES[type];
+  const name = (businessName || "").trim();
+  return { siteName: name || ex.siteName, tagline: ex.tagline };
+}
+
+const PLATFORMS = ["wordpress", "wix", "squarespace", "webflow", "other"] as const;
+
 export function defaultTryConfig(type: TryBusinessType = "local"): TrySignupConfig {
   const ex = EXAMPLES[type];
   return {
@@ -112,11 +162,12 @@ export function defaultTryConfig(type: TryBusinessType = "local"): TrySignupConf
     audienceName: ex.audience,
     extraAudienceName: ex.extra,
     headline: ex.headline,
-    buttonLabel: "Join",
+    buttonLabel: ex.button,
     display: "inline",
-    firstName: true,
+    firstName: false,
     phone: false,
     smsConsent: false,
+    platform: "wordpress",
   };
 }
 
@@ -150,6 +201,9 @@ export function sanitizeTryConfig(raw: unknown): TrySignupConfig {
     firstName: input.firstName !== undefined ? Boolean(input.firstName) : fallback.firstName,
     phone: input.phone !== undefined ? Boolean(input.phone) : fallback.phone,
     smsConsent: Boolean(input.phone) && Boolean(input.smsConsent),
+    platform: PLATFORMS.includes(input.platform as (typeof PLATFORMS)[number])
+      ? (input.platform as TrySignupConfig["platform"])
+      : "wordpress",
   };
 }
 
@@ -178,12 +232,14 @@ export function scheduleTryFollowUpAt(now = new Date(), timeZone = "America/Chic
 }
 
 export function tryConfigMeaningful(config: TrySignupConfig, events: TrySignupEvents): boolean {
-  if (events.activation_clicked || events.builder_previewed) return true;
+  if (events.activation_clicked || events.make_live_clicked || events.builder_previewed || events.customization_changed) {
+    return true;
+  }
   const fresh = defaultTryConfig(config.businessType);
   return (
     config.audienceName !== fresh.audienceName ||
     config.display !== "inline" ||
     config.phone ||
-    !config.firstName
+    config.firstName
   );
 }
