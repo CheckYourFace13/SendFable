@@ -406,7 +406,7 @@ function SignupBox(props: {
     return (
       <div className="rounded-lg border border-ink/10 bg-white p-4">
         <p className="text-base font-semibold text-ink">✓ Added to {props.config.audienceName}</p>
-        <p className="mt-2 text-sm text-ink/60">That's what your visitors will see.</p>
+        <p className="mt-2 text-sm text-ink/60">{"That's what your visitors will see."}</p>
       </div>
     );
   }
