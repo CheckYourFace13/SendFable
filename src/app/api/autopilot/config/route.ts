@@ -9,6 +9,7 @@ import { describeAutopilotAccount } from "@/lib/autopilot/commercial-account";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 import type { Prisma } from "@prisma/client";
+import { preferredScribeAudienceTagId, resolveScribeAudience } from "@/lib/autopilot/audience";
 
 function jsonConfig<T extends { estimatedCostMicros: bigint }>(config: T | null) {
   if (!config) return null;
@@ -20,6 +21,7 @@ const putSchema = z.object({
   audienceType: z.enum(["all", "tags", "segment"]).default("all"),
   audienceTagIds: z.array(z.string()).max(50).optional(),
   audienceSegmentId: z.string().cuid().nullable().optional(),
+  audienceChosen: z.boolean().optional(),
   checkFrequency: z.enum(["DAILY", "TWICE_DAILY", "WEEKLY"]).default("DAILY"),
   enabled: z.boolean(),
   remindersEnabled: z.boolean().optional(),
@@ -36,8 +38,24 @@ export async function GET() {
     disabled: ent.disabled,
     plan: ent.plan,
   });
-  const config = await prisma.marketingAutopilotConfig.findUnique({
-    where: { workspaceId: ctx.workspace.id },
+  const [config, audiences, workspace] = await Promise.all([
+    prisma.marketingAutopilotConfig.findUnique({
+      where: { workspaceId: ctx.workspace.id },
+    }),
+    prisma.tag.findMany({
+      where: { workspaceId: ctx.workspace.id },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.workspace.findUnique({
+      where: { id: ctx.workspace.id },
+      select: { onboardingData: true },
+    }),
+  ]);
+  const scribeAudience = resolveScribeAudience({
+    config,
+    audiences,
+    preferredAudienceTagId: preferredScribeAudienceTagId(workspace?.onboardingData),
   });
 
   const waiting = await prisma.marketingAutopilotDraft.count({
@@ -63,6 +81,8 @@ export async function GET() {
 
   return NextResponse.json({
     config: jsonConfig(config),
+    audiences,
+    scribeAudience,
     waitingDrafts: waiting,
     lastCampaign: lastSent,
     allowedFrequencies: quotas.autopilotFrequencies,
@@ -112,19 +132,54 @@ export async function PUT(req: Request) {
     ? parsed.data.checkFrequency
     : quotas.autopilotFrequencies[0]!;
 
-  const prior = await prisma.marketingAutopilotConfig.findUnique({
-    where: { workspaceId: ctx.workspace.id },
-  });
+  const [prior, audiences, workspace] = await Promise.all([
+    prisma.marketingAutopilotConfig.findUnique({
+      where: { workspaceId: ctx.workspace.id },
+    }),
+    prisma.tag.findMany({
+      where: { workspaceId: ctx.workspace.id },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.workspace.findUnique({
+      where: { id: ctx.workspace.id },
+      select: { onboardingData: true },
+    }),
+  ]);
   const urlChanged = Boolean(prior && prior.pageUrl !== parsed.data.pageUrl);
+  const audienceChosen =
+    parsed.data.audienceChosen === true ||
+    parsed.data.audienceType === "tags" ||
+    parsed.data.audienceType === "segment";
+  const nextAudience = {
+    audienceType: parsed.data.audienceType,
+    audienceTagIds: parsed.data.audienceTagIds ?? [],
+    audienceSegmentId: parsed.data.audienceSegmentId ?? null,
+    audienceChosen,
+  };
+  const resolved = resolveScribeAudience({
+    config: nextAudience,
+    audiences,
+    preferredAudienceTagId: preferredScribeAudienceTagId(workspace?.onboardingData),
+  });
+  if (parsed.data.enabled && !resolved.ok) {
+    return NextResponse.json(
+      { error: resolved.label, scribeAudience: resolved, audiences },
+      { status: 400 }
+    );
+  }
 
   const config = await prisma.marketingAutopilotConfig.upsert({
     where: { workspaceId: ctx.workspace.id },
     create: {
       workspaceId: ctx.workspace.id,
       pageUrl: parsed.data.pageUrl,
-      audienceType: parsed.data.audienceType,
-      audienceTagIds: (parsed.data.audienceTagIds ?? []) as unknown as Prisma.InputJsonValue,
-      audienceSegmentId: parsed.data.audienceSegmentId ?? null,
+      audienceType: resolved.ok ? resolved.audienceType : nextAudience.audienceType,
+      audienceTagIds: (resolved.ok
+        ? resolved.audienceTagIds
+        : nextAudience.audienceTagIds) as unknown as Prisma.InputJsonValue,
+      audienceSegmentId: resolved.ok ? resolved.audienceSegmentId : nextAudience.audienceSegmentId,
+      audienceChosen,
       checkFrequency: frequency,
       enabled: parsed.data.enabled,
       remindersEnabled: parsed.data.remindersEnabled ?? true,
@@ -133,9 +188,12 @@ export async function PUT(req: Request) {
     },
     update: {
       pageUrl: parsed.data.pageUrl,
-      audienceType: parsed.data.audienceType,
-      audienceTagIds: (parsed.data.audienceTagIds ?? []) as unknown as Prisma.InputJsonValue,
-      audienceSegmentId: parsed.data.audienceSegmentId ?? null,
+      audienceType: resolved.ok ? resolved.audienceType : nextAudience.audienceType,
+      audienceTagIds: (resolved.ok
+        ? resolved.audienceTagIds
+        : nextAudience.audienceTagIds) as unknown as Prisma.InputJsonValue,
+      audienceSegmentId: resolved.ok ? resolved.audienceSegmentId : nextAudience.audienceSegmentId,
+      audienceChosen,
       checkFrequency: frequency,
       enabled: parsed.data.enabled,
       remindersEnabled: parsed.data.remindersEnabled ?? true,

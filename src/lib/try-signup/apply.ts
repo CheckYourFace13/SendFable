@@ -35,6 +35,38 @@ export async function applyTrySignupDraft(opts: {
     fields,
   });
 
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: opts.workspaceId },
+    select: { onboardingData: true },
+  });
+  const onboarding =
+    workspace?.onboardingData && typeof workspace.onboardingData === "object"
+      ? (workspace.onboardingData as Record<string, unknown>)
+      : {};
+  await prisma.workspace.update({
+    where: { id: opts.workspaceId },
+    data: {
+      onboardingData: {
+        ...onboarding,
+        scribePreferredAudienceTagId: primary.id,
+      } as Prisma.InputJsonValue,
+    },
+  });
+
+  const existingScribe = await prisma.marketingAutopilotConfig.findUnique({
+    where: { workspaceId: opts.workspaceId },
+    select: { audienceChosen: true, audienceType: true },
+  });
+  if (existingScribe && !existingScribe.audienceChosen && existingScribe.audienceType === "all") {
+    await prisma.marketingAutopilotConfig.update({
+      where: { workspaceId: opts.workspaceId },
+      data: {
+        audienceType: "tags",
+        audienceTagIds: [primary.id] as unknown as Prisma.InputJsonValue,
+      },
+    });
+  }
+
   await prisma.trySignupDraft.update({
     where: { id: draft.id },
     data: {

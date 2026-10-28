@@ -57,7 +57,11 @@ export default async function AutopilotReviewPage({
   }
 
   const { draft, action } = loaded;
-  const recipients = loaded.recipients ?? 0;
+  const recipients = "recipients" in loaded ? loaded.recipients ?? 0 : 0;
+  const audienceLabel =
+    "audienceLabel" in loaded && loaded.audienceLabel
+      ? loaded.audienceLabel
+      : "Everyone subscribed";
   const titles = {
     approve: "Choose when this campaign sends",
     reject: "Skip this campaign?",
@@ -82,9 +86,11 @@ export default async function AutopilotReviewPage({
         </div>
         <div>
           <dt className="text-ink/50">Audience</dt>
-          <dd className="mt-0.5 text-ink">
-            {recipients.toLocaleString()} estimated recipient{recipients === 1 ? "" : "s"}
-          </dd>
+          <dd className="mt-0.5 text-ink">{audienceLabel}</dd>
+        </div>
+        <div>
+          <dt className="text-ink/50">Estimated recipients</dt>
+          <dd className="mt-0.5 text-ink">{recipients.toLocaleString()}</dd>
         </div>
       </dl>
 
@@ -108,7 +114,7 @@ export default async function AutopilotReviewPage({
       <AutopilotConfirmForm
         token={token}
         action={action}
-        audience="Selected audience"
+        audience={audienceLabel}
         recipientCount={recipients}
       />
 

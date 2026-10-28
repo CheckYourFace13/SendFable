@@ -1620,6 +1620,8 @@ model MarketingAutopilotConfig {
   audienceType      String  @default("all")
   audienceTagIds    Json    @default("[]")
   audienceSegmentId String?
+  /// True only after the owner explicitly picks an audience (including Everyone subscribed).
+  audienceChosen    Boolean @default(false)
   checkFrequency    AutopilotCheckFrequency @default(DAILY)
   remindersEnabled  Boolean @default(true)
   /// Opt-in auto-send via ledger.

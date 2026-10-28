@@ -117,6 +117,11 @@ export default function ScribePage() {
   const [pendingSkip, setPendingSkip] = useState<string | null>(null);
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
   const [commercial, setCommercial] = useState<Commercial | null>(null);
+  const [audiences, setAudiences] = useState<Array<{ id: string; name: string }>>([]);
+  const [audienceKey, setAudienceKey] = useState("");
+  const [audienceLabel, setAudienceLabel] = useState("Everyone subscribed");
+  const [needsAudienceChoice, setNeedsAudienceChoice] = useState(false);
+  const [editingAudience, setEditingAudience] = useState(false);
 
   async function load() {
     const [cRes, dRes] = await Promise.all([
@@ -138,6 +143,23 @@ export default function ScribePage() {
       setDraftsUsed(typeof j.draftsUsedThisMonth === "number" ? j.draftsUsedThisMonth : 0);
       setInternalUnlimited(Boolean(j.internalUnlimited));
       setCommercial(j.commercial || null);
+      const nextAudiences: Array<{ id: string; name: string }> = j.audiences || [];
+      setAudiences(nextAudiences);
+      const resolved = j.scribeAudience;
+      if (resolved?.ok && resolved.audienceType === "tags" && resolved.audienceTagIds?.[0]) {
+        setAudienceKey(resolved.audienceTagIds[0]);
+        setAudienceLabel(resolved.label || nextAudiences.find((a) => a.id === resolved.audienceTagIds[0])?.name || "Selected audience");
+        setNeedsAudienceChoice(false);
+      } else if (resolved?.ok && resolved.audienceType === "all") {
+        setAudienceKey("all");
+        setAudienceLabel("Everyone subscribed");
+        setNeedsAudienceChoice(false);
+      } else {
+        setAudienceKey("");
+        setAudienceLabel(resolved?.label || "Choose who these campaigns go to");
+        setNeedsAudienceChoice(true);
+        setEditingAudience(true);
+      }
     }
     if (dRes.ok) {
       const j = await dRes.json();
@@ -150,7 +172,24 @@ export default function ScribePage() {
     void load();
   }, []);
 
-  async function save(next?: { turnOn?: boolean; frequency?: Freq }) {
+  function audiencePayload(key: string) {
+    if (key === "all") {
+      return { audienceType: "all" as const, audienceTagIds: [] as string[], audienceChosen: true };
+    }
+    if (key) {
+      return { audienceType: "tags" as const, audienceTagIds: [key], audienceChosen: true };
+    }
+    return { audienceType: "all" as const, audienceTagIds: [] as string[], audienceChosen: false };
+  }
+
+  async function save(next?: { turnOn?: boolean; frequency?: Freq; audienceKey?: string }) {
+    const key = next?.audienceKey ?? audienceKey;
+    const turningOn = next?.turnOn ?? enabled;
+    if (turningOn && !key && audiences.length > 1) {
+      toast.error("Choose who these campaigns go to");
+      setEditingAudience(true);
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/autopilot/config", {
@@ -158,9 +197,9 @@ export default function ScribePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pageUrl,
-          audienceType: "all",
+          ...audiencePayload(key),
           checkFrequency: next?.frequency || frequency,
-          enabled: next?.turnOn ?? enabled,
+          enabled: turningOn,
           remindersEnabled: reminders,
           paused: false,
         }),
@@ -296,6 +335,49 @@ export default function ScribePage() {
             </dd>
           </div>
         </dl>
+        <div className="mt-5 rounded-xl border bg-white px-4 py-3 text-sm">
+          <p className="text-muted-foreground">Campaign audience</p>
+          <p className="mt-1 font-medium">{audienceLabel}</p>
+          {needsAudienceChoice && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Choose who these campaigns go to. Everyone subscribed is only used if you pick it.
+            </p>
+          )}
+          {editingAudience || needsAudienceChoice ? (
+            <select
+              aria-label="Default audience"
+              className="mt-2 h-9 w-full max-w-xs rounded-md border border-input bg-white px-3 text-sm"
+              value={audienceKey}
+              onChange={(e) => {
+                const value = e.target.value;
+                setAudienceKey(value);
+                if (value) {
+                  setEditingAudience(false);
+                  void save({ audienceKey: value });
+                }
+              }}
+            >
+              {(!audienceKey || needsAudienceChoice) && (
+                <option value="">Choose an audience</option>
+              )}
+              {audiences.map((audience) => (
+                <option key={audience.id} value={audience.id}>
+                  {audience.name}
+                </option>
+              ))}
+              <option value="all">Everyone subscribed</option>
+            </select>
+          ) : (
+            <Button
+              className="mt-2"
+              size="sm"
+              variant="outline"
+              onClick={() => setEditingAudience(true)}
+            >
+              Change
+            </Button>
+          )}
+        </div>
         {cap != null && cap > 0 && (
           <div className="mt-4">
             <div className="h-2 overflow-hidden rounded-full bg-ink/10">
@@ -443,8 +525,12 @@ export default function ScribePage() {
                   <p className="text-muted-foreground">Created: {when(draft.createdAt)}</p>
                   <p className="text-muted-foreground">
                     Audience: {draft.audience || "Everyone subscribed"}
-                    {draft.recipientCount != null ? ` · ${draft.recipientCount.toLocaleString()}` : ""}
                   </p>
+                  {draft.recipientCount != null && (
+                    <p className="text-muted-foreground">
+                      Estimated recipients: {draft.recipientCount.toLocaleString()}
+                    </p>
+                  )}
                   <p className="text-muted-foreground">Status: Waiting</p>
                 </div>
                 <div className="flex flex-wrap gap-2">

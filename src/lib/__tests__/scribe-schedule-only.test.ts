@@ -14,6 +14,8 @@ describe("scribe schedule-only contract", () => {
     assert.match(tick, /NO RESPONSE = NO SEND/);
     assert.match(tick, /sendAutopilotApprovalEmail/);
     assert.match(tick, /createAutopilotCampaignDraft/);
+    assert.match(tick, /resolveScribeAudience/);
+    assert.match(tick, /audience_unresolved/);
     assert.doesNotMatch(tick, /enqueueAutopilotAutoSend/);
     assert.doesNotMatch(tick, /launchCampaign/);
   });

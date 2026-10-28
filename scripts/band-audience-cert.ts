@@ -6,6 +6,11 @@ import { prisma } from "../src/lib/prisma";
 import { applyTrySignupDraft } from "../src/lib/try-signup/apply";
 import { defaultTryConfig } from "../src/lib/try-signup/config";
 import { randomToken } from "../src/lib/utils";
+import {
+  EVERYONE_SUBSCRIBED,
+  preferredScribeAudienceTagId,
+  resolveScribeAudience,
+} from "../src/lib/autopilot/audience";
 
 async function main() {
   const token = randomToken(18);
@@ -65,6 +70,88 @@ async function main() {
   if (fansOnly.length !== 1 || fansOnly[0]?.id !== fan.id) throw new Error("Fans leak");
   if (venuesOnly.length !== 1 || venuesOnly[0]?.id !== venue.id) throw new Error("Venues leak");
 
+  const afterApply = await prisma.workspace.findUniqueOrThrow({
+    where: { id: workspace.id },
+    select: { onboardingData: true },
+  });
+  const preferred = preferredScribeAudienceTagId(afterApply.onboardingData);
+  if (preferred !== fans.id) throw new Error("try-builder did not store Fans as Scribe default");
+  const scribe = await prisma.marketingAutopilotConfig.findUnique({
+    where: { workspaceId: workspace.id },
+  });
+  if (scribe?.enabled) throw new Error("apply must not enable Scribe");
+
+  const audienceList = [
+    { id: fans.id, name: fans.name },
+    { id: venues.id, name: venues.name },
+  ];
+  const defaultAudience = resolveScribeAudience({
+    config: scribe,
+    audiences: audienceList,
+    preferredAudienceTagId: preferred,
+  });
+  if (!defaultAudience.ok || defaultAudience.label !== "Fans") {
+    throw new Error("Scribe default was not Fans");
+  }
+
+  const fansDraft = await prisma.campaign.create({
+    data: {
+      workspaceId: workspace.id,
+      name: "Scribe: Friday show",
+      status: "DRAFT",
+      channel: "EMAIL",
+      subject: "Friday show",
+      audienceType: defaultAudience.audienceType,
+      audienceTagIds: defaultAudience.audienceTagIds,
+    },
+  });
+  if (fansDraft.audienceType !== "tags") throw new Error("Fans draft used Everyone subscribed");
+  if (JSON.stringify(fansDraft.audienceTagIds) !== JSON.stringify([fans.id])) {
+    throw new Error("Fans draft audience mismatch");
+  }
+
+  const venuesResolved = resolveScribeAudience({
+    config: {
+      audienceType: "tags",
+      audienceTagIds: [venues.id],
+      audienceChosen: true,
+    },
+    audiences: audienceList,
+  });
+  if (!venuesResolved.ok || venuesResolved.label !== "Venues") {
+    throw new Error("Venues default failed");
+  }
+  const venuesDraft = await prisma.campaign.create({
+    data: {
+      workspaceId: workspace.id,
+      name: "Scribe: Booking update",
+      status: "DRAFT",
+      channel: "EMAIL",
+      subject: "Booking update",
+      audienceType: venuesResolved.audienceType,
+      audienceTagIds: venuesResolved.audienceTagIds,
+    },
+  });
+  if (venuesDraft.audienceType !== "tags") throw new Error("Venues draft used Everyone subscribed");
+  if (JSON.stringify(venuesDraft.audienceTagIds) !== JSON.stringify([venues.id])) {
+    throw new Error("Venues draft audience mismatch");
+  }
+  if (venuesDraft.status !== "DRAFT" || fansDraft.status !== "DRAFT") {
+    throw new Error("band drafts must stay DRAFT");
+  }
+
+  const afterDelete = resolveScribeAudience({
+    config: {
+      audienceType: "tags",
+      audienceTagIds: [fans.id],
+      audienceChosen: true,
+    },
+    audiences: [{ id: venues.id, name: venues.name }],
+  });
+  if (afterDelete.ok || afterDelete.label === EVERYONE_SUBSCRIBED) {
+    throw new Error("deleted Fans silently fell back to Everyone subscribed");
+  }
+
   await prisma.workspace.delete({ where: { id: workspace.id } });
   await prisma.trySignupDraft.delete({ where: { id: draft.id } }).catch(() => undefined);
 
@@ -75,6 +162,10 @@ async function main() {
       venues: venues.name,
       formId: applied.formId,
       venueFormId: venueForm.id,
+      scribeDefault: defaultAudience.label,
+      fansDraftAudience: "Fans",
+      venuesDraftAudience: "Venues",
+      autoSend: "NONE",
     })
   );
 }

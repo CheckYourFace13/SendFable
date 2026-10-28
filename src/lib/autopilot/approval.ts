@@ -9,6 +9,11 @@ import { formatScheduledWhen, parseAutopilotSchedule } from "@/lib/autopilot/sch
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 import { humanizeScribeChange, renderAutopilotApprovalEmail } from "@/lib/autopilot/approval-copy";
+import {
+  AUDIENCE_MISSING,
+  campaignAudienceIsSendable,
+  labelCampaignAudience,
+} from "@/lib/autopilot/audience";
 
 export { humanizeScribeChange, renderAutopilotApprovalEmail } from "@/lib/autopilot/approval-copy";
 
@@ -106,12 +111,23 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
     draft.subject || draft.campaign.subject
   );
   const brandName = draft.workspace.name?.trim() || "your workspace";
+  const audienceTagIds = (draft.campaign.audienceTagIds as string[]) ?? [];
+  const audienceTags = audienceTagIds.length
+    ? await prisma.tag.findMany({
+        where: { workspaceId: draft.workspaceId, id: { in: audienceTagIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const audienceLabel = labelCampaignAudience({
+    audienceType: draft.campaign.audienceType,
+    audienceTagIds,
+    audiences: audienceTags,
+  });
   const rendered = renderAutopilotApprovalEmail({
     brandName,
     changeLine,
     subject: draft.subject || "(no subject)",
-    audienceLabel:
-      draft.campaign.audienceType === "all" ? "Everyone subscribed" : draft.campaign.audienceType,
+    audienceLabel,
     recipients,
     previewSnippet,
     approveUrl,
@@ -159,15 +175,29 @@ export async function loadAutopilotReview(token: string) {
     return { error: "already_decided" as const, draft, action: verified.action };
   }
 
+  const audienceTagIds = (draft.campaign?.audienceTagIds as string[]) ?? [];
+  const audienceTags = audienceTagIds.length
+    ? await prisma.tag.findMany({
+        where: { workspaceId: draft.workspaceId, id: { in: audienceTagIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const audienceLabel = draft.campaign
+    ? labelCampaignAudience({
+        audienceType: draft.campaign.audienceType,
+        audienceTagIds,
+        audiences: audienceTags,
+      })
+    : "Everyone subscribed";
   const recipients = draft.campaign
     ? await countAudience(draft.workspaceId, {
         audienceType: (draft.campaign.audienceType as "all" | "tags" | "segment") || "all",
-        audienceTagIds: (draft.campaign.audienceTagIds as string[]) ?? [],
+        audienceTagIds,
         audienceSegmentId: draft.campaign.audienceSegmentId,
       })
     : 0;
 
-  return { draft, action: verified.action, recipients, token };
+  return { draft, action: verified.action, recipients, token, audienceLabel };
 }
 
 /**
@@ -306,6 +336,24 @@ export async function scheduleAutopilotDraft(opts: {
   }
   const open = ["AWAITING_APPROVAL", "DRAFTED", "EDITING", "APPROVED"].includes(draft.status);
   if (!open) return { ok: false, error: "already_decided" };
+  const scheduledTagIds = (draft.campaign.audienceTagIds as string[]) ?? [];
+  const scheduledTags = scheduledTagIds.length
+    ? await prisma.tag.findMany({
+        where: { workspaceId: draft.workspaceId, id: { in: scheduledTagIds } },
+        select: { id: true },
+      })
+    : [];
+  const audienceOk = campaignAudienceIsSendable({
+    audienceType: draft.campaign.audienceType,
+    audienceTagIds: scheduledTagIds,
+    existingTagIds: scheduledTags.map((tag) => tag.id),
+  });
+  if (!audienceOk.ok) {
+    return {
+      ok: false,
+      error: `${AUDIENCE_MISSING}. Choose another audience before scheduling.`,
+    };
+  }
 
   await prisma.$transaction([
     prisma.campaign.update({

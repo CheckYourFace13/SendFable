@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { countAudience } from "@/lib/audience";
 import { formatScheduledWhen } from "@/lib/autopilot/schedule";
+import { labelCampaignAudience } from "@/lib/autopilot/audience";
 
 export async function GET() {
   const ctx = await getApiContext();
@@ -54,20 +55,17 @@ export async function GET() {
         select: { id: true, name: true },
       })
     : [];
-  const tagNames = new Map(tags.map((tag) => [tag.id, tag.name]));
 
   const mapped = [];
   for (const draft of drafts) {
     const ids = Array.isArray(draft.campaign?.audienceTagIds)
       ? (draft.campaign.audienceTagIds as string[])
       : [];
-    const named = ids.map((id) => tagNames.get(id)).filter(Boolean);
-    const audience =
-      draft.campaign?.audienceType === "tags"
-        ? named.join(", ") || "Selected audience"
-        : draft.campaign?.audienceType === "segment"
-          ? "A segment"
-          : "Everyone subscribed";
+    const audience = labelCampaignAudience({
+      audienceType: draft.campaign?.audienceType,
+      audienceTagIds: ids,
+      audiences: tags,
+    });
     const scheduled =
       draft.campaign?.status === "SCHEDULED" && (draft.scheduledFor || draft.campaign.scheduledAt);
     let recipientCount: number | null = null;

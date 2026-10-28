@@ -375,6 +375,7 @@ export async function provisionDrinkKnirdProductSurface(opts: {
       checkFrequency: "WEEKLY",
       audienceType: "tags",
       audienceTagIds: tagIdsJson,
+      audienceChosen: true,
       channel: "EMAIL",
       remindersEnabled: true,
     },
@@ -384,6 +385,7 @@ export async function provisionDrinkKnirdProductSurface(opts: {
       checkFrequency: "WEEKLY",
       audienceType: "tags",
       audienceTagIds: tagIdsJson,
+      audienceChosen: true,
     },
   });
 

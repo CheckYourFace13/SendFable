@@ -4,6 +4,7 @@
  * NO RESPONSE = NO SEND. Never launches a campaign from this tick.
  */
 
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { fetchPublicText } from "@/lib/ssrf";
 import { withAcquisitionLock } from "@/lib/acquisition/lock";
@@ -13,6 +14,7 @@ import { assessChange } from "@/lib/autopilot/change-filter";
 import { generateWithOptionalLlm } from "@/lib/autopilot/generate";
 import { createAutopilotCampaignDraft } from "@/lib/autopilot/draft";
 import { sendAutopilotApprovalEmail } from "@/lib/autopilot/approval";
+import { preferredScribeAudienceTagId, resolveScribeAudience } from "@/lib/autopilot/audience";
 import { resolveAutopilotCreation, suggestBrandFromHtml } from "@/lib/autopilot/commercial-account";
 import { imageCandidates, pickImage } from "@/lib/acquisition/website-demo/extract";
 import { confirmSameSiteImage } from "@/lib/acquisition/website-demo/image";
@@ -192,6 +194,29 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
   const workspace = await prisma.workspace.findUniqueOrThrow({
     where: { id: config.workspaceId },
   });
+  const audiences = await prisma.tag.findMany({
+    where: { workspaceId: config.workspaceId },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+  const resolvedAudience = resolveScribeAudience({
+    config,
+    audiences,
+    preferredAudienceTagId: preferredScribeAudienceTagId(workspace.onboardingData),
+  });
+  if (!resolvedAudience.ok) {
+    actions.push(`audience_unresolved:${resolvedAudience.reason}`);
+    return actions;
+  }
+  if (resolvedAudience.source === "single" || resolvedAudience.source === "preferred") {
+    await prisma.marketingAutopilotConfig.update({
+      where: { id: config.id },
+      data: {
+        audienceType: resolvedAudience.audienceType,
+        audienceTagIds: resolvedAudience.audienceTagIds as unknown as Prisma.InputJsonValue,
+      },
+    });
+  }
 
   try {
     await suggestBrandFromHtml(config.workspaceId, body, finalUrl);
@@ -232,9 +257,9 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
       changeSummary: assessment.reason,
       changedContent: assessment.addedText,
       generated,
-      audienceType: config.audienceType,
-      audienceTagIds: (config.audienceTagIds as string[]) ?? [],
-      audienceSegmentId: config.audienceSegmentId,
+      audienceType: resolvedAudience.audienceType,
+      audienceTagIds: resolvedAudience.audienceTagIds,
+      audienceSegmentId: resolvedAudience.audienceSegmentId,
       choice,
       imageUrl,
       imageAlt,

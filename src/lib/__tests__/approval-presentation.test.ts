@@ -45,9 +45,8 @@ describe("Scribe approval email presentation", () => {
     assert.match(html, /Sushi Saito Omakase Residency at Sushi Noz NYC/);
     assert.match(html, /Subject:/);
     assert.match(html, /Saito residency this month/);
-    assert.match(html, /Audience:/);
-    assert.match(html, /Everyone subscribed/);
-    assert.match(html, /Estimated recipients:<\/strong> 184/);
+    assert.match(html, /Audience:<\/strong><br>Everyone subscribed/);
+    assert.match(html, /Estimated recipients:<\/strong><br>184/);
     assert.match(html, /Approve &amp; Schedule/);
     assert.match(html, />Edit</);
     assert.match(html, /Skip this campaign/);
@@ -60,6 +59,23 @@ describe("Scribe approval email presentation", () => {
     assert.match(text, /SendFable/);
     assert.doesNotMatch(text, /Sendfable/);
     assert.match(text, /New content found: Sushi Saito Omakase Residency at Sushi Noz NYC/);
+    assert.match(text, /Audience: Everyone subscribed/);
+    assert.match(text, /Estimated recipients: 184/);
+    const fansMail = renderAutopilotApprovalEmail({
+      brandName: "Harbor Lights",
+      changeLine: "New content found: Friday show",
+      subject: "Friday show",
+      audienceLabel: "Fans",
+      recipients: 842,
+      previewSnippet: "Doors at 8.",
+      approveUrl: "https://sendfable.com/autopilot/review?t=approve",
+      editUrl: "https://sendfable.com/autopilot/review?t=edit",
+      rejectUrl: "https://sendfable.com/autopilot/review?t=skip",
+    });
+    assert.match(fansMail.html, /Audience:<\/strong><br>Fans/);
+    assert.match(fansMail.html, /Estimated recipients:<\/strong><br>842/);
+    assert.match(fansMail.text, /Audience: Fans/);
+    assert.match(fansMail.text, /Estimated recipients: 842/);
     assert.match(text, /Approve & Schedule:/);
     assert.match(text, /Edit:/);
     assert.match(text, /Skip this campaign:/);

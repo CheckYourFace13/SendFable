@@ -70,6 +70,8 @@ describe("try signup builder", () => {
     assert.match(src, /Use this on my website/);
     const apply = readFileSync(join(process.cwd(), "src/lib/try-signup/apply.ts"), "utf8");
     assert.match(apply, /claimedAt/);
+    assert.match(apply, /scribePreferredAudienceTagId/);
+    assert.doesNotMatch(apply, /enabled:\s*true/);
     const signup = readFileSync(join(process.cwd(), "src/app/api/auth/signup/route.ts"), "utf8");
     assert.match(signup, /applyTrySignupDraft/);
   });
