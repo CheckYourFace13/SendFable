@@ -50,11 +50,43 @@ if systemctl is-active --quiet nginx; then clear_alert nginx; else
 fi
 
 # 4. Disk usage.
+# Warning ≥85%, critical ≥90%. Within the 6h de-dup window, re-alert only if
+# usage rises by ≥3 points or severity escalates to critical.
 USED=$(df --output=pcent / | tail -1 | tr -dc '0-9')
-if [ "${USED:-0}" -ge 85 ]; then
-  alert disk "Disk ${USED}% full" "Root filesystem at ${USED}%. Clean logs/backups soon."
-else
+USED=${USED:-0}
+LAST_DISK_PCT_FILE="$STATE/disk-last-pct"
+LEVEL_FILE="$STATE/disk-last-level"
+LAST_DISK_PCT=0
+LAST_LEVEL=""
+[ -f "$LAST_DISK_PCT_FILE" ] && LAST_DISK_PCT=$(tr -dc '0-9' < "$LAST_DISK_PCT_FILE" 2>/dev/null || echo 0)
+[ -f "$LEVEL_FILE" ] && LAST_LEVEL=$(tr -d '\n' < "$LEVEL_FILE" 2>/dev/null || true)
+if [ "$USED" -lt 85 ]; then
   clear_alert disk
+  rm -f "$LAST_DISK_PCT_FILE" "$LEVEL_FILE"
+else
+  LEVEL="warn"
+  SUBJECT="Disk ${USED}% full"
+  BODY="Root filesystem at ${USED}% (warning ≥85%). Clean Docker build cache / logs soon."
+  if [ "$USED" -ge 90 ]; then
+    LEVEL="crit"
+    SUBJECT="Disk CRITICAL ${USED}% full"
+    BODY="Root filesystem at ${USED}% (≥90%). Prune Docker build cache / logs / disposable caches soon."
+  fi
+  mark="$STATE/alert-disk"
+  now=$(date +%s)
+  last=0
+  [ -f "$mark" ] && last=$(cat "$mark" 2>/dev/null || echo 0)
+  rise=$((USED - LAST_DISK_PCT))
+  escalate=0
+  [ "$LEVEL" = "crit" ] && [ "$LAST_LEVEL" != "crit" ] && escalate=1
+  if [ $((now - last)) -ge $DEDUP_SECS ] || [ "$rise" -ge 3 ] || [ "$escalate" -eq 1 ]; then
+    rm -f "$mark"
+    alert disk "$SUBJECT" "$BODY"
+  else
+    log "SUPPRESSED(disk) $SUBJECT (no material rise)"
+  fi
+  echo "$USED" > "$LAST_DISK_PCT_FILE"
+  echo "$LEVEL" > "$LEVEL_FILE"
 fi
 
 # 5. TLS certificate expiry (< 14 days).
