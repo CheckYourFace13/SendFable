@@ -45,10 +45,11 @@ fi
 
 docker compose -p sendfable -f docker-compose.prod.yml build app worker
 docker compose -p sendfable -f docker-compose.prod.yml up -d --no-deps app worker
-# Prevent root-disk pressure from unbounded BuildKit/legacy build cache after deploys.
+sleep 12
+# Prevent root-disk pressure from unbounded build cache after deploys.
+# Runs after containers swap so intermediate layers are reclaimable.
 docker builder prune -af >/dev/null 2>&1 || true
 docker image prune -f >/dev/null 2>&1 || true
-sleep 12
 docker exec sendfable-worker sh -c 'test ! -d /app/src/lib/newsletter && ! grep -q enqueueAutopilotAutoSend /app/src/lib/autopilot/tick.ts /app/src/worker/index.ts'
 curl -sf -o /dev/null -w 'health:%{http_code}\n' http://127.0.0.1:3010/api/health
 echo DEPLOY_OK "$(git rev-parse --short HEAD)"
