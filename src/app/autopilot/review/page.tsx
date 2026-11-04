@@ -25,20 +25,28 @@ export default async function AutopilotReviewPage({
 
   const loaded = await loadAutopilotReview(token);
 
-  if ("error" in loaded && loaded.error && !("draft" in loaded && loaded.draft)) {
-    const messages: Record<string, string> = {
-      invalid_token: "This link is invalid or expired. Nothing was sent. The draft stays waiting in SendFable if you have not decided yet.",
-      not_found: "This campaign draft could not be found.",
-      token_used: "This link was already used.",
-      expired: "This link is no longer active. Nothing was sent. Open Scribe in SendFable if the draft is still waiting.",
-      already_decided: "This draft was already decided. Nothing else will send from this link.",
-    };
+  if ("error" in loaded && loaded.error === "invalid_token") {
     return (
       <Shell>
         <h1 className="text-xl font-semibold text-ink">Unable to continue</h1>
         <p className="mt-2 text-sm text-ink/65">
-          {messages[loaded.error] || "Something went wrong."}
+          This link is invalid or expired. Nothing was sent. The draft stays waiting in
+          SendFable if you have not decided yet.
         </p>
+        <p className="mt-6 text-sm">
+          <Link href="/login" className="text-coral underline">
+            Sign in to SendFable
+          </Link>
+        </p>
+      </Shell>
+    );
+  }
+
+  if ("error" in loaded && loaded.error === "not_found") {
+    return (
+      <Shell>
+        <h1 className="text-xl font-semibold text-ink">Unable to continue</h1>
+        <p className="mt-2 text-sm text-ink/65">This campaign draft could not be found.</p>
         <p className="mt-6 text-sm">
           <Link href="/login" className="text-coral underline">
             Sign in to SendFable
@@ -57,6 +65,80 @@ export default async function AutopilotReviewPage({
   }
 
   const { draft, action } = loaded;
+  const outcome = "outcome" in loaded ? loaded.outcome : "open";
+  const scheduledLabel =
+    "scheduledLabel" in loaded && loaded.scheduledLabel ? loaded.scheduledLabel : null;
+
+  if (outcome === "sent") {
+    return (
+      <Shell>
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">Scribe</p>
+        <h1 className="mt-2 text-xl font-semibold text-ink">Campaign sent</h1>
+        <p className="mt-2 text-sm text-ink/65">
+          This campaign already sent. Reopening the review link does not send again.
+        </p>
+        <SubjectBlock subject={draft.subject} />
+        <SignInLink />
+      </Shell>
+    );
+  }
+
+  if (outcome === "scheduled") {
+    return (
+      <Shell>
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">Scribe</p>
+        <h1 className="mt-2 text-xl font-semibold text-ink">Campaign scheduled</h1>
+        <p className="mt-2 text-sm text-ink/65">
+          {scheduledLabel
+            ? `Campaign scheduled for: ${scheduledLabel}`
+            : "This campaign is already scheduled. Nothing else will send from this link."}
+        </p>
+        <SubjectBlock subject={draft.subject} />
+        <SignInLink />
+      </Shell>
+    );
+  }
+
+  if (outcome === "rejected") {
+    return (
+      <Shell>
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">Scribe</p>
+        <h1 className="mt-2 text-xl font-semibold text-ink">Campaign skipped</h1>
+        <p className="mt-2 text-sm text-ink/65">
+          This draft was skipped. It will not send from this link.
+        </p>
+        <SignInLink />
+      </Shell>
+    );
+  }
+
+  if (outcome === "editing") {
+    return (
+      <Shell>
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">Scribe</p>
+        <h1 className="mt-2 text-xl font-semibold text-ink">Opened for editing</h1>
+        <p className="mt-2 text-sm text-ink/65">
+          This draft was moved to the editor. Sign in to finish changes, then schedule from
+          SendFable.
+        </p>
+        <SignInLink />
+      </Shell>
+    );
+  }
+
+  if (outcome === "decided") {
+    return (
+      <Shell>
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">Scribe</p>
+        <h1 className="mt-2 text-xl font-semibold text-ink">Already decided</h1>
+        <p className="mt-2 text-sm text-ink/65">
+          This draft was already decided. Nothing else will send from this link.
+        </p>
+        <SignInLink />
+      </Shell>
+    );
+  }
+
   const recipients = "recipients" in loaded ? loaded.recipients ?? 0 : 0;
   const audienceLabel =
     "audienceLabel" in loaded && loaded.audienceLabel
@@ -70,9 +152,7 @@ export default async function AutopilotReviewPage({
 
   return (
     <Shell>
-      <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">
-        Scribe
-      </p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">Scribe</p>
       <h1 className="mt-2 text-xl font-semibold text-ink">{titles[action]}</h1>
 
       <dl className="mt-6 space-y-3 text-sm">
@@ -123,6 +203,28 @@ export default async function AutopilotReviewPage({
         the action. If you do nothing, nothing sends, and the draft stays waiting for you.
       </p>
     </Shell>
+  );
+}
+
+function SubjectBlock({ subject }: { subject: string | null }) {
+  if (!subject) return null;
+  return (
+    <dl className="mt-6 space-y-3 text-sm">
+      <div>
+        <dt className="text-ink/50">Subject</dt>
+        <dd className="mt-0.5 font-medium text-ink">{subject}</dd>
+      </div>
+    </dl>
+  );
+}
+
+function SignInLink() {
+  return (
+    <p className="mt-6 text-sm">
+      <Link href="/login" className="text-coral underline">
+        Sign in to SendFable
+      </Link>
+    </p>
   );
 }
 

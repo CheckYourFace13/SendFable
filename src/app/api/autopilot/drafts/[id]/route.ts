@@ -5,6 +5,7 @@ import {
   cancelAutopilotSchedule,
   scheduleAutopilotDraft,
 } from "@/lib/autopilot/approval";
+import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 
 const schema = z.object({
@@ -25,10 +26,18 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "Confirmation required" }, { status: 400 });
   }
 
+  const draft = await prisma.marketingAutopilotDraft.findFirst({
+    where: { id: params.id, workspaceId: ctx.workspace.id },
+    select: { approvalTokenVersion: true },
+  });
+  if (!draft) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  const expectedTokenVersion = draft.approvalTokenVersion;
+
   if (parsed.data.action === "schedule") {
     const scheduled = await scheduleAutopilotDraft({
       draftId: params.id,
       workspaceId: ctx.workspace.id,
+      expectedTokenVersion,
       confirm: true,
       date: parsed.data.date,
       time: parsed.data.time,
@@ -55,6 +64,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const result = await applyAutopilotDecision({
     draftId: params.id,
     workspaceId: ctx.workspace.id,
+    expectedTokenVersion,
     action: parsed.data.action === "skip" ? "reject" : parsed.data.action,
     confirm: true,
   });

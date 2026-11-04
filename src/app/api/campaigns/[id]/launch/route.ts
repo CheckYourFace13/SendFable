@@ -197,10 +197,25 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (at.getTime() <= Date.now()) {
       return NextResponse.json({ error: "Schedule time must be in the future" }, { status: 400 });
     }
-    const updated = await prisma.campaign.update({
-      where: { id: campaign.id },
+    // Atomic claim: only DRAFT/PAUSED/SCHEDULED can (re)schedule; never SENDING/COMPLETED.
+    const claimed = await prisma.campaign.updateMany({
+      where: {
+        id: campaign.id,
+        workspaceId: ctx.workspace.id,
+        status: { in: ["DRAFT", "PAUSED", "SCHEDULED"] },
+      },
       data: { status: "SCHEDULED", scheduledAt: at, recipientCount },
     });
+    if (claimed.count !== 1) {
+      const current = await prisma.campaign.findFirst({
+        where: { id: campaign.id, workspaceId: ctx.workspace.id },
+      });
+      if (current && ["SENDING", "COMPLETED"].includes(current.status)) {
+        return NextResponse.json({ campaign: current, alreadyLaunched: true });
+      }
+      return NextResponse.json({ error: "Campaign cannot be scheduled in its current state" }, { status: 409 });
+    }
+    const updated = await prisma.campaign.findUnique({ where: { id: campaign.id } });
     const prior = await prisma.campaign.count({
       where: {
         workspaceId: ctx.workspace.id,

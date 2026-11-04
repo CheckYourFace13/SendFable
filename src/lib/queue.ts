@@ -45,18 +45,26 @@ export async function enqueueRecipients(
   const q = getCampaignQueue();
   if (!q) return "inline";
 
-  await q.addBulk(
-    jobs.map((data) => ({
-      name: "send",
-      data,
-      opts: {
+  for (const data of jobs) {
+    try {
+      await q.add("send", data, {
+        // Durable idempotency: duplicate launch/enqueue cannot create a second job
+        // for the same recipient row.
+        jobId: `campaign-send:${data.recipientId}`,
         attempts: 3,
         backoff: { type: "exponential", delay: 2000 },
         removeOnComplete: 1000,
         removeOnFail: 5000,
-      },
-    }))
-  );
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // BullMQ rejects duplicate jobIds — treat as already enqueued.
+      if (/already exists|Job.?Id|duplicate/i.test(msg)) {
+        continue;
+      }
+      throw err;
+    }
+  }
   return "queued";
 }
 

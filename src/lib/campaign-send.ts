@@ -26,14 +26,21 @@ import { acquirePlatformSendSlot } from "@/lib/platform-send-rate";
 
 /**
  * Snapshot recipients and enqueue (or inline-process) a campaign send.
+ * Atomic: only one caller can transition DRAFT|SCHEDULED|PAUSED → SENDING.
+ * Concurrent launches / worker polls return the existing recipient count.
  */
-export async function launchCampaign(campaignId: string): Promise<{ recipientCount: number }> {
+export async function launchCampaign(
+  campaignId: string
+): Promise<{ recipientCount: number; alreadyLaunched?: boolean }> {
   assertCampaignSendEnabled();
   const campaign = await prisma.campaign.findUnique({
     where: { id: campaignId },
     include: { workspace: true, senderIdentity: true },
   });
   if (!campaign) throw new Error("Campaign not found");
+  if (["SENDING", "COMPLETED"].includes(campaign.status)) {
+    return { recipientCount: campaign.recipientCount, alreadyLaunched: true };
+  }
   if (!["DRAFT", "SCHEDULED", "PAUSED"].includes(campaign.status)) {
     throw new Error(`Cannot launch campaign in status ${campaign.status}`);
   }
@@ -59,8 +66,35 @@ export async function launchCampaign(campaignId: string): Promise<{ recipientCou
 
   if (!contacts.length) throw new Error("Audience is empty after suppressions");
 
+  const priorStatus = campaign.status;
+
+  // Claim exclusive launch rights before mutating recipients / enqueueing.
+  const claimed = await prisma.campaign.updateMany({
+    where: {
+      id: campaignId,
+      status: { in: ["DRAFT", "SCHEDULED", "PAUSED"] },
+    },
+    data: {
+      status: "SENDING",
+      sentAt: campaign.sentAt ?? new Date(),
+      pausedAt: null,
+      pauseReason: null,
+      recipientCount: contacts.length,
+    },
+  });
+  if (claimed.count !== 1) {
+    const current = await prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: { status: true, recipientCount: true },
+    });
+    if (current && ["SENDING", "COMPLETED"].includes(current.status)) {
+      return { recipientCount: current.recipientCount, alreadyLaunched: true };
+    }
+    throw new Error(`Cannot launch campaign in status ${current?.status ?? "unknown"}`);
+  }
+
   // Clear previous snapshot if relaunching from PAUSED with no pending left, or fresh launch
-  if (campaign.status === "DRAFT" || campaign.status === "SCHEDULED") {
+  if (priorStatus === "DRAFT" || priorStatus === "SCHEDULED") {
     await prisma.campaignRecipient.deleteMany({ where: { campaignId } });
     await prisma.campaignLink.deleteMany({ where: { campaignId } });
 
@@ -75,17 +109,6 @@ export async function launchCampaign(campaignId: string): Promise<{ recipientCou
       skipDuplicates: true,
     });
   }
-
-  await prisma.campaign.update({
-    where: { id: campaignId },
-    data: {
-      status: "SENDING",
-      sentAt: campaign.sentAt ?? new Date(),
-      pausedAt: null,
-      pauseReason: null,
-      recipientCount: contacts.length,
-    },
-  });
 
   const pending = await prisma.campaignRecipient.findMany({
     where: { campaignId, status: "PENDING" },

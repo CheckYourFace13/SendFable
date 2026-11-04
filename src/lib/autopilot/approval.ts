@@ -14,8 +14,13 @@ import {
   campaignAudienceIsSendable,
   labelCampaignAudience,
 } from "@/lib/autopilot/audience";
+import {
+  resolveAutopilotReviewOutcome,
+  type AutopilotReviewOutcome,
+} from "@/lib/autopilot/review-outcome";
 
 export { humanizeScribeChange, renderAutopilotApprovalEmail } from "@/lib/autopilot/approval-copy";
+export { resolveAutopilotReviewOutcome, type AutopilotReviewOutcome } from "@/lib/autopilot/review-outcome";
 
 export async function signAutopilotActionToken(opts: {
   draftId: string;
@@ -168,12 +173,6 @@ export async function loadAutopilotReview(token: string) {
     include: { campaign: true, workspace: true },
   });
   if (!draft) return { error: "not_found" as const };
-  if (draft.approvalTokenVersion !== verified.version) {
-    return { error: "token_used" as const };
-  }
-  if (!["AWAITING_APPROVAL", "DRAFTED", "EDITING"].includes(draft.status)) {
-    return { error: "already_decided" as const, draft, action: verified.action };
-  }
 
   const audienceTagIds = (draft.campaign?.audienceTagIds as string[]) ?? [];
   const audienceTags = audienceTagIds.length
@@ -197,7 +196,32 @@ export async function loadAutopilotReview(token: string) {
       })
     : 0;
 
-  return { draft, action: verified.action, recipients, token, audienceLabel };
+  const tokenMatches = draft.approvalTokenVersion === verified.version;
+  const open =
+    tokenMatches && ["AWAITING_APPROVAL", "DRAFTED", "EDITING"].includes(draft.status);
+
+  if (!open) {
+    // Token may be stale after a successful decide — never show a bare "already used"
+    // when we can report the real campaign/draft state.
+    const resolved = resolveAutopilotReviewOutcome(draft);
+    return {
+      draft,
+      action: verified.action,
+      recipients,
+      audienceLabel,
+      outcome: resolved.outcome,
+      scheduledLabel: resolved.scheduledLabel,
+    };
+  }
+
+  return {
+    draft,
+    action: verified.action,
+    recipients,
+    token,
+    audienceLabel,
+    outcome: "open" as const,
+  };
 }
 
 /**
@@ -222,14 +246,40 @@ export async function executeAutopilotAction(opts: {
     include: { campaign: true },
   });
   if (!draft) return { ok: false, error: "not_found" };
+
+  // Idempotent replay: stale token after a successful decide returns the real state.
   if (draft.approvalTokenVersion !== verified.version) {
-    return { ok: false, error: "token_used" };
+    const resolved = resolveAutopilotReviewOutcome(draft);
+    if (resolved.outcome === "scheduled") {
+      return {
+        ok: true,
+        result: "scheduled",
+        campaignId: draft.campaignId ?? undefined,
+        scheduledLabel: resolved.scheduledLabel || "the time you chose",
+      };
+    }
+    if (resolved.outcome === "sent") {
+      return {
+        ok: true,
+        result: "scheduled",
+        campaignId: draft.campaignId ?? undefined,
+        scheduledLabel: "already sent",
+      };
+    }
+    if (resolved.outcome === "rejected") {
+      return { ok: true, result: "rejected" };
+    }
+    if (resolved.outcome === "editing") {
+      return { ok: true, result: "edit", campaignId: draft.campaignId ?? undefined };
+    }
+    return { ok: false, error: "already_decided" };
   }
 
   if (verified.action === "approve") {
     return scheduleAutopilotDraft({
       draftId: draft.id,
       workspaceId: draft.workspaceId,
+      expectedTokenVersion: verified.version,
       confirm: opts.confirm,
       date: opts.date,
       time: opts.time,
@@ -240,6 +290,7 @@ export async function executeAutopilotAction(opts: {
   return applyAutopilotDecision({
     draftId: draft.id,
     workspaceId: draft.workspaceId,
+    expectedTokenVersion: verified.version,
     action: verified.action,
     confirm: opts.confirm,
   });
@@ -248,6 +299,7 @@ export async function executeAutopilotAction(opts: {
 export async function applyAutopilotDecision(opts: {
   draftId: string;
   workspaceId: string;
+  expectedTokenVersion: number;
   action: AutopilotAction;
   confirm: boolean;
 }): Promise<
@@ -265,8 +317,13 @@ export async function applyAutopilotDecision(opts: {
   if (opts.action === "edit") {
     if (!opts.confirm) return { ok: false, error: "confirm_required" };
     if (!draft.campaignId) return { ok: false, error: "no_campaign" };
-    await prisma.marketingAutopilotDraft.update({
-      where: { id: draft.id },
+    const claimed = await prisma.marketingAutopilotDraft.updateMany({
+      where: {
+        id: draft.id,
+        workspaceId: opts.workspaceId,
+        approvalTokenVersion: opts.expectedTokenVersion,
+        status: { in: ["AWAITING_APPROVAL", "DRAFTED", "EDITING"] },
+      },
       data: {
         status: "EDITING",
         decidedAt: new Date(),
@@ -274,6 +331,7 @@ export async function applyAutopilotDecision(opts: {
         approvalTokenVersion: { increment: 1 },
       },
     });
+    if (claimed.count !== 1) return { ok: false, error: "already_decided" };
     try {
       ensureAnalyticsPersistence();
       trackEvent("autopilot_edit_clicked");
@@ -285,8 +343,13 @@ export async function applyAutopilotDecision(opts: {
 
   if (opts.action === "reject") {
     if (!opts.confirm) return { ok: false, error: "confirm_required" };
-    await prisma.marketingAutopilotDraft.update({
-      where: { id: draft.id },
+    const claimed = await prisma.marketingAutopilotDraft.updateMany({
+      where: {
+        id: draft.id,
+        workspaceId: opts.workspaceId,
+        approvalTokenVersion: opts.expectedTokenVersion,
+        status: { in: ["AWAITING_APPROVAL", "DRAFTED", "EDITING"] },
+      },
       data: {
         status: "REJECTED",
         decidedAt: new Date(),
@@ -294,6 +357,7 @@ export async function applyAutopilotDecision(opts: {
         approvalTokenVersion: { increment: 1 },
       },
     });
+    if (claimed.count !== 1) return { ok: false, error: "already_decided" };
     try {
       ensureAnalyticsPersistence();
       trackEvent("autopilot_rejected");
@@ -310,6 +374,7 @@ export async function applyAutopilotDecision(opts: {
 export async function scheduleAutopilotDraft(opts: {
   draftId: string;
   workspaceId: string;
+  expectedTokenVersion: number;
   confirm: boolean;
   date?: string | null;
   time?: string | null;
@@ -331,7 +396,8 @@ export async function scheduleAutopilotDraft(opts: {
     include: { campaign: true },
   });
   if (!draft?.campaignId || !draft.campaign) return { ok: false, error: "no_campaign" };
-  if (["SENDING", "SENT"].includes(draft.campaign.status)) {
+  // Campaign enum uses COMPLETED (not SENT) after delivery.
+  if (["SENDING", "COMPLETED"].includes(draft.campaign.status)) {
     return { ok: false, error: "already_decided" };
   }
   const open = ["AWAITING_APPROVAL", "DRAFTED", "EDITING", "APPROVED"].includes(draft.status);
@@ -355,23 +421,63 @@ export async function scheduleAutopilotDraft(opts: {
     };
   }
 
-  await prisma.$transaction([
-    prisma.campaign.update({
-      where: { id: draft.campaignId },
-      data: { status: "SCHEDULED", scheduledAt: when.at },
-    }),
-    prisma.marketingAutopilotDraft.update({
-      where: { id: draft.id },
-      data: {
-        status: "APPROVED",
-        decidedAt: new Date(),
-        decidedAction: "SCHEDULE",
-        scheduledFor: when.at,
-        scheduleTimezone: when.timezone,
-        approvalTokenVersion: { increment: 1 },
-      },
-    }),
-  ]);
+  // Claim the token version and schedule in one transaction. Token version only
+  // increments when both campaign + draft writes succeed — so a failed schedule
+  // leaves the link usable. Concurrent POSTs: only one claim wins.
+  const scheduledLabel = formatScheduledWhen(when.at, when.timezone);
+  try {
+    await prisma.$transaction(async (tx) => {
+      const claimed = await tx.marketingAutopilotDraft.updateMany({
+        where: {
+          id: draft.id,
+          workspaceId: opts.workspaceId,
+          approvalTokenVersion: opts.expectedTokenVersion,
+          status: { in: ["AWAITING_APPROVAL", "DRAFTED", "EDITING", "APPROVED"] },
+        },
+        data: {
+          status: "APPROVED",
+          decidedAt: new Date(),
+          decidedAction: "SCHEDULE",
+          scheduledFor: when.at,
+          scheduleTimezone: when.timezone,
+          approvalTokenVersion: { increment: 1 },
+        },
+      });
+      if (claimed.count !== 1) {
+        throw new Error("ALREADY_DECIDED");
+      }
+      const camp = await tx.campaign.updateMany({
+        where: {
+          id: draft.campaignId!,
+          status: { in: ["DRAFT", "SCHEDULED", "PAUSED"] },
+        },
+        data: { status: "SCHEDULED", scheduledAt: when.at },
+      });
+      if (camp.count !== 1) {
+        throw new Error("ALREADY_DECIDED");
+      }
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === "ALREADY_DECIDED") {
+      const again = await prisma.marketingAutopilotDraft.findFirst({
+        where: { id: draft.id },
+        include: { campaign: true },
+      });
+      if (again) {
+        const resolved = resolveAutopilotReviewOutcome(again);
+        if (resolved.outcome === "scheduled" || resolved.outcome === "sent") {
+          return {
+            ok: true,
+            result: "scheduled",
+            campaignId: again.campaignId ?? undefined,
+            scheduledLabel: resolved.scheduledLabel || scheduledLabel,
+          };
+        }
+      }
+      return { ok: false, error: "already_decided" };
+    }
+    throw err;
+  }
 
   try {
     ensureAnalyticsPersistence();
@@ -384,7 +490,7 @@ export async function scheduleAutopilotDraft(opts: {
     ok: true,
     result: "scheduled",
     campaignId: draft.campaignId,
-    scheduledLabel: formatScheduledWhen(when.at, when.timezone),
+    scheduledLabel,
   };
 }
 

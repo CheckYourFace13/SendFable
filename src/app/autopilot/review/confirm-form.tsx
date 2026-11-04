@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { AutopilotScheduleForm } from "@/components/app/autopilot-schedule-form";
 
 export function AutopilotConfirmForm({
@@ -15,7 +14,6 @@ export function AutopilotConfirmForm({
   audience?: string;
   recipientCount?: number;
 }) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
@@ -31,6 +29,7 @@ export function AutopilotConfirmForm({
   } as const;
 
   async function onConfirm(schedule?: { date: string; time: string; timezone: string }) {
+    if (busy || done) return;
     setBusy(true);
     setError(null);
     try {
@@ -50,13 +49,19 @@ export function AutopilotConfirmForm({
         return;
       }
       if (json.result === "scheduled") {
-        setDone(`Scheduled for ${json.scheduledLabel || "the time you chose"}. Nothing sends before then.`);
+        const label = json.scheduledLabel || "the time you chose";
+        setDone(
+          label === "already sent"
+            ? "Campaign sent. Reopening this link does not send again."
+            : `Campaign scheduled for: ${label}`
+        );
       } else if (json.result === "rejected") {
         setDone("Got it — this campaign will not send.");
       } else {
         setDone("Done.");
       }
-      router.refresh();
+      // Do not refresh the server page here: a refresh reloads the review GET with the
+      // now-stale token and used to wipe this success UI with "link already used".
     } catch {
       setError("Network error — try again");
     } finally {

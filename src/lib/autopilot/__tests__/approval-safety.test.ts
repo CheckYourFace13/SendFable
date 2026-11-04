@@ -22,6 +22,7 @@ describe("autopilot approval safety", () => {
     assert.match(src, /confirm_required/);
     assert.match(src, /schedule_required/);
     assert.doesNotMatch(src, /launchCampaign/);
+    assert.match(src, /expectedTokenVersion/);
     // GET review path must not call launch
     const review = readFileSync(
       join(process.cwd(), "src/app/autopilot/review/page.tsx"),
@@ -29,6 +30,8 @@ describe("autopilot approval safety", () => {
     );
     assert.doesNotMatch(review, /launchCampaign/);
     assert.match(review, /Opening this page does not send/);
+    assert.match(review, /Campaign sent/);
+    assert.match(review, /Campaign scheduled/);
   });
 
   it("worker tick never launches campaigns", () => {
