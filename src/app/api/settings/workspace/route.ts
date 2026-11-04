@@ -60,18 +60,19 @@ export async function PATCH(req: Request) {
     });
   }
 
-  const homeTimezone =
-    parsed.data.timezone === undefined
-      ? undefined
-      : normalizeHomeTimezone(parsed.data.timezone);
-  if (parsed.data.timezone !== undefined && !homeTimezone) {
-    return NextResponse.json({ error: "Choose a supported home timezone" }, { status: 400 });
+  let nextTimezone: string | undefined;
+  if (parsed.data.timezone !== undefined) {
+    const normalized = normalizeHomeTimezone(parsed.data.timezone);
+    if (!normalized) {
+      return NextResponse.json({ error: "Choose a supported home timezone" }, { status: 400 });
+    }
+    nextTimezone = normalized;
   }
 
-  if (homeTimezone) {
+  if (nextTimezone) {
     await prisma.user.update({
       where: { id: ctx.user.id },
-      data: { timezone: homeTimezone },
+      data: { timezone: nextTimezone },
     });
   }
 
@@ -81,7 +82,7 @@ export async function PATCH(req: Request) {
       name: parsed.data.name,
       mailingAddress:
         parsed.data.mailingAddress === undefined ? undefined : parsed.data.mailingAddress,
-      timezone: homeTimezone,
+      timezone: nextTimezone,
       defaultSenderIdentityId:
         parsed.data.defaultSenderIdentityId === undefined
           ? undefined
