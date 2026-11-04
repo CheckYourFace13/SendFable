@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { ACQUISITION_AUTOPILOT_LANDING } from "@/lib/acquisition/personalize";
 import { draftMessageForProspect } from "@/lib/acquisition/send";
 import {
+  isCurrentAutopilotInitial,
   orderSendCandidates,
   planStaleInitial,
   SENT_INITIAL_STATUSES,
@@ -122,12 +123,11 @@ export async function loadSendCandidates(limit = 30) {
         dryRun: false,
         status: { in: ["DRAFT", "SCHEDULED"] },
         step: "INITIAL",
-        ctaPath: ACQUISITION_AUTOPILOT_LANDING,
         NOT: { copyVersion: WEBSITE_DEMO_COPY_VERSION },
       },
       include: { prospect: true },
       orderBy: { createdAt: "asc" },
-      take: 40,
+      take: 80,
     }),
     prisma.acquisitionMessage.findMany({
       where: {
@@ -141,8 +141,11 @@ export async function loadSendCandidates(limit = 30) {
     }),
   ]);
 
+  // Prefer Autopilot landing drafts, but also allow utility_signup / try-builder
+  // currents that isCurrentAutopilotInitial accepts (orderSendCandidates filters).
+  const currentInitials = initials.filter((m) => isCurrentAutopilotInitial(m));
   const ordered = orderSendCandidates(
-    [...initials, ...followUps].map((m) => ({
+    [...currentInitials, ...followUps].map((m) => ({
       ...m,
       createdAt: m.createdAt,
     })) as Array<QueueMessage & (typeof initials)[number]>

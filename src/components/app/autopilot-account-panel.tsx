@@ -80,7 +80,7 @@ export function AutopilotAccountPanel({
           <div className="mt-3 space-y-3 text-sm">
             <p className="font-medium">Try Scribe free for 3 months.</p>
             <p>1 campaign creation each month. No credit card required.</p>
-            <p>Nothing sends until you schedule it.</p>
+            <p>Nothing sends until you choose Send now or schedule it.</p>
             <p className="text-muted-foreground">
               Unused trial creations do not roll over. This is separate from your Free plan&apos;s
               monthly emails.

@@ -16,6 +16,7 @@ import {
   ratesOverDays,
   UNSUB_SAFETY_THRESHOLDS,
 } from "@/lib/acquisition/ramp";
+import { capsForStage } from "@/lib/acquisition/flags";
 import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { prisma } from "@/lib/prisma";
 import { trackComparisonLines } from "@/lib/acquisition/website-demo/metrics";
@@ -202,6 +203,36 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
   });
 
   const stageCaps = await getStageCaps();
+  const stageChangesToday = await prisma.acquisitionEvent.findMany({
+    where: {
+      type: { in: ["stage_reduced", "stage_ramped", "stage_set"] },
+      createdAt: { gte: since },
+    },
+    orderBy: { createdAt: "asc" },
+    select: { type: true, meta: true, createdAt: true },
+    take: 10,
+  });
+  const firstStageChange = stageChangesToday[0] || null;
+  const lastStageChange = stageChangesToday[stageChangesToday.length - 1] || null;
+  const firstMeta = (firstStageChange?.meta || null) as {
+    from?: number;
+    to?: number;
+    stage?: number;
+    reason?: string;
+  } | null;
+  const lastMeta = (lastStageChange?.meta || null) as {
+    from?: number;
+    to?: number;
+    stage?: number;
+    reason?: string;
+  } | null;
+  const dayStartStage =
+    typeof firstMeta?.from === "number"
+      ? firstMeta.from
+      : typeof firstMeta?.stage === "number"
+        ? firstMeta.stage
+        : stageCaps.stage;
+  const baseCaps = capsForStage(dayStartStage);
   const { getInventoryHealth } = await import("@/lib/acquisition/discovery/inventory");
   const inventory = await getInventoryHealth();
   const { getConversionOptimizationSnapshot } = await import(
@@ -212,6 +243,9 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     (conversion as { activeCopyVersion?: string; abTest?: { enabled?: boolean } } | null)
       ?.activeCopyVersion || "v1a/v1b Autopilot A/B";
   const rates7 = await ratesOverDays(7);
+  const softBackoffActive =
+    stageChangesToday.some((e) => e.type === "stage_reduced") ||
+    (rates7.sent >= 20 && (rates7.bounceRate > 0.02 || rates7.unsubRate > 0.02));
   const unsubSafetyLine = formatUnsubSafetyExplanation({
     sent: rates7.sent,
     unsubscribed: rates7.unsubscribed,
@@ -224,6 +258,14 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     year: "numeric",
     timeZone: REPORT_TZ,
   });
+
+  const stageTransitionLine = lastStageChange
+    ? `Stage change today: ${lastStageChange.type} ${
+        typeof lastMeta?.from === "number" && typeof lastMeta?.to === "number"
+          ? `${lastMeta.from}→${lastMeta.to}`
+          : ""
+      }${lastMeta?.reason ? ` (${lastMeta.reason})` : ""} at ${lastStageChange.createdAt.toISOString()}`
+    : "Stage change today: none";
 
   return [
     `SendFable Acquisition — ${dateLabel} (America/Chicago day)`,
@@ -249,11 +291,16 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
     ...(await trackComparisonLines(since)),
     "",
     `Current A/B: ${abWinner}`,
-    `Current stage: ${stageCaps.stage}`,
-    `Daily Casey new cap: ${stageCaps.newPerDay}`,
+    `BASE STAGE (start of Chicago day / pre-change): ${dayStartStage}`,
+    `BASE NEW CAP: ${baseCaps.newPerDay}`,
+    `BASE TOTAL CAP: ${baseCaps.totalPerDay}`,
+    `CURRENT EFFECTIVE STAGE: ${stageCaps.stage}`,
+    `CURRENT EFFECTIVE NEW CAP: ${stageCaps.newPerDay}`,
+    `CURRENT EFFECTIVE TOTAL CAP: ${stageCaps.totalPerDay}`,
+    `SOFT BACKOFF: ${softBackoffActive ? "ACTIVE" : "INACTIVE"}`,
+    stageTransitionLine,
     `Personalized demo cap: ${WEBSITE_DEMO_DAILY_NEW_LIMIT}/day (separate; does not consume Casey cap)`,
-    `Combined new capacity: ${stageCaps.newPerDay + WEBSITE_DEMO_DAILY_NEW_LIMIT}/day`,
-    `Daily Casey total cap: ${stageCaps.totalPerDay}`,
+    `Combined new capacity (effective): ${stageCaps.newPerDay + WEBSITE_DEMO_DAILY_NEW_LIMIT}/day`,
     `Inventory (sendable): ${inventory.sendableInventory}`,
     `Pipeline paused: ${paused.paused ? `YES (${paused.reason || "—"})` : "NO"}`,
     `7D safety sends: ${rates7.sent}`,

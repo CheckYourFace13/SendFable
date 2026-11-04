@@ -401,7 +401,7 @@ export default function ScribePage() {
             <p className="font-medium">Try Scribe free for 3 months</p>
             <p className="mt-1 text-muted-foreground">
               1 campaign creation each month. No credit card required. Nothing sends until you
-              schedule it.
+              choose Send now or schedule it.
             </p>
             <a className="mt-3 inline-block font-medium text-coral underline" href="#usage">
               Start the trial

@@ -36,7 +36,7 @@ const STEPS = [
   },
   {
     name: "Send a test, then a small campaign",
-    text: "Create a short email in Simple Mode, send a test to yourself, then send to a small segment first if the list is large or quiet. After you are sending, Scribe can watch a public page and prepare the next email. Nothing sends until you schedule it.",
+    text: "Create a short email in Simple Mode, send a test to yourself, then send to a small segment first if the list is large or quiet. After you are sending, Scribe can watch a public page and prepare the next email. Nothing sends until you choose Send now or schedule it.",
   },
 ];
 

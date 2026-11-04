@@ -317,10 +317,17 @@ export async function getActiveCopyVersion(): Promise<CopyVersionId> {
   const { copyVersion, state } = await readOptState();
   // Autopilot pitch A/B (v1a vs v1b) is on by default. Only pin a single
   // version when optimization explicitly disables the test.
+  // Do not silently route half of drafts to utility_signup — that CTA is not
+  // in the Casey send loop (loadSendCandidates filters Autopilot landing).
   if (state.abTest?.enabled === false) {
     return isCopyVersionId(copyVersion) ? copyVersion : DEFAULT_COPY_VERSION;
   }
-  return Math.random() < 0.5 ? "v1a" : "utility_signup";
+  const control = state.abTest?.control === "v1a" ? "v1a" : "v1a";
+  const variant =
+    state.abTest?.variant === "v1b" || state.abTest?.variant === "v2a"
+      ? state.abTest.variant
+      : "v1b";
+  return Math.random() < 0.5 ? control : variant;
 }
 
 export async function getPreferredDiscoveryBias(): Promise<{

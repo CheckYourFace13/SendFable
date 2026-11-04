@@ -116,7 +116,7 @@ export function WebsiteToEmailProof() {
           </span>
         </div>
         <p className="mt-3 text-center text-sm font-bold uppercase tracking-wider text-coral">
-          Nothing sends until you schedule it.
+          Nothing sends until you choose Send now or schedule it.
         </p>
       </div>
     </figure>

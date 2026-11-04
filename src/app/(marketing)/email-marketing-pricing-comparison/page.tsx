@@ -142,7 +142,7 @@ export default function EmailMarketingPricingComparisonPage() {
           <li>Campaign-first UI, Simple Mode, Send Confidence, CSV import, hosted signup tools</li>
           <li>
             Email, Text, or Both. Scribe is a 3-month free trial on Free (1 campaign a
-            month), then a monthly allowance on paid plans. Nothing sends until you schedule it.
+            month), then a monthly allowance on paid plans. Nothing sends until you choose Send now or schedule it.
           </li>
         </ul>
         <h3 className="mt-8 text-lg font-semibold text-ink">Where others may win</h3>

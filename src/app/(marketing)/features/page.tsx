@@ -84,7 +84,7 @@ export default function FeaturesPage() {
     {
       id: "approval",
       title: "Owner approval",
-      body: "Approve & Schedule, Edit, or Skip this campaign. Nothing sends until you schedule it. If you do nothing, the draft stays waiting.",
+      body: "Approve & Schedule, Edit, or Skip this campaign. Nothing sends until you choose Send now or schedule it. If you do nothing, the draft stays waiting.",
     },
     {
       id: "contacts",

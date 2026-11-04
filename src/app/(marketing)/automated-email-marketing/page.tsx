@@ -62,7 +62,7 @@ const FAQS = [
   },
   {
     q: "Does opening the approval email send the campaign?",
-    a: "No. Email security scanners often open links automatically. Approve & Schedule opens a page where you choose a date, time, and timezone. Nothing sends until you schedule it.",
+    a: "No. Email security scanners often open links automatically. Approve & Schedule opens a confirmation page where you choose Send now or pick a date, time, and timezone. Nothing sends until you do.",
   },
   {
     q: "Which plans include Scribe?",
@@ -70,7 +70,7 @@ const FAQS = [
   },
   {
     q: "Does Scribe send texts too?",
-    a: "Scribe drafts email. Text messaging is a separate paid add-on for campaigns you create as Email, Text, or Both. Scribe does not send a text on its own, and nothing sends until you schedule it.",
+    a: "Scribe drafts email. Text messaging is a separate paid add-on for campaigns you create as Email, Text, or Both. Scribe does not send a text on its own, and nothing sends until you choose Send now or schedule it.",
   },
 ];
 
@@ -109,8 +109,8 @@ export default function AutomatedEmailMarketingPage() {
       <div className="mt-6 rounded-xl border-2 border-coral/40 bg-coral/5 px-5 py-4">
         <p className="text-sm font-bold uppercase tracking-wider text-coral">No approval. No send.</p>
         <p className="mt-1 text-sm text-ink/70">
-          Nothing sends until you schedule it. Try Scribe free for 3 months. 1 creation a month during
-          the trial.
+          Nothing sends until you choose Send now or schedule it. Try Scribe free for 3 months. 1
+          creation a month during the trial.
         </p>
       </div>
 
@@ -177,8 +177,8 @@ export default function AutomatedEmailMarketingPage() {
               b: "You see the finished draft. Edit it, or skip this campaign.",
             },
             {
-              t: "Schedule",
-              b: "You choose the date and time. Nothing sends until you do. No reply means it waits.",
+              t: "Send or schedule",
+              b: "Choose Send now or pick a date and time. Nothing sends until you do. No reply means it waits.",
             },
           ].map((s, i) => (
             <li key={s.t} className="flex gap-4">
@@ -207,11 +207,11 @@ export default function AutomatedEmailMarketingPage() {
       </section>
 
       <section className="mt-16 rounded-xl border border-ink/10 bg-parchment/50 p-6">
-        <h2 className="text-xl font-semibold text-ink">Your content, your look, then you schedule</h2>
+        <h2 className="text-xl font-semibold text-ink">Your content, your look, then you decide</h2>
         <p className="mt-2 text-sm text-ink/65">
           Competitors often offer complex automation builders. SendFable&apos;s differentiator is
           simpler: watch the page where you already post promotions, prepare the campaign, and wait
-          for you. Nothing sends until you schedule it.
+          for you. Nothing sends until you choose Send now or schedule it.
         </p>
         <p className="mt-4 text-sm">
           <Link href="/compare/mailchimp" className="text-coral underline">
@@ -250,7 +250,7 @@ export default function AutomatedEmailMarketingPage() {
       <Faq items={FAQS} />
       <MarketingCta
         title="Fresh content in. A campaign ready for your review."
-        body="Start free. Point Scribe at one page. Nothing sends until you schedule it."
+        body="Start free. Point Scribe at one page. Nothing sends until you choose Send now or schedule it."
         primaryLabel="Start free"
       />
     </div>

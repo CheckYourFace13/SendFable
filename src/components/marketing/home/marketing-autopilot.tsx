@@ -57,7 +57,7 @@ export function MarketingAutopilotHome() {
             a month.
           </p>
           <p className="mt-4 text-sm font-bold uppercase tracking-wider text-coral">
-            Nothing sends until you schedule it.
+            Nothing sends until you choose Send now or schedule it.
           </p>
         </div>
 

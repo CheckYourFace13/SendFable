@@ -43,7 +43,7 @@ export default function FaqPage() {
     },
     {
       q: "What is Scribe?",
-      a: "Scribe watches a page on your website and drafts a campaign in your look. You Approve & Schedule, Edit, or Skip. Nothing sends until you schedule it.",
+      a: "Scribe watches a page on your website and drafts a campaign in your look. You Approve & Schedule, Edit, or Skip. Nothing sends until you choose Send now or schedule it.",
     },
     {
       q: "Does Scribe send automatically?",
