@@ -103,6 +103,6 @@ describe("review link UI safety (source)", () => {
     assert.match(send, /updateMany/);
     assert.match(send, /alreadyLaunched/);
     const queue = readFileSync(join(process.cwd(), "src/lib/queue.ts"), "utf8");
-    assert.match(queue, /jobId: `campaign-send:\$\{data\.recipientId\}`/);
+    assert.match(queue, /jobId: `campaign-send-\$\{data\.recipientId\}`/);
   });
 });

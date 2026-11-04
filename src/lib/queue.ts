@@ -50,7 +50,7 @@ export async function enqueueRecipients(
       await q.add("send", data, {
         // Durable idempotency: duplicate launch/enqueue cannot create a second job
         // for the same recipient row.
-        jobId: `campaign-send:${data.recipientId}`,
+        jobId: `campaign-send-${data.recipientId}`,
         attempts: 3,
         backoff: { type: "exponential", delay: 2000 },
         removeOnComplete: 1000,
