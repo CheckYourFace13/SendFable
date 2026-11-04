@@ -17,7 +17,7 @@ test.describe("Marketing Autopilot public surfaces", () => {
       /Your website changes/i
     );
     await expect(page.locator("#marketing-autopilot")).toContainText(
-      /Nothing sends until you schedule it/i
+      /Nothing sends until you choose Send now or schedule it/i
     );
     await expect(page.locator("#marketing-autopilot")).toContainText(
       /3 months/i

@@ -53,7 +53,7 @@ test.describe("Marketing Autopilot certification surfaces", () => {
     await expect(section).toBeVisible();
     await expect(section).toContainText(/Your website changes/i);
     await expect(section).toContainText(/You choose when it sends/i);
-    await expect(section).toContainText(/Nothing sends until you schedule it/i);
+    await expect(section).toContainText(/Nothing sends until you choose Send now or schedule it/i);
     await expect(section.getByRole("link", { name: /Start free/i })).toBeVisible();
   });
 
