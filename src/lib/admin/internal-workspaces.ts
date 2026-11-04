@@ -7,6 +7,7 @@ import { FORM_PRESETS } from "@/lib/form-presets";
 import { assertSafePublicUrl } from "@/lib/ssrf";
 import { internalWorkspaceHealth } from "@/lib/owner-admin-access";
 import { softwareQuotas } from "@/lib/internal-entitlement";
+import { resolveHomeTimezone } from "@/lib/home-timezone";
 
 const PLAN_KEYS = new Set<Plan>(["FREE", "STARTER", "GROWTH", "PRO", "PRO_PLUS"]);
 
@@ -131,6 +132,8 @@ export async function createInternalWorkspace(opts: {
   internalLabel?: string;
   plan?: Plan;
   mailingAddress?: string | null;
+  /** Optional IANA home timezone; otherwise account timezone, else UTC. */
+  timezone?: string | null;
   ip?: string | null;
 }) {
   const plan = opts.plan ?? "FREE";
@@ -168,6 +171,15 @@ export async function createInternalWorkspace(opts: {
     mailingAddress = home?.workspace.mailingAddress?.trim() || null;
   }
 
+  const adminUser = await prisma.user.findUnique({
+    where: { id: opts.adminUserId },
+    select: { timezone: true },
+  });
+  const homeTimezone = resolveHomeTimezone({
+    workspaceTimezone: opts.timezone,
+    accountTimezone: adminUser?.timezone,
+  });
+
   const workspace = await prisma.$transaction(async (tx) => {
     const ws = await tx.workspace.create({
       data: {
@@ -177,7 +189,7 @@ export async function createInternalWorkspace(opts: {
         internalPlanOverride: plan,
         internalLabel: opts.internalLabel?.trim() || opts.name.trim(),
         mailingAddress,
-        timezone: "America/Chicago",
+        timezone: homeTimezone,
         primaryColor: "#1B4332",
         secondaryColor: "#081C15",
         onboardingCompletedAt: new Date(),
