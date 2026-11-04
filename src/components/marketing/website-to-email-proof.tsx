@@ -17,7 +17,7 @@ function LatteArt() {
   );
 }
 
-const STEPS = ["Their content", "Their look", "You schedule"];
+const STEPS = ["Their content", "Their look", "You send or schedule"];
 
 export function WebsiteToEmailProof() {
   return (

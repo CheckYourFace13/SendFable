@@ -69,7 +69,7 @@ export default function PricingPage() {
                 },
                 {
                   q: "Is Scribe included?",
-                  a: `Scribe drafts a campaign from a page you choose and waits for you to schedule it. Free can try it for 3 months, with 1 creation a month. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
+                  a: `Scribe drafts a campaign from a page you choose. Nothing sends until you choose Send now or schedule it. Free can try it for 3 months, with 1 creation a month. Starter includes ${autopilotMaxDraftsPerMonth("STARTER")} a month, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, and Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")}.`,
                 },
                 {
                   q: "Can I buy more Scribe creations?",

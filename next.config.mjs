@@ -13,6 +13,10 @@ const nextConfig = {
   async redirects() {
     return [
       { source: "/favicon.ico", destination: "/icon.svg", permanent: false },
+      // Compat aliases — canonical embed script remains /embed/form.js.
+      { source: "/embed.js", destination: "/embed/form.js", permanent: true },
+      // Docs hub for installs; do not invent a second /embeds page.
+      { source: "/embeds", destination: "/integrations", permanent: true },
       // Content hub lives at /resources — do not 404 /blog.
       { source: "/blog", destination: "/resources", permanent: true },
       { source: "/blog/:path*", destination: "/resources", permanent: true },

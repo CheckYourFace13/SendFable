@@ -37,7 +37,7 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
     ["Billing basis", "Contact + monthly email caps", competitor.billingBasis],
     [
       "Automation",
-      "Scribe: your content, your look, then you schedule. Plus campaigns, signup tools, and Email, Text, or Both.",
+      "Scribe: your content, your look, then you send now or schedule. Plus campaigns, Signup Tools, and Email, Text, or Both.",
       capabilityLabel(competitor.automation),
     ],
     ["CRM", "Not a CRM suite", capabilityLabel(competitor.crm)],
@@ -237,7 +237,7 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
           <p className="mt-2">{competitor.deliverabilityNote}</p>
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-ink">Forms and list growth</h2>
+          <h2 className="text-xl font-semibold text-ink">Signup Tools and list growth</h2>
           <p className="mt-2">{competitor.formsNote}</p>
         </div>
         <div>

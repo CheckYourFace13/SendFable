@@ -91,7 +91,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "restaurant",
     industry: "restaurant",
     goal: "sale",
-    suggestedSubjects: ["Tonight’s special for {{first_name|you}}", "A table’s waiting"],
+    suggestedSubjects: [
+      "Tonight’s special for {{first_name|you}}",
+      "A table’s waiting",
+      "Chef’s pick this week",
+      "Before we run out: this week’s special",
+    ],
     suggestedPreviewText: "Chef’s picks this week",
     recommendedCta: "Reserve a table",
     designJson: simpleIndustryDesign({
@@ -109,7 +114,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "brewery",
     industry: "brewery",
     goal: "sale",
-    suggestedSubjects: ["Tasting flight this Friday", "New pours on tap"],
+    suggestedSubjects: [
+      "Tasting flight this Friday",
+      "New pours on tap",
+      "Save a seat for tasting night",
+      "Four pours. One evening.",
+    ],
     suggestedPreviewText: "Save your spot at the bar",
     recommendedCta: "Get tickets",
     designJson: simpleIndustryDesign({
@@ -127,7 +137,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "retail",
     industry: "retail",
     goal: "sale",
-    suggestedSubjects: ["Weekend sale starts now", "Save before Sunday"],
+    suggestedSubjects: [
+      "Weekend sale starts now",
+      "Save before Sunday",
+      "Member picks are marked down",
+      "Ends Sunday — sizes go fast",
+    ],
     suggestedPreviewText: "Member picks + limited stock",
     recommendedCta: "Shop the sale",
     designJson: simpleIndustryDesign({
@@ -145,7 +160,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "realtor",
     industry: "realtor",
     goal: "news",
-    suggestedSubjects: ["Just listed nearby", "A home you should see"],
+    suggestedSubjects: [
+      "Just listed nearby",
+      "A home you should see",
+      "New on the market this week",
+      "Open-house details inside",
+    ],
     suggestedPreviewText: "Photos + open house details",
     recommendedCta: "See the listing",
     designJson: simpleIndustryDesign({
@@ -163,7 +183,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "salon",
     industry: "salon",
     goal: "welcome",
-    suggestedSubjects: ["Welcome to the chair", "Thanks for joining us"],
+    suggestedSubjects: [
+      "Welcome to the chair",
+      "Thanks for joining us",
+      "Book your first visit",
+      "Glad you’re here — next step inside",
+    ],
     suggestedPreviewText: "How to book + first-visit tips",
     recommendedCta: "Book now",
     designJson: simpleIndustryDesign({
@@ -181,7 +206,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "cafe",
     industry: "cafe",
     goal: "announce",
-    suggestedSubjects: ["This week at the cafe", "Pastries you’ll want first thing"],
+    suggestedSubjects: [
+      "This week at the cafe",
+      "Pastries you’ll want first thing",
+      "New drinks on the board",
+      "Monday specials are up",
+    ],
     suggestedPreviewText: "Drinks + bites for the week",
     recommendedCta: "See the menu",
     designJson: simpleIndustryDesign({
@@ -199,7 +229,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "event",
     industry: "event",
     goal: "sale",
-    suggestedSubjects: ["You’re invited", "Save the date"],
+    suggestedSubjects: [
+      "You’re invited",
+      "Save the date",
+      "Join us — details + RSVP",
+      "A night we’d love you at",
+    ],
     suggestedPreviewText: "Date, place, and RSVP",
     recommendedCta: "RSVP",
     designJson: simpleIndustryDesign({
@@ -217,7 +252,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "newsletter",
     industry: "general",
     goal: "news",
-    suggestedSubjects: ["What’s new this month", "A quick update for you"],
+    suggestedSubjects: [
+      "What’s new this month",
+      "A quick update for you",
+      "Three things worth a minute",
+      "Your monthly note",
+    ],
     suggestedPreviewText: "Stories worth a minute",
     recommendedCta: "Read more",
     designJson: simpleIndustryDesign({
@@ -235,7 +275,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "holiday-hours",
     industry: "general",
     goal: "news",
-    suggestedSubjects: ["Holiday hours update", "When we’re open"],
+    suggestedSubjects: [
+      "Holiday hours update",
+      "When we’re open",
+      "Plan your visit — holiday hours",
+      "Closed / open dates inside",
+    ],
     suggestedPreviewText: "Plan your visit",
     recommendedCta: "See hours",
     designJson: simpleIndustryDesign({
@@ -253,7 +298,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "win-back",
     industry: "general",
     goal: "winback",
-    suggestedSubjects: ["We miss you", "A little something for your return"],
+    suggestedSubjects: [
+      "We miss you",
+      "A little something for your return",
+      "Come back — thank-you offer inside",
+      "It’s been a while",
+    ],
     suggestedPreviewText: "Come back for a thank-you offer",
     recommendedCta: "Claim offer",
     designJson: simpleIndustryDesign({
@@ -271,7 +321,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "review-request",
     industry: "general",
     goal: "winback",
-    suggestedSubjects: ["How did we do?", "Got 30 seconds?"],
+    suggestedSubjects: [
+      "How did we do?",
+      "Got 30 seconds?",
+      "Quick favor after your visit",
+      "Your feedback helps a lot",
+    ],
     suggestedPreviewText: "Your feedback helps a lot",
     recommendedCta: "Leave a review",
     designJson: simpleIndustryDesign({
@@ -289,7 +344,12 @@ export const PLATFORM_TEMPLATES: PlatformTemplateSeed[] = [
     category: "grand-opening",
     industry: "general",
     goal: "announce",
-    suggestedSubjects: ["We’re open", "Come celebrate with us"],
+    suggestedSubjects: [
+      "We’re open",
+      "Come celebrate with us",
+      "Opening day details inside",
+      "The doors are open",
+    ],
     suggestedPreviewText: "Opening day details inside",
     recommendedCta: "See details",
     designJson: simpleIndustryDesign({

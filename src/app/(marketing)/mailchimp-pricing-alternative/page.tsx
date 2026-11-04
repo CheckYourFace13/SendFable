@@ -51,7 +51,7 @@ export default function MailchimpPricingAlternativePage() {
       <p className="mt-6 text-sm text-ink/75">
         Scribe is not permanently included on Free. Try it free for 3 months: 1
         automatically created campaign per month. Paid plans include a monthly allowance. Nothing
-        sends until you schedule it.{" "}
+        sends until you choose Send now or schedule it.{" "}
         <Link className="text-coral hover:underline" href="/automated-email-marketing">
           See how it works
         </Link>

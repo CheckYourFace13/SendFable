@@ -181,7 +181,7 @@ export default function FeaturesPage() {
           priority
         />
         <figcaption className="px-4 py-3 text-left text-sm text-ink/60">
-          Scribe: your content, your look, then you schedule it.{" "}
+          Scribe: your content, your look, then you send now or schedule it.{" "}
           <Link href="/automated-email-marketing" className="text-coral underline-offset-2 hover:underline">
             See how it works
           </Link>

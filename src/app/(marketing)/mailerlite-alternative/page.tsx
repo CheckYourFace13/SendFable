@@ -22,7 +22,7 @@ export default function MailerLiteAlternativePage() {
     },
     {
       q: "How does the Free plan compare?",
-      a: `SendFable Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month with a small footer badge. MailerLite Free limits change — confirm on their pricing page. Snapshot last checked ${ml.pricingLastChecked}.`,
+      a: `SendFable Free includes up to ${PLANS.FREE.contactCap.toLocaleString()} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month with a small footer badge. MailerLite Free (as of June 16, 2026) includes 250 active subscribers and 2,500 emails/month. Snapshot last checked ${ml.pricingLastChecked}.`,
     },
     {
       q: "Can I switch from MailerLite?",

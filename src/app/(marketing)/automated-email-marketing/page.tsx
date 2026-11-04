@@ -12,7 +12,7 @@ import { PLANS } from "@/lib/plans";
 export const metadata = marketingPageMeta({
   title: "Scribe — automated email marketing from your website content",
   description:
-    "Scribe watches a page on your site, drafts a campaign in your look, and waits until you schedule it.",
+    "Scribe watches a page on your site, drafts a campaign in your look, and waits until you choose Send now or schedule it.",
   path: "/automated-email-marketing",
 });
 
@@ -50,11 +50,11 @@ const USE_CASES = [
 const FAQS = [
   {
     q: "Will SendFable send emails without me?",
-    a: "No. Scribe never sends a generated campaign until you schedule it. No response always means no send.",
+    a: "No. Scribe never sends a generated campaign until you choose Send now or schedule it. No response always means no send.",
   },
   {
     q: "Is this the same as Mailchimp-style automation builders?",
-    a: "No. Scribe is simpler: your page changes, a campaign is drafted in your look, and you schedule it, edit it, or skip it.",
+    a: "No. Scribe is simpler: your page changes, a campaign is drafted in your look, and you send it now, schedule it, edit it, or skip it.",
   },
   {
     q: "What pages can I watch?",

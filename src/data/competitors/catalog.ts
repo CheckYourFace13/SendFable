@@ -145,56 +145,105 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     ],
   }),
 
-  mailerlite: rec({
-    slug: "mailerlite",
-    name: "MailerLite",
-    officialUrl: "https://www.mailerlite.com/",
-    pricingUrl: "https://www.mailerlite.com/pricing",
-    publicComparisonEnabled: true,
-    sources: ["https://www.mailerlite.com/pricing"],
-    freePlanSummary: "Free tier with contact and send limits.",
-    paidPlanSummary: "Growing Business and Advanced scale by subscribers.",
-    billingBasis: "Subscriber-based.",
-    contactLimitsSummary: "Free and paid tiers by subscriber count.",
-    emailLimitsSummary: "Send limits apply on Free; paid tiers raise volume.",
-    automation: "strong",
-    crm: "basic",
-    ecommerce: "basic",
-    sms: "none",
-    newsletterCreator: "basic",
-    integrationsSummary: "Solid common integrations; smaller marketplace than Mailchimp.",
-    supportSummary: "Help center and email support; higher plans improve response priority.",
-    bestFor: ["Budget-conscious marketers who still want polished builders"],
-    potentialDrawbacks: ["Less CRM depth than suites", "Feature set still broader than ultra-simple tools"],
-    sendfableStronger: [
-      "Managed SES positioning",
-      "Very clear small-business Free→Pro Plus ladder",
-      "Any-email signup focus",
-      "Scribe: page changes become a campaign in your look, and you choose when it sends",
-    ],
-    competitorStronger: ["Established builder polish", "Automation depth for the price", "Larger existing user community"],
-    shortAnswer:
-      "MailerLite is a strong affordable established option. SendFable may fit when you want a simpler campaign-first product with managed SES delivery, transparent US-dollar plan caps, and website-to-campaign drafts you approve.",
-    whoSendfableIsFor: "Owners who want a minimal campaign workflow and clear contact/email caps.",
-    whoCompetitorIsFor: "Marketers who want MailerLite’s builder and automations at competitive subscriber pricing.",
-    deliverabilityNote: "Both emphasize permission-based sending. SendFable documents SES-based delivery and sender handling explicitly.",
-    formsNote: "Both support signup tools and landing-style capture.",
-    templatesNote: "MailerLite’s editor is a frequent reason teams choose it. SendFable prioritizes practical templates.",
-    analyticsNote: "Core campaign metrics on both; MailerLite automations add journey-level reporting.",
-    migrationNote: "CSV export/import works well between the two for contacts and tags.",
-    tiers: [
-      { name: "Free", contacts: 1_000, monthlyPrice: 0, notes: "Send limits apply — confirm current Free caps" },
-      { name: "Growing Business ~2,500", contacts: 2_500, monthlyPrice: 25, notes: "Approximate" },
-      { name: "Growing Business ~10,000", contacts: 10_000, monthlyPrice: 50, notes: "Approximate" },
-    ],
-    relatedSlugs: ["mailchimp", "emailoctopus", "brevo"],
-    faqs: [
-      {
-        q: "Is MailerLite or SendFable better for beginners?",
-        a: "Both can work. SendFable aims for fewer decisions; MailerLite offers more established templates and automations if you want them.",
-      },
-    ],
-  }),
+  mailerlite: {
+    ...rec({
+      slug: "mailerlite",
+      name: "MailerLite",
+      officialUrl: "https://www.mailerlite.com/",
+      pricingUrl: "https://www.mailerlite.com/pricing",
+      publicComparisonEnabled: true,
+      sources: [
+        "https://www.mailerlite.com/pricing",
+        "https://www.mailerlite.com/free-plan",
+        "https://www.mailerlite.com/help/free-plan-update-faq",
+        "https://www.mailerlite.com/help/plan-and-billing",
+      ],
+      freePlanSummary:
+        "Free: 250 active subscribers and 2,500 emails/month (updated June 16, 2026).",
+      paidPlanSummary:
+        "Comfort and Power scale by active subscribers (Growing Business/Advanced renamed June 16, 2026).",
+      billingBasis: "Active-subscriber subscription; Free also caps monthly sends.",
+      contactLimitsSummary:
+        "Free: 250 active subscribers. Paid Comfort/Power tiers scale from hundreds to high volumes.",
+      emailLimitsSummary:
+        "Free: 2,500 emails/month. Comfort: about 10× the subscriber-tier ceiling. Power: unlimited with fair use.",
+      automation: "strong",
+      crm: "basic",
+      ecommerce: "basic",
+      sms: "none",
+      newsletterCreator: "basic",
+      integrationsSummary: "Solid common integrations; smaller marketplace than Mailchimp.",
+      supportSummary: "Help center and email support; higher plans improve response priority.",
+      bestFor: ["Budget-conscious marketers who still want polished builders"],
+      potentialDrawbacks: [
+        "Free list/send caps tightened in 2026",
+        "Less CRM depth than suites",
+        "Feature set still broader than ultra-simple tools",
+      ],
+      sendfableStronger: [
+        "Managed SES positioning",
+        "Very clear small-business Free→Pro Plus ladder",
+        "Any-email signup focus",
+        "Scribe: page changes become a campaign in your look, and you choose Send now or schedule",
+      ],
+      competitorStronger: [
+        "Established builder polish",
+        "Automation depth for the price",
+        "Websites, landing pages, and related free-plan tools",
+        "Larger existing user community",
+      ],
+      shortAnswer:
+        "MailerLite is a strong affordable established option. SendFable may fit when you want a simpler campaign-first product with managed SES delivery, transparent US-dollar plan caps, and website-to-campaign drafts you approve.",
+      whoSendfableIsFor: "Owners who want a minimal campaign workflow and clear contact/email caps.",
+      whoCompetitorIsFor:
+        "Marketers who want MailerLite’s builder, websites/landing pages, and automations at competitive subscriber pricing.",
+      deliverabilityNote:
+        "Both emphasize permission-based sending. SendFable documents SES-based delivery and sender handling explicitly.",
+      formsNote: "Both support signup tools and landing-style capture.",
+      templatesNote:
+        "MailerLite’s editor is a frequent reason teams choose it. SendFable prioritizes practical templates.",
+      analyticsNote:
+        "Core campaign metrics on both; MailerLite automations add journey-level reporting.",
+      migrationNote: "CSV export/import works well between the two for contacts and tags.",
+      tiers: [
+        {
+          name: "Free",
+          contacts: 250,
+          monthlyPrice: 0,
+          notes: "250 active subscribers / 2,500 emails/mo (as of 2026-06-16)",
+        },
+        {
+          name: "Comfort ~500",
+          contacts: 500,
+          monthlyPrice: 12,
+          notes: "Approx at 500 subscribers; verify calculator",
+        },
+        {
+          name: "Power ~500",
+          contacts: 500,
+          monthlyPrice: 25,
+          notes: "Approx at 500 subscribers; verify calculator",
+        },
+      ],
+      relatedSlugs: ["mailchimp", "emailoctopus", "brevo"],
+      faqs: [
+        {
+          q: "Is MailerLite or SendFable better for beginners?",
+          a: "Both can work. SendFable aims for fewer decisions; MailerLite offers more established templates and automations if you want them.",
+        },
+        {
+          q: "What are MailerLite’s Free plan limits now?",
+          a: "As of June 16, 2026 MailerLite Free includes 250 active subscribers and 2,500 monthly emails, plus expanded free features with some feature-use caps. SendFable Free includes 500 contacts and 1,000 emails/month. Verify both on their official pricing pages before you decide.",
+        },
+        {
+          q: "Should I pick based only on Free limits?",
+          a: "No. Free caps matter early, but builder preference, websites/landing pages, automations, and how you grow the list usually matter more. MailerLite is often stronger as a full marketing toolkit; SendFable is often simpler for campaign-first email.",
+        },
+      ],
+    }),
+    pricingLastChecked: "2026-11-04",
+    featuresLastChecked: "2026-11-04",
+  },
 
   brevo: rec({
     slug: "brevo",
@@ -221,7 +270,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "Predictable contact-tier pricing",
       "Simpler small-business UX",
       "Campaign-first focus",
-      "Scribe watches your page, drafts in your look, and waits until you schedule",
+      "Scribe watches your page, drafts in your look, and waits until you send now or schedule",
     ],
     competitorStronger: ["Volume-based pricing", "SMS + multi-channel in-product", "Transactional email heritage"],
     shortAnswer:

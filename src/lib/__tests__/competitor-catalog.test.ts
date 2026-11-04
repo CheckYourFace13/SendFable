@@ -61,6 +61,17 @@ describe("competitor catalog (SF-002)", () => {
     assert.equal(free!.monthlyPrice, 0);
   });
 
+  it("mailerlite free plan reflects official 250 active / 2,500 emails caps", () => {
+    const free = COMPETITORS.mailerlite!.tiers.find((t) => t.name === "Free");
+    assert.ok(free);
+    assert.equal(free!.contacts, 250);
+    assert.equal(free!.monthlyPrice, 0);
+    assert.match(String(free!.notes), /2,?500/);
+    assert.match(COMPETITORS.mailerlite!.freePlanSummary, /250/);
+    assert.match(COMPETITORS.mailerlite!.freePlanSummary, /2,?500/);
+    assert.equal(COMPETITORS.mailerlite!.pricingLastChecked, "2026-11-04");
+  });
+
   it("surfaces comparison disclaimer language", () => {
     assert.match(COMPARISON_DISCLAIMER, /change/i);
     assert.match(COMPARISON_DISCLAIMER, /approximate|verify/i);

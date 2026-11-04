@@ -6,8 +6,8 @@ const STEPS = [
   { n: "1", title: "Collect", body: "Customer joins your list." },
   { n: "2", title: "Watch", body: "SendFable watches your marketing page." },
   { n: "3", title: "Draft", body: "A ready-to-send campaign is created." },
-  { n: "4", title: "Schedule", body: "You pick the date, time, and timezone." },
-  { n: "5", title: "Send", body: "Nothing goes out until that time." },
+  { n: "4", title: "Choose", body: "Send now, or pick a date, time, and timezone." },
+  { n: "5", title: "Send", body: "Nothing sends until you choose Send now or schedule it." },
 ];
 
 const SHOTS = [
@@ -23,8 +23,8 @@ const SHOTS = [
   },
   {
     webp: "/product/autopilot-approval-confirm.webp",
-    alt: "Owner chooses a date and time before anything sends",
-    label: "3 · You schedule",
+    alt: "Owner chooses Send now or a date and time before anything sends",
+    label: "3 · You choose",
   },
 ];
 
