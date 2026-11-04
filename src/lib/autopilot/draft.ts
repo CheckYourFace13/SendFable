@@ -22,6 +22,8 @@ export async function createAutopilotCampaignDraft(opts: {
   choice: CreationChoice;
   imageUrl?: string | null;
   imageAlt?: string | null;
+  imageSourceType?: string | null;
+  imageSourcePageUrl?: string | null;
 }): Promise<{ draftId: string; campaignId: string }> {
   const workspace = await prisma.workspace.findUniqueOrThrow({
     where: { id: opts.workspaceId },
@@ -114,6 +116,9 @@ export async function createAutopilotCampaignDraft(opts: {
         goal: opts.generated.goal,
         templateSlug,
         explanation: opts.generated.explanation,
+        imageUrl: opts.imageUrl || null,
+        imageSourceType: opts.imageSourceType || null,
+        imageSourcePageUrl: opts.imageSourcePageUrl || opts.sourceUrl,
         expiresAt: null,
         generationCostMicros: BigInt(opts.generated.costMicros),
         generationModel: opts.generated.model,

@@ -17,6 +17,26 @@ export type AutopilotTimezone = (typeof AUTOPILOT_TIMEZONES)[number];
 
 const ZONE_SET = new Set<string>(AUTOPILOT_TIMEZONES);
 
+/**
+ * Prefer workspace timezone, then account/user, then browser, then UTC.
+ * Always editable by the owner on the schedule form.
+ */
+export function resolveDefaultTimezone(opts: {
+  workspaceTimezone?: string | null;
+  accountTimezone?: string | null;
+  browserTimezone?: string | null;
+}): AutopilotTimezone {
+  for (const raw of [
+    opts.workspaceTimezone,
+    opts.accountTimezone,
+    opts.browserTimezone,
+  ]) {
+    const z = (raw || "").trim();
+    if (z && ZONE_SET.has(z)) return z as AutopilotTimezone;
+  }
+  return "UTC";
+}
+
 export type ScheduleInput = {
   date?: string | null;
   time?: string | null;
@@ -29,8 +49,8 @@ export type ScheduleResult =
   | { ok: false; error: string };
 
 /**
- * Date, time, and timezone must all be chosen. Nothing is prefilled, and
- * there is no send-now option.
+ * Date, time, and timezone must all be chosen for schedule-later.
+ * Timezone may be prefilled from workspace defaults; send-now is a separate action.
  */
 export function parseAutopilotSchedule(input: ScheduleInput): ScheduleResult {
   const date = (input.date || "").trim();

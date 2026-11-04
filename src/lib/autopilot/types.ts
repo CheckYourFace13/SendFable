@@ -10,7 +10,7 @@ export type AutopilotDraftStatus =
   | "SENT"
   | "EXPIRED";
 
-export type AutopilotAction = "approve" | "reject" | "edit";
+export type AutopilotAction = "approve" | "reject" | "edit" | "send";
 
 /** Kept for older references. Waiting drafts are not expired on this timer. */
 export const AUTOPILOT_DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;

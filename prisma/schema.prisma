@@ -1673,6 +1673,11 @@ model MarketingAutopilotDraft {
   templateSlug String?
   explanation  String? @db.Text
 
+  /// Auditable image choice for the selected story (null = no clearly relevant image).
+  imageUrl            String?
+  imageSourceType     String?
+  imageSourcePageUrl  String?
+
   approvalTokenVersion Int       @default(1)
   approvalEmailSentAt  DateTime?
   reminderSentAt       DateTime?

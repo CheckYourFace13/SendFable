@@ -4,12 +4,13 @@ import {
   applyAutopilotDecision,
   cancelAutopilotSchedule,
   scheduleAutopilotDraft,
+  sendNowAutopilotDraft,
 } from "@/lib/autopilot/approval";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 
 const schema = z.object({
-  action: z.enum(["approve", "skip", "edit", "schedule", "cancel-schedule"]),
+  action: z.enum(["approve", "skip", "edit", "schedule", "cancel-schedule", "send-now"]),
   confirm: z.literal(true),
   date: z.string().max(20).optional(),
   time: z.string().max(10).optional(),
@@ -45,6 +46,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     });
     if (!scheduled.ok) return NextResponse.json({ error: scheduled.error }, { status: 400 });
     return NextResponse.json(scheduled);
+  }
+
+  if (parsed.data.action === "send-now") {
+    const sent = await sendNowAutopilotDraft({
+      draftId: params.id,
+      workspaceId: ctx.workspace.id,
+      expectedTokenVersion,
+      confirm: true,
+    });
+    if (!sent.ok) return NextResponse.json({ error: sent.error }, { status: 400 });
+    return NextResponse.json(sent);
   }
 
   if (parsed.data.action === "cancel-schedule") {

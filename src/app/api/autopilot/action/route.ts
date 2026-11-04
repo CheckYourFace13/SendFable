@@ -9,11 +9,12 @@ const schema = z.object({
   date: z.string().max(20).optional(),
   time: z.string().max(10).optional(),
   timezone: z.string().max(80).optional(),
+  mode: z.enum(["send_now", "schedule"]).optional(),
 });
 
 /**
  * POST-only owner decision. GET never sends.
- * Body: { token, confirm: true }
+ * Body: { token, confirm: true, mode?: send_now|schedule, date?, time?, timezone? }
  */
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
@@ -27,6 +28,7 @@ export async function POST(req: Request) {
     date: parsed.data.date,
     time: parsed.data.time,
     timezone: parsed.data.timezone,
+    mode: parsed.data.mode,
   });
 
   if (!result.ok) {

@@ -122,6 +122,7 @@ export default function ScribePage() {
   const [audienceLabel, setAudienceLabel] = useState("Everyone subscribed");
   const [needsAudienceChoice, setNeedsAudienceChoice] = useState(false);
   const [editingAudience, setEditingAudience] = useState(false);
+  const [workspaceTimezone, setWorkspaceTimezone] = useState("UTC");
 
   async function load() {
     const [cRes, dRes] = await Promise.all([
@@ -143,6 +144,7 @@ export default function ScribePage() {
       setDraftsUsed(typeof j.draftsUsedThisMonth === "number" ? j.draftsUsedThisMonth : 0);
       setInternalUnlimited(Boolean(j.internalUnlimited));
       setCommercial(j.commercial || null);
+      setWorkspaceTimezone(j.workspaceTimezone || "UTC");
       const nextAudiences: Array<{ id: string; name: string }> = j.audiences || [];
       setAudiences(nextAudiences);
       const resolved = j.scribeAudience;
@@ -230,7 +232,7 @@ export default function ScribePage() {
 
   async function decide(
     id: string,
-    action: "skip" | "edit" | "schedule" | "cancel-schedule",
+    action: "skip" | "edit" | "schedule" | "cancel-schedule" | "send-now",
     schedule?: { date: string; time: string; timezone: string }
   ) {
     const res = await fetch(`/api/autopilot/drafts/${id}`, {
@@ -247,7 +249,8 @@ export default function ScribePage() {
       window.location.href = `/campaigns/${data.campaignId}`;
       return;
     }
-    if (action === "schedule") toast.success(`Scheduled for ${data.scheduledLabel || "the time you chose"}`);
+    if (action === "send-now") toast.success("Campaign sent.");
+    else if (action === "schedule") toast.success(`Scheduled for ${data.scheduledLabel || "the time you chose"}`);
     else if (action === "cancel-schedule") toast.success("Schedule canceled. Nothing will send.");
     else toast.success("Campaign skipped. It will not send.");
     setPendingSkip(null);
@@ -511,7 +514,8 @@ export default function ScribePage() {
       <section id="drafts" className="mt-12 scroll-mt-16">
         <h2 className="text-xl font-semibold">Waiting for you</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Nothing sends until you schedule it. If you do nothing, the draft stays here.
+          Nothing sends until you confirm Send now or schedule a time. If you do nothing, the draft
+          stays here.
         </p>
         {waitingDrafts.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">No drafts are waiting.</p>
@@ -543,7 +547,7 @@ export default function ScribePage() {
                     Edit
                   </Button>
                   <Button size="sm" onClick={() => setSchedulingId(draft.id)}>
-                    Approve &amp; Schedule
+                    Choose date &amp; time
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setPendingSkip(draft.id)}>
                     Skip
@@ -553,6 +557,8 @@ export default function ScribePage() {
                   <AutopilotScheduleForm
                     audience={draft.audience || "Everyone subscribed"}
                     recipientCount={draft.recipientCount}
+                    defaultTimezone={workspaceTimezone}
+                    onSendNow={() => void decide(draft.id, "send-now")}
                     onSchedule={(value) => void decide(draft.id, "schedule", value)}
                   />
                 )}
@@ -585,7 +591,8 @@ export default function ScribePage() {
                   <AutopilotScheduleForm
                     audience={draft.audience || "Everyone subscribed"}
                     recipientCount={draft.recipientCount}
-                    submitLabel="SCHEDULE CAMPAIGN"
+                    defaultTimezone={workspaceTimezone}
+                    submitLabel="SCHEDULE FOR LATER"
                     onSchedule={(value) => void decide(draft.id, "schedule", value)}
                   />
                 )}

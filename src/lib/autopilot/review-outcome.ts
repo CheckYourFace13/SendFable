@@ -37,6 +37,9 @@ export function resolveAutopilotReviewOutcome(draft: {
   if (draft.status === "EDITING" || draft.decidedAction === "EDIT") {
     return { outcome: "editing" };
   }
+  if (draft.status === "SENT" || draft.decidedAction === "SEND_NOW") {
+    return { outcome: "sent" };
+  }
   if (draft.status === "APPROVED" || draft.decidedAction === "SCHEDULE") {
     const at = draft.scheduledFor || draft.campaign?.scheduledAt;
     const tz = draft.scheduleTimezone || "UTC";

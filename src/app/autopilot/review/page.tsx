@@ -68,6 +68,10 @@ export default async function AutopilotReviewPage({
   const outcome = "outcome" in loaded ? loaded.outcome : "open";
   const scheduledLabel =
     "scheduledLabel" in loaded && loaded.scheduledLabel ? loaded.scheduledLabel : null;
+  const defaultTimezone =
+    "defaultTimezone" in loaded && loaded.defaultTimezone
+      ? loaded.defaultTimezone
+      : draft.workspace?.timezone || "UTC";
 
   if (outcome === "sent") {
     return (
@@ -93,6 +97,9 @@ export default async function AutopilotReviewPage({
             ? `Campaign scheduled for: ${scheduledLabel}`
             : "This campaign is already scheduled. Nothing else will send from this link."}
         </p>
+        {draft.scheduleTimezone ? (
+          <p className="mt-2 text-sm text-ink/65">Timezone: {draft.scheduleTimezone}</p>
+        ) : null}
         <SubjectBlock subject={draft.subject} />
         <SignInLink />
       </Shell>
@@ -148,6 +155,7 @@ export default async function AutopilotReviewPage({
     approve: "Choose when this campaign sends",
     reject: "Skip this campaign?",
     edit: "Edit this campaign before sending?",
+    send: "Send this campaign now?",
   } as const;
 
   return (
@@ -156,10 +164,6 @@ export default async function AutopilotReviewPage({
       <h1 className="mt-2 text-xl font-semibold text-ink">{titles[action]}</h1>
 
       <dl className="mt-6 space-y-3 text-sm">
-        <div>
-          <dt className="text-ink/50">What changed</dt>
-          <dd className="mt-0.5 text-ink">{draft.explanation || draft.changeSummary}</dd>
-        </div>
         <div>
           <dt className="text-ink/50">Subject</dt>
           <dd className="mt-0.5 font-medium text-ink">{draft.subject}</dd>
@@ -172,11 +176,23 @@ export default async function AutopilotReviewPage({
           <dt className="text-ink/50">Estimated recipients</dt>
           <dd className="mt-0.5 text-ink">{recipients.toLocaleString()}</dd>
         </div>
+        {action === "approve" ? (
+          <div>
+            <dt className="text-ink/50">Timezone default</dt>
+            <dd className="mt-0.5 text-ink">{defaultTimezone}</dd>
+          </div>
+        ) : null}
       </dl>
 
       {action === "approve" && (
         <p className="mt-6 rounded-lg border border-ink/10 bg-parchment px-4 py-3 text-sm text-ink/80">
-          Nothing sends until you schedule it. Choose a date, time, and timezone.
+          Nothing sends until you confirm. Choose SEND NOW or schedule a date, time, and timezone.
+        </p>
+      )}
+      {action === "send" && (
+        <p className="mt-6 rounded-lg border border-ink/10 bg-parchment px-4 py-3 text-sm text-ink/80">
+          Opening this link did not send the campaign. Confirm with SEND NOW only if you want to
+          send immediately.
         </p>
       )}
       {action === "reject" && (
@@ -196,6 +212,8 @@ export default async function AutopilotReviewPage({
         action={action}
         audience={audienceLabel}
         recipientCount={recipients}
+        defaultTimezone={defaultTimezone}
+        subject={draft.subject || ""}
       />
 
       <p className="mt-8 text-xs text-ink/45">

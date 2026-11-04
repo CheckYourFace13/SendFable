@@ -49,7 +49,7 @@ export async function GET() {
     }),
     prisma.workspace.findUnique({
       where: { id: ctx.workspace.id },
-      select: { onboardingData: true },
+      select: { onboardingData: true, timezone: true },
     }),
   ]);
   const scribeAudience = resolveScribeAudience({
@@ -93,6 +93,7 @@ export async function GET() {
     draftsUsedThisMonth,
     draftsCap,
     draftsLimitReached: draftsCap != null && draftsCap > 0 && draftsUsedThisMonth >= draftsCap,
+    workspaceTimezone: workspace?.timezone || "UTC",
     commercial: await describeAutopilotAccount(
       ctx.workspace.id,
       ent.plan,

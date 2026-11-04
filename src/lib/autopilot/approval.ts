@@ -5,7 +5,11 @@ import { platformFrom, sendEmail } from "@/lib/mailer";
 import { getWorkspaceOwner } from "@/lib/workspace-owner";
 import { countAudience } from "@/lib/audience";
 import type { AutopilotAction } from "@/lib/autopilot/types";
-import { formatScheduledWhen, parseAutopilotSchedule } from "@/lib/autopilot/schedule";
+import {
+  formatScheduledWhen,
+  parseAutopilotSchedule,
+  resolveDefaultTimezone,
+} from "@/lib/autopilot/schedule";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 import { humanizeScribeChange, renderAutopilotApprovalEmail } from "@/lib/autopilot/approval-copy";
@@ -18,6 +22,7 @@ import {
   resolveAutopilotReviewOutcome,
   type AutopilotReviewOutcome,
 } from "@/lib/autopilot/review-outcome";
+import { launchCampaign } from "@/lib/campaign-send";
 
 export { humanizeScribeChange, renderAutopilotApprovalEmail } from "@/lib/autopilot/approval-copy";
 export { resolveAutopilotReviewOutcome, type AutopilotReviewOutcome } from "@/lib/autopilot/review-outcome";
@@ -48,7 +53,7 @@ export async function verifyAutopilotActionToken(token: string): Promise<{
 } | null> {
   const payload = await verifyToken("autopilot-action", token);
   if (!payload?.draftId || !payload.workspaceId || !payload.action || !payload.v) return null;
-  if (!["approve", "reject", "edit"].includes(payload.action)) return null;
+  if (!["approve", "reject", "edit", "send"].includes(payload.action)) return null;
   return {
     draftId: payload.draftId,
     workspaceId: payload.workspaceId,
@@ -79,7 +84,13 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
   });
 
   const v = draft.approvalTokenVersion;
-  const [approveTok, rejectTok, editTok] = await Promise.all([
+  const [sendTok, approveTok, rejectTok, editTok] = await Promise.all([
+    signAutopilotActionToken({
+      draftId: draft.id,
+      workspaceId: draft.workspaceId,
+      action: "send",
+      version: v,
+    }),
     signAutopilotActionToken({
       draftId: draft.id,
       workspaceId: draft.workspaceId,
@@ -100,7 +111,8 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
     }),
   ]);
 
-  const approveUrl = appUrl(`/autopilot/review?t=${encodeURIComponent(approveTok)}`);
+  const sendNowUrl = appUrl(`/autopilot/review?t=${encodeURIComponent(sendTok)}`);
+  const scheduleUrl = appUrl(`/autopilot/review?t=${encodeURIComponent(approveTok)}`);
   const rejectUrl = appUrl(`/autopilot/review?t=${encodeURIComponent(rejectTok)}`);
   const editUrl = appUrl(`/autopilot/review?t=${encodeURIComponent(editTok)}`);
 
@@ -135,9 +147,11 @@ export async function sendAutopilotApprovalEmail(draftId: string): Promise<void>
     audienceLabel,
     recipients,
     previewSnippet,
-    approveUrl,
+    sendNowUrl,
+    scheduleUrl,
     editUrl,
     rejectUrl,
+    imageUrl: draft.imageUrl,
   });
 
   await sendEmail({
@@ -195,6 +209,9 @@ export async function loadAutopilotReview(token: string) {
         audienceSegmentId: draft.campaign.audienceSegmentId,
       })
     : 0;
+  const defaultTimezone = resolveDefaultTimezone({
+    workspaceTimezone: draft.workspace.timezone,
+  });
 
   const tokenMatches = draft.approvalTokenVersion === verified.version;
   const open =
@@ -209,6 +226,7 @@ export async function loadAutopilotReview(token: string) {
       action: verified.action,
       recipients,
       audienceLabel,
+      defaultTimezone,
       outcome: resolved.outcome,
       scheduledLabel: resolved.scheduledLabel,
     };
@@ -220,6 +238,7 @@ export async function loadAutopilotReview(token: string) {
     recipients,
     token,
     audienceLabel,
+    defaultTimezone,
     outcome: "open" as const,
   };
 }
@@ -234,8 +253,14 @@ export async function executeAutopilotAction(opts: {
   date?: string | null;
   time?: string | null;
   timezone?: string | null;
+  mode?: "send_now" | "schedule" | null;
 }): Promise<
-  | { ok: true; result: "scheduled" | "rejected" | "edit"; campaignId?: string; scheduledLabel?: string }
+  | {
+      ok: true;
+      result: "scheduled" | "rejected" | "edit" | "sent";
+      campaignId?: string;
+      scheduledLabel?: string;
+    }
   | { ok: false; error: string }
 > {
   const verified = await verifyAutopilotActionToken(opts.token);
@@ -261,7 +286,7 @@ export async function executeAutopilotAction(opts: {
     if (resolved.outcome === "sent") {
       return {
         ok: true,
-        result: "scheduled",
+        result: "sent",
         campaignId: draft.campaignId ?? undefined,
         scheduledLabel: "already sent",
       };
@@ -273,6 +298,19 @@ export async function executeAutopilotAction(opts: {
       return { ok: true, result: "edit", campaignId: draft.campaignId ?? undefined };
     }
     return { ok: false, error: "already_decided" };
+  }
+
+  const wantsSendNow =
+    verified.action === "send" ||
+    (verified.action === "approve" && opts.mode === "send_now");
+
+  if (wantsSendNow) {
+    return sendNowAutopilotDraft({
+      draftId: draft.id,
+      workspaceId: draft.workspaceId,
+      expectedTokenVersion: verified.version,
+      confirm: opts.confirm,
+    });
   }
 
   if (verified.action === "approve") {
@@ -296,6 +334,135 @@ export async function executeAutopilotAction(opts: {
   });
 }
 
+/**
+ * Explicit SEND NOW after confirmation POST.
+ * GET never reaches this path. Duplicate launches are idempotent via launchCampaign.
+ */
+export async function sendNowAutopilotDraft(opts: {
+  draftId: string;
+  workspaceId: string;
+  expectedTokenVersion: number;
+  confirm: boolean;
+}): Promise<
+  | { ok: true; result: "sent"; campaignId?: string; scheduledLabel?: string }
+  | { ok: false; error: string }
+> {
+  if (!opts.confirm) return { ok: false, error: "confirm_required" };
+
+  const draft = await prisma.marketingAutopilotDraft.findFirst({
+    where: { id: opts.draftId, workspaceId: opts.workspaceId },
+    include: { campaign: true },
+  });
+  if (!draft?.campaignId || !draft.campaign) return { ok: false, error: "no_campaign" };
+  if (["SENDING", "COMPLETED"].includes(draft.campaign.status)) {
+    return {
+      ok: true,
+      result: "sent",
+      campaignId: draft.campaignId,
+      scheduledLabel: "already sent",
+    };
+  }
+  const open = ["AWAITING_APPROVAL", "DRAFTED", "EDITING", "APPROVED"].includes(draft.status);
+  if (!open) return { ok: false, error: "already_decided" };
+
+  const sendTagIds = (draft.campaign.audienceTagIds as string[]) ?? [];
+  const sendTags = sendTagIds.length
+    ? await prisma.tag.findMany({
+        where: { workspaceId: draft.workspaceId, id: { in: sendTagIds } },
+        select: { id: true },
+      })
+    : [];
+  const audienceOk = campaignAudienceIsSendable({
+    audienceType: draft.campaign.audienceType,
+    audienceTagIds: sendTagIds,
+    existingTagIds: sendTags.map((tag) => tag.id),
+  });
+  if (!audienceOk.ok) {
+    return {
+      ok: false,
+      error: `${AUDIENCE_MISSING}. Choose another audience before sending.`,
+    };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const claimed = await tx.marketingAutopilotDraft.updateMany({
+        where: {
+          id: draft.id,
+          workspaceId: opts.workspaceId,
+          approvalTokenVersion: opts.expectedTokenVersion,
+          status: { in: ["AWAITING_APPROVAL", "DRAFTED", "EDITING", "APPROVED"] },
+        },
+        data: {
+          status: "APPROVED",
+          decidedAt: new Date(),
+          decidedAction: "SEND_NOW",
+          scheduledFor: null,
+          scheduleTimezone: null,
+          approvalTokenVersion: { increment: 1 },
+        },
+      });
+      if (claimed.count !== 1) {
+        throw new Error("ALREADY_DECIDED");
+      }
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === "ALREADY_DECIDED") {
+      const again = await prisma.marketingAutopilotDraft.findFirst({
+        where: { id: draft.id },
+        include: { campaign: true },
+      });
+      if (again) {
+        const resolved = resolveAutopilotReviewOutcome(again);
+        if (resolved.outcome === "sent") {
+          return {
+            ok: true,
+            result: "sent",
+            campaignId: again.campaignId ?? undefined,
+            scheduledLabel: "already sent",
+          };
+        }
+      }
+      return { ok: false, error: "already_decided" };
+    }
+    throw err;
+  }
+
+  try {
+    const launched = await launchCampaign(draft.campaignId);
+    await prisma.marketingAutopilotDraft.update({
+      where: { id: draft.id },
+      data: { status: "SENT" },
+    });
+    try {
+      ensureAnalyticsPersistence();
+      trackEvent("autopilot_approved");
+    } catch {
+      /* fail open */
+    }
+    return {
+      ok: true,
+      result: "sent",
+      campaignId: draft.campaignId,
+      scheduledLabel: launched.alreadyLaunched ? "already sent" : "sent just now",
+    };
+  } catch (err) {
+    // Roll draft back to waiting so the owner can retry; token already incremented.
+    await prisma.marketingAutopilotDraft.update({
+      where: { id: draft.id },
+      data: {
+        status: "AWAITING_APPROVAL",
+        decidedAt: null,
+        decidedAction: null,
+      },
+    });
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "send_failed",
+    };
+  }
+}
+
 export async function applyAutopilotDecision(opts: {
   draftId: string;
   workspaceId: string;
@@ -303,7 +470,7 @@ export async function applyAutopilotDecision(opts: {
   action: AutopilotAction;
   confirm: boolean;
 }): Promise<
-  | { ok: true; result: "scheduled" | "rejected" | "edit"; campaignId?: string; scheduledLabel?: string }
+  | { ok: true; result: "scheduled" | "rejected" | "edit" | "sent"; campaignId?: string; scheduledLabel?: string }
   | { ok: false; error: string }
 > {
   const draft = await prisma.marketingAutopilotDraft.findFirst({
@@ -313,6 +480,15 @@ export async function applyAutopilotDecision(opts: {
   if (!draft) return { ok: false, error: "not_found" };
   const open = ["AWAITING_APPROVAL", "DRAFTED", "EDITING"].includes(draft.status);
   if (!open) return { ok: false, error: "already_decided" };
+
+  if (opts.action === "send") {
+    return sendNowAutopilotDraft({
+      draftId: opts.draftId,
+      workspaceId: opts.workspaceId,
+      expectedTokenVersion: opts.expectedTokenVersion,
+      confirm: opts.confirm,
+    });
+  }
 
   if (opts.action === "edit") {
     if (!opts.confirm) return { ok: false, error: "confirm_required" };

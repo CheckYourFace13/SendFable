@@ -8,15 +8,22 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { fetchPublicText } from "@/lib/ssrf";
 import { withAcquisitionLock } from "@/lib/acquisition/lock";
-import { htmlToVisibleText } from "@/lib/autopilot/extract";
+import { extractHtmlHeadings, htmlToVisibleText } from "@/lib/autopilot/extract";
 import { changeFingerprint, changesAreSimilar, contentFingerprint } from "@/lib/autopilot/hash";
 import { assessChange } from "@/lib/autopilot/change-filter";
+import {
+  factsFromCandidate,
+  rankCampaignContent,
+} from "@/lib/autopilot/content-rank";
 import { generateWithOptionalLlm } from "@/lib/autopilot/generate";
 import { createAutopilotCampaignDraft } from "@/lib/autopilot/draft";
 import { sendAutopilotApprovalEmail } from "@/lib/autopilot/approval";
 import { preferredScribeAudienceTagId, resolveScribeAudience } from "@/lib/autopilot/audience";
 import { resolveAutopilotCreation, suggestBrandFromHtml } from "@/lib/autopilot/commercial-account";
-import { imageCandidates, pickImage } from "@/lib/acquisition/website-demo/extract";
+import {
+  confirmScribeImage,
+  selectScribeCampaignImage,
+} from "@/lib/autopilot/campaign-image";
 import { confirmSameSiteImage } from "@/lib/acquisition/website-demo/image";
 import {
   AUTOPILOT_MAX_GENERATIONS_PER_DAY,
@@ -224,11 +231,23 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
     /* brand suggestion never blocks a draft */
   }
 
-  const generated = await generateWithOptionalLlm({
+  const ranked = rankCampaignContent({
+    pageText: text,
     addedText: assessment.addedText,
+    htmlHeadings: extractHtmlHeadings(body),
+    now,
+  });
+  if (!ranked.ok) {
+    actions.push(`skip:${ranked.reason}`);
+    return actions;
+  }
+
+  const factPack = factsFromCandidate(ranked.candidate);
+  const generated = await generateWithOptionalLlm({
+    addedText: factPack,
     sourceUrl: finalUrl,
     workspaceName: workspace.name,
-    reason: assessment.reason,
+    reason: ranked.reason,
   });
 
   if (!generated) {
@@ -236,16 +255,13 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
     return actions;
   }
 
-  let imageUrl: string | null = null;
-  let imageAlt: string | null = null;
-  const picked = pickImage(imageCandidates(body, finalUrl), generated.headline, finalUrl);
-  if (picked) {
-    const check = await confirmSameSiteImage(picked.src, finalUrl);
-    if (check === "ok") {
-      imageUrl = picked.src;
-      imageAlt = picked.alt || generated.headline;
-    }
-  }
+  let image = selectScribeCampaignImage({
+    html: body,
+    pageUrl: finalUrl,
+    title: ranked.candidate.title || generated.headline,
+    body: ranked.candidate.body,
+  });
+  image = await confirmScribeImage(image, (url, page) => confirmSameSiteImage(url, page));
 
   let draftId: string;
   try {
@@ -254,15 +270,17 @@ async function processConfig(configId: string, now: Date): Promise<string[]> {
       configId: config.id,
       sourceUrl: finalUrl,
       changeFingerprint: fp,
-      changeSummary: assessment.reason,
-      changedContent: assessment.addedText,
+      changeSummary: ranked.reason,
+      changedContent: factPack,
       generated,
       audienceType: resolvedAudience.audienceType,
       audienceTagIds: resolvedAudience.audienceTagIds,
       audienceSegmentId: resolvedAudience.audienceSegmentId,
       choice,
-      imageUrl,
-      imageAlt,
+      imageUrl: image.imageUrl,
+      imageAlt: image.imageAlt,
+      imageSourceType: image.imageSourceType === "none" ? null : image.imageSourceType,
+      imageSourcePageUrl: image.imageSourcePageUrl,
     });
     draftId = created.draftId;
   } catch (err) {

@@ -64,8 +64,19 @@ describe("autopilot generate", () => {
     assert.ok(g);
     assert.match(g!.subject, /Fall Special/i);
     assert.match(g!.bodyHtml, /\$12 lunch plate/);
+    assert.match(g!.bodyHtml, /Read the full update/);
     assert.equal(g!.ctaHref, "https://example.com/specials");
     assert.equal(g!.costMicros, 0);
+  });
+
+  it("rejects season-closed-only extractive drafts", () => {
+    const g = generateExtractive({
+      addedText: "Season dates May 1 – October 31, 2026 Published season closed",
+      sourceUrl: "https://boatingchicago.com",
+      workspaceName: "BoatingChicago",
+      reason: "substantial_new_content",
+    });
+    assert.equal(g, null);
   });
 
   it("refuses insufficient content", () => {

@@ -35,6 +35,12 @@ function actionBtn(href: string, label: string, bg: string): string {
 </td></tr>`;
 }
 
+function secondaryLink(href: string, label: string): string {
+  return `<tr><td style="padding:0 0 8px 0;">
+  <a href="${href}" style="display:inline-block;font-size:13px;font-weight:600;color:#4F46E5;text-decoration:underline;">${label}</a>
+</td></tr>`;
+}
+
 /** Owner-facing change line — never expose filter keys like substantial_new_content. */
 export function humanizeScribeChange(
   explanation: string | null | undefined,
@@ -45,8 +51,8 @@ export function humanizeScribeChange(
   const internal = raw.match(/Detected a page change\s*\([^)]*\):\s*[“"']?(.+?)[”"']?\s*$/i);
   const titled = raw.match(/^New content found:\s*(.+)$/i);
   const title = (internal?.[1] || titled?.[1] || fallback || raw).replace(/[“”]/g, "").trim();
-  if (!title) return "New content found on your watched page.";
-  return `New content found: ${title}`;
+  if (!title) return "A new campaign draft is ready.";
+  return title;
 }
 
 export function renderAutopilotApprovalEmail(opts: {
@@ -56,34 +62,43 @@ export function renderAutopilotApprovalEmail(opts: {
   audienceLabel: string;
   recipients: number;
   previewSnippet: string;
-  approveUrl: string;
+  sendNowUrl: string;
+  scheduleUrl: string;
   editUrl: string;
   rejectUrl: string;
+  imageUrl?: string | null;
 }): { html: string; text: string } {
   const found = opts.changeLine.replace(/^New content found:\s*/i, "").trim();
+  const imageBlock = opts.imageUrl
+    ? `<p style="margin:0 0 16px;"><img src="${escapeHtml(opts.imageUrl)}" alt="" width="472" style="display:block;width:100%;max-width:472px;height:auto;border-radius:8px;border:1px solid #e5e7eb;" /></p>`
+    : "";
   const body =
     `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;">Scribe drafted a campaign for <strong>${escapeHtml(
       opts.brandName
     )}</strong>.</p>` +
-    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;"><strong>New content found:</strong><br>${escapeHtml(
-      found
-    )}</p>` +
     `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;"><strong>Subject:</strong> ${escapeHtml(
       opts.subject
     )}</p>` +
+    (found
+      ? `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;"><strong>Preview:</strong><br>${escapeHtml(
+          found
+        )}</p>`
+      : "") +
     `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;"><strong>Audience:</strong><br>${escapeHtml(
       opts.audienceLabel
     )}</p>` +
     `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151;"><strong>Estimated recipients:</strong><br>${opts.recipients}</p>` +
+    imageBlock +
     `<p style="margin:0 0 16px;font-size:13px;line-height:1.5;color:#6b7280;background:#f9fafb;border-radius:8px;padding:12px;">${escapeHtml(
       opts.previewSnippet
     )}…</p>` +
     `<table role="presentation" cellpadding="0" cellspacing="0">` +
-    actionBtn(opts.approveUrl, "Approve &amp; Schedule", "#059669") +
-    actionBtn(opts.editUrl, "Edit", "#4F46E5") +
-    actionBtn(opts.rejectUrl, "Skip this campaign", "#6b7280") +
+    actionBtn(opts.sendNowUrl, "SEND NOW", "#059669") +
+    actionBtn(opts.scheduleUrl, "CHOOSE DATE &amp; TIME", "#4F46E5") +
+    secondaryLink(opts.editUrl, "Edit campaign") +
+    secondaryLink(opts.rejectUrl, "Skip this campaign") +
     `</table>` +
-    `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#6b7280;">Nothing sends until you choose the date and time. Opening a link does not send the campaign.</p>`;
+    `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#6b7280;">Opening a link never sends. SEND NOW opens a confirmation page first. If you do nothing, nothing sends.</p>`;
 
   const html = shell("Your next campaign is ready to review", body);
   const text = [
@@ -92,18 +107,22 @@ export function renderAutopilotApprovalEmail(opts: {
     "Your next campaign is ready to review",
     "",
     `Scribe drafted a campaign for ${opts.brandName}.`,
-    `New content found: ${found}`,
     `Subject: ${opts.subject}`,
+    found ? `Preview: ${found}` : "",
     `Audience: ${opts.audienceLabel}`,
     `Estimated recipients: ${opts.recipients}`,
+    opts.imageUrl ? `Image: ${opts.imageUrl}` : "",
     "",
     opts.previewSnippet,
     "",
-    `Approve & Schedule: ${opts.approveUrl}`,
-    `Edit: ${opts.editUrl}`,
+    `SEND NOW: ${opts.sendNowUrl}`,
+    `CHOOSE DATE & TIME: ${opts.scheduleUrl}`,
+    `Edit campaign: ${opts.editUrl}`,
     `Skip this campaign: ${opts.rejectUrl}`,
     "",
-    "Nothing sends until you choose the date and time. Opening a link does not send the campaign.",
-  ].join("\n");
+    "Opening a link never sends. SEND NOW opens a confirmation page first. If you do nothing, nothing sends.",
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
   return { html, text };
 }

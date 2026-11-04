@@ -320,22 +320,22 @@ describe("autopilot scheduling", () => {
     if (scheduled.ok) assert.equal(scheduled.at.toISOString(), "2026-12-01T21:00:00.000Z");
   });
 
-  it("does not launch from approval, the worker tick, or an empty response", () => {
+  it("does not launch from the worker tick or an empty response; send-now is confirm-only", () => {
     const approval = src("src/lib/autopilot/approval.ts");
     const tick = src("src/lib/autopilot/tick.ts");
     const queue = src("src/app/(app)/scribe/page.tsx");
-    assert.doesNotMatch(approval, /launchCampaign/);
     assert.match(approval, /schedule_required/);
     assert.match(approval, /parseAutopilotSchedule/);
+    assert.match(approval, /sendNowAutopilotDraft/);
+    assert.match(approval, /Explicit SEND NOW after confirmation POST/);
     assert.doesNotMatch(tick, /launchCampaign/);
-    assert.match(tick, /check === "ok"/);
+    assert.match(tick, /rankCampaignContent/);
     assert.match(tick, /no_creation_entitlement/);
     assert.doesNotMatch(tick, /expireStale/);
-    assert.match(queue, /Approve &amp; Schedule/);
-    assert.match(queue, /SCHEDULE CAMPAIGN/);
+    assert.match(queue, /Choose date|SCHEDULE FOR LATER|SEND NOW/);
     assert.match(queue, /Cancel schedule/);
-    assert.doesNotMatch(queue, /Send this campaign now/);
     assert.match(src("src/app/api/autopilot/drafts/[id]/route.ts"), /ctx\.workspace\.id/);
+    assert.match(src("src/app/api/autopilot/drafts/[id]/route.ts"), /send-now/);
     assert.match(src("src/app/api/autopilot/trial/route.ts"), /ctx\.workspace\.id/);
     assert.match(src("src/lib/campaign-send.ts"), /sendBadgeForCampaign/);
   });

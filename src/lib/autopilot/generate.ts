@@ -2,9 +2,11 @@
  * Campaign content generation from watched-page changes.
  * Default: extractive (no AI cost). Optional low-cost LLM polish when configured.
  * NEVER invents prices, dates, offers, or claims not present in source text.
+ * Reads like a short newsletter — never raw website-diff language.
  */
 
 import { extractHeadings } from "@/lib/autopilot/extract";
+import { isSeasonStatusJunk } from "@/lib/autopilot/content-rank";
 import { AUTOPILOT_MAX_BODY_CHARS } from "@/lib/autopilot/types";
 
 export type GeneratedCampaign = {
@@ -24,7 +26,7 @@ export type GeneratedCampaign = {
 const SALE =
   /\b(sale|special|specials|discount|% off|promo|promotion|happy hour|limited time|offer)\b/i;
 const EVENT =
-  /\b(event|events|tickets?|register|registration|fundraiser|tonight|this weekend|live music|class|workshop)\b/i;
+  /\b(event|events|tickets?|register|registration|fundraiser|tonight|this weekend|live music|class|workshop|training)\b/i;
 const PRODUCT =
   /\b(new\s+(beer|brew|release|product|menu|service|listing)|now available|just dropped|launch)\b/i;
 
@@ -48,7 +50,8 @@ function pickCta(goal: GeneratedCampaign["goal"], text: string): string {
   if (EVENT.test(text)) return "Get details";
   if (SALE.test(text)) return "See the offer";
   if (PRODUCT.test(text)) return "See what's new";
-  return "Learn more";
+  if (/\b(guide|tips?|how to|haul-?out|winter)\b/i.test(text)) return "Read the guide";
+  return "Read the update";
 }
 
 function escapeHtml(s: string): string {
@@ -63,7 +66,7 @@ function paragraphsFromAdded(addedText: string): string[] {
   const chunks = addedText
     .split(/\n+/)
     .map((l) => l.trim())
-    .filter((l) => l.length >= 12);
+    .filter((l) => l.length >= 12 && !isSeasonStatusJunk(l));
   const out: string[] = [];
   let buf = "";
   for (const line of chunks) {
@@ -79,6 +82,30 @@ function paragraphsFromAdded(addedText: string): string[] {
   return out;
 }
 
+function whyItMatters(text: string, workspaceName: string): string {
+  if (/\b(haul-?out|winter storage|shrink wrap|off-season)\b/i.test(text)) {
+    return "Worth a look before harbor yards fill up for the off-season.";
+  }
+  if (/\b(advisory|warning|weather|conditions)\b/i.test(text)) {
+    return "Conditions change quickly — check the details before you head out.";
+  }
+  if (/\b(training|workshop|class|registration)\b/i.test(text)) {
+    return "A practical update if you or your crew want to stay sharp.";
+  }
+  if (/\b(guide|tips?|how to)\b/i.test(text)) {
+    return `A useful read from ${workspaceName}.`;
+  }
+  return `Here’s what ${workspaceName} wants you to know.`;
+}
+
+function cleanHeadline(raw: string): string {
+  return raw
+    .replace(/\bPublished season closed\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s*[·|]\s*$/g, "")
+    .trim();
+}
+
 /** Extractive generator — only uses text present in `addedText`. */
 export function generateExtractive(opts: {
   addedText: string;
@@ -86,29 +113,37 @@ export function generateExtractive(opts: {
   workspaceName: string;
   reason: string;
 }): GeneratedCampaign | null {
-  const { addedText, sourceUrl, workspaceName, reason } = opts;
+  const { addedText, sourceUrl, workspaceName } = opts;
   const cleaned = addedText.trim();
   if (cleaned.length < 24) return null;
+  if (isSeasonStatusJunk(cleaned) && cleaned.length < 280) return null;
 
-  const headings = extractHeadings(cleaned);
-  const headline = (headings[0] || cleaned.split("\n")[0] || "").slice(0, 90).trim();
+  const headings = extractHeadings(cleaned).map(cleanHeadline).filter((h) => h.length >= 6);
+  const headline = (headings[0] || cleanHeadline(cleaned.split("\n")[0] || "")).slice(0, 90).trim();
   if (headline.length < 6) return null;
+  if (isSeasonStatusJunk(headline)) return null;
 
   const goal = classifyGoal(cleaned);
-  const paras = paragraphsFromAdded(cleaned);
+  const paras = paragraphsFromAdded(cleaned).filter((p) => !isSeasonStatusJunk(p));
   if (!paras.length) return null;
 
-  // Factual body: only quoted/sourced lines from the page change
-  let body = paras
-    .map((p) => `<p>${escapeHtml(p.slice(0, 400))}</p>`)
-    .join("");
-  body = `<p>Hi {{first_name|there}},</p>${body}<p>See the full update on our site.</p>`;
+  const intro = `Hi {{first_name|there}},`;
+  const lead = paras[0].slice(0, 400);
+  const detail = paras.slice(1, 3).map((p) => p.slice(0, 400));
+  const care = whyItMatters(cleaned, workspaceName);
+
+  let body =
+    `<p>${escapeHtml(intro)}</p>` +
+    `<p>${escapeHtml(lead)}</p>` +
+    detail.map((p) => `<p>${escapeHtml(p)}</p>`).join("") +
+    `<p>${escapeHtml(care)}</p>` +
+    `<p>Read the full update on the site.</p>`;
   if (body.length > AUTOPILOT_MAX_BODY_CHARS) {
     body = body.slice(0, AUTOPILOT_MAX_BODY_CHARS);
   }
 
   const subject = headline.length <= 70 ? headline : `${headline.slice(0, 67)}…`;
-  const preheader = paras[0]?.slice(0, 110) || `An update from ${workspaceName}`;
+  const preheader = (paras[0] || care).slice(0, 110);
 
   return {
     subject,
@@ -119,8 +154,8 @@ export function generateExtractive(opts: {
     ctaHref: sourceUrl,
     goal,
     templateSlug: pickTemplate(goal, cleaned),
-    explanation: `New content found: ${headline.slice(0, 80)}`,
-    model: "extractive-v1",
+    explanation: headline.slice(0, 120),
+    model: "extractive-v2",
     costMicros: 0,
   };
 }
@@ -157,9 +192,11 @@ export async function generateWithOptionalLlm(opts: {
   }
 
   const facts = opts.addedText.slice(0, 3500);
-  const prompt = `You write short marketing email drafts for small businesses.
+  const prompt = `You write short newsletter email drafts for small businesses.
 Use ONLY facts explicitly present in FACTS below. Do not invent prices, dates, discounts, inventory, or claims.
-If facts are insufficient, return {"insufficient":true}.
+Structure: useful subject, strong headline, short intro, main update, why the reader should care.
+Never use raw website-diff language like "New content found" or "Published season closed" as the story.
+If facts are insufficient or only season-status/boilerplate, return {"insufficient":true}.
 Return JSON: {"subject":"...","preheader":"...","headline":"...","bodyParagraphs":["..."],"ctaLabel":"..."}
 FACTS:\n${facts}\nSOURCE:${opts.sourceUrl}`;
 
@@ -216,14 +253,16 @@ FACTS:\n${facts}\nSOURCE:${opts.sourceUrl}`;
 
     const paras = (parsed.bodyParagraphs || []).slice(0, 4);
     if (!paras.length) return base;
+    if (isSeasonStatusJunk(parsed.headline || "") || isSeasonStatusJunk(parsed.subject || "")) {
+      return base;
+    }
 
     const bodyHtml =
       `<p>Hi {{first_name|there}},</p>` +
       paras.map((p) => `<p>${escapeHtml(p.slice(0, 400))}</p>`).join("") +
-      `<p>See the full update on our site.</p>`;
+      `<p>Read the full update on the site.</p>`;
 
     const tokens = json.usage?.total_tokens ?? 800;
-    // Rough gpt-4o-mini blended estimate ~$0.15/1M in + $0.60/1M out → ~$0.0003/draft
     const costMicros = Math.round((tokens / 1_000_000) * 400_000);
 
     return {
@@ -233,6 +272,7 @@ FACTS:\n${facts}\nSOURCE:${opts.sourceUrl}`;
       headline: (parsed.headline || base.headline).slice(0, 90),
       bodyHtml,
       ctaLabel: (parsed.ctaLabel || base.ctaLabel).slice(0, 40),
+      explanation: (parsed.headline || base.headline).slice(0, 120),
       model,
       costMicros,
     };

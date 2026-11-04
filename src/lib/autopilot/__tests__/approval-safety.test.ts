@@ -14,16 +14,18 @@ describe("autopilot approval safety", () => {
     assert.match(src, /GET never sends/);
   });
 
-  it("executeAutopilotAction requires confirm for approve", () => {
+  it("executeAutopilotAction requires confirm; GET review never launches", () => {
     const src = readFileSync(
       join(process.cwd(), "src/lib/autopilot/approval.ts"),
       "utf8"
     );
     assert.match(src, /confirm_required/);
     assert.match(src, /schedule_required/);
-    assert.doesNotMatch(src, /launchCampaign/);
+    assert.match(src, /sendNowAutopilotDraft/);
+    assert.match(src, /launchCampaign/);
     assert.match(src, /expectedTokenVersion/);
-    // GET review path must not call launch
+    // launchCampaign only via confirmed send-now path
+    assert.match(src, /Explicit SEND NOW after confirmation POST/);
     const review = readFileSync(
       join(process.cwd(), "src/app/autopilot/review/page.tsx"),
       "utf8"
@@ -38,6 +40,8 @@ describe("autopilot approval safety", () => {
     const src = readFileSync(join(process.cwd(), "src/lib/autopilot/tick.ts"), "utf8");
     assert.doesNotMatch(src, /launchCampaign/);
     assert.match(src, /sendAutopilotApprovalEmail/);
+    assert.match(src, /rankCampaignContent/);
+    assert.match(src, /skip:\$\{ranked\.reason\}/);
   });
 
   it("waiting drafts are not auto-expired and reminders fire once", () => {
@@ -49,14 +53,14 @@ describe("autopilot approval safety", () => {
     const approval = readFileSync(join(process.cwd(), "src/lib/autopilot/approval.ts"), "utf8");
     const copy = readFileSync(join(process.cwd(), "src/lib/autopilot/approval-copy.ts"), "utf8");
     assert.match(copy, /Skip this campaign/);
+    assert.match(copy, /SEND NOW/);
+    assert.match(copy, /CHOOSE DATE/);
     assert.doesNotMatch(approval, /data: \{ status: "EXPIRED" \}/);
     assert.match(approval, /already_decided/);
     const queue = readFileSync(join(process.cwd(), "src/app/(app)/scribe/page.tsx"), "utf8");
     assert.match(queue, /Waiting for you/);
-    assert.match(queue, /Campaign audience/);
-    assert.match(queue, /Approve &amp; Schedule/);
-    assert.match(queue, /SCHEDULE CAMPAIGN/);
-    assert.doesNotMatch(queue, /Send this campaign now/);
+    assert.match(queue, /Campaign audience|Audience:/);
+    assert.match(queue, /Choose date|SCHEDULE FOR LATER|SEND NOW/);
     assert.match(queue, /Skip/);
   });
 });

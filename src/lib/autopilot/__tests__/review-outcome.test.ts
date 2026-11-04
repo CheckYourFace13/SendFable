@@ -41,6 +41,19 @@ describe("resolveAutopilotReviewOutcome", () => {
     assert.match(resolved.scheduledLabel!, /2026|Nov|CST|CDT|Chicago|GMT/i);
   });
 
+  it("reports sent for explicit SEND_NOW decisions", () => {
+    assert.equal(
+      resolveAutopilotReviewOutcome({
+        status: "SENT",
+        decidedAction: "SEND_NOW",
+        scheduledFor: null,
+        scheduleTimezone: null,
+        campaign: { status: "COMPLETED", scheduledAt: null },
+      }).outcome,
+      "sent"
+    );
+  });
+
   it("reports rejected and editing distinctly", () => {
     assert.equal(
       resolveAutopilotReviewOutcome({

@@ -67,3 +67,20 @@ export function extractHeadings(text: string): string[] {
     .filter((l) => l.length >= 8 && l.length <= 120 && !/[.!?]$/.test(l))
     .slice(0, 12);
 }
+
+/** Pull H1–H3 titles from raw HTML (full document, not only &lt;main&gt;). */
+export function extractHtmlHeadings(html: string): string[] {
+  const out: string[] = [];
+  const re = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    const text = m[2]
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (text.length >= 8 && text.length <= 160) out.push(text);
+  }
+  return out.slice(0, 40);
+}
