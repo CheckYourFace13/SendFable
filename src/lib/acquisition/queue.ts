@@ -4,17 +4,16 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { ACQUISITION_AUTOPILOT_LANDING } from "@/lib/acquisition/personalize";
 import { draftMessageForProspect } from "@/lib/acquisition/send";
 import {
   isCurrentAutopilotInitial,
   orderSendCandidates,
   planStaleInitial,
   SENT_INITIAL_STATUSES,
-  stableAutopilotVariant,
   WEBSITE_DEMO_COPY_VERSION,
   type QueueMessage,
 } from "@/lib/acquisition/queue-policy";
+import { UTILITY_SIGNUP_COPY_VERSION, UTILITY_SIGNUP_LANDING } from "@/lib/try-signup/config";
 
 export async function reconcileStaleInitialDrafts(limit = 40): Promise<{
   regenerated: number;
@@ -76,11 +75,10 @@ export async function reconcileStaleInitialDrafts(limit = 40): Promise<{
       continue;
     }
 
-    const variant = stableAutopilotVariant(draft.prospectId);
     const result = await draftMessageForProspect(draft.prospectId, "INITIAL", {
       dryRun: false,
-      copyVersion: variant,
-      landingPath: ACQUISITION_AUTOPILOT_LANDING,
+      copyVersion: UTILITY_SIGNUP_COPY_VERSION,
+      landingPath: UTILITY_SIGNUP_LANDING,
       allowScheduledRewrite: true,
     });
 
@@ -106,7 +104,7 @@ export async function reconcileStaleInitialDrafts(limit = 40): Promise<{
         meta: {
           messageId: draft.id,
           previousSubject: draft.subject.slice(0, 180),
-          copyVersion: variant,
+          copyVersion: UTILITY_SIGNUP_COPY_VERSION,
         },
       },
     });

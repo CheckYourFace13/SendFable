@@ -14,29 +14,40 @@ import { ACQUISITION_RAMP_STAGES } from "@/lib/acquisition/flags";
 
 const current = {
   step: "INITIAL",
-  subject: "Could your website write your marketing emails?",
-  ctaPath: "/automated-email-marketing",
-  copyVersion: "v1a",
+  subject: "Put your fan signup on your website",
+  ctaPath: "/try/signup-tool",
+  copyVersion: "utility_signup",
   prospectId: "p1",
   createdAt: new Date("2026-10-05T13:00:00Z"),
 };
 
+const archivedAutopilot = {
+  step: "INITIAL",
+  subject: "Could your website write your marketing emails?",
+  ctaPath: "/automated-email-marketing",
+  copyVersion: "v1a",
+  prospectId: "old",
+  createdAt: new Date("2026-09-01T00:00:00Z"),
+};
+
 describe("acquisition queue policy", () => {
-  it("recognizes only the current Autopilot A/B initials", () => {
+  it("recognizes only the current utility-first initials", () => {
     assert.equal(isCurrentAutopilotInitial(current), true);
+    assert.equal(isCurrentAutopilotInitial(archivedAutopilot), false);
     assert.equal(
       isCurrentAutopilotInitial({
-        ...current,
+        ...archivedAutopilot,
         subject: "What if Harbor Coffee's marketing mostly wrote itself?",
         copyVersion: "v1b",
       }),
-      true
+      false
     );
     assert.equal(
       isCurrentAutopilotInitial({
         ...current,
         subject: "Quick question about Harbor Coffee",
         ctaPath: "/solutions/local-events",
+        copyVersion: "v1a",
       }),
       false
     );
@@ -52,13 +63,7 @@ describe("acquisition queue policy", () => {
 
   it("sends current initials ahead of older stale drafts and follow-ups", () => {
     const ordered = orderSendCandidates([
-      {
-        ...current,
-        prospectId: "old",
-        subject: "A simpler email tool for Harbor Coffee?",
-        ctaPath: "/email-marketing-for-small-business",
-        createdAt: new Date("2026-09-01T00:00:00Z"),
-      },
+      archivedAutopilot,
       {
         ...current,
         prospectId: "new",
@@ -90,7 +95,7 @@ describe("acquisition queue policy", () => {
     assert.equal(ordered[0]?.createdAt.toISOString(), "2026-10-01T00:00:00.000Z");
   });
 
-  it("regenerates stale unsent initials and retires duplicates", () => {
+  it("regenerates archived Autopilot unsent initials and retires duplicates", () => {
     const stale = {
       step: "INITIAL",
       subject: "Quick question about Harbor Coffee",
@@ -99,6 +104,7 @@ describe("acquisition queue policy", () => {
     };
     assert.equal(planStaleInitial(stale, false), "regenerate");
     assert.equal(planStaleInitial(stale, true), "retire_duplicate");
+    assert.equal(planStaleInitial(archivedAutopilot, false), "regenerate");
     assert.equal(planStaleInitial(current, false), "keep");
     assert.equal(planStaleInitial({ ...stale, step: "FOLLOW_UP_1" }, false), "keep");
     assert.equal(
@@ -117,7 +123,7 @@ describe("acquisition queue policy", () => {
       planStaleInitial(
         {
           step: "INITIAL",
-          subject: "A signup list for Harbor Lights",
+          subject: "Put your fan signup on your website",
           ctaPath: "/try/signup-tool",
           copyVersion: "utility_signup",
         },
@@ -125,18 +131,9 @@ describe("acquisition queue policy", () => {
       ),
       "keep"
     );
-    assert.equal(
-      isCurrentAutopilotInitial({
-        step: "INITIAL",
-        subject: "A signup list for Harbor Lights",
-        ctaPath: "/try/signup-tool",
-        copyVersion: "utility_signup",
-      }),
-      true
-    );
   });
 
-  it("assigns a stable A/B variant", () => {
+  it("keeps archived Autopilot A/B helper stable for history tooling", () => {
     assert.equal(stableAutopilotVariant("prospect-1"), stableAutopilotVariant("prospect-1"));
     assert.ok(["v1a", "v1b"].includes(stableAutopilotVariant("prospect-1")));
   });
@@ -159,11 +156,8 @@ describe("acquisition queue policy", () => {
         subject: "We made this from Harbor Coffee's website",
         createdAt: new Date("2026-10-01T00:00:00Z"),
       },
-      { ...current, prospectId: "casey" },
+      current,
     ]);
-    assert.deepEqual(
-      ordered.map((m) => m.prospectId),
-      ["casey"]
-    );
+    assert.equal(ordered[0]?.prospectId, "p1");
   });
 });

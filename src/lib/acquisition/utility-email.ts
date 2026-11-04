@@ -32,8 +32,8 @@ function copyForType(type: TryBusinessType): UtilityEmailCopy {
       subject: "Put your fan signup on your website",
       headline: "Put a fan signup right on your website.",
       body: [
-        "Fans join one audience. Venues can have another.",
-        "Your contacts stay yours.",
+        "Fans join one audience. Venues can have another. Your contacts stay yours.",
+        "Later, SendFable can turn your content into campaigns. Nothing sends unless you choose Send now or schedule it.",
       ],
       audiencePrimary: "Fans",
       audienceSecondary: "Venues",
@@ -43,11 +43,11 @@ function copyForType(type: TryBusinessType): UtilityEmailCopy {
   }
   if (type === "restaurant") {
     return {
-      subject: "Turn website visitors into regulars",
+      subject: "Put your email signup on your website",
       headline: "Put a signup right on your website.",
       body: [
-        "Customers join one audience. Private events can have another.",
-        "Your contacts stay yours.",
+        "Customers join one audience. Private events can have another. Your contacts stay yours.",
+        "Later, SendFable can turn your content into campaigns. Nothing sends unless you choose Send now or schedule it.",
       ],
       audiencePrimary: "Customers",
       audienceSecondary: "Private Events",
@@ -57,11 +57,11 @@ function copyForType(type: TryBusinessType): UtilityEmailCopy {
   }
   if (type === "brewery") {
     return {
-      subject: "Build your taproom list",
+      subject: "Put your taproom signup on your website",
       headline: "Put a taproom signup right on your website.",
       body: [
-        "Taproom guests join one audience. Releases can have another.",
-        "Your contacts stay yours.",
+        "Taproom guests join one audience. Releases can have another. Your contacts stay yours.",
+        "Later, SendFable can turn your content into campaigns. Nothing sends unless you choose Send now or schedule it.",
       ],
       audiencePrimary: "Taproom",
       audienceSecondary: "Beer Releases",
@@ -71,11 +71,11 @@ function copyForType(type: TryBusinessType): UtilityEmailCopy {
   }
   if (type === "contractor") {
     return {
-      subject: "Keep website leads in one place",
+      subject: "Put a customer signup on your website",
       headline: "Put a signup right on your website.",
       body: [
-        "Customers join one audience. Leads can have another.",
-        "Your contacts stay yours.",
+        "Customers join one audience. Leads can have another. Your contacts stay yours.",
+        "Later, SendFable can turn your content into campaigns. Nothing sends unless you choose Send now or schedule it.",
       ],
       audiencePrimary: "Customers",
       audienceSecondary: "Leads",
@@ -83,12 +83,40 @@ function copyForType(type: TryBusinessType): UtilityEmailCopy {
       buttonLabel: "Join",
     };
   }
+  if (type === "retail") {
+    return {
+      subject: "Put your customer signup on your website",
+      headline: "Put a signup right on your website.",
+      body: [
+        "Customers join one audience. VIPs can have another. Your contacts stay yours.",
+        "Later, SendFable can turn your content into campaigns. Nothing sends unless you choose Send now or schedule it.",
+      ],
+      audiencePrimary: "Customers",
+      audienceSecondary: "VIP",
+      formHeadline: "Get new arrivals",
+      buttonLabel: "Join",
+    };
+  }
+  if (type === "local") {
+    return {
+      subject: "Put your attendee signup on your website",
+      headline: "Put a signup right on your website.",
+      body: [
+        "Attendees join one audience. Partners can have another. Your contacts stay yours.",
+        "Later, SendFable can turn your content into campaigns. Nothing sends unless you choose Send now or schedule it.",
+      ],
+      audiencePrimary: "Attendees",
+      audienceSecondary: "Partners",
+      formHeadline: "Stay in the loop",
+      buttonLabel: "Join",
+    };
+  }
   return {
-    subject: "Collect people from your website",
+    subject: "Put your signup on your website",
     headline: "Put a signup right on your website.",
     body: [
-      "People join one audience. Another group can have its own.",
-      "Your contacts stay yours.",
+      "People join one audience. Another group can have its own. Your contacts stay yours.",
+      "Later, SendFable can turn your content into campaigns. Nothing sends unless you choose Send now or schedule it.",
     ],
     audiencePrimary: "Customers",
     audienceSecondary: "Leads",
@@ -108,7 +136,7 @@ export function freePlanLine(): string {
 }
 
 export function coreMarketingWordCount(copy: UtilityEmailCopy): number {
-  const words = [copy.headline, ...copy.body, UTILITY_EMAIL_CTA, "Free to start.", "Nothing sends unless you schedule it."]
+  const words = [copy.headline, ...copy.body, UTILITY_EMAIL_CTA]
     .join(" ")
     .trim()
     .split(/\s+/)
@@ -144,7 +172,10 @@ export function signupToolPreviewHtml(
     <p style="margin:0 0 10px;"><span style="display:inline-block;padding:10px 16px;background:#e11d48;color:#ffffff;border-radius:6px;font-size:14px;font-weight:600;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">${esc(
       copy.buttonLabel
     )}</span></p>
-    <p style="margin:0;font-size:11px;color:#6b7280;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">No spam. Unsubscribe anytime.</p>
+    <p style="margin:0 0 10px;font-size:11px;color:#6b7280;font-family:Inter,-apple-system,'Segoe UI',sans-serif;">No spam. Unsubscribe anytime.</p>
+    <p style="margin:0;font-size:12px;color:#374151;font-family:Inter,-apple-system,'Segoe UI',sans-serif;"><strong>${esc(
+      copy.audiencePrimary
+    )}</strong> / ${esc(copy.audienceSecondary)}</p>
   </td></tr>
   </table>
 </td></tr>
@@ -171,6 +202,7 @@ export function renderUtilitySignupEmail(opts: {
     "email address",
     copy.buttonLabel,
     "No spam. Unsubscribe anytime.",
+    `${copy.audiencePrimary} / ${copy.audienceSecondary}`,
     "",
     ...copy.body,
     "",
@@ -178,8 +210,6 @@ export function renderUtilitySignupEmail(opts: {
     opts.ctaUrl,
     "",
     "Free to start.",
-    "",
-    "Nothing sends unless you schedule it.",
     "",
     "Casey",
     "SendFable",
@@ -212,7 +242,6 @@ export function renderUtilitySignupEmail(opts: {
     )}</a>
   </p>
   <p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#6b7280;">Free to start.</p>
-  <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#6b7280;">Nothing sends unless you schedule it.</p>
 </td></tr>
 <tr><td style="padding-top:18px;">
   <p style="margin:0 0 6px;font-size:13px;color:#17213B;">SendFable</p>

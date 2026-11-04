@@ -1,11 +1,10 @@
 /**
  * Send-queue policy for Casey acquisition.
- * Current approved campaign is the Marketing Autopilot v1a/v1b pitch.
- * Stale initials are regenerated or retired; prospects are never deleted.
- * An initial is never sent twice.
+ * Current approved campaign is utility-first Signup Tool (utility_signup).
+ * Historical Autopilot v1a/v1b initials are archived and regenerated when unsent.
+ * Prospects are never deleted. An initial is never sent twice.
  */
 
-import { ACQUISITION_AUTOPILOT_LANDING } from "@/lib/acquisition/personalize";
 import { UTILITY_SIGNUP_COPY_VERSION, UTILITY_SIGNUP_LANDING } from "@/lib/try-signup/config";
 
 export const WEBSITE_DEMO_COPY_VERSION = "personalized_website_demo";
@@ -38,6 +37,7 @@ export type QueueMessage = {
 const SENT_INITIAL_STATUSES = ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] as const;
 export { SENT_INITIAL_STATUSES };
 
+/** True when this INITIAL is the live utility-first experiment (not archived Autopilot). */
 export function isCurrentAutopilotInitial(msg: {
   step: string;
   subject: string;
@@ -48,14 +48,13 @@ export function isCurrentAutopilotInitial(msg: {
   if (msg.copyVersion === WEBSITE_DEMO_COPY_VERSION) return false;
   if (msg.copyVersion === UTILITY_SIGNUP_COPY_VERSION) return true;
   const path = (msg.ctaPath || "").split("?")[0].replace(/\/$/, "");
-  if (path === UTILITY_SIGNUP_LANDING) return true;
-  if (path !== ACQUISITION_AUTOPILOT_LANDING) return false;
-  const subject = msg.subject.trim();
-  if (subject === "Could your website write your marketing emails?") return true;
-  return /marketing mostly wrote itself\?$/.test(subject);
+  return path === UTILITY_SIGNUP_LANDING;
 }
 
-/** Stable 50/50 so a regenerated draft does not flip versions every tick. */
+/**
+ * Archived Autopilot A/B helper — kept for historical tests/cohort tooling.
+ * New drafts must use utility_signup, not this.
+ */
 export function stableAutopilotVariant(prospectId: string): "v1a" | "v1b" {
   let h = 2166136261;
   for (let i = 0; i < prospectId.length; i++) {
@@ -73,15 +72,14 @@ export function planStaleInitial(
 ): StalePlan {
   if (msg.step !== "INITIAL") return "keep";
   if (msg.copyVersion === WEBSITE_DEMO_COPY_VERSION) return "keep";
-  if (msg.copyVersion === UTILITY_SIGNUP_COPY_VERSION) return "keep";
   if (isCurrentAutopilotInitial(msg)) return "keep";
   if (hasSentInitial) return "retire_duplicate";
   return "regenerate";
 }
 
 /**
- * Current Autopilot initials first (oldest within that generation), then follow-ups.
- * Stale initials are excluded so they cannot occupy the send window.
+ * Current utility initials first (oldest within that generation), then follow-ups.
+ * Stale Autopilot/solutions initials are excluded so they cannot occupy the send window.
  * One initial candidate per prospect.
  */
 export function orderSendCandidates<T extends QueueMessage>(messages: T[]): T[] {

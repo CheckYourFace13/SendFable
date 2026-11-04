@@ -33,7 +33,10 @@ import { pollAcquisitionReplies } from "@/lib/acquisition/reply-imap";
 import { verifyAcquisitionSender } from "@/lib/acquisition/sender";
 import { alertOwnerException } from "@/lib/acquisition/notify";
 import { checkAcquisitionDeliveryAttribution } from "@/lib/acquisition/delivery-health";
-import { evaluateConversionCohort } from "@/lib/acquisition/conversion-optimize";
+import {
+  activateUtilityFirstExperiment,
+  evaluateConversionCohort,
+} from "@/lib/acquisition/conversion-optimize";
 import { sendDailyAcquisitionReportIfDue } from "@/lib/acquisition/report";
 import { sendDueTryFollowUps } from "@/lib/try-signup/follow-up";
 
@@ -52,6 +55,8 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
   const lock = await withAcquisitionLock("tick", 55, async () => {
     const actions: string[] = [];
     await ensurePipelineControl();
+    const utility = await activateUtilityFirstExperiment(now);
+    if (utility.activated) actions.push("utility_first_activated");
     const daily = await sendDailyAcquisitionReportIfDue();
     if (daily.sent) actions.push("daily_report");
     await prisma.acquisitionPipelineControl.update({

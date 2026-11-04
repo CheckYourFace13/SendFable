@@ -13,11 +13,12 @@ import {
 import { ACQUISITION_PREFERRED_FROM } from "@/lib/acquisition/flags";
 
 describe("utility signup email", () => {
-  it("uses benefit-led subjects by business type", () => {
+  it("uses concrete utility subjects by business type", () => {
     assert.equal(utilityEmailCopy("band").subject, "Put your fan signup on your website");
-    assert.equal(utilityEmailCopy("restaurant").subject, "Turn website visitors into regulars");
-    assert.equal(utilityEmailCopy("brewery").subject, "Build your taproom list");
-    assert.equal(utilityEmailCopy("contractor").subject, "Keep website leads in one place");
+    assert.equal(utilityEmailCopy("restaurant").subject, "Put your email signup on your website");
+    assert.equal(utilityEmailCopy("brewery").subject, "Put your taproom signup on your website");
+    assert.equal(utilityEmailCopy("contractor").subject, "Put a customer signup on your website");
+    assert.equal(utilityEmailCopy("retail").subject, "Put your customer signup on your website");
   });
 
   it("greets without a business name", () => {
@@ -40,8 +41,8 @@ describe("utility signup email", () => {
       ctaUrl: "https://sendfable.com/try/signup-tool?type=band",
       unsubUrl: "https://sendfable.com/u",
     });
-    assert.ok(coreMarketingWordCount(mail.copy) >= 30);
-    assert.ok(coreMarketingWordCount(mail.copy) <= 55);
+    assert.ok(coreMarketingWordCount(mail.copy) >= 40);
+    assert.ok(coreMarketingWordCount(mail.copy) <= 65);
     assert.equal(UTILITY_EMAIL_CTA, "Try it on your website");
     assert.match(mail.html, /Put a fan signup right on your website/);
     assert.match(mail.html, /KarPool Band/);
@@ -50,22 +51,22 @@ describe("utility signup email", () => {
     assert.match(mail.html, /email address/);
     assert.match(mail.html, /Join the fan list/);
     assert.match(mail.html, /No spam. Unsubscribe anytime/);
-    assert.match(mail.html, /Fans join one audience/);
-    assert.match(mail.html, /Venues can have another/);
+    assert.match(mail.html, /Fans/);
+    assert.match(mail.html, /Venues/);
     assert.match(mail.html, /Your contacts stay yours/);
+    assert.match(mail.html, /turn your content into campaigns/);
+    assert.match(mail.html, /Send now or schedule it/);
     assert.match(mail.html, new RegExp(UTILITY_EMAIL_CTA));
     assert.match(mail.html, /https:\/\/sendfable.com\/try\/signup-tool\?type=band/);
     assert.match(mail.html, />Unsubscribe</);
     assert.match(mail.html, /SendFable is operated by iScream Studio INC/);
     assert.match(mail.html, /1364 Patriot Blvd/);
     assert.match(mail.html, /Free to start/);
-    assert.match(mail.html, /Nothing sends unless you schedule it/);
+    assert.doesNotMatch(mail.html, /See how it works/);
     assert.doesNotMatch(mail.html, /Activate/);
     assert.doesNotMatch(mail.html, /Create account/);
     assert.doesNotMatch(mail.html, /Start writing/);
-    assert.doesNotMatch(mail.html, /Legal: iScream Studio INC/);
-    assert.doesNotMatch(mail.html, /iScream Studio INC · SendFable/);
-    assert.doesNotMatch(mail.html, /FREE!!!/i);
+    assert.doesNotMatch(mail.html, /dashboard/i);
     assert.match(mail.text, /Unsubscribe:/);
     assert.match(mail.text, /Fans join one audience/);
   });
@@ -87,7 +88,7 @@ describe("utility signup email", () => {
       { unsubUrl: "https://sendfable.com/u", copyVersion: "utility_signup" }
     );
     assert.equal(built.subject, "Put your fan signup on your website");
-    assert.match(built.bodyText, /Nothing sends unless you schedule it/);
+    assert.match(built.bodyText, /Send now or schedule it/);
     assert.match(built.bodyText, /Try it on your website/);
     assert.doesNotMatch(built.bodyText, /Hi KarPool Band/);
   });

@@ -126,7 +126,27 @@ describe("acquisition scoring", () => {
 });
 
 describe("acquisition personalization + compliance", () => {
-  it("builds initial Autopilot email with free plan and unsubscribe", () => {
+  it("builds initial utility email by default with try landing and unsubscribe", () => {
+    const built = buildInitialEmail(
+      {
+        businessName: "Test Brewery",
+        category: "brewery",
+        claim: "I saw you promote weekly events on your site.",
+        evidence: "upcoming events calendar",
+        sourceUrl: "https://test.example",
+      },
+      { unsubUrl: "https://sendfable.com/api/acquisition/unsubscribe?token=x" }
+    );
+    assert.match(built.subject, /taproom signup on your website/i);
+    assert.match(built.bodyText, /Try it on your website/);
+    assert.match(built.bodyText, /try\/signup-tool/);
+    assert.match(built.bodyText, /Send now or schedule it/);
+    assert.match(built.bodyText, /Unsubscribe:/);
+    assert.ok(bodyHasUnsubscribe(built.bodyText));
+    assert.ok(!openerLooksFabricated(built.opener));
+  });
+
+  it("still builds archived Autopilot v1a when explicitly requested", () => {
     const built = buildInitialEmail(
       {
         businessName: "Test Brewery",
@@ -134,7 +154,10 @@ describe("acquisition personalization + compliance", () => {
         evidence: "upcoming events calendar",
         sourceUrl: "https://test.example",
       },
-      { unsubUrl: "https://sendfable.com/api/acquisition/unsubscribe?token=x" }
+      {
+        unsubUrl: "https://sendfable.com/api/acquisition/unsubscribe?token=x",
+        copyVersion: "v1a",
+      }
     );
     assert.match(built.subject, /website write your marketing emails/i);
     assert.match(built.bodyText, new RegExp(String(PLANS.FREE.contactCap)));
@@ -146,7 +169,6 @@ describe("acquisition personalization + compliance", () => {
     assert.match(built.bodyText, /\bCasey\b/);
     assert.doesNotMatch(built.bodyText, /I built SendFable/);
     assert.ok(bodyHasUnsubscribe(built.bodyText));
-    assert.ok(!openerLooksFabricated(built.opener));
   });
 
   it("rejects fabricated openers", () => {
@@ -324,7 +346,7 @@ describe("acquisition continuous discovery (OSM)", () => {
     assert.match(b.bodyText, /Website changes/);
     assert.match(a.bodyText, /\bCasey\b/);
     assert.doesNotMatch(a.bodyText, /I built SendFable/);
-    assert.equal(DEFAULT_COPY_VERSION, "v1a");
+    assert.equal(DEFAULT_COPY_VERSION, "utility_signup");
     assert.equal(nextCopyVersion("v1a"), "v1b");
     const u = buildInitialEmail(
       {
@@ -339,7 +361,7 @@ describe("acquisition continuous discovery (OSM)", () => {
     assert.equal(u.subject, "Put your fan signup on your website");
     assert.match(u.bodyText, /Put a fan signup right on your website/);
     assert.match(u.bodyText, /Venues can have another/);
-    assert.match(u.bodyText, /Nothing sends unless you schedule it/);
+    assert.match(u.bodyText, /Send now or schedule it/);
     assert.match(u.bodyText, /Try it on your website/);
     assert.doesNotMatch(u.bodyText, /automatically emails your customers/i);
     assert.doesNotMatch(u.bodyText, /iScream Studio INC · SendFable/);

@@ -12,6 +12,7 @@ import {
 } from "@/lib/acquisition/personalize";
 import { ensurePipelineControl } from "@/lib/acquisition/caps";
 import { alertOwnerException } from "@/lib/acquisition/notify";
+import { UTILITY_SIGNUP_COPY_VERSION } from "@/lib/try-signup/config";
 
 export const COHORT_SIZE = 25;
 
@@ -77,8 +78,26 @@ export type OptState = {
   bestSegmentKey?: string;
   worstSegmentKey?: string;
   bottleneck?: Bottleneck;
-  /** 50/50 A/B of controlled copy against v1a */
+  /**
+   * Archived Autopilot A/B (v1a vs v1b → /automated-email-marketing).
+   * Historical cohort rows remain; enabled must stay false while utility-first is live.
+   */
   abTest?: { control: "v1a"; variant: "v1b"; enabled: boolean };
+  archivedExperiment?: {
+    id: string;
+    control: string;
+    variant: string;
+    landing: string;
+    archivedAt: string;
+    note: string;
+  };
+  /** Live cold-outreach experiment (utility Signup Tool). */
+  utilityExperiment?: {
+    version: string;
+    landing: string;
+    startedAt: string;
+    note: string;
+  };
   /** Gated product fixes — only one set per cohort eval */
   fixLandingUtm?: boolean;
   fixOnboardingReturn?: boolean;
@@ -287,7 +306,7 @@ function nextActionText(
     return "Early data — keep collecting. No copy, landing, or Casey A/B change.";
   }
   if (bottleneck === "A") {
-    return `A/B test Autopilot v1b (subject/lead) against ${copyVersion || "v1a"} — 50/50 on new INITIAL drafts.`;
+    return `Hold utility_signup; collect more click data before one single copy change (not Autopilot v1a/v1b).`;
   }
   if (bottleneck === "B") {
     return "Enable landing→signup UTM preservation fix (single friction).";
@@ -315,19 +334,17 @@ async function readOptState(): Promise<{
 
 export async function getActiveCopyVersion(): Promise<CopyVersionId> {
   const { copyVersion, state } = await readOptState();
-  // Autopilot pitch A/B (v1a vs v1b) is on by default. Only pin a single
-  // version when optimization explicitly disables the test.
-  // Do not silently route half of drafts to utility_signup — that CTA is not
-  // in the Casey send loop (loadSendCandidates filters Autopilot landing).
-  if (state.abTest?.enabled === false) {
-    return isCopyVersionId(copyVersion) ? copyVersion : DEFAULT_COPY_VERSION;
+  // Utility-first Signup Tool is the primary cold outreach experiment.
+  // Archived Autopilot v1a/v1b stays disabled so historical cohorts remain intact.
+  if (state.utilityExperiment?.version === UTILITY_SIGNUP_COPY_VERSION) {
+    return UTILITY_SIGNUP_COPY_VERSION;
   }
-  const control = state.abTest?.control === "v1a" ? "v1a" : "v1a";
-  const variant =
-    state.abTest?.variant === "v1b" || state.abTest?.variant === "v2a"
-      ? state.abTest.variant
-      : "v1b";
-  return Math.random() < 0.5 ? control : variant;
+  if (state.abTest?.enabled === true) {
+    // Legacy path only if an owner explicitly re-enables Autopilot AB.
+    return Math.random() < 0.5 ? "v1a" : "v1b";
+  }
+  if (copyVersion === UTILITY_SIGNUP_COPY_VERSION) return UTILITY_SIGNUP_COPY_VERSION;
+  return UTILITY_SIGNUP_COPY_VERSION;
 }
 
 export async function getPreferredDiscoveryBias(): Promise<{
@@ -414,9 +431,11 @@ export async function getConversionOptimizationSnapshot(): Promise<ConversionOpt
     last25,
     bestSegment,
     worstSegment,
-    currentCopyVersion: state.abTest?.enabled
-      ? `A/B ${state.abTest.control} vs ${state.abTest.variant}`
-      : copyVersion,
+    currentCopyVersion: state.utilityExperiment?.version
+      ? `utility_signup → /try/signup-tool`
+      : state.abTest?.enabled
+        ? `A/B ${state.abTest.control} vs ${state.abTest.variant}`
+        : copyVersion,
     nextAutoOptimization: nextActionText(last25, copyVersion, bottleneck),
     status,
     bottleneck,
@@ -429,6 +448,63 @@ export async function getConversionOptimizationSnapshot(): Promise<ConversionOpt
         : `Cohort ready — last ${Math.min(COHORT_SIZE, last25.delivered)} delivered INITIAL.`,
     abTestActive: Boolean(state.abTest?.enabled),
   };
+}
+
+/** Activate utility-first cold outreach; archive Autopilot v1a/v1b without deleting history. */
+export async function activateUtilityFirstExperiment(now = new Date()): Promise<{
+  activated: boolean;
+  alreadyActive: boolean;
+}> {
+  const control = await ensurePipelineControl();
+  const state = ((control as { optimizationState?: OptState }).optimizationState ||
+    {}) as OptState;
+  if (
+    state.utilityExperiment?.version === UTILITY_SIGNUP_COPY_VERSION &&
+    state.abTest?.enabled === false &&
+    (control as { activeCopyVersion?: string }).activeCopyVersion === UTILITY_SIGNUP_COPY_VERSION
+  ) {
+    return { activated: false, alreadyActive: true };
+  }
+
+  const next: OptState = {
+    ...state,
+    abTest: { control: "v1a", variant: "v1b", enabled: false },
+    archivedExperiment: state.archivedExperiment || {
+      id: "autopilot_v1a_v1b",
+      control: "v1a",
+      variant: "v1b",
+      landing: "/automated-email-marketing",
+      archivedAt: now.toISOString(),
+      note: "Archived in favor of utility_signup → /try/signup-tool. Historical cohort preserved.",
+    },
+    utilityExperiment: {
+      version: UTILITY_SIGNUP_COPY_VERSION,
+      landing: "/try/signup-tool",
+      startedAt: state.utilityExperiment?.startedAt || now.toISOString(),
+      note: "Primary cold outreach: short Signup Tool email → try before account",
+    },
+    lastAction: "utility_first_activated",
+    lastReason: "owner: restore utility-first as primary cold path",
+    lastReportAt: now.toISOString(),
+  };
+
+  await prisma.acquisitionPipelineControl.update({
+    where: { id: "default" },
+    data: {
+      activeCopyVersion: UTILITY_SIGNUP_COPY_VERSION,
+      optimizationState: next as object,
+    },
+  });
+  await prisma.acquisitionEvent.create({
+    data: {
+      type: "utility_first_activated",
+      meta: {
+        archived: next.archivedExperiment,
+        utility: next.utilityExperiment,
+      },
+    },
+  });
+  return { activated: true, alreadyActive: false };
 }
 
 /**
@@ -484,25 +560,42 @@ export async function evaluateConversionCohort(now = new Date()): Promise<{
     worstSegmentKey: worst?.key,
   };
 
+  // Keep Autopilot AB archived; utility-first remains the live cold path.
+  state.abTest = { control: "v1a", variant: "v1b", enabled: false };
+  if (!state.archivedExperiment) {
+    state.archivedExperiment = {
+      id: "autopilot_v1a_v1b",
+      control: "v1a",
+      variant: "v1b",
+      landing: "/automated-email-marketing",
+      archivedAt: now.toISOString(),
+      note: "Archived in favor of utility_signup → /try/signup-tool",
+    };
+  }
+  if (!state.utilityExperiment) {
+    state.utilityExperiment = {
+      version: UTILITY_SIGNUP_COPY_VERSION,
+      landing: "/try/signup-tool",
+      startedAt: now.toISOString(),
+      note: "Primary cold outreach: Signup Tool try-before-account",
+    };
+  }
+
   if (bottleneck === "EARLY") {
-    reason = "CLICKTHROUGH — NEEDS MORE DATA";
-    if (!state.abTest) {
-      state.abTest = { control: "v1a", variant: "v1b", enabled: true };
-    }
+    reason = "UTILITY — NEEDS MORE DATA";
+    action = "hold";
   } else {
   state.preferredCategories = [];
   state.preferredSignals = [];
   // Clear prior single-fix flags — only one may be set below
-  state.abTest = { control: "v1a", variant: "v1b", enabled: false };
   state.fixLandingUtm = false;
   state.fixOnboardingReturn = false;
   state.fixBillingBadgeValue = false;
 
-  // Exactly one change
+  // Exactly one change — do not revive archived Autopilot AB.
   if (bottleneck === "A") {
-    state.abTest = { control: "v1a", variant: "v1b", enabled: true };
-    action = "copy_ab";
-    reason = "A/B Autopilot v1b vs v1a (50/50 new INITIAL drafts)";
+    action = "hold";
+    reason = "utility_first live — collect clicks before next single copy change";
   } else if (bottleneck === "B") {
     state.fixLandingUtm = true;
     action = "landing_fix";
@@ -532,8 +625,7 @@ export async function evaluateConversionCohort(now = new Date()): Promise<{
   await prisma.acquisitionPipelineControl.update({
     where: { id: "default" },
     data: {
-      // Keep baseline v1a as control; AB handled in getActiveCopyVersion
-      activeCopyVersion: "v1a",
+      activeCopyVersion: UTILITY_SIGNUP_COPY_VERSION,
       lastCohortEvalAt: now,
       lastCohortEvalDelivered: totalDelivered,
       optimizationState: state as object,

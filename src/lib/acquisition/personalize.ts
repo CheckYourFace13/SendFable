@@ -22,13 +22,17 @@ export type BuiltOutreach = {
   opener: string;
 };
 
-/** Stable controlled variants. v1a = current Casey control. utility_signup = try-builder. */
+/**
+ * Controlled Casey copy versions.
+ * Live cold outreach: utility_signup → /try/signup-tool.
+ * v1a/v1b/v2a Autopilot pitches are archived (historical cohort only).
+ */
 export const COPY_VERSIONS = ["v1a", "v1b", "v2a", "utility_signup"] as const;
 export type CopyVersionId = (typeof COPY_VERSIONS)[number];
 
-export const DEFAULT_COPY_VERSION: CopyVersionId = "v1a";
+export const DEFAULT_COPY_VERSION: CopyVersionId = "utility_signup";
 
-/** Primary Casey landing for Autopilot acquisition. */
+/** Archived Autopilot landing (historical v1a/v1b only). */
 export const ACQUISITION_AUTOPILOT_LANDING = "/automated-email-marketing";
 
 export function isCopyVersionId(v: string | null | undefined): v is CopyVersionId {

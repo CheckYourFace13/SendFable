@@ -240,8 +240,8 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
   );
   const conversion = await getConversionOptimizationSnapshot().catch(() => null);
   const abWinner =
-    (conversion as { activeCopyVersion?: string; abTest?: { enabled?: boolean } } | null)
-      ?.activeCopyVersion || "v1a/v1b Autopilot A/B";
+    (conversion as { currentCopyVersion?: string } | null)?.currentCopyVersion ||
+    "utility_signup → /try/signup-tool";
   const rates7 = await ratesOverDays(7);
   const softBackoffActive =
     stageChangesToday.some((e) => e.type === "stage_reduced") ||
