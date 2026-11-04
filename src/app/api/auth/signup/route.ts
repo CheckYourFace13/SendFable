@@ -11,12 +11,15 @@ import { publicSignupAllowed } from "@/lib/early-launch";
 import { recordPolicyAcceptance } from "@/lib/policy-acceptance";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
+import { normalizeHomeTimezone } from "@/lib/home-timezone";
 
 const signupSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   email: z.string().email().max(254),
   password: z.string().min(8).max(128),
   workspaceName: z.string().trim().min(1).max(80).optional(),
+  /** Browser/account IANA timezone — becomes workspace home timezone when valid. */
+  timezone: z.string().trim().max(80).optional(),
   referralCode: z.string().trim().min(3).max(32).optional(),
   utmSource: z.string().trim().max(80).optional(),
   utmMedium: z.string().trim().max(80).optional(),
@@ -80,6 +83,7 @@ export async function POST(req: Request) {
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   const workspaceName = parsed.data.workspaceName?.trim() || "My workspace";
+  const homeTimezone = normalizeHomeTimezone(parsed.data.timezone) || "UTC";
   const ownCode = randomToken(6).slice(0, 8);
 
   let referredByCode: string | null = null;
@@ -95,6 +99,7 @@ export async function POST(req: Request) {
       email,
       name: parsed.data.name?.trim() || null,
       passwordHash,
+      timezone: homeTimezone,
       referralCode: ownCode,
       referredByCode,
       memberships: {
@@ -104,6 +109,7 @@ export async function POST(req: Request) {
             create: {
               name: workspaceName,
               referralCode: ownCode,
+              timezone: homeTimezone,
             },
           },
         },

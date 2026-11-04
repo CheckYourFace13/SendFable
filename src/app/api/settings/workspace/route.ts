@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
+import { normalizeHomeTimezone } from "@/lib/home-timezone";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
@@ -13,7 +14,13 @@ const schema = z.object({
 export async function GET() {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return NextResponse.json({ workspace: ctx.workspace });
+  return NextResponse.json({
+    workspace: {
+      ...ctx.workspace,
+      homeTimezone: ctx.workspace.timezone,
+    },
+    accountTimezone: ctx.user.timezone || null,
+  });
 }
 
 export async function PATCH(req: Request) {
@@ -53,13 +60,28 @@ export async function PATCH(req: Request) {
     });
   }
 
+  const homeTimezone =
+    parsed.data.timezone === undefined
+      ? undefined
+      : normalizeHomeTimezone(parsed.data.timezone);
+  if (parsed.data.timezone !== undefined && !homeTimezone) {
+    return NextResponse.json({ error: "Choose a supported home timezone" }, { status: 400 });
+  }
+
+  if (homeTimezone) {
+    await prisma.user.update({
+      where: { id: ctx.user.id },
+      data: { timezone: homeTimezone },
+    });
+  }
+
   const workspace = await prisma.workspace.update({
     where: { id: ctx.workspace.id },
     data: {
       name: parsed.data.name,
       mailingAddress:
         parsed.data.mailingAddress === undefined ? undefined : parsed.data.mailingAddress,
-      timezone: parsed.data.timezone,
+      timezone: homeTimezone,
       defaultSenderIdentityId:
         parsed.data.defaultSenderIdentityId === undefined
           ? undefined
@@ -67,7 +89,9 @@ export async function PATCH(req: Request) {
     },
   });
 
-  return NextResponse.json({ workspace });
+  return NextResponse.json({
+    workspace: { ...workspace, homeTimezone: workspace.timezone },
+  });
 }
 
 export async function DELETE() {

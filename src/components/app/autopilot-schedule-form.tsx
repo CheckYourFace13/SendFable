@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  AUTOPILOT_TIMEZONES,
-  resolveDefaultTimezone,
-  type AutopilotTimezone,
-} from "@/lib/autopilot/schedule";
+  detectBrowserTimezone,
+  labelHomeTimezone,
+  resolveHomeTimezone,
+  type HomeTimezone,
+} from "@/lib/home-timezone";
+import { HomeTimezoneSelect } from "@/components/app/home-timezone-select";
 import { Button } from "@/components/ui/button";
 
 export function AutopilotScheduleForm({
@@ -14,6 +16,7 @@ export function AutopilotScheduleForm({
   busy,
   submitLabel = "SCHEDULE FOR LATER",
   defaultTimezone,
+  accountTimezone,
   browserTimezone,
   onSchedule,
   onSendNow,
@@ -23,27 +26,29 @@ export function AutopilotScheduleForm({
   busy?: boolean;
   submitLabel?: string;
   defaultTimezone?: string | null;
+  accountTimezone?: string | null;
   browserTimezone?: string | null;
   onSchedule: (value: { date: string; time: string; timezone: string }) => void;
   onSendNow?: () => void;
 }) {
   const resolvedZone = useMemo(
     () =>
-      resolveDefaultTimezone({
+      resolveHomeTimezone({
         workspaceTimezone: defaultTimezone,
-        browserTimezone:
-          browserTimezone ||
-          (typeof Intl !== "undefined"
-            ? Intl.DateTimeFormat().resolvedOptions().timeZone
-            : null),
+        accountTimezone,
+        browserTimezone: browserTimezone || detectBrowserTimezone(),
       }),
-    [defaultTimezone, browserTimezone]
+    [defaultTimezone, accountTimezone, browserTimezone]
   );
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [timezone, setTimezone] = useState<AutopilotTimezone>(resolvedZone);
+  const [timezone, setTimezone] = useState<HomeTimezone>(resolvedZone);
   const [mode, setMode] = useState<"choose" | "schedule">(onSendNow ? "choose" : "schedule");
   const ready = Boolean(date && time && timezone);
+
+  useEffect(() => {
+    setTimezone(resolvedZone);
+  }, [resolvedZone]);
 
   if (mode === "choose" && onSendNow) {
     return (
@@ -53,7 +58,7 @@ export function AutopilotScheduleForm({
           {recipientCount != null ? ` · ${recipientCount.toLocaleString()} recipients` : ""}
         </p>
         <p className="text-sm text-muted-foreground">
-          Timezone default: {resolvedZone.replace(/_/g, " ")} (editable when you schedule)
+          Home timezone: {labelHomeTimezone(resolvedZone)} (editable when you schedule)
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
@@ -113,28 +118,21 @@ export function AutopilotScheduleForm({
           />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block text-muted-foreground">Timezone</span>
-          <select
-            required
+          <span className="mb-1 block text-muted-foreground">Home timezone</span>
+          <HomeTimezoneSelect
             value={timezone}
-            onChange={(event) => setTimezone(event.target.value as AutopilotTimezone)}
+            onChange={(next) => setTimezone(next as HomeTimezone)}
             className="min-h-11 w-full rounded-md border bg-background px-3"
-          >
-            {AUTOPILOT_TIMEZONES.map((zone) => (
-              <option key={zone} value={zone}>
-                {zone.replace(/_/g, " ")}
-              </option>
-            ))}
-          </select>
+          />
         </label>
       </div>
       <p className="text-sm text-muted-foreground">
-        Prefills from your workspace timezone ({resolvedZone.replace(/_/g, " ")}). You can change
-        it.
+        Prefills from your workspace home timezone ({labelHomeTimezone(resolvedZone)}). You can
+        change it for this send.
       </p>
       {ready && (
         <p className="text-sm text-muted-foreground">
-          Selected: {date} at {time} ({timezone.replace(/_/g, " ")})
+          Selected: {date} at {time} ({labelHomeTimezone(timezone)})
         </p>
       )}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

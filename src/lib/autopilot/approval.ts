@@ -5,11 +5,8 @@ import { platformFrom, sendEmail } from "@/lib/mailer";
 import { getWorkspaceOwner } from "@/lib/workspace-owner";
 import { countAudience } from "@/lib/audience";
 import type { AutopilotAction } from "@/lib/autopilot/types";
-import {
-  formatScheduledWhen,
-  parseAutopilotSchedule,
-  resolveDefaultTimezone,
-} from "@/lib/autopilot/schedule";
+import { formatScheduledWhen, parseAutopilotSchedule } from "@/lib/autopilot/schedule";
+import { resolveHomeTimezone } from "@/lib/home-timezone";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 import { humanizeScribeChange, renderAutopilotApprovalEmail } from "@/lib/autopilot/approval-copy";
@@ -188,6 +185,7 @@ export async function loadAutopilotReview(token: string) {
   });
   if (!draft) return { error: "not_found" as const };
 
+  const owner = await getWorkspaceOwner(draft.workspaceId).catch(() => null);
   const audienceTagIds = (draft.campaign?.audienceTagIds as string[]) ?? [];
   const audienceTags = audienceTagIds.length
     ? await prisma.tag.findMany({
@@ -209,8 +207,9 @@ export async function loadAutopilotReview(token: string) {
         audienceSegmentId: draft.campaign.audienceSegmentId,
       })
     : 0;
-  const defaultTimezone = resolveDefaultTimezone({
+  const defaultTimezone = resolveHomeTimezone({
     workspaceTimezone: draft.workspace.timezone,
+    accountTimezone: owner?.timezone,
   });
 
   const tokenMatches = draft.approvalTokenVersion === verified.version;

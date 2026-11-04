@@ -98,7 +98,9 @@ export default async function AutopilotReviewPage({
             : "This campaign is already scheduled. Nothing else will send from this link."}
         </p>
         {draft.scheduleTimezone ? (
-          <p className="mt-2 text-sm text-ink/65">Timezone: {draft.scheduleTimezone}</p>
+          <p className="mt-2 text-sm text-ink/65">
+            Home timezone used: {draft.scheduleTimezone.replace(/_/g, " ")}
+          </p>
         ) : null}
         <SubjectBlock subject={draft.subject} />
         <SignInLink />
@@ -178,8 +180,8 @@ export default async function AutopilotReviewPage({
         </div>
         {action === "approve" ? (
           <div>
-            <dt className="text-ink/50">Timezone default</dt>
-            <dd className="mt-0.5 text-ink">{defaultTimezone}</dd>
+            <dt className="text-ink/50">Home timezone</dt>
+            <dd className="mt-0.5 text-ink">{defaultTimezone.replace(/_/g, " ")}</dd>
           </div>
         ) : null}
       </dl>

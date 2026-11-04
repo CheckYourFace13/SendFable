@@ -106,6 +106,10 @@ function SignupForm() {
           utmContent,
           tryToken,
           acceptedPolicies: true,
+          timezone:
+            typeof Intl !== "undefined"
+              ? Intl.DateTimeFormat().resolvedOptions().timeZone
+              : undefined,
         }),
       });
       const data = await res.json();

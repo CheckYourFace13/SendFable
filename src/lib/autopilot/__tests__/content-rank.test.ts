@@ -8,7 +8,7 @@ import {
 } from "@/lib/autopilot/content-rank";
 import { generateExtractive } from "@/lib/autopilot/generate";
 import { selectScribeCampaignImage } from "@/lib/autopilot/campaign-image";
-import { resolveDefaultTimezone } from "@/lib/autopilot/schedule";
+import { resolveHomeTimezone } from "@/lib/home-timezone";
 
 describe("scribe content ranking", () => {
   it("rejects published season closed as junk", () => {
@@ -153,21 +153,21 @@ describe("scribe image selection", () => {
 });
 
 describe("scribe timezone default", () => {
-  it("prefers workspace timezone over browser and UTC", () => {
+  it("prefers workspace home timezone over browser and UTC", () => {
     assert.equal(
-      resolveDefaultTimezone({
+      resolveHomeTimezone({
         workspaceTimezone: "America/Chicago",
         browserTimezone: "America/New_York",
       }),
       "America/Chicago"
     );
     assert.equal(
-      resolveDefaultTimezone({
+      resolveHomeTimezone({
         workspaceTimezone: null,
         browserTimezone: "America/Denver",
       }),
       "America/Denver"
     );
-    assert.equal(resolveDefaultTimezone({}), "UTC");
+    assert.equal(resolveHomeTimezone({}), "UTC");
   });
 });

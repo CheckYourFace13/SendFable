@@ -27,6 +27,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { HomeTimezoneSelect } from "@/components/app/home-timezone-select";
+import { detectBrowserTimezone, resolveHomeTimezone } from "@/lib/home-timezone";
 
 function TextMessagingSettingsLink() {
   const [show, setShow] = useState(false);
@@ -108,7 +110,13 @@ export default function SettingsPage() {
         const w = await wRes.json();
         setName(w.workspace.name);
         setMailingAddress(w.workspace.mailingAddress || "");
-        setTimezone(w.workspace.timezone || "UTC");
+        setTimezone(
+          resolveHomeTimezone({
+            workspaceTimezone: w.workspace.homeTimezone || w.workspace.timezone,
+            accountTimezone: w.accountTimezone,
+            browserTimezone: detectBrowserTimezone(),
+          })
+        );
         setDefaultSender(w.workspace.defaultSenderIdentityId || "");
       }
     })();
@@ -197,8 +205,16 @@ export default function SettingsPage() {
           />
         </div>
         <div>
-          <Label>Timezone</Label>
-          <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+          <Label htmlFor="home-timezone">Home timezone</Label>
+          <HomeTimezoneSelect
+            id="home-timezone"
+            value={timezone}
+            onChange={setTimezone}
+            className="mt-1.5 min-h-11 w-full rounded-md border bg-background px-3 text-sm"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Used as the default when scheduling campaigns. Editable anytime.
+          </p>
         </div>
         <div>
           <Label>Default sender</Label>

@@ -123,6 +123,7 @@ export default function ScribePage() {
   const [needsAudienceChoice, setNeedsAudienceChoice] = useState(false);
   const [editingAudience, setEditingAudience] = useState(false);
   const [workspaceTimezone, setWorkspaceTimezone] = useState("UTC");
+  const [accountTimezone, setAccountTimezone] = useState<string | null>(null);
 
   async function load() {
     const [cRes, dRes] = await Promise.all([
@@ -144,7 +145,8 @@ export default function ScribePage() {
       setDraftsUsed(typeof j.draftsUsedThisMonth === "number" ? j.draftsUsedThisMonth : 0);
       setInternalUnlimited(Boolean(j.internalUnlimited));
       setCommercial(j.commercial || null);
-      setWorkspaceTimezone(j.workspaceTimezone || "UTC");
+      setWorkspaceTimezone(j.homeTimezone || j.workspaceTimezone || "UTC");
+      setAccountTimezone(j.accountTimezone || null);
       const nextAudiences: Array<{ id: string; name: string }> = j.audiences || [];
       setAudiences(nextAudiences);
       const resolved = j.scribeAudience;
@@ -558,6 +560,7 @@ export default function ScribePage() {
                     audience={draft.audience || "Everyone subscribed"}
                     recipientCount={draft.recipientCount}
                     defaultTimezone={workspaceTimezone}
+                    accountTimezone={accountTimezone}
                     onSendNow={() => void decide(draft.id, "send-now")}
                     onSchedule={(value) => void decide(draft.id, "schedule", value)}
                   />
@@ -592,6 +595,7 @@ export default function ScribePage() {
                     audience={draft.audience || "Everyone subscribed"}
                     recipientCount={draft.recipientCount}
                     defaultTimezone={workspaceTimezone}
+                    accountTimezone={accountTimezone}
                     submitLabel="SCHEDULE FOR LATER"
                     onSchedule={(value) => void decide(draft.id, "schedule", value)}
                   />

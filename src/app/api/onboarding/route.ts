@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getApiContext } from "@/lib/session";
 import { randomToken } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
+import { normalizeHomeTimezone } from "@/lib/home-timezone";
 
 const patchSchema = z.object({
   step: z.number().int().min(0).max(10).optional(),
@@ -21,6 +22,7 @@ const patchSchema = z.object({
       logoUrl: z.string().max(500).optional().nullable(),
       primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
       secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+      timezone: z.string().trim().max(80).optional(),
     })
     .optional(),
 });
@@ -53,6 +55,7 @@ export async function GET() {
     completedAt: ws.onboardingCompletedAt,
     data: ws.onboardingData,
     userName: ctx.user.name || "",
+    accountTimezone: ctx.user.timezone || null,
     workspace: {
       name: ws.name,
       websiteUrl: ws.websiteUrl,
@@ -61,6 +64,8 @@ export async function GET() {
       primaryColor: ws.primaryColor,
       secondaryColor: ws.secondaryColor,
       businessDescription: ws.businessDescription,
+      timezone: ws.timezone,
+      homeTimezone: ws.timezone,
     },
     progress: { verifiedSenders: senders, contacts, campaigns },
   });
@@ -83,10 +88,15 @@ export async function PATCH(req: Request) {
     ...(parsed.data.data || {}),
   };
 
-  if (parsed.data.userName) {
+  const homeTimezone = normalizeHomeTimezone(parsed.data.workspace?.timezone);
+
+  if (parsed.data.userName || homeTimezone) {
     await prisma.user.update({
       where: { id: ctx.user.id },
-      data: { name: parsed.data.userName },
+      data: {
+        name: parsed.data.userName,
+        timezone: homeTimezone || undefined,
+      },
     });
   }
 
@@ -116,6 +126,7 @@ export async function PATCH(req: Request) {
           : parsed.data.workspace.logoUrl,
       primaryColor: parsed.data.workspace?.primaryColor,
       secondaryColor: parsed.data.workspace?.secondaryColor,
+      timezone: homeTimezone || undefined,
     },
   });
 

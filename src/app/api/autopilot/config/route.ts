@@ -94,6 +94,8 @@ export async function GET() {
     draftsCap,
     draftsLimitReached: draftsCap != null && draftsCap > 0 && draftsUsedThisMonth >= draftsCap,
     workspaceTimezone: workspace?.timezone || "UTC",
+    homeTimezone: workspace?.timezone || "UTC",
+    accountTimezone: ctx.user.timezone || null,
     commercial: await describeAutopilotAccount(
       ctx.workspace.id,
       ent.plan,

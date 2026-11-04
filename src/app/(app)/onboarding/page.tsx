@@ -16,6 +16,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { CAMPAIGN_GOALS } from "@/lib/campaign-goals";
 import { track } from "@/lib/track";
+import {
+  detectBrowserTimezone,
+  resolveHomeTimezone,
+} from "@/lib/home-timezone";
+import { HomeTimezoneSelect } from "@/components/app/home-timezone-select";
 
 const STEPS = [
   "Your business",
@@ -35,6 +40,7 @@ export default function OnboardingPage() {
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("announce");
+  const [homeTimezone, setHomeTimezone] = useState("UTC");
   const [progress, setProgress] = useState({ verifiedSenders: 0, contacts: 0, campaigns: 0 });
   const [started, setStarted] = useState(false);
 
@@ -53,6 +59,13 @@ export default function OnboardingPage() {
       setName(data.workspace?.name && data.workspace.name !== "My workspace" ? data.workspace.name : "");
       setAddress(data.workspace?.mailingAddress || "");
       setDescription(data.workspace?.businessDescription || "");
+      setHomeTimezone(
+        resolveHomeTimezone({
+          workspaceTimezone: data.workspace?.homeTimezone || data.workspace?.timezone,
+          accountTimezone: data.accountTimezone,
+          browserTimezone: detectBrowserTimezone(),
+        })
+      );
       setProgress(data.progress || { verifiedSenders: 0, contacts: 0, campaigns: 0 });
       setLoading(false);
       if (!started) {
@@ -87,6 +100,7 @@ export default function OnboardingPage() {
       name: name.trim() || undefined,
       mailingAddress: address || null,
       businessDescription: description || null,
+      timezone: homeTimezone,
     };
     if (step === 0 && !displayName.trim()) {
       toast.error("Add a first name or display name so we know what to call you.");
@@ -182,6 +196,18 @@ export default function OnboardingPage() {
               />
               <p className="mt-1 text-xs text-muted-foreground">
                 Required by law in every email you send.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="home-timezone">Home timezone</Label>
+              <HomeTimezoneSelect
+                id="home-timezone"
+                value={homeTimezone}
+                onChange={setHomeTimezone}
+                className="mt-1.5 min-h-11 w-full rounded-md border border-ink/15 bg-background px-3 text-sm"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Used automatically when you schedule campaigns. You can change it later.
               </p>
             </div>
             <div>

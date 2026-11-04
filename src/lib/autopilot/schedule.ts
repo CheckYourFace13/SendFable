@@ -1,41 +1,17 @@
-export const AUTOPILOT_TIMEZONES = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Phoenix",
-  "America/Los_Angeles",
-  "America/Anchorage",
-  "Pacific/Honolulu",
-  "America/Toronto",
-  "America/Vancouver",
-  "Europe/London",
-  "Europe/Paris",
-  "UTC",
-] as const;
+import {
+  HOME_TIMEZONES,
+  type HomeTimezone,
+  formatInHomeTimezone,
+  normalizeHomeTimezone,
+  resolveHomeTimezone,
+  zonedLocalToUtc,
+} from "@/lib/home-timezone";
 
-export type AutopilotTimezone = (typeof AUTOPILOT_TIMEZONES)[number];
+/** @deprecated Prefer HOME_TIMEZONES — kept for Scribe schedule UI imports. */
+export const AUTOPILOT_TIMEZONES = HOME_TIMEZONES;
+export type AutopilotTimezone = HomeTimezone;
 
-const ZONE_SET = new Set<string>(AUTOPILOT_TIMEZONES);
-
-/**
- * Prefer workspace timezone, then account/user, then browser, then UTC.
- * Always editable by the owner on the schedule form.
- */
-export function resolveDefaultTimezone(opts: {
-  workspaceTimezone?: string | null;
-  accountTimezone?: string | null;
-  browserTimezone?: string | null;
-}): AutopilotTimezone {
-  for (const raw of [
-    opts.workspaceTimezone,
-    opts.accountTimezone,
-    opts.browserTimezone,
-  ]) {
-    const z = (raw || "").trim();
-    if (z && ZONE_SET.has(z)) return z as AutopilotTimezone;
-  }
-  return "UTC";
-}
+export { resolveHomeTimezone as resolveDefaultTimezone };
 
 export type ScheduleInput = {
   date?: string | null;
@@ -50,7 +26,7 @@ export type ScheduleResult =
 
 /**
  * Date, time, and timezone must all be chosen for schedule-later.
- * Timezone may be prefilled from workspace defaults; send-now is a separate action.
+ * Timezone may be prefilled from the workspace home timezone; send-now is separate.
  */
 export function parseAutopilotSchedule(input: ScheduleInput): ScheduleResult {
   const date = (input.date || "").trim();
@@ -58,7 +34,7 @@ export function parseAutopilotSchedule(input: ScheduleInput): ScheduleResult {
   const timezone = (input.timezone || "").trim();
   if (!date) return { ok: false, error: "Date is required" };
   if (!time) return { ok: false, error: "Time is required" };
-  if (!timezone || !ZONE_SET.has(timezone)) return { ok: false, error: "Timezone is required" };
+  if (!normalizeHomeTimezone(timezone)) return { ok: false, error: "Timezone is required" };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: "Date is required" };
   if (!/^\d{2}:\d{2}$/.test(time)) return { ok: false, error: "Time is required" };
 
@@ -72,67 +48,5 @@ export function parseAutopilotSchedule(input: ScheduleInput): ScheduleResult {
 }
 
 export function formatScheduledWhen(at: Date, timezone: string): string {
-  const zone = ZONE_SET.has(timezone) ? timezone : "UTC";
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: zone,
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(at);
-}
-
-function zonedLocalToUtc(date: string, time: string, timeZone: string): Date | null {
-  const [year, month, day] = date.split("-").map(Number);
-  const [hour, minute] = time.split(":").map(Number);
-  if (
-    !year ||
-    !month ||
-    !day ||
-    hour == null ||
-    minute == null ||
-    hour > 23 ||
-    minute > 59
-  ) {
-    return null;
-  }
-  const utcGuess = Date.UTC(year, month - 1, day, hour, minute, 0);
-  const asUtc = zonedPartsToUtc(new Date(utcGuess), timeZone);
-  if (asUtc == null) return null;
-  const corrected = new Date(utcGuess - (asUtc - utcGuess));
-  const check = zonedPartsToUtc(corrected, timeZone);
-  if (check == null) return null;
-  if (Math.abs(check - utcGuess) > 60_000) return null;
-  return corrected;
-}
-
-function zonedPartsToUtc(instant: Date, timeZone: string): number | null {
-  try {
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    }).formatToParts(instant);
-    const bag: Record<string, string> = {};
-    for (const part of parts) bag[part.type] = part.value;
-    const hour = Number(bag.hour) % 24;
-    return Date.UTC(
-      Number(bag.year),
-      Number(bag.month) - 1,
-      Number(bag.day),
-      hour,
-      Number(bag.minute),
-      Number(bag.second)
-    );
-  } catch {
-    return null;
-  }
+  return formatInHomeTimezone(at, timezone);
 }

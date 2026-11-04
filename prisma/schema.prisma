@@ -216,6 +216,8 @@ model User {
   passwordHash  String?
   emailVerified DateTime?
   image         String?
+  /// Optional account-level IANA timezone (fallback when workspace home timezone is unset).
+  timezone      String?
 
   plan                 Plan      @default(FREE)
   stripeCustomerId     String?   @unique
@@ -292,6 +294,7 @@ model Workspace {
   id                      String  @id @default(cuid())
   name                    String
   mailingAddress          String?
+  /// Workspace home timezone (IANA). Captured at signup/onboarding; drives schedule defaults.
   timezone                String  @default("UTC")
   defaultSenderIdentityId String?
 

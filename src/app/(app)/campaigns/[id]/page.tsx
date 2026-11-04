@@ -22,6 +22,13 @@ import { EmailBuilder } from "@/components/email-builder/builder";
 import type { EmailDesign } from "@/lib/email-compiler";
 import { CampaignSmsEditor } from "@/components/campaigns/campaign-sms-editor";
 import { calculateSegments } from "@/lib/sms/segments";
+import {
+  datetimeLocalInZoneToUtc,
+  detectBrowserTimezone,
+  formatInHomeTimezone,
+  labelHomeTimezone,
+  resolveHomeTimezone,
+} from "@/lib/home-timezone";
 
 type Identity = { id: string; value: string; displayName: string | null; status: string };
 type Tag = { id: string; name: string };
@@ -40,6 +47,7 @@ export default function CampaignDetailPage() {
   const [confidence, setConfidence] = useState<any>(null);
   const [mailingAddress, setMailingAddress] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string | null>(null);
+  const [homeTimezone, setHomeTimezone] = useState("UTC");
   const [confirmWhen, setConfirmWhen] = useState<"now" | "schedule" | null>(null);
   const [launching, setLaunching] = useState(false);
   const [tab, setTab] = useState("setup");
@@ -66,6 +74,13 @@ export default function CampaignDetailPage() {
       const w = await wRes.json();
       setMailingAddress(w.workspace?.mailingAddress || null);
       setBusinessName(w.workspace?.name || null);
+      setHomeTimezone(
+        resolveHomeTimezone({
+          workspaceTimezone: w.workspace?.homeTimezone || w.workspace?.timezone,
+          accountTimezone: w.accountTimezone,
+          browserTimezone: detectBrowserTimezone(),
+        })
+      );
     }
   }, [params.id]);
 
@@ -113,12 +128,22 @@ export default function CampaignDetailPage() {
 
   async function launch(when: "now" | "schedule") {
     setLaunching(true);
+    let scheduledAt: string | undefined;
+    if (when === "schedule") {
+      const at = datetimeLocalInZoneToUtc(scheduleAt, homeTimezone);
+      if (!at) {
+        setLaunching(false);
+        toast.error("Choose a valid date and time");
+        return;
+      }
+      scheduledAt = at.toISOString();
+    }
     const res = await fetch(`/api/campaigns/${params.id}/launch`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         when,
-        scheduledAt: when === "schedule" ? new Date(scheduleAt).toISOString() : undefined,
+        scheduledAt,
       }),
     });
     const data = await res.json();
@@ -407,17 +432,16 @@ export default function CampaignDetailPage() {
         <TabsContent value="review" className="mt-6 max-w-2xl space-y-4">
           {(() => {
             const sender = identities.find((i) => i.id === campaign.senderIdentityId);
-            const whenLabel =
+            const scheduledUtc =
               confirmWhen === "schedule" && scheduleAt
-                ? new Date(scheduleAt).toLocaleString(undefined, {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    timeZoneName: "short",
-                  })
-                : "Send now";
+                ? datetimeLocalInZoneToUtc(scheduleAt, homeTimezone)
+                : null;
+            const whenLabel =
+              confirmWhen === "schedule" && scheduledUtc
+                ? formatInHomeTimezone(scheduledUtc, homeTimezone)
+                : confirmWhen === "schedule" && scheduleAt
+                  ? `${scheduleAt.replace("T", " ")} (${labelHomeTimezone(homeTimezone)})`
+                  : "Send now";
             const blockers = (confidence?.checks || []).filter(
               (c: { blocksSend?: boolean; level: string }) => c.blocksSend || c.level === "error"
             );
@@ -548,13 +572,18 @@ export default function CampaignDetailPage() {
                     </Button>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                       <div>
-                        <Label className="text-xs">Schedule (your local time)</Label>
+                        <Label className="text-xs">
+                          Schedule ({labelHomeTimezone(homeTimezone)})
+                        </Label>
                         <Input
                           type="datetime-local"
                           className="min-h-11"
                           value={scheduleAt}
                           onChange={(e) => setScheduleAt(e.target.value)}
                         />
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Uses your workspace home timezone. Change it in Settings.
+                        </p>
                       </div>
                       <Button
                         variant="outline"
