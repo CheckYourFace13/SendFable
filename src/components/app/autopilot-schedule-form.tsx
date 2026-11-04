@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AUTOPILOT_TIMEZONES, resolveDefaultTimezone } from "@/lib/autopilot/schedule";
+import {
+  AUTOPILOT_TIMEZONES,
+  resolveDefaultTimezone,
+  type AutopilotTimezone,
+} from "@/lib/autopilot/schedule";
 import { Button } from "@/components/ui/button";
 
 export function AutopilotScheduleForm({
@@ -37,7 +41,7 @@ export function AutopilotScheduleForm({
   );
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [timezone, setTimezone] = useState(resolvedZone);
+  const [timezone, setTimezone] = useState<AutopilotTimezone>(resolvedZone);
   const [mode, setMode] = useState<"choose" | "schedule">(onSendNow ? "choose" : "schedule");
   const ready = Boolean(date && time && timezone);
 
@@ -113,7 +117,7 @@ export function AutopilotScheduleForm({
           <select
             required
             value={timezone}
-            onChange={(event) => setTimezone(event.target.value)}
+            onChange={(event) => setTimezone(event.target.value as AutopilotTimezone)}
             className="min-h-11 w-full rounded-md border bg-background px-3"
           >
             {AUTOPILOT_TIMEZONES.map((zone) => (
