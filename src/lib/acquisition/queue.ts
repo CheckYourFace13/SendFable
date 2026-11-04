@@ -20,14 +20,23 @@ export async function reconcileStaleInitialDrafts(limit = 40): Promise<{
   retired: number;
   cancelled: number;
 }> {
-  const drafts = await prisma.acquisitionMessage.findMany({
+  // Only pull non-current drafts. Taking "oldest N of all drafts" stalls once
+  // the oldest batch is already utility_signup (plan=keep) while newer Autopilot
+  // drafts remain unsent.
+  const candidates = await prisma.acquisitionMessage.findMany({
     where: {
       dryRun: false,
       step: "INITIAL",
       status: { in: ["DRAFT", "SCHEDULED"] },
+      NOT: {
+        AND: [
+          { copyVersion: UTILITY_SIGNUP_COPY_VERSION },
+          { ctaPath: { startsWith: UTILITY_SIGNUP_LANDING } },
+        ],
+      },
     },
     orderBy: { createdAt: "asc" },
-    take: limit,
+    take: Math.max(limit * 3, 120),
     select: {
       id: true,
       prospectId: true,
@@ -38,6 +47,10 @@ export async function reconcileStaleInitialDrafts(limit = 40): Promise<{
       prospect: { select: { status: true } },
     },
   });
+
+  const drafts = candidates
+    .filter((d) => !isCurrentAutopilotInitial(d))
+    .slice(0, limit);
 
   if (!drafts.length) return { regenerated: 0, retired: 0, cancelled: 0 };
 
