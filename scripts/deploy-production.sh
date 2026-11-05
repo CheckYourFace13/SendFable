@@ -43,13 +43,15 @@ if grep -R -n --exclude='*.test.ts' --exclude='*.test.tsx' enqueueAutopilotAutoS
   exit 2
 fi
 
+# shellcheck disable=SC1091
+source "$(dirname "$0")/docker-disk-cleanup.sh"
+echo "DISK_BEFORE_BUILD=$(disk_pct)%"
 docker compose -p sendfable -f docker-compose.prod.yml build app worker
 docker compose -p sendfable -f docker-compose.prod.yml up -d --no-deps app worker
 sleep 12
-# Prevent root-disk pressure from unbounded build cache after deploys.
-# Runs after containers swap so intermediate layers are reclaimable.
-docker builder prune -af >/dev/null 2>&1 || true
-docker image prune -f >/dev/null 2>&1 || true
 docker exec sendfable-worker sh -c 'test ! -d /app/src/lib/newsletter && ! grep -q enqueueAutopilotAutoSend /app/src/lib/autopilot/tick.ts /app/src/worker/index.ts'
 curl -sf -o /dev/null -w 'health:%{http_code}\n' http://127.0.0.1:3010/api/health
+# After a healthy swap: drop build cache and images no container is using.
+# Volumes are never pruned.
+sendfable_docker_cleanup
 echo DEPLOY_OK "$(git rev-parse --short HEAD)"

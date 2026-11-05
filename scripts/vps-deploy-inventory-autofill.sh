@@ -6,6 +6,9 @@ git checkout main
 git pull --ff-only origin main
 echo "COMMIT=$(git rev-parse --short HEAD)"
 docker compose -p sendfable -f docker-compose.prod.yml up -d --build app worker
+# shellcheck disable=SC1091
+source "$(dirname "$0")/docker-disk-cleanup.sh"
+sendfable_docker_cleanup
 sleep 20
 docker compose -p sendfable -f docker-compose.prod.yml ps
 # Confirm SES attribution + inventory helpers in worker image

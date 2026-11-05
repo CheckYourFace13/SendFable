@@ -66,11 +66,11 @@ if [ "$USED" -lt 85 ]; then
 else
   LEVEL="warn"
   SUBJECT="Disk ${USED}% full"
-  BODY="Root filesystem at ${USED}% (warning ≥85%). Clean Docker build cache / logs soon."
+  BODY="Root filesystem at ${USED}% (df /, warning ≥85%). This is measured usage, not a Docker-only estimate."
   if [ "$USED" -ge 90 ]; then
     LEVEL="crit"
     SUBJECT="Disk CRITICAL ${USED}% full"
-    BODY="Root filesystem at ${USED}% (≥90%). Prune Docker build cache / logs / disposable caches soon."
+    BODY="Root filesystem at ${USED}% (df /, critical ≥90%). This is measured usage, not a Docker-only estimate."
   fi
   mark="$STATE/alert-disk"
   now=$(date +%s)

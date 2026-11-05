@@ -13,6 +13,9 @@ git reset --hard origin/main
 echo "POST_PULL_HEAD=$(git rev-parse HEAD)"
 
 docker compose -p sendfable -f docker-compose.prod.yml up -d --build app worker
+# shellcheck disable=SC1091
+source "$(dirname "$0")/docker-disk-cleanup.sh"
+sendfable_docker_cleanup
 
 echo "Waiting for health..."
 for i in $(seq 1 60); do

@@ -21,6 +21,9 @@ CREATE INDEX IF NOT EXISTS \"AcquisitionMessage_deliveredAt_idx\" ON \"Acquisiti
 CREATE INDEX IF NOT EXISTS \"AcquisitionMessage_copyVersion_idx\" ON \"AcquisitionMessage\"(\"copyVersion\");
 "
 docker compose -p sendfable -f docker-compose.prod.yml up -d --build app worker
+# shellcheck disable=SC1091
+source "$(dirname "$0")/docker-disk-cleanup.sh"
+sendfable_docker_cleanup
 sleep 20
 docker compose -p sendfable -f docker-compose.prod.yml ps
 docker compose -p sendfable -f docker-compose.prod.yml exec -T worker npx tsx scripts/vps-conversion-status.ts

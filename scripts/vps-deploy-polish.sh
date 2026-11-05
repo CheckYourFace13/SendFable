@@ -11,6 +11,9 @@ if ! grep -q '^PLATFORM_OWNER_EMAIL=' .env; then
 fi
 
 docker compose -p sendfable -f docker-compose.prod.yml up -d --build app worker
+# shellcheck disable=SC1091
+source "$(dirname "$0")/docker-disk-cleanup.sh"
+sendfable_docker_cleanup
 
 echo "Waiting for health..."
 for i in $(seq 1 60); do
