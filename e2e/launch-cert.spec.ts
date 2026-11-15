@@ -132,11 +132,19 @@ test.describe("AUTH gates", () => {
 });
 
 test.describe("Public SMS marketing", () => {
-  test("public /sms is not a customer product page", async ({ page }) => {
+  test("public /sms is an indexable product page when SMS is public", async ({ page }) => {
     const res = await page.goto(`${BASE}/sms`);
     const status = res?.status() ?? 0;
-    const onLogin = /login|signin/i.test(page.url());
-    expect(status >= 400 || onLogin).toBeTruthy();
+    // When SENDFABLE_SMS_PUBLIC_ENABLED=true: 200 product page.
+    // When false: 404 (notFound) — still must not expose Telnyx/TCR admin copy.
+    if (status === 200) {
+      await expect(
+        page.getByRole("heading", { name: /Text messaging for the same audience/i })
+      ).toBeVisible();
+      await expect(page.getByText(/STOP/i).first()).toBeVisible();
+    } else {
+      expect(status).toBeGreaterThanOrEqual(400);
+    }
     await expect(page.getByRole("heading", { name: /telnyx|tcr|campaign id/i })).toHaveCount(0);
   });
 

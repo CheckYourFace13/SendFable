@@ -101,11 +101,16 @@ const APP_PREFIXES = [
   "/admin",
   "/library",
   "/brand",
-  "/sms",
   "/inbox",
 ];
 
+/** Authenticated SMS app surfaces (exact /sms is the public product page). */
+const SMS_APP_PREFIXES = ["/sms/onboarding", "/sms/checkout-preview", "/sms/pricing-preview"];
+
 function isAppPath(pathname: string): boolean {
+  if (SMS_APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+    return true;
+  }
   return APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 

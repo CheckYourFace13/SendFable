@@ -301,7 +301,7 @@ describe("acquisition continuous discovery (OSM)", () => {
     assert.equal(INVENTORY_MIN_BY_STAGE[2], 140);
     assert.equal(INVENTORY_MIN_BY_STAGE[3], 280);
     assert.equal(INVENTORY_MIN_BY_STAGE[4], 420);
-    assert.equal(inventoryTargetForStage(1).preferredTarget, 100);
+    assert.equal(inventoryTargetForStage(1).preferredTarget, 220);
     assert.equal(inventoryTargetForStage(2).preferredTarget, 140);
   });
 

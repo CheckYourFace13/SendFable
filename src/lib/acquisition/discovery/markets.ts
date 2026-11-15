@@ -44,6 +44,27 @@ export const DISCOVERY_MARKETS: DiscoveryMarket[] = [
   { city: "Philadelphia", state: "PA", lat: 39.9526, lon: -75.1652 },
   { city: "San Diego", state: "CA", lat: 32.7157, lon: -117.1611 },
   { city: "Sacramento", state: "CA", lat: 38.5816, lon: -121.4944 },
+  // Expanded mid-size markets — rotate nationally without lowering quality gates
+  { city: "Omaha", state: "NE", lat: 41.2565, lon: -95.9345 },
+  { city: "Des Moines", state: "IA", lat: 41.5868, lon: -93.625 },
+  { city: "Oklahoma City", state: "OK", lat: 35.4676, lon: -97.5164 },
+  { city: "Tulsa", state: "OK", lat: 36.154, lon: -95.9928 },
+  { city: "Richmond", state: "VA", lat: 37.5407, lon: -77.436 },
+  { city: "Norfolk", state: "VA", lat: 36.8508, lon: -76.2859 },
+  { city: "Buffalo", state: "NY", lat: 42.8864, lon: -78.8784 },
+  { city: "Rochester", state: "NY", lat: 43.1566, lon: -77.6088 },
+  { city: "Providence", state: "RI", lat: 41.824, lon: -71.4128 },
+  { city: "Hartford", state: "CT", lat: 41.7658, lon: -72.6734 },
+  { city: "Boise", state: "ID", lat: 43.615, lon: -116.2023 },
+  { city: "Salt Lake City", state: "UT", lat: 40.7608, lon: -111.891 },
+  { city: "Albuquerque", state: "NM", lat: 35.0844, lon: -106.6504 },
+  { city: "Tucson", state: "AZ", lat: 32.2226, lon: -110.9747 },
+  { city: "Fresno", state: "CA", lat: 36.7378, lon: -119.7871 },
+  { city: "Spokane", state: "WA", lat: 47.6588, lon: -117.426 },
+  { city: "Knoxville", state: "TN", lat: 35.9606, lon: -83.9207 },
+  { city: "Birmingham", state: "AL", lat: 33.5186, lon: -86.8104 },
+  { city: "New Orleans", state: "LA", lat: 29.9511, lon: -90.0715 },
+  { city: "Jacksonville", state: "FL", lat: 30.3322, lon: -81.6557 },
 ];
 
 /** Stable day index into markets (UTC date). */

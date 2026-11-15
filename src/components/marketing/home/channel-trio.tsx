@@ -49,8 +49,12 @@ export function ChannelTrio() {
           ))}
         </div>
         <p className="mt-8 text-sm">
+          <Link href="/sms" className="font-medium text-coral motion-underline">
+            How SendFable Text works
+          </Link>
+          {" · "}
           <Link href="/pricing" className="font-medium text-coral motion-underline">
-            See email and text pricing
+            Email and text pricing
           </Link>
         </p>
       </div>

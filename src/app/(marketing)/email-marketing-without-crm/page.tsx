@@ -27,7 +27,8 @@ export default function Page() {
         A CRM helps when you manage sales pipelines — it is optional for newsletter and promo email.
       </p>
       <p className="mt-4 text-sm text-slate-700">
-        If you need CRM-first platforms, see{" "}
+        Collect readers with a Signup Tool, make it live free, then send email. Scribe can draft from
+        your site content when you are ready. If you need CRM-first platforms, see{" "}
         <Link className="text-coral hover:underline" href="/compare/hubspot">
           HubSpot
         </Link>{" "}
@@ -35,13 +36,16 @@ export default function Page() {
         <Link className="text-coral hover:underline" href="/compare/engagebay">
           EngageBay
         </Link>
-        . If you want email without that weight,{" "}
-        <Link className="text-coral hover:underline" href="/signup">
-          start writing free
-        </Link>
         .
       </p>
-      <MarketingCta />
+      <MarketingCta
+        title="Skip the CRM suite"
+        body="Try a signup on a sample website first. Free plan. No credit card."
+        primaryHref="/try/signup-tool"
+        primaryLabel="Try Signup Tool"
+        secondaryHref="/signup"
+        secondaryLabel="Start free"
+      />
     </div>
   );
 }

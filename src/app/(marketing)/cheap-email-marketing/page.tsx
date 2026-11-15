@@ -47,7 +47,7 @@ export default function CheapEmailMarketingPage() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild>
-          <Link href="/signup">Start free</Link>
+          <Link href="/try/signup-tool">Try a signup on your site</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/pricing">Full pricing</Link>

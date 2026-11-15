@@ -24,10 +24,34 @@ export type AutofillResult = {
   approved: number;
   healthBefore: InventoryHealth;
   healthAfter: InventoryHealth | null;
+  /** True when inventory was already at/above preferred and we still ran a growth batch. */
+  growthMaintenance?: boolean;
 };
 
 function cooldownMs(status: InventoryHealth["status"]): number {
   return DISCOVERY_COOLDOWN_MINUTES[status] * 60_000;
+}
+
+function utcDayKey(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** One growth/maintenance discovery pass per UTC day while inventory is HEALTHY. */
+export async function shouldRunGrowthMaintenance(now = new Date()): Promise<boolean> {
+  if (!acquisitionDiscoveryEnabled()) return false;
+  const health = await getInventoryHealth(now);
+  if (health.status !== "HEALTHY") return false;
+  if (!health.canDiscoverMoreToday) return false;
+
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const already = await prisma.acquisitionEvent.findFirst({
+    where: {
+      type: "discovery_run",
+      createdAt: { gte: dayStart },
+    },
+    select: { id: true },
+  });
+  return !already;
 }
 
 export async function shouldRunDiscoveryNow(now = new Date()): Promise<boolean> {
@@ -35,9 +59,9 @@ export async function shouldRunDiscoveryNow(now = new Date()): Promise<boolean> 
 
   const health = await getInventoryHealth(now);
 
-  // Always allow daily maintenance pass at UTC noon when healthy
-  const noonPass = now.getUTCHours() === 12 && now.getUTCMinutes() < 5;
-  if (!health.needsDiscovery && !noonPass) return false;
+  // Always allow a once-daily growth pass when healthy (replaces fragile UTC-noon-only window).
+  const growthPass = await shouldRunGrowthMaintenance(now);
+  if (!health.needsDiscovery && !growthPass) return false;
   if (!health.canDiscoverMoreToday && health.needsDiscovery) return false;
 
   const recent = await prisma.acquisitionEvent.findFirst({
@@ -49,16 +73,18 @@ export async function shouldRunDiscoveryNow(now = new Date()): Promise<boolean> 
   });
   if (recent) return false;
 
-  return health.needsDiscovery || noonPass;
+  return health.needsDiscovery || growthPass;
 }
 
 /**
  * Run 1..N discovery batches until preferred inventory target or daily ceiling.
  * STARVED runs more markets / larger batches; never lowers score threshold.
+ * When inventory is already HEALTHY, still runs one growth-maintenance batch/day
+ * so the prospect pool keeps rotating instead of freezing for weeks.
  */
 export async function runInventoryAutofill(
   now = new Date(),
-  opts?: { force?: boolean }
+  opts?: { force?: boolean; growthOnly?: boolean }
 ): Promise<AutofillResult> {
   const healthBefore = await getInventoryHealth(now);
   if (!acquisitionDiscoveryEnabled()) {
@@ -87,8 +113,13 @@ export async function runInventoryAutofill(
       healthAfter: healthBefore,
     };
   }
+
+  const growthMaintenance =
+    healthBefore.status === "HEALTHY" &&
+    healthBefore.sendableInventory >= healthBefore.preferredTarget;
+
   if (opts?.force) {
-    if (healthBefore.sendableInventory >= healthBefore.preferredTarget) {
+    if (!growthMaintenance && healthBefore.sendableInventory >= healthBefore.preferredTarget) {
       return {
         ran: false,
         reason: "healthy",
@@ -121,8 +152,9 @@ export async function runInventoryAutofill(
   let newDomains = 0;
   let qualified = 0;
   let approved = 0;
-  const maxBatches =
-    healthBefore.status === "STARVED"
+  const maxBatches = growthMaintenance
+    ? 1
+    : healthBefore.status === "STARVED"
       ? 5
       : healthBefore.status === "LOW"
         ? 4
@@ -130,24 +162,30 @@ export async function runInventoryAutofill(
 
   for (let i = 0; i < maxBatches; i++) {
     const health = await getInventoryHealth(now);
-    if (health.sendableInventory >= health.preferredTarget) break;
+    // Growth maintenance: allow one batch even when already at preferred.
+    if (!growthMaintenance && health.sendableInventory >= health.preferredTarget) break;
     if (!health.canDiscoverMoreToday) break;
 
     const remaining = health.dailyCeiling - health.attemptsToday;
     if (remaining <= 0) break;
 
-    const limit =
-      health.status === "STARVED"
+    const limit = growthMaintenance
+      ? Math.min(25, remaining)
+      : health.status === "STARVED"
         ? Math.min(40, remaining)
         : health.status === "LOW"
           ? Math.min(30, remaining)
           : Math.min(20, remaining);
 
+    // Rotate markets aggressively on growth days so we do not re-query the same cities.
+    const marketOffset =
+      i + now.getUTCHours() + (growthMaintenance ? Number(utcDayKey(now).replace(/-/g, "")) % 17 : 0);
+
     const disc: DiscoverSummary = await runDiscovery({
       limit,
       enrich: true,
-      marketCount: health.status === "STARVED" ? 5 : health.status === "LOW" ? 4 : 3,
-      marketOffset: i + now.getUTCHours(),
+      marketCount: growthMaintenance ? 4 : health.status === "STARVED" ? 5 : health.status === "LOW" ? 4 : 3,
+      marketOffset,
     });
     batches++;
     attempted += disc.attempted;
@@ -159,6 +197,7 @@ export async function runInventoryAutofill(
 
     // Stop early if we made no progress (avoid spinning Overpass)
     if (disc.newDomains === 0 && disc.qualified === 0 && disc.upserted === 0) break;
+    if (growthMaintenance) break;
   }
 
   const healthAfter = await getInventoryHealth(now);
@@ -166,7 +205,7 @@ export async function runInventoryAutofill(
 
   return {
     ran: batches > 0,
-    reason: batches > 0 ? "autofill" : "no_batch",
+    reason: batches > 0 ? (growthMaintenance ? "growth_maintenance" : "autofill") : "no_batch",
     batches,
     attempted,
     newDomains,
@@ -174,6 +213,7 @@ export async function runInventoryAutofill(
     approved,
     healthBefore,
     healthAfter,
+    growthMaintenance,
   };
 }
 

@@ -37,8 +37,9 @@ import {
   activateUtilityFirstExperiment,
   evaluateConversionCohort,
 } from "@/lib/acquisition/conversion-optimize";
-import { sendDailyAcquisitionReportIfDue } from "@/lib/acquisition/report";
+import { sendWeeklyAcquisitionReportIfDue } from "@/lib/acquisition/report";
 import { sendDueTryFollowUps } from "@/lib/try-signup/follow-up";
+import { shouldRunGrowthMaintenance } from "@/lib/acquisition/discovery/autofill";
 
 /**
  * Autonomous acquisition tick — discovery autofill, approve, send, replies, ramp.
@@ -57,29 +58,33 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
     await ensurePipelineControl();
     const utility = await activateUtilityFirstExperiment(now);
     if (utility.activated) actions.push("utility_first_activated");
-    const daily = await sendDailyAcquisitionReportIfDue();
-    if (daily.sent) actions.push("daily_report");
+    const weekly = await sendWeeklyAcquisitionReportIfDue();
+    if (weekly.sent) actions.push("weekly_report");
     await prisma.acquisitionPipelineControl.update({
       where: { id: "default" },
       data: { lastTickAt: now },
     });
 
-    const hourUtc = now.getUTCHours();
     const minute = now.getUTCMinutes();
 
-    // Inventory first when STARVED/LOW — do not wait for once-daily noon window
+    // Inventory first when STARVED/LOW; also once-daily growth when HEALTHY
+    // (previously healthy inventory never called autofill, so discovery froze for weeks).
     if (acquisitionDiscoveryEnabled()) {
       const health = await getInventoryHealth(now);
+      const growthDue = health.status === "HEALTHY" && (await shouldRunGrowthMaintenance(now));
       const prioritize =
         health.status === "STARVED" ||
         (health.status === "LOW" && minute < 5) ||
-        (minute < 2 && health.needsDiscovery);
+        (minute < 2 && health.needsDiscovery) ||
+        (minute < 5 && growthDue);
 
       if (prioritize) {
         const fill = await runInventoryAutofill(now);
         if (fill.ran) {
           actions.push(
-            `autofill:${fill.batches}b/${fill.newDomains}new/${fill.qualified}q/${fill.approved}ap`
+            `autofill:${fill.batches}b/${fill.newDomains}new/${fill.qualified}q/${fill.approved}ap${
+              fill.growthMaintenance ? ":growth" : ""
+            }`
           );
         }
         const after = fill.healthAfter || health;

@@ -84,7 +84,14 @@ export default function EmailNewsletterSoftwarePage() {
           <Faq items={FAQS} />
         </div>
       </section>
-      <MarketingCta />
+      <MarketingCta
+        title="Start collecting readers"
+        body="Try a Signup Tool on a sample site, make it live free, then send your newsletter."
+        primaryHref="/try/signup-tool"
+        primaryLabel="Try Signup Tool"
+        secondaryHref="/signup"
+        secondaryLabel="Start free"
+      />
     </div>
   );
 }

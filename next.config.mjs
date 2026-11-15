@@ -86,6 +86,12 @@ const nextConfig = {
         destination: "/email-newsletter-software",
         permanent: true,
       },
+      // Same "best for SMB" intent as the fuller playbook page
+      {
+        source: "/best-email-marketing-for-small-business",
+        destination: "/email-marketing-for-small-business",
+        permanent: true,
+      },
     ];
   },
 };

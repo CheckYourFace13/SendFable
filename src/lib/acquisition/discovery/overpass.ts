@@ -34,10 +34,17 @@ const OSM_CATEGORY_QUERIES: Array<{
   { category: "events", filter: '["amenity"="arts_centre"]' },
   { category: "contractor", filter: '["craft"="carpenter"]' },
   { category: "contractor", filter: '["craft"="electrician"]' },
+  { category: "contractor", filter: '["craft"="plumber"]' },
   { category: "real_estate", filter: '["office"="estate_agent"]' },
   { category: "professional", filter: '["office"="lawyer"]' },
   { category: "professional", filter: '["office"="accountant"]' },
+  { category: "professional", filter: '["office"="dentist"]' },
   { category: "nonprofit", filter: '["office"="ngo"]' },
+  { category: "retail", filter: '["shop"="books"]' },
+  { category: "retail", filter: '["shop"="florist"]' },
+  { category: "fitness", filter: '["leisure"="yoga"]' },
+  { category: "pet", filter: '["amenity"="veterinary"]' },
+  { category: "events", filter: '["amenity"="music_venue"]' },
 ];
 
 /** Domains that are national chains / enterprises — skip for SMB outreach. */
@@ -169,13 +176,27 @@ export function categorizeOsmTags(tags: Record<string, string>): string {
   if (tags.amenity === "cafe") return "cafe";
   if (tags.shop === "bakery") return "bakery";
   if (tags.shop === "hairdresser" || tags.shop === "beauty") return "salon";
-  if (tags.leisure === "fitness_centre") return "fitness";
-  if (tags.shop === "pet") return "pet";
+  if (tags.leisure === "fitness_centre" || tags.leisure === "yoga") return "fitness";
+  if (tags.shop === "pet" || tags.amenity === "veterinary") return "pet";
   if (tags.office === "estate_agent") return "real_estate";
-  if (tags.office === "lawyer" || tags.office === "accountant") return "professional";
+  if (tags.office === "lawyer" || tags.office === "accountant" || tags.office === "dentist") {
+    return "professional";
+  }
   if (tags.office === "ngo") return "nonprofit";
-  if (tags.amenity === "theatre" || tags.amenity === "arts_centre") return "events";
-  if (tags.craft === "carpenter" || tags.craft === "electrician") return "contractor";
+  if (
+    tags.amenity === "theatre" ||
+    tags.amenity === "arts_centre" ||
+    tags.amenity === "music_venue"
+  ) {
+    return "events";
+  }
+  if (
+    tags.craft === "carpenter" ||
+    tags.craft === "electrician" ||
+    tags.craft === "plumber"
+  ) {
+    return "contractor";
+  }
   if (tags.shop) return "retail";
   if (tags.amenity === "bar" || tags.amenity === "pub") return "restaurant";
   return "local_services";

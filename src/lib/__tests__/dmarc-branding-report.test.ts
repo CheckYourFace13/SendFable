@@ -10,6 +10,7 @@ import { resolveFromHeaders } from "@/lib/identities";
 import {
   startOfChicagoDay,
   isPastChicagoReportHour,
+  isPastChicagoWeeklyReportSlot,
 } from "@/lib/acquisition/report";
 
 describe("DMARC-safe From rewrite helpers", () => {
@@ -63,5 +64,17 @@ describe("acquisition daily report Chicago timing", () => {
     const after = new Date("2026-10-06T21:30:00.000Z"); // 16:30 CDT
     assert.equal(isPastChicagoReportHour(before), false);
     assert.equal(isPastChicagoReportHour(after), true);
+  });
+
+  it("isPastChicagoWeeklyReportSlot is Friday after 18:00 Chicago only", () => {
+    // Friday 2026-11-13 17:00 CT = 23:00 UTC (CST)
+    const friBefore = new Date("2026-11-13T23:00:00.000Z");
+    // Friday 2026-11-13 18:05 CT = 00:05 UTC Sat
+    const friAfter = new Date("2026-11-14T00:05:00.000Z");
+    // Saturday 2026-11-14 19:00 CT
+    const saturday = new Date("2026-11-15T01:00:00.000Z");
+    assert.equal(isPastChicagoWeeklyReportSlot(friBefore), false);
+    assert.equal(isPastChicagoWeeklyReportSlot(friAfter), true);
+    assert.equal(isPastChicagoWeeklyReportSlot(saturday), false);
   });
 });

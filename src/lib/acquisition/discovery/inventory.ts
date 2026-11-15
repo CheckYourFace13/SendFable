@@ -17,8 +17,12 @@ export const INVENTORY_MIN_BY_STAGE: Record<number, number> = {
   4: ACQUISITION_RAMP_STAGES[4].newPerDay * 14, // 420
 };
 
-/** Preferred Stage 1 buffer above the 14-day floor. */
-export const INVENTORY_PREFERRED_BUFFER_STAGE1 = 100;
+/**
+ * Preferred Stage 1 buffer above the 14-day floor.
+ * Kept above ~40 weekdays of Stage-1 sends so discovery does not idle for weeks
+ * while sendable inventory sits just above the old 100 soft target.
+ */
+export const INVENTORY_PREFERRED_BUFFER_STAGE1 = 220;
 
 /** Days below this → STARVED (worker prioritizes discovery). */
 export const INVENTORY_STARVED_DAYS = 2;

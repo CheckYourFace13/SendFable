@@ -38,7 +38,16 @@ export default function Page() {
           <li key={l}>{l}</li>
         ))}
       </ul>
+      <h2 className="mt-10 text-xl font-semibold">See it before you sign up</h2>
+      <p className="mt-3 text-sm text-slate-700">
+        Build a signup tool on a sample site, then make it live free. Scribe can turn your own site
+        content into a campaign later — nothing sends until you choose Send now or schedule it.
+      </p>
       <p className="mt-8 text-sm">
+        <Link className="text-coral hover:underline" href="/try/signup-tool">
+          Try Signup Tool
+        </Link>{" "}
+        ·{" "}
         <Link className="text-coral hover:underline" href="/how-sendfable-works">
           How it works
         </Link>{" "}
@@ -47,7 +56,12 @@ export default function Page() {
           Email without CRM
         </Link>
       </p>
-      <MarketingCta />
+      <MarketingCta
+        primaryHref="/try/signup-tool"
+        primaryLabel="Try Signup Tool"
+        secondaryHref="/signup"
+        secondaryLabel="Start free"
+      />
     </div>
   );
 }

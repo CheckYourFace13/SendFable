@@ -9,6 +9,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           "/",
           "/pricing",
+          "/sms",
           "/features",
           "/deliverability",
           "/templates",
@@ -69,7 +70,9 @@ export default function robots(): MetadataRoute.Robots {
           "/signup",
           "/early-access",
           "/link-unavailable",
-          "/sms/",
+          "/sms/onboarding",
+          "/sms/checkout-preview",
+          "/sms/pricing-preview",
           "/cert/",
           "/autopilot/",
         ],

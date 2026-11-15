@@ -26,8 +26,11 @@ import {
 } from "@/lib/acquisition/queue-policy";
 
 const REPORT_TZ = "America/Chicago";
-/** Send the daily report after the Chicago send window has had time to run. */
+/** Legacy daily gate (kept for tests / admin day builders). Owner summary is weekly. */
 const REPORT_AFTER_HOUR_CHICAGO = 16;
+/** Owner weekly acquisition summary: Friday 6:00 PM America/Chicago. */
+const WEEKLY_REPORT_WEEKDAY_CHICAGO = 5; // Friday
+const WEEKLY_REPORT_HOUR_CHICAGO = 18;
 
 function chicagoParts(d: Date): {
   year: number;
@@ -109,6 +112,41 @@ function chicagoDateKey(d: Date): string {
 
 export function isPastChicagoReportHour(now = new Date()): boolean {
   return chicagoParts(now).hour >= REPORT_AFTER_HOUR_CHICAGO;
+}
+
+function weekdayInChicago(d: Date): number {
+  // 0=Sun … 6=Sat
+  const w = new Intl.DateTimeFormat("en-US", { timeZone: REPORT_TZ, weekday: "short" }).format(d);
+  const map: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  return map[w] ?? d.getUTCDay();
+}
+
+/** True on Friday at/after 18:00 America/Chicago. */
+export function isPastChicagoWeeklyReportSlot(now = new Date()): boolean {
+  const p = chicagoParts(now);
+  if (weekdayInChicago(now) !== WEEKLY_REPORT_WEEKDAY_CHICAGO) return false;
+  return p.hour > WEEKLY_REPORT_HOUR_CHICAGO || (p.hour === WEEKLY_REPORT_HOUR_CHICAGO && p.minute >= 0);
+}
+
+/** Start of the Chicago calendar day that is `daysBack` days before `now`'s Chicago day. */
+export function startOfChicagoDayDaysBack(now: Date, daysBack: number): Date {
+  const key = chicagoDateKey(now);
+  const [y, m, day] = key.split("-").map(Number) as [number, number, number];
+  // Approximate then snap via startOfChicagoDay
+  const approx = new Date(Date.UTC(y, m - 1, day) - daysBack * 24 * 3600_000);
+  // Walk until Chicago dateKey is exactly daysBack earlier
+  const targetParts = chicagoParts(now);
+  const targetUtc = Date.UTC(targetParts.year, targetParts.month - 1, targetParts.day);
+  const want = new Date(targetUtc - daysBack * 24 * 3600_000);
+  return startOfChicagoDay(want);
 }
 
 export async function buildDailyAcquisitionReport(now = new Date()): Promise<string> {
@@ -315,36 +353,208 @@ export async function buildDailyAcquisitionReport(now = new Date()): Promise<str
   ].join("\n");
 }
 
+/**
+ * Daily owner acquisition emails are DISABLED.
+ * Use sendWeeklyAcquisitionReportIfDue (Friday 6pm America/Chicago).
+ * Critical/ops alerts still go through notify.ts immediately.
+ */
 export async function sendDailyAcquisitionReportIfDue(): Promise<{
+  sent: boolean;
+  reason?: string;
+}> {
+  return { sent: false, reason: "daily_disabled_use_weekly" };
+}
+
+export async function buildWeeklyAcquisitionReport(now = new Date()): Promise<{
+  subject: string;
+  body: string;
+  rangeLabel: string;
+}> {
+  const endKey = chicagoDateKey(now);
+  const since = startOfChicagoDayDaysBack(now, 6);
+  const startKey = chicagoDateKey(since);
+  const rangeLabel = `${startKey} → ${endKey}`;
+
+  const discovered = await prisma.acquisitionEvent.count({
+    where: { type: { in: ["discovered", "discovered_new"] }, createdAt: { gte: since } },
+  });
+  const qualified = await prisma.acquisitionProspect.count({
+    where: {
+      status: { in: ["QUALIFIED", "QUEUED"] },
+      updatedAt: { gte: since },
+      sourceKind: { not: "seed_catalog" },
+    },
+  });
+  const newOutreach = await prisma.acquisitionMessage.count({
+    where: {
+      step: "INITIAL",
+      dryRun: false,
+      sentAt: { gte: since },
+      status: { in: ["SENT", "DELIVERED", "BOUNCED", "COMPLAINED"] },
+    },
+  });
+  const delivered = await prisma.acquisitionMessage.count({
+    where: { dryRun: false, deliveredAt: { gte: since } },
+  });
+  const bounced = await prisma.acquisitionMessage.count({
+    where: { dryRun: false, bounceAt: { gte: since } },
+  });
+  const unsubscribed = await prisma.acquisitionProspect.count({
+    where: { status: "UNSUBSCRIBED", updatedAt: { gte: since } },
+  });
+  const clicks = await prisma.acquisitionMessage.count({
+    where: { dryRun: false, clickedAt: { gte: since } },
+  });
+  const replies = await prisma.acquisitionEvent.count({
+    where: { type: "reply", createdAt: { gte: since } },
+  });
+  const replyRows = await prisma.acquisitionEvent.findMany({
+    where: { type: "reply", createdAt: { gte: since } },
+    select: { meta: true },
+  });
+  const positive = replyRows.filter(
+    (e) => (e.meta as { replyClass?: string })?.replyClass === "POSITIVE"
+  ).length;
+  const tryVisits = await prisma.acquisitionEvent.count({
+    where: { type: "try_page_view", createdAt: { gte: since } },
+  });
+  const demoCompletions = await prisma.acquisitionEvent.count({
+    where: {
+      type: { in: ["demo_signup_success", "make_live_clicked"] },
+      createdAt: { gte: since },
+    },
+  });
+  const makeLive = await prisma.acquisitionEvent.count({
+    where: { type: "make_live_clicked", createdAt: { gte: since } },
+  });
+  const signups = await prisma.acquisitionEvent.count({
+    where: { type: { in: ["signup_matched", "signup_completed"] }, createdAt: { gte: since } },
+  });
+  const realTools = await prisma.acquisitionEvent.count({
+    where: { type: "real_signup_tool_created", createdAt: { gte: since } },
+  });
+  const firstSends = await prisma.acquisitionProspect.count({
+    where: { firstSendAt: { gte: since } },
+  });
+  const paid = await prisma.acquisitionProspect.count({
+    where: { paidAt: { gte: since } },
+  });
+
+  const { getInventoryHealth } = await import("@/lib/acquisition/discovery/inventory");
+  const inventory = await getInventoryHealth(now);
+  // Approximate beginning inventory: current + new outreach − new qualified (coarse)
+  const beginningSendable = Math.max(0, inventory.sendableInventory + newOutreach - qualified);
+
+  const stageCaps = await getStageCaps();
+  const baseCaps = capsForStage(stageCaps.stage);
+  const rates7 = await ratesOverDays(7);
+  const softBackoffActive =
+    rates7.sent >= 20 && (rates7.bounceRate > 0.02 || rates7.unsubRate > 0.02);
+  const paused = await isPipelinePaused();
+
+  const weekendNote =
+    "Outreach schedule: Monday–Friday local business hours only. Saturday/Sunday 0 sends are EXPECTED, not a failure.";
+
+  const clickPct = delivered > 0 ? ((clicks / delivered) * 100).toFixed(1) : "n/a";
+  const tryPct = clicks > 0 ? ((tryVisits / clicks) * 100).toFixed(1) : "n/a";
+  const signupPct = tryVisits > 0 ? ((signups / tryVisits) * 100).toFixed(1) : "n/a";
+  const firstPct = signups > 0 ? ((firstSends / signups) * 100).toFixed(1) : "n/a";
+  const paidPct = firstSends > 0 ? ((paid / firstSends) * 100).toFixed(1) : "n/a";
+
+  let bottleneck = "Insufficient weekly volume to name a new bottleneck.";
+  if (discovered === 0 && qualified === 0) {
+    bottleneck = "Discovery idle or no new qualified domains this week.";
+  } else if (delivered > 0 && clicks === 0) {
+    bottleneck = `Delivered→Click (0/${delivered} clicks).`;
+  } else if (clicks > 0 && tryVisits === 0) {
+    bottleneck = `Click→Try (0 try visits after ${clicks} clicks).`;
+  } else if (tryVisits > 0 && signups === 0) {
+    bottleneck = `Try→Signup (0 signups after ${tryVisits} try visits).`;
+  } else if (signups > 0 && firstSends === 0) {
+    bottleneck = `Signup→First Send (0 first sends after ${signups} signups).`;
+  } else if (firstSends > 0 && paid === 0) {
+    bottleneck = `First Send→Paid (0 paid after ${firstSends} first sends).`;
+  }
+
+  const body = [
+    `SendFable Weekly Acquisition — ${rangeLabel} (America/Chicago)`,
+    weekendNote,
+    "",
+    `NEW PROSPECTS DISCOVERED: ${discovered}`,
+    `QUALIFIED: ${qualified}`,
+    `NEW OUTREACH: ${newOutreach}`,
+    `DELIVERED: ${delivered}`,
+    `BOUNCED: ${bounced}`,
+    `UNSUBSCRIBED: ${unsubscribed}`,
+    `CLICKS: ${clicks}`,
+    `REPLIES: ${replies}`,
+    `POSITIVE REPLIES: ${positive}`,
+    `TRY PAGE VISITS: ${tryVisits}`,
+    `DEMO COMPLETIONS: ${demoCompletions}`,
+    `MAKE LIVE CLICKS: ${makeLive}`,
+    `SIGNUPS: ${signups}`,
+    `REAL SIGNUP TOOLS CREATED: ${realTools}`,
+    `FIRST SENDS: ${firstSends}`,
+    `PAID CUSTOMERS: ${paid}`,
+    "",
+    `Beginning sendable inventory (approx): ${beginningSendable}`,
+    `Ending sendable inventory: ${inventory.sendableInventory}`,
+    `Current acquisition stage: ${stageCaps.stage}`,
+    `Base cap (new/day): ${baseCaps.newPerDay}`,
+    `Effective cap (new/day): ${stageCaps.newPerDay}`,
+    `Safety/backoff: ${paused.paused ? `PAUSED (${paused.reason || "—"})` : softBackoffActive ? "SOFT BACKOFF ACTIVE" : "INACTIVE"}`,
+    `7D safety: ${rates7.sent} sends, ${rates7.unsubscribed} unsubs, ${rates7.bounced} bounces`,
+    "",
+    "FUNNEL",
+    `Delivered → Click → Try → Signup → First Send → Paid`,
+    `${delivered} → ${clicks} (${clickPct}%) → ${tryVisits} (${tryPct}%) → ${signups} (${signupPct}%) → ${firstSends} (${firstPct}%) → ${paid} (${paidPct}%)`,
+    "",
+    `BIGGEST BOTTLENECK: ${bottleneck}`,
+    "",
+    "SYSTEM ACTION THIS WEEK:",
+    "(filled by operator notes / deploy changelog when present)",
+    "",
+    "OWNER ACTION: NONE unless genuinely needed",
+  ].join("\n");
+
+  return {
+    subject: `SendFable Weekly Acquisition — ${rangeLabel}`,
+    body,
+    rangeLabel,
+  };
+}
+
+export async function sendWeeklyAcquisitionReportIfDue(): Promise<{
   sent: boolean;
   reason?: string;
 }> {
   const control = await ensurePipelineControl();
   const now = new Date();
 
-  if (!isPastChicagoReportHour(now)) {
-    return { sent: false, reason: "before_chicago_16h" };
+  if (!isPastChicagoWeeklyReportSlot(now)) {
+    return { sent: false, reason: "not_friday_after_18h_chicago" };
   }
 
-  const todayKey = chicagoDateKey(now);
+  const fridayKey = chicagoDateKey(now);
   if (control.lastDailyReportAt) {
+    // Reuse lastDailyReportAt as last weekly send marker (same Friday key = already sent).
     const lastKey = chicagoDateKey(control.lastDailyReportAt);
-    if (lastKey === todayKey) {
-      return { sent: false, reason: "already_sent_today" };
+    if (lastKey === fridayKey) {
+      return { sent: false, reason: "already_sent_this_friday" };
     }
   }
 
   const to = acquisitionOwnerAlertEmail();
   if (!to) return { sent: false, reason: "no_alert_email" };
 
-  const body = await buildDailyAcquisitionReport(now);
+  const built = await buildWeeklyAcquisitionReport(now);
   await sendEmail({
     from: platformFrom("SendFable Acquisition"),
     to,
-    subject: `SendFable Acquisition — ${todayKey} (Chicago day)`,
-    text: body,
-    html: `<pre style="font-family:monospace;font-size:13px;">${body.replace(/</g, "&lt;")}</pre>`,
-    tags: { kind: "acquisition_report" },
+    subject: built.subject,
+    text: built.body,
+    html: `<pre style="font-family:monospace;font-size:13px;">${built.body.replace(/</g, "&lt;")}</pre>`,
+    tags: { kind: "acquisition_weekly_report" },
   });
 
   await prisma.acquisitionPipelineControl.update({

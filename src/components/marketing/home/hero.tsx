@@ -37,10 +37,15 @@ export function Hero() {
               variant="outline"
               className="border-ink/20 bg-surface text-ink hover:bg-parchment"
             >
-              <Link href="/pricing">See pricing</Link>
+              <Link href="/try/signup-tool">Try Signup Tool</Link>
             </Button>
           </div>
-          <p className="mt-4 text-sm text-ink/70">No credit card · Cancel anytime</p>
+          <p className="mt-4 text-sm text-ink/70">
+            No credit card · Cancel anytime ·{" "}
+            <Link href="/pricing" className="underline underline-offset-2 hover:text-ink">
+              See pricing
+            </Link>
+          </p>
           <Text20Hint />
           <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink/60">
             <li>Transparent limits</li>
