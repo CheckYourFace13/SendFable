@@ -306,8 +306,17 @@ export async function runDiscovery(
           })
         ).map((p) => p.domain)
       );
-      const fresh = candidates.filter((c) => !existingDomains.has(normalizeDomain(c.website)));
-      const pool = [...fresh, ...candidates.filter((c) => existingDomains.has(normalizeDomain(c.website)))];
+      const fresh = candidates.filter((c) => {
+        const d = normalizeDomain(c.website);
+        return Boolean(d) && !existingDomains.has(d);
+      });
+      // Prefer never-seen domains. Only re-enrich known domains when fresh is empty
+      // (keeps quality gates; avoids burning the daily ceiling on duplicates).
+      const known = candidates.filter((c) => {
+        const d = normalizeDomain(c.website);
+        return Boolean(d) && existingDomains.has(d);
+      });
+      const pool = fresh.length > 0 ? fresh : known;
       // Prefer better-performing segments (~70%) while keeping exploration (~30%)
       let ordered = pool;
       try {

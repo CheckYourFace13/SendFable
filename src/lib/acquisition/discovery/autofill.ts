@@ -177,16 +177,31 @@ export async function runInventoryAutofill(
           ? Math.min(30, remaining)
           : Math.min(20, remaining);
 
-    // Rotate markets aggressively on growth days so we do not re-query the same cities.
-    const marketOffset =
-      i + now.getUTCHours() + (growthMaintenance ? Number(utcDayKey(now).replace(/-/g, "")) % 17 : 0);
+    // Rotate markets aggressively; when a batch finds no fresh domains, jump further.
+    let marketOffset =
+      i +
+      now.getUTCHours() +
+      now.getUTCDay() * 3 +
+      (growthMaintenance ? Number(utcDayKey(now).replace(/-/g, "")) % 29 : 0);
 
-    const disc: DiscoverSummary = await runDiscovery({
+    let disc: DiscoverSummary = await runDiscovery({
       limit,
       enrich: true,
-      marketCount: growthMaintenance ? 4 : health.status === "STARVED" ? 5 : health.status === "LOW" ? 4 : 3,
+      marketCount: growthMaintenance ? 5 : health.status === "STARVED" ? 5 : health.status === "LOW" ? 4 : 4,
       marketOffset,
     });
+
+    // One retry with a large market jump when Overpass only returned known domains.
+    if (disc.newDomains === 0 && disc.qualified === 0) {
+      marketOffset += 11 + i * 5;
+      disc = await runDiscovery({
+        limit,
+        enrich: true,
+        marketCount: 5,
+        marketOffset,
+      });
+    }
+
     batches++;
     attempted += disc.attempted;
     newDomains += disc.newDomains;
