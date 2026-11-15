@@ -65,6 +65,7 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
       data: { lastTickAt: now },
     });
 
+    const hourUtc = now.getUTCHours();
     const minute = now.getUTCMinutes();
 
     // Inventory first when STARVED/LOW; also once-daily growth when HEALTHY
