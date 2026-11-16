@@ -3,6 +3,8 @@ import { z } from "zod";
 import { isValidEmail, normalizeEmail } from "@/lib/utils";
 import { platformFrom, sendEmail } from "@/lib/mailer";
 import { requireIntegrationAuth } from "@/lib/integration-auth";
+import { prisma } from "@/lib/prisma";
+import { formatWorkspaceFrom, identityAllowsFrom, safeDisplayName } from "@/lib/workspace-from";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +23,16 @@ const schema = z.object({
   subject: z.string().trim().min(1).max(200),
   text: z.string().trim().min(1).max(50_000),
   html: z.string().trim().max(100_000).optional(),
-  /** Display name only; From always uses PLATFORM_SEND_DOMAIN. */
+  /** Display name. The address stays on the shared platform domain unless `from` is set. */
   fromName: z.string().trim().min(1).max(80).optional(),
+  /**
+   * Optional From address. Honored only when this workspace has a verified
+   * identity for that exact address or domain. Other workspaces keep the
+   * shared platform sender when this field is omitted.
+   */
+  from: z.string().email().max(200).optional(),
+  /** HTTPS List-Unsubscribe URL. Not used as the From address. */
+  listUnsubscribe: z.string().trim().url().max(500).optional(),
   kind: z.enum(["owner_notify", "transactional"]).default("owner_notify"),
 });
 
@@ -62,21 +72,45 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Valid replyTo required" }, { status: 400 });
   }
 
-  const fromName =
-    parsed.data.fromName?.trim() ||
-    auth.workspace.name?.trim() ||
-    "SendFable";
+  const fromName = safeDisplayName(
+    parsed.data.fromName?.trim() || auth.workspace.name?.trim() || "SendFable",
+  );
+
+  let from = platformFrom(fromName);
+  if (parsed.data.from) {
+    const fromEmail = normalizeEmail(parsed.data.from);
+    if (!isValidEmail(fromEmail)) {
+      return NextResponse.json({ error: "Valid from address required" }, { status: 400 });
+    }
+    const identities = await prisma.senderIdentity.findMany({
+      where: { workspaceId: auth.workspace.id },
+      select: { type: true, value: true, status: true },
+    });
+    if (!identityAllowsFrom(identities, fromEmail)) {
+      return NextResponse.json(
+        { error: "From address is not a verified identity for this workspace" },
+        { status: 403 },
+      );
+    }
+    from = formatWorkspaceFrom(fromName, fromEmail);
+  }
+
+  const listUnsubscribe = parsed.data.listUnsubscribe;
+  if (listUnsubscribe && !listUnsubscribe.startsWith("https://")) {
+    return NextResponse.json({ error: "List-Unsubscribe must be https" }, { status: 400 });
+  }
 
   const html = parsed.data.html?.trim() || textToHtml(parsed.data.text);
 
   try {
     const result = await sendEmail({
-      from: platformFrom(fromName),
+      from,
       to,
       replyTo,
       subject: parsed.data.subject,
       text: parsed.data.text,
       html,
+      headers: listUnsubscribe ? { "List-Unsubscribe": `<${listUnsubscribe}>` } : undefined,
       noConfigurationSet: true,
       tags: {
         purpose: parsed.data.kind,
