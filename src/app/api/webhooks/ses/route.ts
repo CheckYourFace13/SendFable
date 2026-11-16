@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleHardBounceOrComplaint, suppressGlobal } from "@/lib/suppression";
 import { checkAutoPause, reevaluateCampaignDeliveryOutcome } from "@/lib/campaign-send";
+import { deliveryExternalId, integrationDeliveryEventType } from "@/lib/integration-mail-events";
 import { verifySnsSignature, type SnsSignedMessage } from "@/lib/sns-verify";
 
 export const dynamic = "force-dynamic";
@@ -114,6 +115,21 @@ export async function POST(req: Request) {
     }));
 
   if (!recip) {
+    const trackedEvent = integrationDeliveryEventType(eventType, note.bounce?.bounceType);
+    if (trackedEvent && messageId) {
+      const registered = await prisma.webhookEvent.findUnique({
+        where: { source_externalId: { source: "integration-send", externalId: messageId } },
+      });
+      if (registered) {
+        await prisma.webhookEvent.create({
+          data: {
+            source: "ses-mail",
+            externalId: deliveryExternalId(messageId, trackedEvent),
+            type: trackedEvent,
+          },
+        }).catch(() => undefined);
+      }
+    }
     // Acquisition outreach messages (separate from customer campaigns)
     try {
       const { handleAcquisitionSesEvent } = await import("@/lib/acquisition/lifecycle");

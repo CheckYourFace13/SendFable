@@ -33,6 +33,12 @@ const schema = z.object({
   from: z.string().email().max(200).optional(),
   /** HTTPS List-Unsubscribe URL. Not used as the From address. */
   listUnsubscribe: z.string().trim().url().max(500).optional(),
+  /**
+   * When true, send through the SES configuration set so delivery, bounce, and
+   * complaint events can be stored for this workspace. Default mail stays off
+   * that path.
+   */
+  trackDelivery: z.boolean().optional(),
   kind: z.enum(["owner_notify", "transactional"]).default("owner_notify"),
 });
 
@@ -111,18 +117,29 @@ export async function POST(req: Request) {
       text: parsed.data.text,
       html,
       headers: listUnsubscribe ? { "List-Unsubscribe": `<${listUnsubscribe}>` } : undefined,
-      noConfigurationSet: true,
+      noConfigurationSet: parsed.data.trackDelivery !== true,
       tags: {
         purpose: parsed.data.kind,
         workspace: auth.workspace.id.slice(0, 32),
       },
     });
 
+    if (parsed.data.trackDelivery && result.messageId) {
+      await prisma.webhookEvent.create({
+        data: {
+          source: "integration-send",
+          externalId: result.messageId,
+          type: auth.workspace.id,
+        },
+      }).catch(() => undefined);
+    }
+
     console.log("[v1/mail/send] accepted", {
       workspaceId: auth.workspace.id,
       kind: parsed.data.kind,
       messageId: result.messageId,
       dev: result.dev,
+      trackDelivery: parsed.data.trackDelivery === true,
     });
 
     return NextResponse.json({
