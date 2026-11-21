@@ -69,7 +69,7 @@ describe("competitor catalog (SF-002)", () => {
     assert.match(String(free!.notes), /2,?500/);
     assert.match(COMPETITORS.mailerlite!.freePlanSummary, /250/);
     assert.match(COMPETITORS.mailerlite!.freePlanSummary, /2,?500/);
-    assert.equal(COMPETITORS.mailerlite!.pricingLastChecked, "2026-11-04");
+    assert.equal(COMPETITORS.mailerlite!.pricingLastChecked, "2026-11-21");
   });
 
   it("surfaces comparison disclaimer language", () => {

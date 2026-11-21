@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { checkSpamCopy } from "@/lib/tools/spam-check";
 
+const EXAMPLE_SUBJECT = "URGENT: Act now — limited time!!!";
+const EXAMPLE_BODY = [
+  "Congratulations winner!!! Buy now and click here for your risk-free, 100% free offer $$$.",
+  "This is not spam. Dear friend, make money with once in a lifetime guaranteed results.",
+  "Order now: https://example.com/a https://example.com/b https://example.com/c",
+].join(" ");
+
 export function SpamWordChecker() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -12,9 +19,21 @@ export function SpamWordChecker() {
 
   return (
     <div className="rounded-2xl border border-ink/10 bg-white p-6 sm:p-8">
-      <label htmlFor="spam-subject" className="block text-sm font-medium text-ink">
-        Subject line
-      </label>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <label htmlFor="spam-subject" className="block text-sm font-medium text-ink">
+          Subject line
+        </label>
+        <button
+          type="button"
+          className="text-sm font-medium text-coral underline-offset-2 hover:underline"
+          onClick={() => {
+            setSubject(EXAMPLE_SUBJECT);
+            setBody(EXAMPLE_BODY);
+          }}
+        >
+          Load example
+        </button>
+      </div>
       <input
         id="spam-subject"
         value={subject}

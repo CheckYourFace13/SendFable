@@ -8,6 +8,7 @@ import {
   TRY_BUSINESS_TYPES,
   categoryToTryType,
   defaultTryConfig,
+  draftTryConfig,
   sanitizeTryConfig,
   tryBusinessLabel,
   trySiteChrome,
@@ -34,6 +35,7 @@ function BuilderInner() {
   const [token, setToken] = useState(search.get("try")?.trim() || "");
   const [config, setConfig] = useState<TrySignupConfig>(() => defaultTryConfig(typeHint));
   const dirty = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [demoEmail, setDemoEmail] = useState("");
   const [demoFirst, setDemoFirst] = useState("");
   const [demoPhone, setDemoPhone] = useState("");
@@ -92,7 +94,8 @@ function BuilderInner() {
 
   function update(patch: Partial<TrySignupConfig>) {
     dirty.current = true;
-    const next = sanitizeTryConfig({ ...config, ...patch });
+    // Live draft preserves spaces/punctuation; sanitize only when persisting.
+    const next = draftTryConfig({ ...config, ...patch });
     setConfig(next);
     setDemoJoined(false);
     setDemoEmail("");
@@ -100,7 +103,10 @@ function BuilderInner() {
     setDemoPhone("");
     if (next.display !== "popup") setPopupOpen(false);
     trackClientEvent("customization_changed");
-    void save({ next, event: "customization_changed" });
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void save({ next: sanitizeTryConfig(next), event: "customization_changed" });
+    }, 400);
   }
 
   function joinDemo(e: React.FormEvent) {
@@ -131,7 +137,9 @@ function BuilderInner() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">See it working.</h1>
-        <p className="mt-2 text-sm text-ink/60">This is a demo. Nothing is saved or sent.</p>
+        <p className="mt-2 text-sm text-ink/60">
+          Demo only. This does not add you to a list or send anything.
+        </p>
       </div>
 
       <WebsitePreview
@@ -444,7 +452,7 @@ function SignupBox(props: {
         autoComplete="off"
         name="demo-email"
         aria-label="Email"
-        placeholder="chris@example.com"
+        placeholder="you@example.com"
         value={props.demoEmail}
         onChange={(e) => props.onEmail(e.target.value)}
         className="h-11 w-full rounded-md border border-ink/15 px-3 text-base"

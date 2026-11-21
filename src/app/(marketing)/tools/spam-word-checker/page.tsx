@@ -41,7 +41,9 @@ export default function SpamWordCheckerPage() {
         </p>
         <h2 className="text-xl font-semibold text-ink">Example</h2>
         <p>
-          “Reply today or lose this forever” is worth rewriting. “This week’s hours” usually is not.
+          Use <strong>Load example</strong> above for a subject and body that hit several checklist
+          rules (pressure phrases, shouting, and crowded links). A quiet line like “This week’s
+          hours” usually will not.
         </p>
         <h2 className="text-xl font-semibold text-ink">What the result means</h2>
         <p>

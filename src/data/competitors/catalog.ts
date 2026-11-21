@@ -1,7 +1,7 @@
 import type { CompetitorRecord } from "./types";
 import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
-const CHECKED = "2026-09-19";
+const CHECKED = "2026-11-21";
 
 function sendfableSmsFaqAnswer(): string {
   return isSmsPublicEnabled()
@@ -36,7 +36,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     publicComparisonEnabled: true,
     sources: ["https://mailchimp.com/pricing/"],
     pricingFreshnessWarning:
-      "Mailchimp scales by contact tier and often shows 12-month promotions. Entry floors verified 2026-09-19 from mailchimp.com/pricing: Free = 250 contacts; Essentials from $13; Standard from $20; Premium from $350. Higher tiers approximate — verify the official calculator.",
+      "Mailchimp scales by contact tier and often shows 12-month promotions. Entry floors verified 2026-11-21 from mailchimp.com/pricing: Free = 250 contacts; Essentials from $13; Standard from $20; Premium from $350. Higher tiers approximate — verify the official calculator.",
     freePlanSummary: "Free plan for up to 250 contacts and max 500 emails/mo (or 250/day).",
     paidPlanSummary:
       "Essentials from ~$13/mo, Standard from ~$20/mo, Premium from ~$350/mo — scales by contact tier; promotions common.",
@@ -83,7 +83,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
         name: "Free",
         contacts: 250,
         monthlyPrice: 0,
-        notes: "Official: up to 250 contacts; max 500 emails/mo or 250/day (2026-09-19)",
+        notes: "Official: up to 250 contacts; max 500 emails/mo or 250/day (2026-11-21)",
       },
       {
         name: "Essentials entry (~500 contacts)",
@@ -120,7 +120,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     faqs: [
       {
         q: "How much does Mailchimp cost?",
-        a: "As of 2026-09-19, Mailchimp Free covers 250 contacts (500 emails/mo). Paid entry is roughly Essentials from $13/mo and Standard from $20/mo at lower contact tiers; Premium starts around $350/mo. Prices scale by contacts and promotions — verify on mailchimp.com/pricing.",
+        a: "As of 2026-11-21, Mailchimp Free covers 250 contacts (500 emails/mo). Paid entry is roughly Essentials from $13/mo and Standard from $20/mo at lower contact tiers; Premium starts around $350/mo. Prices scale by contacts and promotions — verify on mailchimp.com/pricing.",
       },
       {
         q: "Is Mailchimp free?",
@@ -241,8 +241,8 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
         },
       ],
     }),
-    pricingLastChecked: "2026-11-04",
-    featuresLastChecked: "2026-11-04",
+    pricingLastChecked: "2026-11-21",
+    featuresLastChecked: "2026-11-21",
   },
 
   brevo: rec({
@@ -251,9 +251,15 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     officialUrl: "https://www.brevo.com/",
     pricingUrl: "https://www.brevo.com/pricing/",
     publicComparisonEnabled: true,
-    sources: ["https://www.brevo.com/pricing/"],
-    freePlanSummary: "Free plan with daily send caps; contacts often generous on free.",
-    paidPlanSummary: "Plans priced primarily by emails sent per month.",
+    sources: [
+      "https://www.brevo.com/pricing/",
+      "https://www.brevo.com/pricing.md",
+      "https://help.brevo.com/hc/en-us/articles/208580669-FAQs-What-are-the-limits-of-the-Free-plan",
+    ],
+    freePlanSummary:
+      "Free forever: up to 100,000 contacts stored; 300 email sends/day (official help + pricing.md, 2026-11-21).",
+    paidPlanSummary:
+      "Starter from $9/mo, Standard from $18/mo, Professional from $499/mo (USD) — priced by email volume; verify tiers.",
     billingBasis: "Send-volume based (emails/month).",
     contactLimitsSummary: "Often less contact-capped than list-priced tools; confirm current terms.",
     emailLimitsSummary: "Primary pricing lever is monthly email volume.",
@@ -1048,7 +1054,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
         name: "Free Forever",
         contacts: 2_500,
         monthlyPrice: 0,
-        notes: "Official 2026-09-19: 2,500 subscribers / 15,000 emails/mo",
+        notes: "Official 2026-11-21: 2,500 subscribers / 15,000 emails/mo",
       },
       {
         name: "Standard (promotional display)",
@@ -1067,7 +1073,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     faqs: [
       {
         q: "Is Sender’s free plan larger than SendFable’s?",
-        a: "Yes. As of 2026-09-19 Sender Free allows 2,500 subscribers and 15,000 emails/mo vs SendFable Free at 500 contacts and 1,000 emails/mo.",
+        a: "Yes. As of 2026-11-21 Sender Free allows 2,500 subscribers and 15,000 emails/mo vs SendFable Free at 500 contacts and 1,000 emails/mo.",
       },
     ],
   }),

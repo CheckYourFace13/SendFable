@@ -183,20 +183,34 @@ export function categoryToTryType(category?: string | null): TryBusinessType {
   return "other";
 }
 
-export function sanitizeTryConfig(raw: unknown): TrySignupConfig {
+/**
+ * Live typing helper — preserve spaces/punctuation while editing.
+ * Length-cap only; do not trim or snap empty strings back to defaults mid-keystroke.
+ */
+export function draftTryConfig(raw: unknown): TrySignupConfig {
   const input = raw && typeof raw === "object" ? (raw as Partial<TrySignupConfig>) : {};
   const type = TRY_BUSINESS_TYPES.includes(input.businessType as TryBusinessType)
     ? (input.businessType as TryBusinessType)
     : "other";
   const fallback = defaultTryConfig(type);
-  const name = String(input.audienceName || fallback.audienceName).trim().slice(0, 40);
-  const extra = String(input.extraAudienceName || fallback.extraAudienceName).trim().slice(0, 40);
+  const name =
+    input.audienceName !== undefined
+      ? String(input.audienceName).slice(0, 40)
+      : fallback.audienceName;
+  const extra =
+    input.extraAudienceName !== undefined
+      ? String(input.extraAudienceName).slice(0, 40)
+      : fallback.extraAudienceName;
   return {
     businessType: type,
-    audienceName: name || fallback.audienceName,
-    extraAudienceName: extra && extra.toLowerCase() !== name.toLowerCase() ? extra : fallback.extraAudienceName,
-    headline: String(input.headline || fallback.headline).trim().slice(0, 80) || fallback.headline,
-    buttonLabel: String(input.buttonLabel || fallback.buttonLabel).trim().slice(0, 32) || "Join",
+    audienceName: name,
+    extraAudienceName: extra,
+    headline:
+      input.headline !== undefined ? String(input.headline).slice(0, 80) : fallback.headline,
+    buttonLabel:
+      input.buttonLabel !== undefined
+        ? String(input.buttonLabel).slice(0, 32)
+        : fallback.buttonLabel,
     display: input.display === "popup" ? "popup" : "inline",
     firstName: input.firstName !== undefined ? Boolean(input.firstName) : fallback.firstName,
     phone: input.phone !== undefined ? Boolean(input.phone) : fallback.phone,
@@ -204,6 +218,25 @@ export function sanitizeTryConfig(raw: unknown): TrySignupConfig {
     platform: PLATFORMS.includes(input.platform as (typeof PLATFORMS)[number])
       ? (input.platform as TrySignupConfig["platform"])
       : "wordpress",
+  };
+}
+
+/** Persist / load — trim whitespace and restore empty fields to defaults. */
+export function sanitizeTryConfig(raw: unknown): TrySignupConfig {
+  const draft = draftTryConfig(raw);
+  const fallback = defaultTryConfig(draft.businessType);
+  const name = draft.audienceName.trim().slice(0, 40) || fallback.audienceName;
+  const extraRaw = draft.extraAudienceName.trim().slice(0, 40);
+  return {
+    ...draft,
+    audienceName: name,
+    extraAudienceName:
+      extraRaw && extraRaw.toLowerCase() !== name.toLowerCase()
+        ? extraRaw
+        : fallback.extraAudienceName,
+    headline: draft.headline.trim().slice(0, 80) || fallback.headline,
+    buttonLabel: draft.buttonLabel.trim().slice(0, 32) || "Join",
+    smsConsent: Boolean(draft.phone) && Boolean(draft.smsConsent),
   };
 }
 

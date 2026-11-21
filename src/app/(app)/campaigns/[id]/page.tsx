@@ -108,7 +108,13 @@ export default function CampaignDetailPage() {
     if (tab !== "review" || !campaign) return;
     void refreshConfidence();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, params.id]);
+  }, [
+    tab,
+    params.id,
+    campaign?.audienceType,
+    campaign?.audienceTagIds,
+    campaign?.audienceSegmentId,
+  ]);
 
   async function patch(body: Record<string, unknown>) {
     setSaving(true);
@@ -328,6 +334,7 @@ export default function CampaignDetailPage() {
               <Select
                 value={(campaign.audienceTagIds as string[])?.[0] || ""}
                 onValueChange={(v) => {
+                  setCampaign({ ...campaign, audienceTagIds: [v] });
                   void patch({ audienceTagIds: [v] });
                 }}
               >
@@ -345,7 +352,10 @@ export default function CampaignDetailPage() {
               <Label>Segment</Label>
               <Select
                 value={campaign.audienceSegmentId || ""}
-                onValueChange={(v) => void patch({ audienceSegmentId: v })}
+                onValueChange={(v) => {
+                  setCampaign({ ...campaign, audienceSegmentId: v });
+                  void patch({ audienceSegmentId: v });
+                }}
               >
                 <SelectTrigger><SelectValue placeholder="Select segment" /></SelectTrigger>
                 <SelectContent>

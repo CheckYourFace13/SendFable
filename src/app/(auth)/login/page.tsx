@@ -13,6 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { safeCallbackPath } from "@/lib/safe-redirect";
+import {
+  parsePlanCheckoutIntent,
+  publicPlanCtaHref,
+} from "@/lib/plan-checkout-intent";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
@@ -23,6 +27,10 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = safeCallbackPath(params.get("callbackUrl"));
+  const planIntent = parsePlanCheckoutIntent(params);
+  const signupHref = planIntent
+    ? publicPlanCtaHref(planIntent.plan, planIntent.interval === "year")
+    : "/signup";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -162,7 +170,7 @@ function LoginForm() {
         </Tabs>
         <p className="mt-6 text-center text-sm text-ink/60">
           New to SendFable?{" "}
-          <Link href="/signup" className="font-medium text-coral hover:underline">
+          <Link href={signupHref} className="font-medium text-coral hover:underline">
             Create an account
           </Link>
         </p>

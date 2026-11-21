@@ -149,7 +149,7 @@ export function maxRampLevel(plan: Plan): number {
 export const BOUNCE_PAUSE_THRESHOLD = 0.05; // 5%
 export const COMPLAINT_PAUSE_THRESHOLD = 0.001; // 0.1%
 
-/** Approximate Mailchimp Standard-plan pricing by contact count (verified entry floors 2026-09-19; higher tiers approximate). */
+/** Approximate Mailchimp Standard-plan pricing by contact count (verified entry floors 2026-11-21; higher tiers approximate). */
 export const MAILCHIMP_PRICE_TABLE: Array<{ contacts: number; price: number }> = [
   { contacts: 500, price: 20 },
   { contacts: 1_000, price: 30 },

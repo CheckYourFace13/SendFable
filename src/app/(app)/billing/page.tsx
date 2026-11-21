@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,24 @@ import {
 import type { Plan } from "@prisma/client";
 import { UsageUpgradeBanner } from "@/components/app/usage-upgrade-banner";
 import { track } from "@/lib/track";
+import { parsePlanCheckoutIntent } from "@/lib/plan-checkout-intent";
+import { cn } from "@/lib/utils";
 
 export default function BillingPage() {
+  return (
+    <Suspense fallback={<PageHeader title="Billing" description="Loading…" />}>
+      <BillingInner />
+    </Suspense>
+  );
+}
+
+function BillingInner() {
+  const searchParams = useSearchParams();
+  const intent = parsePlanCheckoutIntent(searchParams);
+  const autoCheckout = searchParams.get("checkout") === "1";
+  const autoStarted = useRef(false);
   const [plan, setPlan] = useState<Plan>("FREE");
-  const [annual, setAnnual] = useState(false);
+  const [annual, setAnnual] = useState(intent?.interval === "year");
   const [usage, setUsage] = useState({ emails: 0, contacts: 0 });
   const [loading, setLoading] = useState<string | null>(null);
   const [showBadgeValue, setShowBadgeValue] = useState(false);
@@ -49,16 +64,26 @@ export default function BillingPage() {
     track("pricing_from_app_viewed");
   }, []);
 
-  async function checkout(target: PaidPlanKey) {
+  useEffect(() => {
+    if (!ready || internalUnlimited || !intent || !autoCheckout || autoStarted.current) return;
+    if (plan === intent.plan) return;
+    autoStarted.current = true;
+    setAnnual(intent.interval === "year");
+    void checkout(intent.plan, intent.interval === "year");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, internalUnlimited, intent, autoCheckout, plan]);
+
+  async function checkout(target: PaidPlanKey, useAnnual = annual) {
     setLoading(target);
-    track("plan_cta_clicked", { plan: target, interval: annual ? "year" : "month" });
+    const interval = useAnnual ? "year" : "month";
+    track("plan_cta_clicked", { plan: target, interval });
     try {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plan: target,
-          interval: annual ? "year" : "month",
+          interval,
         }),
       });
       const data = await res.json();
@@ -197,8 +222,15 @@ export default function BillingPage() {
           const price = annual ? annualEffectiveMonthly(key) : p.monthlyPrice;
           const mc = mailchimpPriceFor(p.contactCap);
           const savings = mc - p.monthlyPrice;
+          const highlighted = intent?.plan === key;
           return (
-            <div key={key} className="rounded-xl border bg-white p-6">
+            <div
+              key={key}
+              className={cn(
+                "rounded-xl border bg-white p-6",
+                highlighted && "border-coral ring-2 ring-coral/30"
+              )}
+            >
               <h3 className="text-lg font-semibold">{p.name}</h3>
               <div className="mt-2">
                 <span className="text-3xl font-bold">${price}</span>

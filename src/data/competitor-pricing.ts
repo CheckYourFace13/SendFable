@@ -9,7 +9,7 @@ import type { CompetitorPricing, CompetitorTier } from "./competitor-pricing-typ
 
 export type { CompetitorTier, CompetitorPricing } from "./competitor-pricing-types";
 
-export const PRICING_LAST_CHECKED = "2026-07-29";
+export const PRICING_LAST_CHECKED = "2026-11-21";
 export const PRICING_DISCLAIMER = COMPARISON_DISCLAIMER;
 
 export const COMPETITOR_PRICING: Record<string, CompetitorPricing> = Object.fromEntries(

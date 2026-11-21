@@ -6,6 +6,7 @@ import {
   categoryToTryType,
   defaultTryConfig,
   fieldsFromTryConfig,
+  draftTryConfig,
   sanitizeTryConfig,
   tryBusinessPitch,
   tryConfigMeaningful,
@@ -25,6 +26,22 @@ describe("try signup builder", () => {
     assert.equal(defaultTryConfig("band").platform, "wordpress");
     assert.equal(trySiteChrome("band", "KarPool Band").siteName, "KarPool Band");
     assert.match(tryBusinessPitch("restaurant"), /private-event/i);
+  });
+
+  it("preserves spaces while drafting and trims only on sanitize", () => {
+    const mid = draftTryConfig({
+      businessType: "local",
+      headline: "Stay in the loop.",
+      audienceName: "Customers / Private Events",
+      buttonLabel: "Join us — it’s free",
+    });
+    assert.equal(mid.headline, "Stay in the loop.");
+    assert.equal(mid.audienceName, "Customers / Private Events");
+    assert.equal(mid.buttonLabel, "Join us — it’s free");
+    const typing = draftTryConfig({ ...mid, headline: "Stay in the loop. " });
+    assert.equal(typing.headline, "Stay in the loop. ");
+    const saved = sanitizeTryConfig(typing);
+    assert.equal(saved.headline, "Stay in the loop.");
   });
 
   it("never treats phone as SMS consent", () => {

@@ -36,10 +36,10 @@ export default function Text20PromoPage() {
       </ol>
       <p className="mt-8">
         <Link
-          href="/signup"
+          href="/signup?plan=STARTER&interval=month"
           className="inline-flex rounded-lg bg-coral-solid px-5 py-2.5 text-sm font-semibold text-white hover:bg-coral-hover"
         >
-          Start free
+          Continue with Starter
         </Link>
       </p>
       <p className="mt-6 text-xs text-ink/50">Checkout shows the exact discount before you pay.</p>

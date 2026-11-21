@@ -9,7 +9,7 @@ import { isSmsPublicEnabled } from "@/lib/sms/flags";
 import { COMPETITORS, getCompetitor } from "./catalog";
 import { COMPARISON_DISCLAIMER } from "./types";
 
-export const PRICING_MATRIX_VERIFIED = "2026-09-19";
+export const PRICING_MATRIX_VERIFIED = "2026-11-21";
 
 export const TRADEMARK_DISCLAIMER =
   "Mailchimp and other product names are trademarks of their respective owners. SendFable is not affiliated with them.";
@@ -73,7 +73,7 @@ export function sendfableMatrixRow(smsPublic = isSmsPublicEnabled()): PricingMat
 
 /**
  * Competitor matrix rows. Dollar figures marked approximate unless confidence=exact.
- * Sources: official pricing pages checked 2026-09-19 where fetchable.
+ * Sources: official pricing pages checked 2026-11-21 where fetchable.
  */
 export const COMPETITOR_MATRIX: PricingMatrixRow[] = [
   {
@@ -137,11 +137,11 @@ export const COMPETITOR_MATRIX: PricingMatrixRow[] = [
     name: "Brevo",
     compareHref: "/compare/brevo",
     freePlan: "Yes",
-    freeContacts: "Large storage",
+    freeContacts: "Up to 100,000",
     freeSends: "300 emails/day",
-    entryPaid: "Starter from ~$9/mo",
-    includedContacts: "Contact storage generous; billed on sends",
-    includedSends: "From ~5,000 emails/mo (Starter)",
+    entryPaid: "Starter from $9/mo",
+    includedContacts: "Tiered with send volume (Starter 500 at 5k emails)",
+    includedSends: "From 5,000 emails/mo (Starter)",
     sms: "Credits / multichannel",
     automations: "Strong on paid",
     brandRemoval: "Paid",
@@ -173,7 +173,7 @@ export const COMPETITOR_MATRIX: PricingMatrixRow[] = [
     brandRemoval: "Paid",
     pricingModel: "Subscriber-based",
     bestFor: "Design-forward SMB newsletters",
-    lastVerified: "2026-11-04",
+    lastVerified: PRICING_MATRIX_VERIFIED,
     pricingUrl: "https://www.mailerlite.com/pricing",
     confidence: "approximate",
     estimateAtContacts: {

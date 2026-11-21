@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import type { Plan } from "@prisma/client";
 import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { AUTOPILOT_CREATION_PACKS } from "@/lib/autopilot/commercial";
+import { publicPlanCtaHref } from "@/lib/plan-checkout-intent";
 
 function planBlurb(plan: Plan): string[] {
   const p = PLANS[plan];
@@ -27,9 +28,6 @@ function planBlurb(plan: Plan): string[] {
   // while invites remain early-launch / SES constrained.
   return lines;
 }
-
-/** Public signup CTA — product is generally available. */
-const PRICING_CTA_HREF = "/signup";
 
 const AUTOPILOT_PRICE_NOTE = `Free keeps manual email. Scribe is optional: 3 months, 1 creation a month, no rollover. Then Starter ${autopilotMaxDraftsPerMonth("STARTER")}, Growth ${autopilotMaxDraftsPerMonth("GROWTH")}, Pro ${autopilotMaxDraftsPerMonth("PRO")}, Pro Plus ${autopilotMaxDraftsPerMonth("PRO_PLUS")} a month. Extra packs: ${AUTOPILOT_CREATION_PACKS.map((p) => `${p.credits} for $${p.cents / 100}`).join(", ")}. Manual campaigns do not use those credits. Nothing sends until you choose Send now or schedule it.`;
 
@@ -150,7 +148,7 @@ export function PricingPreview({
                 )}
                 variant={recommended ? "default" : "outline"}
               >
-                <Link href={PRICING_CTA_HREF}>
+                <Link href={publicPlanCtaHref(key, annual)}>
                   {key === "FREE" ? "Start writing free" : "Get started"}
                 </Link>
               </Button>

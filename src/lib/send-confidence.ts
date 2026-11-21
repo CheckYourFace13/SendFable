@@ -42,6 +42,9 @@ export interface ConfidenceInput {
   owner: Pick<User, "emailVerified" | "plan" | "monthlySendCount" | "sendingHeldAt" | "flaggedAt">;
   audienceSize: number;
   suppressedCount: number;
+  /** When audienceSize is 0, optional review copy from inspectAudience. */
+  audienceEmptyLabel?: string;
+  audienceEmptyDetail?: string;
   recentBounceRate: number;
   recentComplaintRate: number;
   /** SMS-eligible audience after consent filters (when channel needs SMS). */
@@ -376,8 +379,10 @@ export function computeSendConfidence(input: ConfidenceInput): ConfidenceResult 
     checks.push({
       id: "audience",
       level: "error",
-      label: "Audience is empty",
-      detail: "No subscribed, non-suppressed recipients match this audience.",
+      label: input.audienceEmptyLabel || "Audience is empty",
+      detail:
+        input.audienceEmptyDetail ||
+        "No subscribed, non-suppressed recipients match this audience.",
       blocksSend: true,
     });
   } else {

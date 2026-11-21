@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getApiContext, getWorkspaceOwner } from "@/lib/session";
-import { countAudience } from "@/lib/audience";
+import { inspectAudience } from "@/lib/audience";
 import { computeSendConfidence } from "@/lib/send-confidence";
 import { isOwnerInternalWorkspace } from "@/lib/internal-entitlement";
 import { normalizeEmail } from "@/lib/utils";
@@ -21,13 +21,18 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const needsEmail = channel === "EMAIL" || channel === "BOTH";
   const needsSms = channel === "SMS" || channel === "BOTH";
 
-  const audienceSize = needsEmail
-    ? await countAudience(ctx.workspace.id, {
+  const audienceInspect = needsEmail
+    ? await inspectAudience(ctx.workspace.id, {
         audienceType: campaign.audienceType as "all" | "tags" | "segment",
         audienceTagIds: (campaign.audienceTagIds as string[]) ?? [],
         audienceSegmentId: campaign.audienceSegmentId,
       })
-    : 0;
+    : null;
+  const audienceSize = audienceInspect?.count ?? 0;
+  const audienceEmpty =
+    audienceInspect && audienceInspect.count <= 0
+      ? emptyAudienceCopy(audienceInspect)
+      : null;
 
   let smsAudienceSize: number | undefined;
   let hasActiveSmsNumber: boolean | undefined;
@@ -81,6 +86,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     owner,
     audienceSize,
     suppressedCount: local + global,
+    audienceEmptyLabel: audienceEmpty?.label,
+    audienceEmptyDetail: audienceEmpty?.detail,
     recentBounceRate: (completed._sum.bounceCount ?? 0) / sent,
     recentComplaintRate: (completed._sum.complaintCount ?? 0) / sent,
     smsAudienceSize,
@@ -93,4 +100,49 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
 
   return NextResponse.json(result);
+}
+
+function emptyAudienceCopy(inspect: {
+  emptyReason: string | null;
+  reservedExcluded: number;
+  suppressedExcluded: number;
+  matchedWithEmail: number;
+}): { label: string; detail: string } {
+  if (inspect.emptyReason === "no_tag_selected") {
+    return {
+      label: "Choose a tag",
+      detail: "Pick a tag so this campaign knows who should receive it.",
+    };
+  }
+  if (inspect.emptyReason === "no_segment_selected") {
+    return {
+      label: "Choose a saved group",
+      detail: "Pick a segment so this campaign knows who should receive it.",
+    };
+  }
+  if (inspect.reservedExcluded > 0 && inspect.matchedWithEmail === inspect.reservedExcluded) {
+    return {
+      label: "No sendable recipients",
+      detail:
+        "Matching contacts use reserved example domains (example.com / .net / .org) and cannot be sent to. Import real addresses for a sendable audience.",
+    };
+  }
+  if (inspect.suppressedExcluded > 0 && inspect.matchedWithEmail === inspect.suppressedExcluded) {
+    return {
+      label: "Audience is empty",
+      detail: "Matching contacts are on the suppression list and were excluded.",
+    };
+  }
+  if (inspect.emptyReason === "all_filtered") {
+    return {
+      label: "No sendable recipients",
+      detail: `${inspect.matchedWithEmail} matching contact${
+        inspect.matchedWithEmail === 1 ? "" : "s"
+      } excluded (suppressed or reserved demo addresses).`,
+    };
+  }
+  return {
+    label: "Audience is empty",
+    detail: "No subscribed, non-suppressed recipients match this audience.",
+  };
 }

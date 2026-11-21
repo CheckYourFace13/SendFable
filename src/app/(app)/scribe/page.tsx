@@ -324,9 +324,13 @@ export default function ScribePage() {
             <dd className="font-medium">
               {internalUnlimited
                 ? "Unlimited"
-                : cap
+                : cap && cap > 0
                   ? `${used} of ${cap} creations used`
-                  : "No creations included"}
+                  : plan === "FREE"
+                    ? "0 included on Free — start the trial or upgrade"
+                    : `${PLANS[plan as keyof typeof PLANS]?.name || plan} includes ${
+                        commercial?.includedPerMonth ?? 0
+                      }/month`}
             </dd>
           </div>
           <div>

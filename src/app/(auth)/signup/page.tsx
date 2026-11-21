@@ -11,10 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { freePlanPromise } from "@/lib/plans";
+import { freePlanPromise, PLANS } from "@/lib/plans";
 import { trackClientEvent } from "@/components/marketing/marketing-analytics";
 import { embedSnippet } from "@/lib/forms/install";
 import { tryInstallSteps, type TryInstallPlatform } from "@/lib/try-signup/install";
+import {
+  billingCheckoutPath,
+  parsePlanCheckoutIntent,
+} from "@/lib/plan-checkout-intent";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
@@ -47,6 +51,7 @@ function SignupForm() {
       return undefined;
     }
   }, [searchParams]);
+  const planIntent = useMemo(() => parsePlanCheckoutIntent(searchParams), [searchParams]);
   useEffect(() => {
     trackClientEvent("signup_start");
     if (tryToken) {
@@ -69,11 +74,16 @@ function SignupForm() {
     } else if (tryToken) {
       q.set("try", tryToken);
       q.set("callbackUrl", "/forms");
+    } else if (planIntent) {
+      q.set("callbackUrl", billingCheckoutPath(planIntent));
+      // Preserve for existing-account login from paid CTA.
+      q.set("plan", planIntent.plan);
+      q.set("interval", planIntent.interval);
     } else {
       q.set("callbackUrl", "/onboarding");
     }
     return `/login?${q.toString()}`;
-  }, [resumeTemplate, resumeGoal, tryToken]);
+  }, [resumeTemplate, resumeGoal, tryToken, planIntent]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
@@ -243,7 +253,11 @@ function SignupForm() {
         <CardDescription>
           {tryToken
             ? `Make this signup live. ${freePlanPromise()} Any email address works. No credit card required.`
-            : `${freePlanPromise()} Any email address works. No credit card required.`}
+            : planIntent
+              ? `Continue with ${PLANS[planIntent.plan].name} (${
+                  planIntent.interval === "year" ? "annual" : "monthly"
+                }). Create your account, then checkout for that plan.`
+              : `${freePlanPromise()} Any email address works. No credit card required.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -291,7 +305,9 @@ function SignupForm() {
         </form>
         <p className="mt-6 text-center text-sm text-ink/60">
           Already have an account?{" "}
-          <Link href={loginHref} className="font-medium text-coral hover:underline">Sign in</Link>
+          <Link href={loginHref} className="font-medium text-coral hover:underline">
+            {planIntent ? "Sign in to continue checkout" : "Sign in"}
+          </Link>
         </p>
       </CardContent>
     </Card>
