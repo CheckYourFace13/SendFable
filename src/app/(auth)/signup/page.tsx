@@ -42,16 +42,18 @@ function SignupForm() {
     () => searchParams.get("goal")?.trim() || undefined,
     [searchParams]
   );
+  const planIntent = useMemo(() => parsePlanCheckoutIntent(searchParams), [searchParams]);
   const tryToken = useMemo(() => {
     const fromQuery = searchParams.get("try")?.trim();
     if (fromQuery) return fromQuery;
+    // Paid-plan CTAs must not be hijacked by a leftover try draft in localStorage.
+    if (planIntent) return undefined;
     try {
       return localStorage.getItem("sf_try_signup")?.trim() || undefined;
     } catch {
       return undefined;
     }
-  }, [searchParams]);
-  const planIntent = useMemo(() => parsePlanCheckoutIntent(searchParams), [searchParams]);
+  }, [searchParams, planIntent]);
   useEffect(() => {
     trackClientEvent("signup_start");
     if (tryToken) {
@@ -71,14 +73,14 @@ function SignupForm() {
           resumeGoal ? `&goal=${encodeURIComponent(resumeGoal)}` : ""
         }`
       );
-    } else if (tryToken) {
-      q.set("try", tryToken);
-      q.set("callbackUrl", "/forms");
     } else if (planIntent) {
       q.set("callbackUrl", billingCheckoutPath(planIntent));
       // Preserve for existing-account login from paid CTA.
       q.set("plan", planIntent.plan);
       q.set("interval", planIntent.interval);
+    } else if (tryToken) {
+      q.set("try", tryToken);
+      q.set("callbackUrl", "/forms");
     } else {
       q.set("callbackUrl", "/onboarding");
     }
@@ -251,12 +253,12 @@ function SignupForm() {
           Create your account
         </h1>
         <CardDescription>
-          {tryToken
-            ? `Make this signup live. ${freePlanPromise()} Any email address works. No credit card required.`
-            : planIntent
-              ? `Continue with ${PLANS[planIntent.plan].name} (${
-                  planIntent.interval === "year" ? "annual" : "monthly"
-                }). Create your account, then checkout for that plan.`
+          {planIntent
+            ? `Continue with ${PLANS[planIntent.plan].name} (${
+                planIntent.interval === "year" ? "annual" : "monthly"
+              }). Create your account, then checkout for that plan.`
+            : tryToken
+              ? `Make this signup live. ${freePlanPromise()} Any email address works. No credit card required.`
               : `${freePlanPromise()} Any email address works. No credit card required.`}
         </CardDescription>
       </CardHeader>
