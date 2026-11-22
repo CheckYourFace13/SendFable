@@ -198,3 +198,34 @@ export function definedTermSetJsonLd(
     })),
   };
 }
+
+/** VideoObject for a page that embeds one official video. Omits uploadDate when unknown. */
+export function videoObjectJsonLd(opts: {
+  name: string;
+  description: string;
+  youtubeId: string;
+  watchUrl: string;
+  /** Page that embeds the video (canonical path). */
+  pagePath: string;
+}) {
+  const thumb = `https://i.ytimg.com/vi/${opts.youtubeId}/hqdefault.jpg`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: opts.name,
+    description: opts.description,
+    thumbnailUrl: [thumb],
+    contentUrl: opts.watchUrl,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${opts.youtubeId}`,
+    url: appUrl(opts.pagePath),
+    publisher: {
+      "@type": "Organization",
+      name: "SendFable",
+      url: appUrl("/"),
+      logo: {
+        "@type": "ImageObject",
+        url: appUrl("/brand/sendfable-mark.svg"),
+      },
+    },
+  };
+}

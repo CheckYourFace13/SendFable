@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
-import { marketingPageMeta } from "@/components/marketing/json-ld";
+import { JsonLd, marketingPageMeta, videoObjectJsonLd } from "@/components/marketing/json-ld";
+import { YoutubeEmbed } from "@/components/marketing/youtube-embed";
+import { OFFICIAL_VIDEOS } from "@/data/official-videos";
 
 export const metadata = marketingPageMeta({
   title: "Free email marketing tools",
@@ -37,8 +39,18 @@ const TOOLS = [
 ] as const;
 
 export default function ToolsHubPage() {
+  const toolsVideo = OFFICIAL_VIDEOS["free-tools"];
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <JsonLd
+        data={videoObjectJsonLd({
+          name: toolsVideo.title,
+          description: toolsVideo.description,
+          youtubeId: toolsVideo.youtubeId,
+          watchUrl: toolsVideo.watchUrl,
+          pagePath: "/tools",
+        })}
+      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
@@ -52,6 +64,15 @@ export default function ToolsHubPage() {
         Check a subject line. Spot risky copy. Compare what email software costs. No account
         required.
       </p>
+      <section className="mt-10">
+        <h2 className="text-2xl font-semibold text-ink">Try SendFable&apos;s free tools</h2>
+        <p className="mt-2 text-sm text-ink/70">
+          A quick look at the free tools. The full product still needs an account to send.
+        </p>
+        <div className="mt-6">
+          <YoutubeEmbed videoId="free-tools" />
+        </div>
+      </section>
       <ul className="mt-10 space-y-4">
         {TOOLS.map((tool) => (
           <li key={tool.href} className="rounded-2xl border border-ink/10 bg-white p-6">

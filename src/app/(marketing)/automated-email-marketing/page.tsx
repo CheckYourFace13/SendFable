@@ -4,8 +4,10 @@ import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { UtmLink } from "@/components/marketing/utm-link";
-import { marketingPageMeta, JsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta, JsonLd, videoObjectJsonLd } from "@/components/marketing/json-ld";
 import { WebsiteToEmailProof } from "@/components/marketing/website-to-email-proof";
+import { YoutubeEmbed } from "@/components/marketing/youtube-embed";
+import { OFFICIAL_VIDEOS } from "@/data/official-videos";
 import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { PLANS } from "@/lib/plans";
 
@@ -75,6 +77,7 @@ const FAQS = [
 ];
 
 export default function AutomatedEmailMarketingPage() {
+  const scribeVideo = OFFICIAL_VIDEOS.scribe;
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <JsonLd
@@ -86,6 +89,15 @@ export default function AutomatedEmailMarketingPage() {
             "Watch your marketing page, draft campaigns automatically, send only after approval.",
           url: "https://sendfable.com/automated-email-marketing",
         }}
+      />
+      <JsonLd
+        data={videoObjectJsonLd({
+          name: scribeVideo.title,
+          description: scribeVideo.description,
+          youtubeId: scribeVideo.youtubeId,
+          watchUrl: scribeVideo.watchUrl,
+          pagePath: "/automated-email-marketing",
+        })}
       />
       <Breadcrumbs
         items={[
@@ -113,6 +125,18 @@ export default function AutomatedEmailMarketingPage() {
           creation a month during the trial.
         </p>
       </div>
+
+      <section className="mt-12">
+        <h2 className="text-2xl font-semibold text-ink">
+          See Scribe turn an update into a campaign
+        </h2>
+        <p className="mt-2 text-sm text-ink/70">
+          Website change → draft in your look → you choose Send now or schedule.
+        </p>
+        <div className="mt-6">
+          <YoutubeEmbed videoId="scribe" />
+        </div>
+      </section>
 
       <div className="mt-10 grid gap-3 sm:grid-cols-2">
         {[

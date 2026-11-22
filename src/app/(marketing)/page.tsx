@@ -13,7 +13,9 @@ import { DeliverabilityStory } from "@/components/marketing/home/deliverability-
 import { PricingPreview } from "@/components/marketing/home/pricing-preview";
 import { HomeFaq } from "@/components/marketing/home/home-faq";
 import { FinalCta } from "@/components/marketing/home/final-cta";
-import { marketingPageMeta } from "@/components/marketing/json-ld";
+import { VideoSection } from "@/components/marketing/youtube-embed";
+import { JsonLd, marketingPageMeta, videoObjectJsonLd } from "@/components/marketing/json-ld";
+import { OFFICIAL_VIDEOS } from "@/data/official-videos";
 import { PLANS } from "@/lib/plans";
 
 const baseMetadata = marketingPageMeta({
@@ -27,9 +29,24 @@ export async function generateMetadata() {
   return applyManagedMetadata("/", baseMetadata);
 }
 export default function HomePage() {
+  const overview = OFFICIAL_VIDEOS.overview;
   return (
     <>
+      <JsonLd
+        data={videoObjectJsonLd({
+          name: overview.title,
+          description: overview.description,
+          youtubeId: overview.youtubeId,
+          watchUrl: overview.watchUrl,
+          pagePath: "/",
+        })}
+      />
       <Hero />
+      <VideoSection
+        videoId="overview"
+        heading="See how SendFable works"
+        support="A short tour of email and text marketing without the marketing-software headache."
+      />
       <ChannelTrio />
       <ThreeSteps />
       <MarketingAutopilotHome />

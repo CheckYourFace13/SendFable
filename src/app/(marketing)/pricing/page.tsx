@@ -1,10 +1,14 @@
+import Link from "next/link";
 import { applyManagedMetadata } from "@/lib/gravyblock-managed";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { PricingPreview } from "@/components/marketing/home/pricing-preview";
 import { SmsPricingSection } from "@/components/marketing/sms-pricing";
 import { Faq } from "@/components/marketing/faq";
-import { marketingPageMeta } from "@/components/marketing/json-ld";
+import { Button } from "@/components/ui/button";
+import { JsonLd, marketingPageMeta, videoObjectJsonLd } from "@/components/marketing/json-ld";
+import { YoutubeEmbed } from "@/components/marketing/youtube-embed";
+import { OFFICIAL_VIDEOS } from "@/data/official-videos";
 import { PLANS } from "@/lib/plans";
 import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { AUTOPILOT_CREATION_PACKS } from "@/lib/autopilot/commercial";
@@ -21,8 +25,18 @@ export async function generateMetadata() {
   return applyManagedMetadata("/pricing", baseMetadata);
 }
 export default function PricingPage() {
+  const pricingVideo = OFFICIAL_VIDEOS.pricing;
   return (
     <div className="editorial-bg">
+      <JsonLd
+        data={videoObjectJsonLd({
+          name: pricingVideo.title,
+          description: pricingVideo.description,
+          youtubeId: pricingVideo.youtubeId,
+          watchUrl: pricingVideo.watchUrl,
+          pagePath: "/pricing",
+        })}
+      />
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <Breadcrumbs
           items={[
@@ -49,6 +63,23 @@ export default function PricingPage() {
         <div className="mt-12">
           <PricingPreview embedded showFullLink={false} />
         </div>
+
+        <section className="mx-auto mt-16 max-w-3xl text-center">
+          <h2 className="font-display text-3xl text-ink">See how quickly you can start</h2>
+          <p className="mt-3 text-charcoal/75">
+            Free includes up to {PLANS.FREE.contactCap.toLocaleString()} contacts and{" "}
+            {PLANS.FREE.emailsPerMonth.toLocaleString()} emails a month. No credit card required.
+            Plan prices above are current — use those, not any figure spoken in the video.
+          </p>
+          <div className="mt-8 text-left">
+            <YoutubeEmbed videoId="pricing" />
+          </div>
+          <div className="mt-6">
+            <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
+              <Link href="/signup">Start free</Link>
+            </Button>
+          </div>
+        </section>
 
         {/* Text messaging plans — server-flag gated; renders nothing while
             SENDFABLE_SMS_PUBLIC_ENABLED=false */}
