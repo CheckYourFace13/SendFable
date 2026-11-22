@@ -39,7 +39,7 @@ test.describe("Marketing Autopilot certification surfaces", () => {
   test("feature page lifecycle copy", async ({ page }) => {
     await page.goto("/automated-email-marketing");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    for (const label of ["Watch", "Create", "Review", "Schedule"]) {
+    for (const label of ["Watch", "Create", "Review", "Send or schedule"]) {
       await expect(page.getByRole("heading", { name: label, exact: true })).toBeVisible();
     }
     await expect(page.getByText(/No approval\. No send/i).first()).toBeVisible();
