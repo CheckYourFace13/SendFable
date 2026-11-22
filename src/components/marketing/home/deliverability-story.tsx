@@ -23,7 +23,7 @@ const STEPS = [
   },
   {
     title: "Send Confidence catches issues",
-    body: "Before you launch, we flag missing unsubscribes, weak links, and common footguns.",
+    body: "Before you launch, we flag missing unsubscribes, weak links, and common mistakes.",
   },
 ];
 

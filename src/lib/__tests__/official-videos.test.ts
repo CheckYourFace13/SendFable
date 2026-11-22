@@ -21,19 +21,29 @@ describe("official SendFable videos", () => {
     assert.doesNotMatch(home, /2eRqsXkX9tU/);
   });
 
-  it("builds click-to-load embed URLs without inventing uploadDate", () => {
+  it("builds click-to-load embed URLs and includes YouTube uploadDate when known", () => {
     const id = OFFICIAL_VIDEOS.overview.youtubeId;
     assert.match(youtubeThumbnailUrl(id), new RegExp(id));
     assert.match(youtubeEmbedUrl(id), /youtube-nocookie\.com\/embed/);
+    assert.match(OFFICIAL_VIDEOS.overview.uploadDate, /^2026-11-21T/);
     const schema = videoObjectJsonLd({
       name: OFFICIAL_VIDEOS.overview.title,
       description: OFFICIAL_VIDEOS.overview.description,
       youtubeId: id,
       watchUrl: OFFICIAL_VIDEOS.overview.watchUrl,
       pagePath: "/",
+      uploadDate: OFFICIAL_VIDEOS.overview.uploadDate,
     });
     assert.equal(schema["@type"], "VideoObject");
-    assert.equal("uploadDate" in schema, false);
+    assert.equal(schema.uploadDate, OFFICIAL_VIDEOS.overview.uploadDate);
+    const without = videoObjectJsonLd({
+      name: "x",
+      description: "y",
+      youtubeId: id,
+      watchUrl: OFFICIAL_VIDEOS.overview.watchUrl,
+      pagePath: "/",
+    });
+    assert.equal("uploadDate" in without, false);
   });
 
   it("never mounts an iframe until the visitor clicks play", () => {

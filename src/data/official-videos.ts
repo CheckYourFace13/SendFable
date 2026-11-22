@@ -17,6 +17,8 @@ export type OfficialVideo = {
   title: string;
   description: string;
   watchUrl: string;
+  /** ISO-8601 upload time from YouTube page metadata (itemprop=uploadDate). */
+  uploadDate: string;
   /** Landscape 16:9 or vertical short */
   aspect: "landscape" | "vertical";
   /** Where this video is embedded on sendfable.com (null = YouTube-only). */
@@ -33,6 +35,7 @@ export const OFFICIAL_VIDEOS: Record<OfficialVideoId, OfficialVideo> = {
     description:
       "A short tour of SendFable: email and text marketing for small businesses, without the marketing-software headache.",
     watchUrl: YT("bfJ0Anqe2C8"),
+    uploadDate: "2026-11-21T14:52:39-08:00",
     aspect: "landscape",
     sitePath: "/",
   },
@@ -43,6 +46,7 @@ export const OFFICIAL_VIDEOS: Record<OfficialVideoId, OfficialVideo> = {
     description:
       "How Scribe turns a website update into a campaign draft you review, then send now or schedule.",
     watchUrl: YT("VX6DoB1sHVE"),
+    uploadDate: "2026-11-21T14:52:43-08:00",
     aspect: "landscape",
     sitePath: "/automated-email-marketing",
   },
@@ -53,6 +57,7 @@ export const OFFICIAL_VIDEOS: Record<OfficialVideoId, OfficialVideo> = {
     description:
       "Try SendFable free tools such as the subject line tester and spam word checker — no account required.",
     watchUrl: YT("-Hf6HP2vAXo"),
+    uploadDate: "2026-11-21T14:52:49-08:00",
     aspect: "landscape",
     sitePath: "/tools",
   },
@@ -63,6 +68,7 @@ export const OFFICIAL_VIDEOS: Record<OfficialVideoId, OfficialVideo> = {
     description:
       "See how quickly you can start on SendFable Free. Current plan prices and limits are on the pricing page.",
     watchUrl: YT("kfnLddV4kf0"),
+    uploadDate: "2026-11-21T14:52:54-08:00",
     aspect: "landscape",
     sitePath: "/pricing",
   },
@@ -72,6 +78,7 @@ export const OFFICIAL_VIDEOS: Record<OfficialVideoId, OfficialVideo> = {
     title: "SendFable starts free — 20 seconds",
     description: "A short clip: SendFable starts free.",
     watchUrl: YT("2eRqsXkX9tU"),
+    uploadDate: "2026-11-21T14:52:58-08:00",
     aspect: "vertical",
     /** Intentionally not embedded — would duplicate the pricing landscape video. */
     sitePath: null,

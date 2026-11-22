@@ -72,11 +72,11 @@ function WriteVisual() {
           ))}
         </aside>
         <div className="space-y-2 bg-parchment/30 p-4">
-          <div className="h-2 w-16 rounded bg-coral/40" />
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-coral">Neighborhood cafe</p>
           <div className="font-display text-base text-ink">Weekend specials</div>
-          <div className="h-16 rounded-md bg-teal/20" />
-          <div className="h-2 w-full rounded bg-ink/10" />
-          <div className="h-2 w-4/5 rounded bg-ink/10" />
+          <div className="rounded-md border border-ink/10 bg-page px-3 py-2 text-[11px] leading-relaxed text-ink/80">
+            Pastry box + drip coffee for two. Pickup Saturday 8–11am. Reply if you want the gluten-free tray.
+          </div>
           <div className="inline-block rounded bg-coral-solid px-3 py-1 text-[10px] font-semibold text-white">
             See the menu
           </div>

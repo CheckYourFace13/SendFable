@@ -22,7 +22,7 @@ export default function ChangelogPage() {
       />
       <h1 className="text-4xl font-bold tracking-tight">Changelog</h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Features that are available in the product today. We do not backdate vaporware. Follow{" "}
+        Dated notes for features available in the product today. Follow{" "}
         <Link href="/feed.xml" className="font-medium text-teal hover:underline">
           /feed.xml
         </Link>{" "}

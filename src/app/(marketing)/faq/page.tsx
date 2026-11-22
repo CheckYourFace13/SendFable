@@ -68,7 +68,7 @@ export default function FaqPage() {
     {
       q: "What does SMS activation cost?",
       a: smsPublic
-        ? "Text Messaging is a separate add-on with an activation/setup fee plus plan pricing for included segments. See /pricing for current Text Messaging details and any promo such as TEXT20."
+        ? "Text Messaging is a separate add-on with an activation/setup fee plus plan pricing for included segments. See /pricing for current Text Messaging details. TEXT20 discounts monthly Starter or Growth email plans — not Text Messaging plans."
         : "Text Messaging is not publicly available yet. Email plans do not require SMS.",
     },
     {

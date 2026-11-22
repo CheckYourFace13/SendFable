@@ -10,7 +10,7 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 export const metadata = marketingPageMeta({
   title: "Mailchimp alternative for simple sending",
   description:
-    "Looking for a Mailchimp alternative? SendFable offers lower typical pricing, any-email signup, and SES delivery — with an honest comparison of trade-offs.",
+    "Looking for a Mailchimp alternative? SendFable offers lower typical pricing, any-email signup, and SES delivery — with a clear SendFable vs Mailchimp comparison of trade-offs.",
   path: "/alternatives/mailchimp",
 });
 

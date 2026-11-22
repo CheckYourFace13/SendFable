@@ -8,7 +8,7 @@ import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 export const metadata = marketingPageMeta({
   title: "Compare email marketing tools",
   description:
-    "Honest SendFable comparisons with Mailchimp, MailerLite, Brevo, ActiveCampaign, HubSpot, and more — with dated pricing snapshots and clear use-case winners.",
+    "SendFable vs Mailchimp, MailerLite, Brevo, ActiveCampaign, HubSpot, and more — with dated pricing snapshots and clear use-case winners.",
   path: "/compare",
 });
 
@@ -31,7 +31,7 @@ export default function CompareHubPage() {
       />
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Comparisons</p>
       <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-ink">
-        Compare email marketing tools honestly
+        Compare email marketing tools
       </h1>
       <p className="mt-4 text-lg text-ink/70">
         {SENDFABLE_FACTS.positioning} We say where competitors are stronger — and where SendFable may

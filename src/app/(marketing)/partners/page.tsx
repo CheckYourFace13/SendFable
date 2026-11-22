@@ -52,11 +52,11 @@ export default function PartnersPage() {
       </h1>
       <p className="mt-4 text-lg text-ink/75">
         Help clients run permission-based email without forcing a CRM. Referrals are attributed;
-        rewards stay inactive until economics and Stripe credits are owner-approved.
+        any rewards stay inactive until the referral program is approved and credits are enabled.
       </p>
 
       <section className="mt-10 space-y-4 text-sm text-slate-700">
-        <h2 className="text-xl font-semibold text-ink">Benefits (honest)</h2>
+        <h2 className="text-xl font-semibold text-ink">Benefits</h2>
         <ul className="list-disc space-y-2 pl-5">
           <li>Clear product story for small businesses who outgrew inbox CC lists</li>
           <li>Documented Mailchimp migration path for permissioned contacts</li>
@@ -70,8 +70,8 @@ export default function PartnersPage() {
         <ol className="list-decimal space-y-2 pl-5">
           <li>Apply below — we review fit manually.</li>
           <li>Share your referral link after approval.</li>
-          <li>Attributed signups appear in admin reporting.</li>
-          <li>Account credits (if any) activate only after owner approval of the referral program.</li>
+          <li>Attributed signups are tracked for your partnership.</li>
+          <li>Account credits (if any) activate only after the referral program is approved.</li>
         </ol>
         <p>
           Migration assistance means guidance and import tooling — not a promise to import data the
@@ -85,7 +85,11 @@ export default function PartnersPage() {
 
       <section className="mt-12">
         <h2 className="text-2xl font-bold text-ink">Apply</h2>
-        <p className="mt-2 text-sm text-ink/70">We do not scrape directories. Outreach stays off until you approve sends.</p>
+        <p className="mt-2 text-sm text-ink/70">
+          SendFable finds public business listings from sources such as OpenStreetMap when
+          discovering local prospects. Customer campaign sending stays separate, and partner
+          outreach stays off until you approve sends.
+        </p>
         <div className="mt-6">
           <PartnerApplyForm formToken={issueInquiryToken("partners")} />
         </div>

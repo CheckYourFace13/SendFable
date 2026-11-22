@@ -20,6 +20,7 @@ const nextConfig = {
       // Content hub lives at /resources — do not 404 /blog.
       { source: "/blog", destination: "/resources", permanent: true },
       { source: "/blog/:path*", destination: "/resources", permanent: true },
+      { source: "/refund", destination: "/refund-policy", permanent: true },
       // Consolidate overlapping industry intent onto /solutions/* (canonical).
       {
         source: "/email-marketing-for-restaurants",

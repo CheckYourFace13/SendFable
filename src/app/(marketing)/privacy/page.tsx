@@ -218,8 +218,8 @@ export default function PrivacyPage() {
         See the full <LegalA href={POLICY_PATHS.cookies}>Cookie disclosure</LegalA>. In short,
         SendFable uses first-party cookies that are necessary to run the Service (session / Auth.js
         cookies, CSRF protection, and a workspace-preference cookie). Optional GA4, when configured,
-        may set analytics cookies from Google — enable only with an updated consent posture if your
-        jurisdiction requires it. We do not set advertising cookies by default.
+        may set analytics cookies from Google — enable them only when your jurisdiction requires a
+        consent choice for analytics. We do not set advertising cookies by default.
       </p>
 
       <LegalH2>8. International processing</LegalH2>

@@ -91,9 +91,9 @@ export default function SmsProductPage() {
         <p className="mt-3 text-sm text-slate-700">
           Text requires a one-time {formatCentsUsd(SMS_ACTIVATION_FEE_CENTS)} activation fee, then a
           monthly Text plan. Carrier registration and number provisioning happen after purchase —
-          details are shown in billing before you pay. Pricing source of truth:{" "}
+          details are shown in billing before you pay. Current pricing:{" "}
           <Link href="/pricing" className="text-coral hover:underline">
-            /pricing
+            Pricing
           </Link>
           .
         </p>

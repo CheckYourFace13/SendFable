@@ -97,6 +97,7 @@ export default function AutomatedEmailMarketingPage() {
           youtubeId: scribeVideo.youtubeId,
           watchUrl: scribeVideo.watchUrl,
           pagePath: "/automated-email-marketing",
+          uploadDate: scribeVideo.uploadDate,
         })}
       />
       <Breadcrumbs

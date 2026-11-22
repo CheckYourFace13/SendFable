@@ -1,9 +1,3 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { JsonLd, faqJsonLd } from "@/components/marketing/json-ld";
 import { PLANS } from "@/lib/plans";
 
@@ -42,6 +36,10 @@ const FAQS = [
   },
 ];
 
+/**
+ * Server-rendered FAQ. Answers stay in the initial HTML (for SEO + screen readers)
+ * while remaining collapsed via native details/summary.
+ */
 export function Faq({
   items = FAQS,
   withSchema = true,
@@ -53,14 +51,22 @@ export function Faq({
   return (
     <>
       {withSchema && items.length > 0 ? <JsonLd data={faqJsonLd(items)} /> : null}
-      <Accordion type="single" collapsible className="w-full">
+      <div className="w-full divide-y divide-ink/10 border-b border-ink/10">
         {items.map((f, i) => (
-          <AccordionItem key={i} value={`item-${i}`}>
-            <AccordionTrigger>{f.q}</AccordionTrigger>
-            <AccordionContent>{f.a}</AccordionContent>
-          </AccordionItem>
+          <details key={i} className="group py-1">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-4 text-left text-sm font-medium text-ink outline-none marker:content-none hover:underline focus-visible:ring-2 focus-visible:ring-coral [&::-webkit-details-marker]:hidden">
+              <span>{f.q}</span>
+              <span
+                aria-hidden="true"
+                className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+              >
+                ▾
+              </span>
+            </summary>
+            <div className="pb-4 pr-8 text-sm text-ink/80">{f.a}</div>
+          </details>
         ))}
-      </Accordion>
+      </div>
     </>
   );
 }

@@ -47,7 +47,7 @@ export default function RefundPolicyPage() {
         temporarily unavailable during maintenance; live plan entitlements still apply once billed.
       </p>
 
-      <LegalH2>1. Plans and limits (verified from product configuration)</LegalH2>
+      <LegalH2>1. Plans and limits</LegalH2>
       <LegalUl>
         <li>
           <strong>Free:</strong> {money(free.monthlyPrice)}; up to {free.contactCap.toLocaleString()}{" "}

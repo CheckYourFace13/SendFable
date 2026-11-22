@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { planSendTimes, type AudienceKind, type Industry, type WeekPreference } from "@/lib/tools/send-time";
 
@@ -10,16 +10,39 @@ const ZONES = [
   "America/Denver",
   "America/Los_Angeles",
   "America/Phoenix",
+  "America/Toronto",
+  "America/Mexico_City",
   "Pacific/Honolulu",
   "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+  "Pacific/Auckland",
   "UTC",
 ];
+
+function browserTimezone(): string {
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (zone && ZONES.includes(zone)) return zone;
+    if (zone) return zone; // still usable even if not in the short list
+  } catch {
+    /* ignore */
+  }
+  return "UTC";
+}
 
 export function SendTimePlanner() {
   const [audience, setAudience] = useState<AudienceKind>("consumer");
   const [week, setWeek] = useState<WeekPreference>("weekday");
-  const [timezone, setTimezone] = useState("America/Chicago");
+  const [timezone, setTimezone] = useState("UTC");
   const [industry, setIndustry] = useState<Industry>("general");
+
+  useEffect(() => {
+    setTimezone(browserTimezone());
+  }, []);
 
   const plan = useMemo(
     () => planSendTimes({ audience, week, timezone, industry }),
@@ -49,7 +72,7 @@ export function SendTimePlanner() {
         </Field>
         <Field label="Primary timezone" id="send-zone">
           <select id="send-zone" className={selectClass} value={timezone} onChange={(e) => setTimezone(e.target.value)}>
-            {ZONES.map((zone) => (
+            {[timezone, ...ZONES].filter((z, i, arr) => arr.indexOf(z) === i).map((zone) => (
               <option key={zone} value={zone}>
                 {zone.replace(/_/g, " ")}
               </option>

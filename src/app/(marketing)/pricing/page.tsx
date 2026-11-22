@@ -35,6 +35,7 @@ export default function PricingPage() {
           youtubeId: pricingVideo.youtubeId,
           watchUrl: pricingVideo.watchUrl,
           pagePath: "/pricing",
+          uploadDate: pricingVideo.uploadDate,
         })}
       />
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
@@ -69,7 +70,7 @@ export default function PricingPage() {
           <p className="mt-3 text-charcoal/75">
             Free includes up to {PLANS.FREE.contactCap.toLocaleString()} contacts and{" "}
             {PLANS.FREE.emailsPerMonth.toLocaleString()} emails a month. No credit card required.
-            Plan prices above are current — use those, not any figure spoken in the video.
+            Prices shown above are current.
           </p>
           <div className="mt-8 text-left">
             <YoutubeEmbed videoId="pricing" />

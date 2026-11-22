@@ -29,7 +29,7 @@ function LoginForm() {
   const callbackUrl = safeCallbackPath(params.get("callbackUrl"));
   const planIntent = parsePlanCheckoutIntent(params);
   const signupHref = planIntent
-    ? publicPlanCtaHref(planIntent.plan, planIntent.interval === "year")
+    ? publicPlanCtaHref(planIntent.plan, planIntent.interval === "year", planIntent.code)
     : "/signup";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

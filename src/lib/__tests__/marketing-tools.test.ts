@@ -17,6 +17,12 @@ test("subject line checklist does not invent an open rate", () => {
   assert.equal(shout.rating, "Needs a rewrite");
   assert.ok(shout.score < clear.score);
   assert.match(shout.notes.join(" "), /capital|exclamation/i);
+
+  const pressure = assessSubjectLine("FREE!!! Act now - 50% off everything today only");
+  assert.ok(pressure.notes.some((n) => /pressure|act now/i.test(n)));
+  assert.ok(pressure.examples.length >= 1);
+  assert.doesNotMatch(pressure.examples.join(" "), /act now/i);
+  assert.doesNotMatch(pressure.examples.join(" "), /FREE!!!/i);
 });
 
 test("spam checker flags patterns without calling them an automatic block", () => {

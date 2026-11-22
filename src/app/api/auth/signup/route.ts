@@ -13,23 +13,36 @@ import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 import { normalizeHomeTimezone } from "@/lib/home-timezone";
 
-const signupSchema = z.object({
-  name: z.string().trim().min(1).max(80).optional(),
-  email: z.string().email().max(254),
-  password: z.string().min(8).max(128),
-  workspaceName: z.string().trim().min(1).max(80).optional(),
-  /** Browser/account IANA timezone — becomes workspace home timezone when valid. */
-  timezone: z.string().trim().max(80).optional(),
-  referralCode: z.string().trim().min(3).max(32).optional(),
-  utmSource: z.string().trim().max(80).optional(),
-  utmMedium: z.string().trim().max(80).optional(),
-  utmCampaign: z.string().trim().max(120).optional(),
-  utmContent: z.string().trim().max(80).optional(),
-  tryToken: z.string().trim().min(8).max(64).optional(),
-  acceptedPolicies: z.literal(true, {
-    errorMap: () => ({ message: "You must agree to the Terms, Acceptable Use, and Privacy Policy." }),
-  }),
-});
+const signupSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80).optional(),
+    email: z.string().email().max(254),
+    password: z.string().min(8).max(128).optional(),
+    /** Create account without a password; client then sends the Auth.js magic link. */
+    magicLink: z.boolean().optional(),
+    workspaceName: z.string().trim().min(1).max(80).optional(),
+    /** Browser/account IANA timezone — becomes workspace home timezone when valid. */
+    timezone: z.string().trim().max(80).optional(),
+    referralCode: z.string().trim().min(3).max(32).optional(),
+    utmSource: z.string().trim().max(80).optional(),
+    utmMedium: z.string().trim().max(80).optional(),
+    utmCampaign: z.string().trim().max(120).optional(),
+    utmContent: z.string().trim().max(80).optional(),
+    tryToken: z.string().trim().min(8).max(64).optional(),
+    acceptedPolicies: z.literal(true, {
+      errorMap: () => ({ message: "You must agree to the Terms, Acceptable Use, and Privacy Policy." }),
+    }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.magicLink) return;
+    if (!data.password || data.password.length < 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Password must be at least 8 characters",
+        path: ["password"],
+      });
+    }
+  });
 
 /** Public Signup Tool slug from a badge link. Rejects anything that is not a public slug. */
 function signupToolLabel(medium?: string, content?: string): string | undefined {
@@ -81,7 +94,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+  const useMagic = parsed.data.magicLink === true;
+  const passwordHash = useMagic
+    ? null
+    : await bcrypt.hash(parsed.data.password!, 12);
   const workspaceName = parsed.data.workspaceName?.trim() || "My workspace";
   const homeTimezone = normalizeHomeTimezone(parsed.data.timezone) || "UTC";
   const ownCode = randomToken(6).slice(0, 8);
@@ -140,8 +156,11 @@ export async function POST(req: Request) {
     });
   }
 
-  const token = await signToken("email-verify", { userId: user.id, email }, "24h");
-  await sendEmailVerification(email, token);
+  // Password signup gets a verify link. Magic-link signup verifies when the Auth.js link is used.
+  if (!useMagic) {
+    const token = await signToken("email-verify", { userId: user.id, email }, "24h");
+    await sendEmailVerification(email, token);
+  }
 
   try {
     ensureAnalyticsPersistence();
@@ -216,6 +235,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
+    magicLink: useMagic,
     formId: activatedFormId,
     hostedSlug: activatedSlug,
     platform: activatedPlatform,

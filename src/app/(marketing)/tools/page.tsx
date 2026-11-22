@@ -49,6 +49,7 @@ export default function ToolsHubPage() {
           youtubeId: toolsVideo.youtubeId,
           watchUrl: toolsVideo.watchUrl,
           pagePath: "/tools",
+          uploadDate: toolsVideo.uploadDate,
         })}
       />
       <Breadcrumbs

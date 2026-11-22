@@ -88,7 +88,6 @@ export const SITEMAP_PATHS = [
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
   const comparePaths = listPublicCompetitors().map((c) => `/compare/${c.slug}`);
   const pairPaths = pairComparisons().map((p) => `/compare/${p.slug}`);
   const migratePaths = migrateSlugs()
@@ -104,9 +103,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...costPaths,
     ...templatePaths,
   ];
+  // Omit lastmod rather than stamping request time as freshness.
   return paths.map((path) => ({
     url: appUrl(path),
-    lastModified: now,
     changeFrequency:
       path === "/"
         ? "weekly"

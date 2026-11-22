@@ -84,6 +84,9 @@ function BillingInner() {
         body: JSON.stringify({
           plan: target,
           interval,
+          ...(intent?.code && intent.plan === target && intent.interval === interval
+            ? { code: intent.code }
+            : {}),
         }),
       });
       const data = await res.json();

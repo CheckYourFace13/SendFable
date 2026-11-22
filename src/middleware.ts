@@ -175,6 +175,22 @@ export default auth((req) => {
     return NextResponse.redirect(url);
   }
   if (isLoggedIn && (pathname === "/login" || pathname === "/signup")) {
+    // Preserve paid-plan + promo checkout intent instead of dumping to dashboard.
+    const plan = req.nextUrl.searchParams.get("plan")?.trim().toUpperCase();
+    const interval = req.nextUrl.searchParams.get("interval")?.trim() || "month";
+    const code = req.nextUrl.searchParams.get("code")?.trim();
+    if (plan && ["STARTER", "GROWTH", "PRO", "PRO_PLUS"].includes(plan)) {
+      const billing = new URL("/billing", req.nextUrl.origin);
+      billing.searchParams.set("plan", plan);
+      billing.searchParams.set("interval", interval === "year" ? "year" : "month");
+      billing.searchParams.set("checkout", "1");
+      if (code) billing.searchParams.set("code", code);
+      return NextResponse.redirect(billing);
+    }
+    const callback = req.nextUrl.searchParams.get("callbackUrl");
+    if (callback && callback.startsWith("/") && !callback.startsWith("//")) {
+      return NextResponse.redirect(new URL(callback, req.nextUrl.origin));
+    }
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
   }
   return NextResponse.next();

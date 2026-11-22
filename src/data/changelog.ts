@@ -8,6 +8,60 @@ export type ChangelogEntry = {
 /** Honest product changelog — only features that ship in the current product. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-21",
+    title: "Official product videos",
+    body: "Click-to-load YouTube walkthroughs on overview, Scribe, Free Tools, and pricing pages.",
+    tags: ["marketing", "videos"],
+  },
+  {
+    date: "2026-11-21",
+    title: "Plan-carrying signup and audience review counts",
+    body: "Paid-plan CTAs carry plan and interval through signup and billing checkout. Campaign review uses the same recipient resolver as sending, with clearer reserved-domain explanations.",
+    tags: ["signup", "sending"],
+  },
+  {
+    date: "2026-11-15",
+    title: "Public Text Messaging",
+    body: "Text Messaging is available as a separate add-on with activation, plans, and consent controls alongside email campaigns.",
+    tags: ["sms", "billing"],
+  },
+  {
+    date: "2026-11-03",
+    title: "Workspace home timezone",
+    body: "Scheduling defaults to each workspace’s home timezone instead of a hard-coded region.",
+    tags: ["scheduling"],
+  },
+  {
+    date: "2026-09-20",
+    title: "Send now or schedule",
+    body: "Campaign review supports sending immediately or scheduling a send with clearer trust copy.",
+    tags: ["sending", "scheduling"],
+  },
+  {
+    date: "2026-10-12",
+    title: "Free Tools",
+    body: "Public tools for subject lines, risky copy, send-time planning, and email pricing comparison — no account required.",
+    tags: ["tools"],
+  },
+  {
+    date: "2026-10-10",
+    title: "Scribe",
+    body: "Scribe drafts campaigns on an owner-selected schedule with plan-based monthly creation allowances.",
+    tags: ["scribe"],
+  },
+  {
+    date: "2026-09-12",
+    title: "Signup Tool demo",
+    body: "Prospects can try a website signup before creating an account, then make it live after signup.",
+    tags: ["signup"],
+  },
+  {
+    date: "2026-07-25",
+    title: "Pro Plus plan",
+    body: "Five-plan catalog including Pro Plus for higher contact and send allowances.",
+    tags: ["billing"],
+  },
+  {
     date: "2026-07-18",
     title: "Core ESP launch",
     body: "Campaign builder, CSV import, tags, visual segments, hosted signup forms, Amazon SES delivery, open/click tracking, and Stripe billing for Free through Pro plans.",
@@ -28,7 +82,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-07-18",
     title: "Custom domain authentication",
-    body: "Growth and Pro plans can authenticate a custom sending domain with DKIM CNAMEs for aligned From addresses.",
+    body: "Growth, Pro, and Pro Plus plans can authenticate a custom sending domain with DKIM CNAMEs for aligned From addresses.",
     tags: ["deliverability", "domains"],
   },
   {
@@ -40,7 +94,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-07-18",
     title: "Team seats on Pro",
-    body: "Pro workspaces can invite teammates with seat limits defined by the plan.",
+    body: "Pro and Pro Plus workspaces can invite teammates with seat limits defined by the plan.",
     tags: ["teams"],
   },
 ];

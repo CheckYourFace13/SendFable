@@ -87,7 +87,13 @@ export function BuilderShowcase() {
                 </p>
                 <div className="h-1.5 w-16 rounded" style={{ backgroundColor: brand }} />
                 <p className="font-display text-xl text-ink">Weekend specials</p>
-                <div className="h-24 rounded-md bg-lavender/50 sm:h-32" />
+                <div
+                  className="rounded-md px-3 py-4 text-sm font-medium text-page sm:py-6"
+                  style={{ backgroundColor: brand }}
+                  aria-hidden="true"
+                >
+                  Saturday pastry box · pickup 8–11am
+                </div>
                 <p className="text-sm leading-relaxed text-charcoal/75">
                   Fresh pastries, a new pour, and a little something for regulars.
                 </p>
@@ -127,7 +133,7 @@ export function BuilderShowcase() {
                   Send Confidence
                 </p>
                 <p className="mt-1 font-display text-2xl text-teal">88</p>
-                <p className="text-[11px] text-ink/55">Demo score — labeled sample</p>
+                <p className="text-[11px] text-ink/55">Sample score</p>
               </div>
               <div className="rounded-lg border border-ink/10 bg-page p-3 text-xs text-ink/65">
                 Preview text: Fresh pastries and a new pour…

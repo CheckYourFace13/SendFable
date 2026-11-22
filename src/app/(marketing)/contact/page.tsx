@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata = marketingPageMeta({
   title: "Contact & support",
   description:
-    "Contact SendFable support with questions about your account, billing, privacy requests, or to report abuse. Use the form — we do not publish mailbox addresses.",
+    "Contact SendFable support with questions about your account, billing, privacy requests, or to report abuse. Prefer the contact form for the fastest route.",
   path: "/contact",
 });
 
@@ -28,7 +28,8 @@ export default function ContactPage() {
       <div className="mt-10 space-y-3 text-sm text-ink/70">
         <p>
           Choose the topic that fits: general or billing, privacy, abuse, security, or legal. The
-          form routes the message. We do not publish email addresses on this site.
+          form routes the message to the right team. Role-based addresses such as support and
+          privacy also appear on our legal and policy pages when a formal notice is required.
         </p>
         <p>
           SendFable is a service operated by iScream Studio INC — that legal-entity name is used

@@ -1,23 +1,23 @@
 import type { CompetitorRecord } from "./types";
 import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
-const CHECKED = "2026-11-21";
-
 function sendfableSmsFaqAnswer(): string {
   return isSmsPublicEnabled()
     ? "Yes. SendFable can send Email, Text, or Both from one campaign when Text Messaging is set up. Text uses separate consent and pricing. Competitors listed here keep their own SMS capabilities."
     : "Text messaging is not publicly available yet. Email marketing is live. SMS remains behind feature flags until public Text Messaging is enabled.";
 }
 
+/** Each competitor must supply its own pricingLastChecked — do not blanket-stamp. */
 function rec(
-  partial: Omit<CompetitorRecord, "pricingLastChecked" | "featuresLastChecked" | "reviewStatus"> & {
+  partial: Omit<CompetitorRecord, "featuresLastChecked" | "reviewStatus"> & {
+    pricingLastChecked: string;
+    featuresLastChecked?: string;
     reviewStatus?: CompetitorRecord["reviewStatus"];
   }
 ): CompetitorRecord {
   return {
     ...partial,
-    pricingLastChecked: CHECKED,
-    featuresLastChecked: CHECKED,
+    featuresLastChecked: partial.featuresLastChecked ?? partial.pricingLastChecked,
     reviewStatus: partial.reviewStatus ?? "reviewed",
   };
 }
@@ -29,6 +29,7 @@ function rec(
  */
 export const COMPETITORS: Record<string, CompetitorRecord> = {
   mailchimp: rec({
+    pricingLastChecked: "2026-11-21",
     slug: "mailchimp",
     name: "Mailchimp",
     officialUrl: "https://mailchimp.com/",
@@ -147,6 +148,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
 
   mailerlite: {
     ...rec({
+      pricingLastChecked: "2026-11-21",
       slug: "mailerlite",
       name: "MailerLite",
       officialUrl: "https://www.mailerlite.com/",
@@ -246,6 +248,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   },
 
   brevo: rec({
+    pricingLastChecked: "2026-11-21",
     slug: "brevo",
     name: "Brevo",
     officialUrl: "https://www.brevo.com/",
@@ -303,6 +306,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   omnisend: rec({
+    pricingLastChecked: "2026-11-21",
     slug: "omnisend",
     name: "Omnisend",
     officialUrl: "https://www.omnisend.com/",
@@ -353,6 +357,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   getresponse: rec({
+    pricingLastChecked: "2026-11-21",
     slug: "getresponse",
     name: "GetResponse",
     officialUrl: "https://www.getresponse.com/",
@@ -398,6 +403,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   moosend: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "moosend",
     name: "Moosend",
     officialUrl: "https://moosend.com/",
@@ -443,6 +449,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   activecampaign: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "activecampaign",
     name: "ActiveCampaign",
     officialUrl: "https://www.activecampaign.com/",
@@ -492,6 +499,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   emailoctopus: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "emailoctopus",
     name: "EmailOctopus",
     officialUrl: "https://emailoctopus.com/",
@@ -537,6 +545,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   engagebay: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "engagebay",
     name: "EngageBay",
     officialUrl: "https://www.engagebay.com/",
@@ -582,6 +591,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   "zoho-campaigns": rec({
+    pricingLastChecked: "2026-09-20",
     slug: "zoho-campaigns",
     name: "Zoho Campaigns",
     officialUrl: "https://www.zoho.com/campaigns/",
@@ -627,6 +637,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   hubspot: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "hubspot",
     name: "HubSpot",
     officialUrl: "https://www.hubspot.com/",
@@ -676,6 +687,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   mailjet: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "mailjet",
     name: "Mailjet",
     officialUrl: "https://www.mailjet.com/",
@@ -721,6 +733,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   kit: rec({
+    pricingLastChecked: "2026-11-21",
     slug: "kit",
     name: "Kit",
     officialUrl: "https://kit.com/",
@@ -767,6 +780,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   beehiiv: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "beehiiv",
     name: "beehiiv",
     officialUrl: "https://www.beehiiv.com/",
@@ -813,6 +827,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   "benchmark-email": rec({
+    pricingLastChecked: "2026-09-20",
     slug: "benchmark-email",
     name: "Benchmark Email",
     officialUrl: "https://www.benchmarkemail.com/",
@@ -858,6 +873,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   aweber: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "aweber",
     name: "AWeber",
     officialUrl: "https://www.aweber.com/",
@@ -903,6 +919,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   "constant-contact": rec({
+    pricingLastChecked: "2026-11-21",
     slug: "constant-contact",
     name: "Constant Contact",
     officialUrl: "https://www.constantcontact.com/",
@@ -953,6 +970,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   klaviyo: rec({
+    pricingLastChecked: "2026-11-21",
     slug: "klaviyo",
     name: "Klaviyo",
     officialUrl: "https://www.klaviyo.com/",
@@ -1008,6 +1026,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   sender: rec({
+    pricingLastChecked: "2026-11-21",
     slug: "sender",
     name: "Sender",
     officialUrl: "https://www.sender.net/",
@@ -1079,6 +1098,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   flodesk: rec({
+    pricingLastChecked: "2026-09-20",
     slug: "flodesk",
     name: "Flodesk",
     officialUrl: "https://flodesk.com/",
@@ -1124,6 +1144,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   "campaign-monitor": rec({
+    pricingLastChecked: "2026-09-20",
     slug: "campaign-monitor",
     name: "Campaign Monitor",
     officialUrl: "https://www.campaignmonitor.com/",

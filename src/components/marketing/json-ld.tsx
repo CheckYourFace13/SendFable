@@ -199,7 +199,7 @@ export function definedTermSetJsonLd(
   };
 }
 
-/** VideoObject for a page that embeds one official video. Omits uploadDate when unknown. */
+/** VideoObject for a page that embeds one official video. Includes uploadDate only when known. */
 export function videoObjectJsonLd(opts: {
   name: string;
   description: string;
@@ -207,6 +207,8 @@ export function videoObjectJsonLd(opts: {
   watchUrl: string;
   /** Page that embeds the video (canonical path). */
   pagePath: string;
+  /** ISO-8601 from YouTube metadata — omit when unknown. */
+  uploadDate?: string;
 }) {
   const thumb = `https://i.ytimg.com/vi/${opts.youtubeId}/hqdefault.jpg`;
   return {
@@ -218,6 +220,7 @@ export function videoObjectJsonLd(opts: {
     contentUrl: opts.watchUrl,
     embedUrl: `https://www.youtube-nocookie.com/embed/${opts.youtubeId}`,
     url: appUrl(opts.pagePath),
+    ...(opts.uploadDate ? { uploadDate: opts.uploadDate } : {}),
     publisher: {
       "@type": "Organization",
       name: "SendFable",

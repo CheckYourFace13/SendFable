@@ -10,12 +10,15 @@ import {
 } from "@/lib/stripe-billing-gate";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
+import { parsePromoCode, stripePromotionIdForCode } from "@/lib/plan-checkout-intent";
 
 const schema = z.object({
   plan: z.enum(["STARTER", "GROWTH", "PRO", "PRO_PLUS"]),
   interval: z.enum(["month", "year"]),
-  /** Optional Stripe promotion code id (promo_…) — dark TEXT20 etc. */
+  /** Optional Stripe promotion code id (promo_…) — e.g. TEXT20 via STRIPE_PROMO_TEXT20. */
   promotionCode: z.string().max(64).optional(),
+  /** Customer-facing code (TEXT20). Resolved server-side when promotionCode omitted. */
+  code: z.string().max(32).optional(),
 });
 
 export async function POST(req: Request) {
@@ -39,6 +42,23 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+  }
+
+  const customerCode = parsePromoCode(parsed.data.code);
+  let promotionCode = parsed.data.promotionCode?.trim() || undefined;
+  if (!promotionCode && customerCode) {
+    // TEXT20 is email Starter/Growth monthly only — never Text Messaging plans.
+    const text20Eligible =
+      customerCode === "TEXT20" &&
+      parsed.data.interval === "month" &&
+      (parsed.data.plan === "STARTER" || parsed.data.plan === "GROWTH");
+    if (customerCode === "TEXT20" && !text20Eligible) {
+      return NextResponse.json(
+        { error: "TEXT20 applies to monthly Starter or Growth only." },
+        { status: 400 }
+      );
+    }
+    promotionCode = stripePromotionIdForCode(customerCode);
   }
 
   const stripe = getStripe()!;
@@ -105,10 +125,8 @@ export async function POST(req: Request) {
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: appUrl("/billing?success=1"),
     cancel_url: appUrl("/billing?canceled=1"),
-    allow_promotion_codes: allowPromoCodes && !parsed.data.promotionCode,
-    ...(parsed.data.promotionCode
-      ? { discounts: [{ promotion_code: parsed.data.promotionCode }] }
-      : {}),
+    allow_promotion_codes: allowPromoCodes && !promotionCode,
+    ...(promotionCode ? { discounts: [{ promotion_code: promotionCode }] } : {}),
     client_reference_id: ctx.user.id,
     consent_collection: {
       terms_of_service: "required",
@@ -126,7 +144,8 @@ export async function POST(req: Request) {
         userId: ctx.user.id,
         workspaceId: ctx.workspace.id,
         plan: parsed.data.plan,
-        ...(parsed.data.promotionCode ? { promotionCode: parsed.data.promotionCode } : {}),
+        ...(promotionCode ? { promotionCode } : {}),
+        ...(customerCode ? { promoCode: customerCode } : {}),
       },
     },
     metadata: {
@@ -135,11 +154,12 @@ export async function POST(req: Request) {
       userId: ctx.user.id,
       workspaceId: ctx.workspace.id,
       plan: parsed.data.plan,
-      ...(parsed.data.promotionCode ? { promotionCode: parsed.data.promotionCode } : {}),
+      ...(promotionCode ? { promotionCode } : {}),
+      ...(customerCode ? { promoCode: customerCode } : {}),
     },
   });
 
-  if (parsed.data.promotionCode) {
+  if (promotionCode) {
     void ensureAnalyticsPersistence();
     trackEvent("promo_applied", {
       plan: parsed.data.plan,

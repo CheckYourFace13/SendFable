@@ -103,10 +103,21 @@ function examplesFor(subject: string, shouty: boolean): string[] {
 
 function soften(subject: string, shouty: boolean): string {
   let next = subject.replace(/!+/g, "").replace(/\?{2,}/g, "?").replace(/\s+/g, " ").trim();
+  // Strip pressure phrases the checklist flags so the plainer version actually fixes them.
+  next = next
+    .replace(
+      /\b(act now|limited time|click here|buy now|order now|100% free|risk-?free|winner|congratulations|urgent|guaranteed|don't miss|dont miss)\b/gi,
+      " "
+    )
+    .replace(/\s+/g, " ")
+    .trim();
   if (shouty) {
     next = next.charAt(0).toUpperCase() + next.slice(1).toLowerCase();
+  } else if (/^[A-Z]{3,}\b/.test(next)) {
+    // Soften leading all-caps shout words (e.g. FREE) without rewriting the whole line.
+    next = next.replace(/\b([A-Z]{3,})\b/g, (word) => word.charAt(0) + word.slice(1).toLowerCase());
   }
-  return next;
+  return next.replace(/^[\s\-–—,:;]+|[\s\-–—,:;]+$/g, "").replace(/\s{2,}/g, " ").trim();
 }
 
 function clip(subject: string): string {

@@ -37,8 +37,8 @@ export default function TermsPage() {
         email marketing platform and related websites, applications, and services (the
         &quot;Service&quot;). {LEGAL_OPERATOR_STATEMENT} (&quot;Operator,&quot; &quot;we,&quot;
         &quot;us,&quot; or &quot;our&quot;). &quot;SendFable&quot; is the product name for the
-        Service. As of the Effective Date, we have not verified a separate registered DBA or
-        assumed-name filing for &quot;SendFable.&quot;
+        Service; these Terms do not claim a separate assumed-name filing beyond the Operator
+        named above.
       </p>
       <p>
         By creating an account, clicking to agree, or using the Service, you agree to these
@@ -306,15 +306,11 @@ export default function TermsPage() {
 
       <LegalH2>18. Governing law and disputes</LegalH2>
       <p>
-        <strong>Governing-law state not yet verified:</strong> we have not verified from reliable
-        formation or registration records that {LEGAL_OPERATOR_NAME} is organized, incorporated, or
-        registered in a specific U.S. state for use as governing law in these Terms (including
-        Illinois). Until that confirmation is recorded and these Terms are updated, disputes will be
+        These Terms do not designate a specific U.S. state as governing law. Disputes will be
         handled in a court of competent jurisdiction in the United States, and U.S. federal law (and
         applicable state law as determined by that court) will apply to the extent necessary.{" "}
         <em>
-          We intentionally do not include mandatory arbitration or a class-action waiver in these
-          Terms.
+          These Terms do not include mandatory arbitration or a class-action waiver.
         </em>
       </p>
 

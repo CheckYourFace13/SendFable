@@ -39,6 +39,7 @@ export default function HomePage() {
           youtubeId: overview.youtubeId,
           watchUrl: overview.watchUrl,
           pagePath: "/",
+          uploadDate: overview.uploadDate,
         })}
       />
       <Hero />

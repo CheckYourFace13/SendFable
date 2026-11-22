@@ -38,7 +38,7 @@ function IndustryMailchimpAlt({
       <p className="mt-8 text-sm text-slate-700">
         Mailchimp may still be better if you need deep automations or a large integration marketplace.{" "}
         <Link className="text-coral hover:underline" href="/compare/mailchimp">
-          See the honest comparison
+          See SendFable vs Mailchimp
         </Link>
         .
       </p>

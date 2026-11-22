@@ -107,11 +107,9 @@ export function GoalPicker() {
             <div className="space-y-3 bg-parchment/50 p-6">
               <div className={cn("h-2 w-20 rounded", goal.accent)} />
               <p className="font-display text-xl text-ink">{goal.template}</p>
-              <div className="h-28 rounded-lg bg-parchment" />
-              <div className="space-y-2">
-                <div className="h-2 w-full rounded bg-ink/10" />
-                <div className="h-2 w-5/6 rounded bg-ink/10" />
-                <div className="h-2 w-2/3 rounded bg-ink/10" />
+              <div className="rounded-lg border border-ink/10 bg-page px-4 py-3 text-sm leading-relaxed text-ink/80">
+                {goal.subject}. A short finished preview for {goal.audience.toLowerCase()} — edit
+                the details in your account before you send.
               </div>
               <div className="inline-block rounded-md bg-coral-solid px-4 py-2 text-sm font-semibold text-white">
                 {goal.cta}

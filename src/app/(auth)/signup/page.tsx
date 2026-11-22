@@ -3,13 +3,15 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { toast } from "sonner";
-import { MailCheck } from "lucide-react";
+import { Mail, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { freePlanPromise, PLANS } from "@/lib/plans";
 import { trackClientEvent } from "@/components/marketing/marketing-analytics";
@@ -78,19 +80,46 @@ function SignupForm() {
       // Preserve for existing-account login from paid CTA.
       q.set("plan", planIntent.plan);
       q.set("interval", planIntent.interval);
+      if (planIntent.code) q.set("code", planIntent.code);
     } else if (tryToken) {
       q.set("try", tryToken);
       q.set("callbackUrl", "/forms");
     } else {
       q.set("callbackUrl", "/onboarding");
     }
+    if (referralCode) q.set("ref", referralCode);
+    if (utmSource) q.set("utm_source", utmSource);
+    if (utmMedium) q.set("utm_medium", utmMedium);
+    if (utmCampaign) q.set("utm_campaign", utmCampaign);
+    if (utmContent) q.set("utm_content", utmContent);
     return `/login?${q.toString()}`;
-  }, [resumeTemplate, resumeGoal, tryToken, planIntent]);
+  }, [
+    resumeTemplate,
+    resumeGoal,
+    tryToken,
+    planIntent,
+    referralCode,
+    utmSource,
+    utmMedium,
+    utmCampaign,
+    utmContent,
+  ]);
+  const magicCallbackUrl = useMemo(() => {
+    if (resumeTemplate) {
+      return `/campaigns/new?template=${encodeURIComponent(resumeTemplate)}${
+        resumeGoal ? `&goal=${encodeURIComponent(resumeGoal)}` : ""
+      }`;
+    }
+    if (planIntent) return billingCheckoutPath(planIntent);
+    if (tryToken) return `/signup?try=${encodeURIComponent(tryToken)}`;
+    return "/onboarding";
+  }, [resumeTemplate, resumeGoal, planIntent, tryToken]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
   const [activatedFormId, setActivatedFormId] = useState<string | null>(null);
   const [hostedSlug, setHostedSlug] = useState<string | null>(null);
   const [livePlatform, setLivePlatform] = useState<TryInstallPlatform>("wordpress");
@@ -234,7 +263,7 @@ function SignupForm() {
           <CardTitle className="text-ink">Verify your email</CardTitle>
           <CardDescription>
             We sent a verification link to <strong>{email}</strong>. You can sign in right away —
-            verifying unlocks sending.
+            verifying your email is required before sending.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
@@ -246,6 +275,121 @@ function SignupForm() {
     );
   }
 
+  async function handleMagic(e: React.FormEvent) {
+    e.preventDefault();
+    if (!acceptedPolicies) {
+      toast.error("Please agree to the Terms, Acceptable Use, and Privacy Policy.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const create = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          magicLink: true,
+          referralCode,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          utmContent,
+          tryToken,
+          acceptedPolicies: true,
+          timezone:
+            typeof Intl !== "undefined"
+              ? Intl.DateTimeFormat().resolvedOptions().timeZone
+              : undefined,
+        }),
+      });
+      const created = await create.json().catch(() => null);
+      if (!create.ok) {
+        // Existing account — still send the magic link so they can continue checkout.
+        if (create.status !== 409) {
+          toast.error(created?.error ?? "Something went wrong.");
+          return;
+        }
+      } else {
+        trackClientEvent("signup_completed");
+      }
+      const res = await signIn("email", {
+        email,
+        redirect: false,
+        callbackUrl: magicCallbackUrl,
+      });
+      if (res?.error) {
+        toast.error("Couldn't send the sign-in link. Try again.");
+        return;
+      }
+      trackClientEvent("signup_magic_link_sent");
+      setMagicSent(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (magicSent) {
+    return (
+      <Card className={cardClass}>
+        <CardHeader className="items-center text-center">
+          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-coral/15">
+            <Mail className="h-6 w-6 text-coral" />
+          </div>
+          <CardTitle className="text-ink">Check your inbox</CardTitle>
+          <CardDescription>
+            We sent a sign-in link to <strong>{email}</strong>. It expires in 24 hours.
+            {planIntent
+              ? ` After you sign in, you can confirm ${PLANS[planIntent.plan].name} at checkout.`
+              : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center text-sm text-ink/60">
+          Wrong address?{" "}
+          <button
+            type="button"
+            className="text-coral underline underline-offset-2"
+            onClick={() => setMagicSent(false)}
+          >
+            Try again
+          </button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const policyCheckbox = (
+    <div className="flex items-start gap-3 rounded-lg border border-ink/10 bg-parchment/50 p-3">
+      <Checkbox
+        id="accept-policies"
+        checked={acceptedPolicies}
+        onCheckedChange={(v) => setAcceptedPolicies(v === true)}
+        className="mt-0.5"
+      />
+      <Label htmlFor="accept-policies" className="text-xs font-normal leading-relaxed text-ink/80">
+        I agree to the{" "}
+        <Link href="/terms" className="underline underline-offset-2 hover:text-ink">
+          Terms of Service
+        </Link>
+        , including the{" "}
+        <Link href="/acceptable-use" className="underline underline-offset-2 hover:text-ink">
+          Acceptable Use Policy
+        </Link>
+        , the{" "}
+        <Link href="/refund-policy" className="underline underline-offset-2 hover:text-ink">
+          Billing &amp; Refund Policy
+        </Link>
+        , and the{" "}
+        <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
+          Privacy Policy
+        </Link>
+        .
+        {planIntent
+          ? " Nothing is charged until you confirm a plan at checkout."
+          : " The Free plan does not create a paid subscription or automatic renewal."}
+      </Label>
+    </div>
+  );
+
   return (
     <Card className={cardClass}>
       <CardHeader>
@@ -254,57 +398,88 @@ function SignupForm() {
         </h1>
         <CardDescription>
           {planIntent
-            ? `Continue with ${PLANS[planIntent.plan].name} (${
-                planIntent.interval === "year" ? "annual" : "monthly"
-              }). Create your account, then checkout for that plan.`
+            ? `You'll confirm ${PLANS[planIntent.plan].name} at checkout. Nothing is charged until you do.${
+                planIntent.code === "TEXT20"
+                  ? " TEXT20 applies automatically for monthly Starter or Growth."
+                  : ""
+              }`
             : tryToken
               ? `Make this signup live. ${freePlanPromise()} Any email address works. No credit card required.`
               : `${freePlanPromise()} Any email address works. No credit card required.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" required autoComplete="email" value={email}
-              onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required minLength={8} autoComplete="new-password"
-              value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
-          </div>
-          <div className="flex items-start gap-3 rounded-lg border border-ink/10 bg-parchment/50 p-3">
-            <Checkbox
-              id="accept-policies"
-              checked={acceptedPolicies}
-              onCheckedChange={(v) => setAcceptedPolicies(v === true)}
-              className="mt-0.5"
-            />
-            <Label htmlFor="accept-policies" className="text-xs font-normal leading-relaxed text-ink/80">
-              I agree to the{" "}
-              <Link href="/terms" className="underline underline-offset-2 hover:text-ink">
-                Terms of Service
-              </Link>
-              , including the{" "}
-              <Link href="/acceptable-use" className="underline underline-offset-2 hover:text-ink">
-                Acceptable Use Policy
-              </Link>
-              , the{" "}
-              <Link href="/refund-policy" className="underline underline-offset-2 hover:text-ink">
-                Billing &amp; Refund Policy
-              </Link>
-              , and the{" "}
-              <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
-                Privacy Policy
-              </Link>
-              . The Free plan does not create a paid subscription or automatic renewal.
-            </Label>
-          </div>
-          <Button type="submit" className={cn("w-full", ctaClass)} loading={loading} disabled={!acceptedPolicies}>
-            Create account
-          </Button>
-        </form>
+        <div className="mb-4">{policyCheckbox}</div>
+        <Tabs defaultValue="password">
+          <TabsList className="mb-4 grid w-full grid-cols-2 bg-parchment">
+            <TabsTrigger value="password">Password</TabsTrigger>
+            <TabsTrigger value="magic">Email me a sign-in link</TabsTrigger>
+          </TabsList>
+          <TabsContent value="password">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                />
+              </div>
+              <Button
+                type="submit"
+                className={cn("w-full", ctaClass)}
+                loading={loading}
+                disabled={!acceptedPolicies}
+              >
+                Create account
+              </Button>
+            </form>
+          </TabsContent>
+          <TabsContent value="magic">
+            <form onSubmit={handleMagic} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="magic-email">Email</Label>
+                <Input
+                  id="magic-email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                />
+              </div>
+              <Button
+                type="submit"
+                className={cn("w-full", ctaClass)}
+                loading={loading}
+                disabled={!acceptedPolicies}
+              >
+                Email me a sign-in link
+              </Button>
+              <p className="text-center text-xs text-ink/70">
+                Same secure email link as sign-in. Works with any email address.
+              </p>
+            </form>
+          </TabsContent>
+        </Tabs>
         <p className="mt-6 text-center text-sm text-ink/60">
           Already have an account?{" "}
           <Link href={loginHref} className="font-medium text-coral hover:underline">
