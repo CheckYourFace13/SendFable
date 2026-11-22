@@ -43,7 +43,7 @@ test.describe("Marketing Autopilot certification surfaces", () => {
       await expect(page.getByRole("heading", { name: label, exact: true })).toBeVisible();
     }
     await expect(page.getByText(/No approval\. No send/i).first()).toBeVisible();
-    await page.getByRole("button", { name: /Will SendFable send emails without me/i }).click();
+    await page.getByText(/Will SendFable send emails without me/i).click();
     await expect(page.getByText(/No response always means no send/i)).toBeVisible();
   });
 

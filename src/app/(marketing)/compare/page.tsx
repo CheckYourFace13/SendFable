@@ -3,6 +3,7 @@ import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
 import { listPublicCompetitors, COMPARISON_DISCLAIMER } from "@/data/competitors";
+import { pairComparisons } from "@/data/competitors/pricing-matrix";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 
 export const metadata = marketingPageMeta({
@@ -14,6 +15,7 @@ export const metadata = marketingPageMeta({
 
 export default function CompareHubPage() {
   const competitors = listPublicCompetitors().sort((a, b) => a.name.localeCompare(b.name));
+  const pairs = pairComparisons();
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
@@ -62,6 +64,19 @@ export default function CompareHubPage() {
           </li>
         ))}
       </ul>
+
+      <section className="mt-14">
+        <h2 className="text-2xl font-semibold">Mailchimp vs other tools</h2>
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-slate-700">
+          {pairs.map((p) => (
+            <li key={p.slug}>
+              <Link className="text-coral hover:underline" href={`/compare/${p.slug}`}>
+                {p.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="mt-14">
         <h2 className="text-2xl font-semibold">Also useful</h2>

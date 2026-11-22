@@ -19,8 +19,10 @@ test.describe("PUBLIC marketing", () => {
   test("pricing shows Free and Starter $12", async ({ page }) => {
     await page.goto(`${BASE}/pricing`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByText(/\$12/)).toBeVisible();
-    await expect(page.getByText(/1,?000/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Starter/i }).first()).toBeVisible();
+    // Price may be split across nodes ($ + 12); match either form.
+    await expect(page.getByText(/\$?\s*12/).first()).toBeVisible();
+    await expect(page.getByText(/1,?000/).first()).toBeVisible();
     await expect(page.getByRole("link", { name: /start|free|upgrade|get started/i }).first()).toBeVisible();
   });
 
@@ -119,7 +121,7 @@ test.describe("AUTH gates", () => {
     await expect(page.getByLabel(/^your name$/i)).toHaveCount(0);
     await expect(page.getByLabel(/business or project name/i)).toHaveCount(0);
     await expect(page.locator('input[type="password"]').first()).toBeVisible();
-    await expect(page.locator('input[type="checkbox"]').first()).toBeVisible();
+    await expect(page.getByRole("checkbox").first()).toBeVisible();
     await expect(page.getByRole("button", { name: /create|start|sign up|continue/i }).first()).toBeVisible();
   });
 

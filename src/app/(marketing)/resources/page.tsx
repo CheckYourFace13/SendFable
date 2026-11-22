@@ -98,6 +98,26 @@ const LINKS = [
     body: "Cost clarity without fake “unlimited” claims.",
   },
   {
+    title: "Simple email marketing software",
+    href: "/simple-email-marketing-software",
+    body: "Campaign-first email without suite sprawl.",
+  },
+  {
+    title: "Email newsletter software",
+    href: "/email-newsletter-software",
+    body: "Newsletters with clear limits and managed delivery.",
+  },
+  {
+    title: "Email without Gmail or Outlook",
+    href: "/email-marketing-without-gmail",
+    body: "Any-email signup — no Google or Microsoft account required.",
+  },
+  {
+    title: "Mailchimp alternative for small business",
+    href: "/mailchimp-alternative-for-small-business",
+    body: "When a simpler Mailchimp alternative fits local teams.",
+  },
+  {
     title: "Changelog",
     href: "/changelog",
     body: "Dated product updates for features that have actually shipped.",
