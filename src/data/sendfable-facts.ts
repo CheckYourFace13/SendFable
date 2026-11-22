@@ -42,7 +42,7 @@ export const SENDFABLE_FACTS = {
     email: "support@sendfable.com",
   },
   legalOperator:
-    "SendFable is operated by iScream Studio INC (Illinois). Public legal pages state the operator; do not surface owner personal identity on marketing pages.",
+    "SendFable is operated by iScream Studio INC. Public legal pages state the operator name used in contracts and notices.",
   plans: PLAN_ORDER.map((key) => ({
     key,
     name: PLANS[key].name,
