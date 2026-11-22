@@ -11,9 +11,10 @@ import { DashboardCharts } from "./dashboard-charts";
 import { AutopilotDashboardCard } from "./autopilot-card";
 import { UsageUpgradeBanner } from "@/components/app/usage-upgrade-banner";
 import { FirstSendFeedback } from "@/components/app/first-send-feedback";
+import { SetupChecklist, type SetupItem } from "./setup-checklist";
 
 export default async function DashboardPage() {
-  const { user, workspace } = await requireWorkspaceContext();
+  const { workspace } = await requireWorkspaceContext();
 
   if (!workspace.onboardingCompletedAt && workspace.onboardingStep < 4) {
     const campaignCount = await prisma.campaign.count({
@@ -31,55 +32,69 @@ export default async function DashboardPage() {
     disabled: Boolean(workspace.disabledAt),
   });
 
-  const [contactCount, campaignCount, recentCampaigns, completedCount, verifiedSender] =
-    await Promise.all([
-      prisma.contact.count({ where: { workspaceId: workspace.id } }),
-      prisma.campaign.count({ where: { workspaceId: workspace.id } }),
-      prisma.campaign.findMany({
-        where: { workspaceId: workspace.id, status: { in: ["COMPLETED", "SENDING"] } },
-        orderBy: { updatedAt: "desc" },
-        take: 5,
-      }),
-      prisma.campaign.count({
-        where: { workspaceId: workspace.id, status: "COMPLETED" },
-      }),
-      prisma.senderIdentity.count({
-        where: { workspaceId: workspace.id, status: "VERIFIED" },
-      }),
-    ]);
+  const [
+    contactCount,
+    campaignCount,
+    recentCampaigns,
+    completedCount,
+    verifiedSender,
+    publishedSignupTool,
+    testSentCount,
+  ] = await Promise.all([
+    prisma.contact.count({ where: { workspaceId: workspace.id } }),
+    prisma.campaign.count({ where: { workspaceId: workspace.id } }),
+    prisma.campaign.findMany({
+      where: { workspaceId: workspace.id, status: { in: ["COMPLETED", "SENDING"] } },
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    }),
+    prisma.campaign.count({
+      where: { workspaceId: workspace.id, status: "COMPLETED" },
+    }),
+    prisma.senderIdentity.count({
+      where: { workspaceId: workspace.id, status: "VERIFIED" },
+    }),
+    prisma.signupForm.count({
+      where: { workspaceId: workspace.id, status: "ACTIVE" },
+    }),
+    prisma.campaign.count({
+      where: { workspaceId: workspace.id, testSentAt: { not: null } },
+    }),
+  ]);
 
   const firstRun = completedCount === 0;
-  const firstSendSteps = [
-    {
-      id: "ready",
-      label: "Account ready",
-      done: true,
-      href: "/dashboard",
-    },
-    {
-      id: "contacts",
-      label: "Add contacts",
-      done: contactCount > 0,
-      href: "/contacts",
-    },
+  const audienceReady = contactCount > 0 || publishedSignupTool > 0;
+
+  const activationSteps: SetupItem[] = [
     {
       id: "sender",
-      label: "Verify sender",
+      label: "Verify your sending email",
       done: verifiedSender > 0,
       href: "/settings/senders",
+      hint: "Confirm the From address people recognize.",
     },
     {
-      id: "campaign",
-      label: "Create campaign",
-      done: campaignCount > 0,
-      href: "/campaigns/new",
+      id: "audience",
+      label: "Add contacts or publish a Signup Tool",
+      done: audienceReady,
+      href: contactCount > 0 ? "/forms" : "/contacts",
+      hint: "Import a CSV, add people, or publish a hosted signup.",
+    },
+    {
+      id: "test",
+      label: "Send yourself a test",
+      done: testSentCount > 0,
+      href: campaignCount > 0 ? "/campaigns" : "/campaigns/new",
+      hint: "Open a draft and use Send test before a real send.",
+    },
+    {
+      id: "first-send",
+      label: "Send your first campaign",
+      done: completedCount > 0,
+      href: campaignCount > 0 ? "/campaigns" : "/campaigns/new",
+      hint: "Review recipients, then send or schedule.",
     },
   ];
-
-  const nextStep =
-    firstSendSteps.find((s) => !s.done) ??
-    ({ id: "send", label: "Review & send", href: "/campaigns", done: false } as const);
-  const continueHref = nextStep.href;
 
   if (firstRun) {
     return (
@@ -99,39 +114,11 @@ export default async function DashboardPage() {
           Let&apos;s send your first campaign
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          One clear path — we&apos;ll take you to the next incomplete step.
+          Steps update from your real account — finish them in any order.
         </p>
 
-        <ol className="mt-8 space-y-2 text-sm">
-          {firstSendSteps.map((item, i) => (
-            <li key={item.id}>
-              <Link
-                href={item.href}
-                className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition hover:border-coral/40 ${
-                  item.done ? "border-emerald-200 bg-emerald-50/60" : "bg-white"
-                }`}
-              >
-                <span
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                    item.done ? "bg-emerald-600 text-white" : "bg-ink text-page"
-                  }`}
-                  aria-hidden
-                >
-                  {item.done ? "✓" : i + 1}
-                </span>
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-
         <div className="mt-8">
-          <Button asChild size="lg" className="w-full sm:w-auto">
-            <Link href={continueHref}>Continue</Link>
-          </Button>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Next: {nextStep.label}
-          </p>
+          <SetupChecklist items={activationSteps} />
         </div>
 
         <div className="mt-10 flex flex-wrap gap-3 text-sm">
@@ -140,6 +127,9 @@ export default async function DashboardPage() {
           </Link>
           <Link href="/contacts/migrate" className="text-muted-foreground hover:underline">
             Migrate from another tool
+          </Link>
+          <Link href="/forms" className="text-muted-foreground hover:underline">
+            Signup Tools
           </Link>
         </div>
       </div>

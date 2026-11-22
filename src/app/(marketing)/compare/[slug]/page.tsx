@@ -29,9 +29,13 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
     return { title: "Comparison" };
   }
   const year = new Date().getFullYear();
+  const short =
+    c.shortAnswer.length > 140
+      ? `${c.shortAnswer.slice(0, 137).trim()}…`
+      : c.shortAnswer;
   return marketingPageMeta({
     title: `SendFable vs ${c.name} (${year})`,
-    description: `${c.shortAnswer} Last checked ${c.pricingLastChecked}.`,
+    description: `${short} Pricing checked ${c.pricingLastChecked}.`,
     path: `/compare/${c.slug}`,
   });
 }

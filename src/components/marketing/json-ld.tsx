@@ -34,8 +34,13 @@ export function marketingPageMeta(opts: {
   const image = opts.image
     ? { ...DEFAULT_OG_IMAGE, url: opts.image }
     : DEFAULT_OG_IMAGE;
+  // Avoid "SendFable … · SendFable" when the page title already names the brand
+  // (root layout template is "%s · SendFable").
+  const title = /sendfable/i.test(opts.title)
+    ? { absolute: opts.title }
+    : opts.title;
   return {
-    title: opts.title,
+    title,
     description: opts.description,
     alternates: { canonical: url },
     ...(opts.noIndex ? { robots: { index: false, follow: false } } : {}),

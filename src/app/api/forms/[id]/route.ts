@@ -7,6 +7,8 @@ import { normalizeFormFields, requirementModeFor } from "@/lib/forms/fields";
 import { developerInstructions, embedSnippet } from "@/lib/forms/install";
 import { parsePresentation } from "@/lib/forms/presentation";
 import { AUDIENCE_REQUIRED, audienceIds } from "@/lib/forms/manage";
+import { trackEvent } from "@/lib/analytics";
+import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
@@ -148,6 +150,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         : undefined,
     },
   });
+
+  if (status === "ACTIVE" && existing.status !== "ACTIVE") {
+    try {
+      ensureAnalyticsPersistence();
+      trackEvent("signup_tool_published");
+    } catch {
+      /* fail open */
+    }
+  }
 
   return NextResponse.json({
     form,

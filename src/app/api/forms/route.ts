@@ -7,6 +7,8 @@ import { slugify, randomToken } from "@/lib/utils";
 import { FORM_PRESETS } from "@/lib/form-presets";
 import { normalizeFormFields, requirementModeFor, defaultNewsletterFields } from "@/lib/forms/fields";
 import { audienceIds, fieldSummary } from "@/lib/forms/manage";
+import { trackEvent } from "@/lib/analytics";
+import { ensureAnalyticsPersistence } from "@/lib/analytics-persist";
 
 const fieldSchema = z.object({
   key: z.string().min(1).max(40),
@@ -88,6 +90,7 @@ export async function POST(req: Request) {
   const clash = await prisma.signupForm.findUnique({ where: { hostedSlug } });
   if (clash) hostedSlug = `${hostedSlug}-${randomToken(4)}`;
 
+  const status = tagIds.length > 0 ? "ACTIVE" : "PAUSED";
   const form = await prisma.signupForm.create({
     data: {
       workspaceId: ctx.workspace.id,
@@ -98,9 +101,17 @@ export async function POST(req: Request) {
       requirementMode,
       collectPhone,
       hostedSlug,
-      status: tagIds.length > 0 ? "ACTIVE" : "PAUSED",
+      status,
     },
   });
+
+  try {
+    ensureAnalyticsPersistence();
+    trackEvent("signup_form_created");
+    if (status === "ACTIVE") trackEvent("signup_tool_published");
+  } catch {
+    /* fail open */
+  }
 
   return NextResponse.json({ form }, { status: 201 });
 }

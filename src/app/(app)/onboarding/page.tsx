@@ -5,8 +5,8 @@
  * Goal: business basics + sender + contacts → first campaign.
  */
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,10 @@ import {
   resolveHomeTimezone,
 } from "@/lib/home-timezone";
 import { HomeTimezoneSelect } from "@/components/app/home-timezone-select";
+import {
+  contactsMigratePath,
+  parseMigrateFrom,
+} from "@/lib/migrate-from-intent";
 
 const STEPS = [
   "Your business",
@@ -31,8 +35,13 @@ const STEPS = [
 
 const TOTAL_STEPS = STEPS.length;
 
-export default function OnboardingPage() {
+function OnboardingPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const migrateFrom = parseMigrateFrom(searchParams.get("from"));
+  const importHref = migrateFrom
+    ? `${contactsMigratePath(migrateFrom)}&from=onboarding`
+    : "/contacts/import?from=onboarding";
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
@@ -265,7 +274,9 @@ export default function OnboardingPage() {
             </p>
             <div className="flex flex-wrap gap-2">
               <Button asChild className="min-h-11">
-                <Link href="/contacts/import?from=onboarding">Import CSV</Link>
+                <Link href={importHref}>
+                  {migrateFrom ? `Import ${migrateFrom} CSV` : "Import CSV"}
+                </Link>
               </Button>
               <Button asChild variant="outline" className="min-h-11">
                 <Link href="/contacts?from=onboarding">Add one contact</Link>
@@ -327,5 +338,13 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading setup…</div>}>
+      <OnboardingPageInner />
+    </Suspense>
   );
 }

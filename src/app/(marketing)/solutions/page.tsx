@@ -10,7 +10,7 @@ import { isSmsPublicEnabled } from "@/lib/sms/flags";
 export const metadata = marketingPageMeta({
   title: "Email marketing by industry",
   description:
-    "SendFable solutions for restaurants, breweries, retail, nonprofits, contractors, salons, events, and professional services — practical email plays, not generic templates.",
+    "Email for restaurants, breweries, retail, nonprofits, contractors, salons, events, and professional services — practical plays, not generic templates.",
   path: "/solutions",
 });
 

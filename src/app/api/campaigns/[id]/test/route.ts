@@ -102,6 +102,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   try {
     ensureAnalyticsPersistence();
     trackEvent("test_send_completed");
+    trackEvent("test_sent");
   } catch {
     /* fail open */
   }

@@ -4,6 +4,7 @@ import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { marketingPageMeta, JsonLd, howToJsonLd } from "@/components/marketing/json-ld";
+import { moveListCtaLabel, signupWithMigrateFrom } from "@/lib/migrate-from-intent";
 
 export const metadata = marketingPageMeta({
   title: "Migrate to SendFable from Mailchimp and others",
@@ -137,18 +138,19 @@ export default function MigratePage() {
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild>
-          <Link href="/contacts/import">Import CSV</Link>
+          <Link href="/contacts/migrate">Import CSV</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/signup">Start free</Link>
+          <Link href={signupWithMigrateFrom("mailchimp")}>{moveListCtaLabel("mailchimp")}</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/migrate/mailchimp">Leave Mailchimp guide</Link>
         </Button>
       </div>
       <p className="mt-3 text-sm text-ink/60">
-        Import CSV opens the real importer. Sign in if you already have an account. New accounts start
-        at Start free, then import from Contacts.
+        Import CSV opens the real CSV importer (sign in if you already have an account). New accounts
+        can start with a competitor-specific move CTA, then land on the matching CSV mapping preset.
+        SendFable does not sync live from other tools.
       </p>
 
       <section className="mt-12">
@@ -172,37 +174,52 @@ export default function MigratePage() {
               ))}
             </ol>
             {s.name === "Mailchimp" && (
-              <p className="mt-4 text-sm">
+              <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 <Link href="/migrate/mailchimp" className="font-medium text-coral underline-offset-4 hover:underline">
-                  Full Mailchimp → SendFable walkthrough
+                  Full Mailchimp walkthrough
+                </Link>
+                <Link href={signupWithMigrateFrom("mailchimp")} className="font-medium text-coral underline-offset-4 hover:underline">
+                  {moveListCtaLabel("mailchimp")}
                 </Link>
               </p>
             )}
             {s.name === "Constant Contact" && (
-              <p className="mt-4 text-sm">
+              <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 <Link href="/migrate/constant-contact" className="font-medium text-coral underline-offset-4 hover:underline">
                   Constant Contact migration guide
+                </Link>
+                <Link href={signupWithMigrateFrom("constant-contact")} className="font-medium text-coral underline-offset-4 hover:underline">
+                  {moveListCtaLabel("constant-contact")}
                 </Link>
               </p>
             )}
             {s.name === "Brevo" && (
-              <p className="mt-4 text-sm">
+              <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 <Link href="/migrate/brevo" className="font-medium text-coral underline-offset-4 hover:underline">
                   Brevo migration guide
+                </Link>
+                <Link href={signupWithMigrateFrom("brevo")} className="font-medium text-coral underline-offset-4 hover:underline">
+                  {moveListCtaLabel("brevo")}
                 </Link>
               </p>
             )}
             {s.name === "MailerLite" && (
-              <p className="mt-4 text-sm">
+              <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 <Link href="/migrate/mailerlite" className="font-medium text-coral underline-offset-4 hover:underline">
                   MailerLite migration guide
+                </Link>
+                <Link href={signupWithMigrateFrom("mailerlite")} className="font-medium text-coral underline-offset-4 hover:underline">
+                  {moveListCtaLabel("mailerlite")}
                 </Link>
               </p>
             )}
             {s.name === "Kit (ConvertKit)" && (
-              <p className="mt-4 text-sm">
-                <Link href="/migrate" className="font-medium text-coral underline-offset-4 hover:underline">
-                  See also CSV path below
+              <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                <Link href="/compare/kit" className="font-medium text-coral underline-offset-4 hover:underline">
+                  SendFable vs Kit
+                </Link>
+                <Link href={signupWithMigrateFrom("kit")} className="font-medium text-coral underline-offset-4 hover:underline">
+                  {moveListCtaLabel("kit")}
                 </Link>
               </p>
             )}

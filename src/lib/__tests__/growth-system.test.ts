@@ -26,6 +26,11 @@ describe("SF-007 analytics contract", () => {
       "pricing_view",
       "comparison_view",
       "signup_complete",
+      "account_created",
+      "sender_verified",
+      "contacts_added",
+      "signup_tool_published",
+      "test_sent",
       "first_campaign_sent",
       "second_campaign_sent",
       "checkout_completed",
@@ -34,6 +39,8 @@ describe("SF-007 analytics contract", () => {
     ]) {
       assert.ok((ANALYTICS_EVENTS as readonly string[]).includes(e));
     }
+    assert.ok(FUNNEL_STAGES.some((s) => s.id === "signup_tool_published"));
+    assert.ok(FUNNEL_STAGES.some((s) => s.id === "test_sent"));
   });
 
   it("maps legacy event names", () => {

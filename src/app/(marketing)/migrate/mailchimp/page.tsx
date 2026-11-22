@@ -9,11 +9,12 @@ import {
   howToJsonLd,
   marketingPageMeta,
 } from "@/components/marketing/json-ld";
+import { moveListCtaLabel, signupWithMigrateFrom } from "@/lib/migrate-from-intent";
 
 export const metadata = marketingPageMeta({
   title: "Migrate from Mailchimp to SendFable",
   description:
-    "Step-by-step guide to leave Mailchimp: export contacts, map fields, suppress unsubscribes, import into SendFable, and send your first campaign without buying lists.",
+    "Leave Mailchimp with a CSV-first guide: export, map fields, keep suppressions, import into SendFable, and send a careful first campaign.",
   path: "/migrate/mailchimp",
 });
 
@@ -156,7 +157,11 @@ export default function MigrateFromMailchimpPage() {
 
       <MarketingCta
         title="Ready to leave Mailchimp complexity?"
-        body="Start free, import your cleaned CSV, and send a test from Simple Mode."
+        body="Start free, import your cleaned CSV with Mailchimp column mapping, and send a test. CSV import only — no live Mailchimp sync."
+        primaryHref={signupWithMigrateFrom("mailchimp")}
+        primaryLabel={moveListCtaLabel("mailchimp")}
+        secondaryHref="/compare/mailchimp"
+        secondaryLabel="SendFable vs Mailchimp"
       />
     </div>
   );

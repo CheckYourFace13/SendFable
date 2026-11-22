@@ -6,6 +6,11 @@ import { Faq } from "@/components/marketing/faq";
 import { marketingPageMeta, JsonLd, breadcrumbJsonLd, faqJsonLd } from "@/components/marketing/json-ld";
 import { getCompetitor } from "@/data/competitors";
 import { migrateSlugs } from "@/data/competitors/pricing-matrix";
+import {
+  moveListCtaLabel,
+  parseMigrateFrom,
+  signupWithMigrateFrom,
+} from "@/lib/migrate-from-intent";
 
 /** Dynamic migrate guides — static /migrate/mailchimp keeps priority. */
 export function generateStaticParams() {
@@ -104,6 +109,9 @@ export default function MigrateSlugPage({ params }: { params: { slug: string } }
   ];
 
   const path = `/migrate/${c.slug}`;
+  const migrateProvider = parseMigrateFrom(c.slug);
+  const signupHref = migrateProvider ? signupWithMigrateFrom(migrateProvider) : "/signup";
+  const signupLabel = migrateProvider ? moveListCtaLabel(migrateProvider) : "Start free and import CSV";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
@@ -154,15 +162,22 @@ export default function MigrateSlugPage({ params }: { params: { slug: string } }
           Pricing comparison
         </Link>
         {" · "}
-        <Link className="text-coral hover:underline" href="/signup">
-          Start free and import CSV
+        <Link className="text-coral hover:underline" href={signupHref}>
+          {signupLabel}
         </Link>
       </p>
 
       <div className="mt-10">
         <Faq items={faqs} />
       </div>
-      <MarketingCta />
+      <MarketingCta
+        title={`Ready to leave ${c.name}?`}
+        body="Start free, import your cleaned CSV with column mapping, and send a test. SendFable does not sync live from other tools — CSV import only."
+        primaryHref={signupHref}
+        primaryLabel={signupLabel}
+        secondaryHref={`/compare/${c.slug}`}
+        secondaryLabel={`SendFable vs ${c.name}`}
+      />
     </div>
   );
 }

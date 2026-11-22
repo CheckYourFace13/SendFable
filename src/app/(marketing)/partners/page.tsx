@@ -9,7 +9,7 @@ import { issueInquiryToken } from "@/lib/inquiry/guard";
 export const dynamic = "force-dynamic";
 
 export const metadata = marketingPageMeta({
-  title: "Partners — designers, agencies, and local advisors",
+  title: "Partners for designers and agencies",
   description:
     "Refer clients to SendFable for simple, permission-based email marketing. No white-label promise. No recurring commission unless separately approved.",
   path: "/partners",

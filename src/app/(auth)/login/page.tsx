@@ -17,6 +17,11 @@ import {
   parsePlanCheckoutIntent,
   publicPlanCtaHref,
 } from "@/lib/plan-checkout-intent";
+import {
+  parseMigrateFrom,
+  postAuthPathForMigrateFrom,
+  signupWithMigrateFrom,
+} from "@/lib/migrate-from-intent";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
@@ -26,11 +31,17 @@ const ctaClass = "bg-coral-solid text-white hover:bg-coral-hover";
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = safeCallbackPath(params.get("callbackUrl"));
+  const migrateFrom = parseMigrateFrom(params.get("from"));
+  const callbackUrl = safeCallbackPath(
+    params.get("callbackUrl") ||
+      (migrateFrom ? postAuthPathForMigrateFrom(migrateFrom) : null)
+  );
   const planIntent = parsePlanCheckoutIntent(params);
   const signupHref = planIntent
     ? publicPlanCtaHref(planIntent.plan, planIntent.interval === "year", planIntent.code)
-    : "/signup";
+    : migrateFrom
+      ? signupWithMigrateFrom(migrateFrom)
+      : "/signup";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

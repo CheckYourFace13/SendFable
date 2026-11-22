@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
@@ -40,6 +40,7 @@ import {
   type MigrationField,
   type MigrationProvider,
 } from "@/lib/migration-presets";
+import { parseMigrateFrom } from "@/lib/migrate-from-intent";
 
 const FIELDS: Array<{ key: MigrationField; label: string }> = [
   { key: "email", label: "Email" },
@@ -52,10 +53,13 @@ const FIELDS: Array<{ key: MigrationField; label: string }> = [
 
 type Step = "provider" | "upload" | "review";
 
-export default function MigratePage() {
+function MigratePageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialProvider =
+    parseMigrateFrom(searchParams.get("provider") || searchParams.get("from")) || "mailchimp";
   const [step, setStep] = useState<Step>("provider");
-  const [provider, setProvider] = useState<MigrationProvider>("mailchimp");
+  const [provider, setProvider] = useState<MigrationProvider>(initialProvider);
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
   const [mapping, setMapping] = useState<Record<number, MigrationField>>({});
@@ -408,5 +412,13 @@ export default function MigratePage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function MigratePage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading import…</div>}>
+      <MigratePageInner />
+    </Suspense>
   );
 }

@@ -7,7 +7,7 @@ import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 export const metadata = marketingPageMeta({
   title: "Best email marketing software by use case",
   description:
-    "Honest picks by use case: simple small-business email, advanced automation, ecommerce, CRM suites, creators, and volume sending — without forcing SendFable to win every category.",
+    "Picks by use case: simple small-business email, advanced automation, ecommerce, CRM suites, creators, and volume sending — SendFable is not forced to win every category.",
   path: "/best-email-marketing-software",
 });
 

@@ -19,7 +19,7 @@ import { OFFICIAL_VIDEOS } from "@/data/official-videos";
 import { PLANS } from "@/lib/plans";
 
 const baseMetadata = marketingPageMeta({
-  title: "SendFable — Email and text marketing without the headache",
+  title: "SendFable — Email marketing without the headache",
   description: `Email marketing for small businesses. Free ${PLANS.FREE.contactCap} contacts and ${PLANS.FREE.emailsPerMonth.toLocaleString()} emails/month. Starter $${PLANS.STARTER.monthlyPrice}/mo. No credit card.`,
   path: "/",
 });

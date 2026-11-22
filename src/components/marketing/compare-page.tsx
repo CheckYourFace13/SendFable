@@ -16,6 +16,11 @@ import { Text20Hint } from "@/components/marketing/text20-hint";
 import { PLANS } from "@/lib/plans";
 import { MailchimpCostCalculator } from "@/components/marketing/mailchimp-cost-calculator";
 import { CompetitorPageTracker } from "@/components/marketing/competitor-page-tracker";
+import {
+  moveListCtaLabel,
+  parseMigrateFrom,
+  signupWithMigrateFrom,
+} from "@/lib/migrate-from-intent";
 
 function money(n: number | string): string {
   return typeof n === "number" ? `$${n}/mo` : n;
@@ -24,6 +29,13 @@ function money(n: number | string): string {
 export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRecord }) {
   const path = `/compare/${competitor.slug}`;
   const title = `SendFable vs ${competitor.name}`;
+  const migrateProvider = parseMigrateFrom(competitor.slug);
+  const primarySignupHref = migrateProvider
+    ? signupWithMigrateFrom(migrateProvider)
+    : "/signup";
+  const primarySignupLabel = migrateProvider
+    ? moveListCtaLabel(migrateProvider)
+    : "Start free";
   const faqs = [
     ...competitor.faqs,
     {
@@ -86,8 +98,7 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
         ]}
       />
 
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Honest comparison</p>
-      <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-ink">{title}</h1>
+      <h1 className="font-display text-4xl font-bold tracking-tight text-ink">{title}</h1>
       <p className="mt-2 text-sm text-ink/55">
         Last checked {competitor.pricingLastChecked}. Pricing and features can change.
       </p>
@@ -99,7 +110,7 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Button asChild className="bg-coral-solid text-white hover:bg-coral-hover">
-          <Link href="/signup">Start free</Link>
+          <Link href={primarySignupHref}>{primarySignupLabel}</Link>
         </Button>
         <Button asChild variant="outline" className="border-ink/15 text-ink hover:bg-parchment">
           <Link href="/pricing">View pricing</Link>
@@ -309,10 +320,15 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
 
       <MarketingCta
         title="Ready to try the simple path?"
-        body={`Create your free account — ${PLANS.FREE.contactCap.toLocaleString()} contacts, no credit card required.`}
-        primaryLabel="Start writing free"
-        secondaryHref="/migrate"
-        secondaryLabel="Migration help"
+        body={
+          migrateProvider
+            ? `Export your ${competitor.name} CSV, start free, and import with column mapping. No live sync — CSV only.`
+            : `Create your free account — ${PLANS.FREE.contactCap.toLocaleString()} contacts, no credit card required.`
+        }
+        primaryHref={primarySignupHref}
+        primaryLabel={migrateProvider ? primarySignupLabel : "Start writing free"}
+        secondaryHref={`/migrate/${competitor.slug}`}
+        secondaryLabel={`How to leave ${competitor.name}`}
       />
     </div>
   );

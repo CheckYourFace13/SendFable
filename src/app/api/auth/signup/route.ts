@@ -165,6 +165,7 @@ export async function POST(req: Request) {
   try {
     ensureAnalyticsPersistence();
     trackEvent("signup_complete");
+    trackEvent("account_created");
     trackEvent("workspace_created");
     const campaign = (parsed.data.utmCampaign || "").toLowerCase();
     const source = (parsed.data.utmSource || "").toLowerCase();

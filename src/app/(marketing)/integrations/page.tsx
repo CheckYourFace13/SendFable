@@ -7,7 +7,7 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 export const metadata = marketingPageMeta({
   title: "Integrations",
   description:
-    "SendFable uses Amazon SES for delivery, Stripe for billing, CSV for audiences, and Signup Tools — a hosted page, Inline embed, or Popup — without a bloated app marketplace.",
+    "Amazon SES delivery, Stripe billing, CSV audiences, and Signup Tools (hosted, inline, or popup) — without a bloated app marketplace.",
   path: "/integrations",
 });
 

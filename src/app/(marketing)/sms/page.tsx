@@ -20,7 +20,7 @@ export async function generateMetadata() {
     return { title: "Text messaging", robots: { index: false, follow: false } };
   }
   return marketingPageMeta({
-    title: "SendFable Text — business SMS with Email, Text, or Both",
+    title: "SendFable Text — Email, Text, or Both",
     description: `Add SendFable Text to collect and message opted-in contacts. Three plans from ${formatCentsUsd(SMS_PLANS.TEXT_ENTRY.monthlyPriceCents)}/mo plus per-segment pricing. ${formatCentsUsd(SMS_ACTIVATION_FEE_CENTS)} activation.`,
     path: "/sms",
   });

@@ -12,7 +12,7 @@ import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { PLANS } from "@/lib/plans";
 
 export const metadata = marketingPageMeta({
-  title: "Scribe — automated email marketing from your website content",
+  title: "Scribe — email drafts from your website",
   description:
     "Scribe watches a page on your site, drafts a campaign in your look, and waits until you choose Send now or schedule it.",
   path: "/automated-email-marketing",

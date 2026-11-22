@@ -171,6 +171,7 @@ export async function POST(req: Request) {
     try {
       ensureAnalyticsPersistence();
       trackEvent("contact_created");
+      trackEvent("contacts_added");
     } catch {
       /* fail open */
     }

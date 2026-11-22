@@ -22,7 +22,7 @@ const year = new Date().getFullYear();
 export const metadata = marketingPageMeta({
   title: `Email Marketing Pricing Comparison (${year})`,
   description:
-    "Compare SendFable, Mailchimp, Constant Contact, Brevo, MailerLite, Klaviyo and other popular email marketing tools — dated public pricing snapshots with an interactive calculator.",
+    "Compare SendFable with Mailchimp, Constant Contact, Brevo, MailerLite, Klaviyo and others — dated public pricing plus an interactive calculator.",
   path: "/email-marketing-pricing-comparison",
 });
 

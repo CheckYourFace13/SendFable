@@ -21,6 +21,10 @@ import {
   billingCheckoutPath,
   parsePlanCheckoutIntent,
 } from "@/lib/plan-checkout-intent";
+import {
+  parseMigrateFrom,
+  postAuthPathForMigrateFrom,
+} from "@/lib/migrate-from-intent";
 
 const cardClass =
   "border-ink/10 bg-page/95 shadow-sm shadow-ink/5";
@@ -45,6 +49,10 @@ function SignupForm() {
     [searchParams]
   );
   const planIntent = useMemo(() => parsePlanCheckoutIntent(searchParams), [searchParams]);
+  const migrateFrom = useMemo(
+    () => parseMigrateFrom(searchParams.get("from")),
+    [searchParams]
+  );
   const tryToken = useMemo(() => {
     const fromQuery = searchParams.get("try")?.trim();
     if (fromQuery) return fromQuery;
@@ -66,6 +74,10 @@ function SignupForm() {
       }).catch(() => undefined);
     }
   }, [tryToken]);
+  const defaultPostAuth = useMemo(
+    () => postAuthPathForMigrateFrom(migrateFrom, "/onboarding"),
+    [migrateFrom]
+  );
   const loginHref = useMemo(() => {
     const q = new URLSearchParams();
     if (resumeTemplate) {
@@ -85,8 +97,9 @@ function SignupForm() {
       q.set("try", tryToken);
       q.set("callbackUrl", "/forms");
     } else {
-      q.set("callbackUrl", "/onboarding");
+      q.set("callbackUrl", defaultPostAuth);
     }
+    if (migrateFrom) q.set("from", migrateFrom);
     if (referralCode) q.set("ref", referralCode);
     if (utmSource) q.set("utm_source", utmSource);
     if (utmMedium) q.set("utm_medium", utmMedium);
@@ -98,6 +111,8 @@ function SignupForm() {
     resumeGoal,
     tryToken,
     planIntent,
+    migrateFrom,
+    defaultPostAuth,
     referralCode,
     utmSource,
     utmMedium,
@@ -112,8 +127,8 @@ function SignupForm() {
     }
     if (planIntent) return billingCheckoutPath(planIntent);
     if (tryToken) return `/signup?try=${encodeURIComponent(tryToken)}`;
-    return "/onboarding";
-  }, [resumeTemplate, resumeGoal, planIntent, tryToken]);
+    return defaultPostAuth;
+  }, [resumeTemplate, resumeGoal, planIntent, tryToken, defaultPostAuth]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);

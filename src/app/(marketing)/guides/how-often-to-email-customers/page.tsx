@@ -2,7 +2,7 @@ import { GuidePage, guideMetadata } from "@/components/marketing/guide-page";
 
 export const metadata = guideMetadata(
   "/guides/how-often-to-email-customers",
-  "How often should a small business email customers?",
+  "How often should small businesses email?",
   "A practical cadence for local businesses: weekly specials, monthly updates, and how to avoid fatigue without going silent."
 );
 
@@ -10,7 +10,7 @@ export default function HowOftenToEmailGuide() {
   return (
     <GuidePage
       path="/guides/how-often-to-email-customers"
-      title="How often should a small business email customers?"
+      title="How often should small businesses email?"
       description="Cadence advice for shops, restaurants, and service businesses — grounded in permission and usefulness, not vanity volume."
       updated="2026-08-24"
       lead="Direct answer: most small businesses do well with one useful email per week, or two short ones if each has a clear reason (specials + event). Monthly is fine if you only have monthly news. Silence for months teaches people to ignore you; daily blasts teach them to unsubscribe."
