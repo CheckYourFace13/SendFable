@@ -13,12 +13,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
   if (!form) {
     return {
-      title: "Form not found · SendFable",
+      title: "Form not found",
       robots: { index: false, follow: false },
     };
   }
   return {
-    title: `${form.name} · SendFable`,
+    title: form.name,
     robots: { index: false, follow: false },
   };
 }
