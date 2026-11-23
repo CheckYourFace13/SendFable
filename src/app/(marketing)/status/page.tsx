@@ -47,14 +47,18 @@ async function liveChecks(): Promise<{
 
 function formatCheckedAt(d: Date): string {
   try {
-    return new Intl.DateTimeFormat("en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
+    // Explicit field options (not dateStyle/timeStyle) so Alpine/Node without full ICU still formats.
+    return d.toLocaleString("en-US", {
       timeZone: "America/Chicago",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
       timeZoneName: "short",
-    }).format(d);
+    });
   } catch {
-    return d.toISOString();
+    return `${d.toISOString()} UTC`;
   }
 }
 
@@ -81,7 +85,7 @@ export default async function StatusPage() {
           </p>
         )}
         <p className="mt-2 text-sm text-muted-foreground">
-          Last checked {formatCheckedAt(health.checkedAt)} (America/Chicago).
+          Last checked {formatCheckedAt(health.checkedAt)}.
         </p>
         <ul className="mt-4 space-y-1 text-sm text-ink/70">
           <li>App: {health.checks.app === "ok" ? "OK" : "Issue"}</li>
