@@ -347,6 +347,21 @@ export async function handleAcquisitionSesEvent(opts: {
           },
         },
       });
+      try {
+        const { abortRecoveryAfterHardBounce } = await import(
+          "@/lib/acquisition/recovery"
+        );
+        await abortRecoveryAfterHardBounce({
+          messageId: msg.id,
+          prospectId: msg.prospectId,
+        });
+        const { evaluateSafetyPauseAndBackoff } = await import(
+          "@/lib/acquisition/ramp"
+        );
+        await evaluateSafetyPauseAndBackoff();
+      } catch {
+        /* ignore recovery abort failures */
+      }
     }
     return true;
   }

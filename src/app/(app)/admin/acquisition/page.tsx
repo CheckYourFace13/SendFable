@@ -87,7 +87,21 @@ export default function AdminAcquisitionPage() {
         <Badge variant={data.paused ? "destructive" : "secondary"}>
           pipeline {data.paused ? `PAUSED: ${data.pauseReason}` : "running"}
         </Badge>
+        <Badge
+          variant={
+            data.acquisitionState === "HEALTHY"
+              ? "default"
+              : data.acquisitionState === "RECOVERY"
+                ? "secondary"
+                : "destructive"
+          }
+        >
+          state {data.acquisitionState || (data.paused ? "HARD_PAUSED" : "HEALTHY")}
+        </Badge>
       </div>
+      {data.acquisitionStateWhy ? (
+        <p className="text-sm text-muted-foreground">{data.acquisitionStateWhy}</p>
+      ) : null}
 
       <section className="rounded-xl border bg-white p-5">
         <h2 className="font-semibold">Growth health</h2>
@@ -215,11 +229,25 @@ export default function AdminAcquisitionPage() {
           <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
             <div>
               Status: <strong>{data.autonomy.status}</strong>
+              {data.autonomy.acquisitionState
+                ? ` (${data.autonomy.acquisitionState})`
+                : ""}
             </div>
             <div>
               Stage: <strong>{data.autonomy.stage}</strong> ({data.autonomy.newPerDay} new /{" "}
-              {data.autonomy.totalPerDay} total)
+              {data.autonomy.totalPerDay} total
+              {data.autonomy.recoveryMode
+                ? `; recovery ${data.autonomy.recoveryNewPerDay ?? 2}/day`
+                : ""}
+              )
             </div>
+            {data.autonomy.recoveryWeek ? (
+              <div>
+                Recovery week: {data.autonomy.recoveryWeek.sends} sent /{" "}
+                {data.autonomy.recoveryWeek.deliveries} delivered /{" "}
+                {data.autonomy.recoveryWeek.bounces} bounced
+              </div>
+            ) : null}
             <div>
               Today sent: <strong>{data.autonomy.todaySent}</strong>
             </div>

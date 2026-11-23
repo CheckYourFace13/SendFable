@@ -108,7 +108,13 @@ export async function resumePipeline(): Promise<void> {
   await ensurePipelineControl();
   await prisma.acquisitionPipelineControl.update({
     where: { id: "default" },
-    data: { paused: false, pauseReason: null, hardPause: false },
+    data: {
+      paused: false,
+      pauseReason: null,
+      hardPause: false,
+      recoveryMode: false,
+      recoveryEnteredAt: null,
+    },
   });
   await prisma.acquisitionEvent.create({
     data: { type: "pipeline_resumed", meta: {} },

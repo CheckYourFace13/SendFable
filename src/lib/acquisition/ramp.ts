@@ -139,14 +139,21 @@ export async function hardPauseAcquisition(reason: string): Promise<void> {
   }
   await prisma.acquisitionPipelineControl.update({
     where: { id: "default" },
-    data: { paused: true, pauseReason: reason, hardPause: true },
+    data: {
+      paused: true,
+      pauseReason: reason,
+      hardPause: true,
+      // Never keep recovery active across a fresh hard pause (esp. complaints).
+      recoveryMode: false,
+      recoveryEnteredAt: null,
+    },
   });
   await prisma.acquisitionEvent.create({
     data: { type: "hard_pause", meta: { reason } },
   });
   await alertOwnerException(
     `SendFable acquisition HARD PAUSE: ${reason}`,
-    `Acquisition sending was hard-paused.\n\nReason: ${reason}\n\nRecoverable bounce/unsub pauses auto-resume when 7-day rates recover. Complaint pauses require review in /admin/acquisition.`
+    `Acquisition sending was hard-paused.\n\nReason: ${reason}\n\nRecoverable bounce-rate pauses may enter automatic RECOVERY (2 new INITIAL/day) or auto-resume when 7-day rates recover. Complaint pauses require review in /admin/acquisition.`
   );
 }
 
@@ -156,7 +163,13 @@ async function autoResumeRecoverablePause(
 ): Promise<void> {
   await prisma.acquisitionPipelineControl.update({
     where: { id: "default" },
-    data: { paused: false, pauseReason: null, hardPause: false },
+    data: {
+      paused: false,
+      pauseReason: null,
+      hardPause: false,
+      recoveryMode: false,
+      recoveryEnteredAt: null,
+    },
   });
   await prisma.acquisitionEvent.create({
     data: {
@@ -175,7 +188,23 @@ async function autoResumeRecoverablePause(
 
 function isRecoverablePauseReason(reason: string | null | undefined): boolean {
   if (!reason) return false;
-  return reason.startsWith("bounce_rate_") || reason.startsWith("unsub_rate_");
+  return (
+    reason.startsWith("bounce_rate_") ||
+    reason.startsWith("unsub_rate_") ||
+    reason === "recovery_hard_bounce"
+  );
+}
+
+/**
+ * Bounce-rate hard pauses only may enter RECOVERY.
+ * `recovery_hard_bounce` stays HARD_PAUSED (no immediate re-entry) until rates clear.
+ * Unsub/complaint never use RECOVERY cadence.
+ */
+export function isRecoverableBouncePauseReason(
+  reason: string | null | undefined
+): boolean {
+  if (!reason) return false;
+  return reason.startsWith("bounce_rate_");
 }
 
 /** True when bounce/unsub hard pause is no longer justified by absolute counts + rates. */
@@ -221,6 +250,8 @@ export async function reduceStage(reason: string): Promise<number> {
 export async function evaluateSafetyPauseAndBackoff(): Promise<{
   ok: boolean;
   hardPaused: boolean;
+  recoveryAllowed: boolean;
+  mode: "HARD_PAUSED" | "RECOVERY" | "HEALTHY";
   stage: number;
   rates: SafetyRates;
   autoResumed?: boolean;
@@ -228,6 +259,8 @@ export async function evaluateSafetyPauseAndBackoff(): Promise<{
   const rates7 = await ratesOverDays(7);
   const stage = await getEffectiveRampStage();
   const control = await ensureControl();
+  const { canEnterRecoveryMode, enterRecoveryMode, deriveAcquisitionState } =
+    await import("@/lib/acquisition/recovery");
 
   // Recoverable hard pauses must not stick forever after the window/counts improve.
   if (
@@ -242,6 +275,8 @@ export async function evaluateSafetyPauseAndBackoff(): Promise<{
     return {
       ok: true,
       hardPaused: false,
+      recoveryAllowed: false,
+      mode: "HEALTHY",
       stage,
       rates: rates7,
       autoResumed: true,
@@ -249,7 +284,46 @@ export async function evaluateSafetyPauseAndBackoff(): Promise<{
   }
 
   if (control.hardPause && control.paused) {
-    return { ok: false, hardPaused: true, stage, rates: rates7 };
+    // Bounce-rate deadlock break: enter restricted RECOVERY automatically.
+    if (
+      canEnterRecoveryMode({
+        paused: control.paused,
+        hardPause: control.hardPause,
+        pauseReason: control.pauseReason,
+        rates: rates7,
+      })
+    ) {
+      await enterRecoveryMode(control.pauseReason || "bounce_rate_recovery");
+      const snap = deriveAcquisitionState({
+        paused: true,
+        hardPause: true,
+        recoveryMode: true,
+        pauseReason: control.pauseReason,
+      });
+      return {
+        ok: false,
+        hardPaused: true,
+        recoveryAllowed: true,
+        mode: snap.state,
+        stage,
+        rates: rates7,
+      };
+    }
+    // Clear stale recoveryMode if pause is no longer bounce-recoverable (e.g. complaint).
+    if (control.recoveryMode) {
+      await prisma.acquisitionPipelineControl.update({
+        where: { id: "default" },
+        data: { recoveryMode: false, recoveryEnteredAt: null },
+      });
+    }
+    return {
+      ok: false,
+      hardPaused: true,
+      recoveryAllowed: false,
+      mode: "HARD_PAUSED",
+      stage,
+      rates: rates7,
+    };
   }
 
   if (rates7.sent >= MIN_SAMPLE_FOR_HARD) {
@@ -269,7 +343,34 @@ export async function evaluateSafetyPauseAndBackoff(): Promise<{
             ? `bounce_rate_${(rates7.bounceRate * 100).toFixed(2)}%`
             : `unsub_rate_${(rates7.unsubRate * 100).toFixed(2)}%`;
       await hardPauseAcquisition(reason);
-      return { ok: false, hardPaused: true, stage, rates: rates7 };
+      // Immediately open bounce-rate recovery when eligible (no owner action).
+      if (
+        decision.reason === "bounce" &&
+        canEnterRecoveryMode({
+          paused: true,
+          hardPause: true,
+          pauseReason: reason,
+          rates: rates7,
+        })
+      ) {
+        await enterRecoveryMode(reason);
+        return {
+          ok: false,
+          hardPaused: true,
+          recoveryAllowed: true,
+          mode: "RECOVERY",
+          stage,
+          rates: rates7,
+        };
+      }
+      return {
+        ok: false,
+        hardPaused: true,
+        recoveryAllowed: false,
+        mode: "HARD_PAUSED",
+        stage,
+        rates: rates7,
+      };
     }
     if (rates7.bounceRate > SOFT_BOUNCE || rates7.unsubRate > SOFT_UNSUB) {
       await reduceStage(
@@ -280,7 +381,22 @@ export async function evaluateSafetyPauseAndBackoff(): Promise<{
     }
   }
 
-  return { ok: true, hardPaused: false, stage: await getEffectiveRampStage(), rates: rates7 };
+  // Ensure recovery flag is clear when healthy.
+  if (control.recoveryMode) {
+    await prisma.acquisitionPipelineControl.update({
+      where: { id: "default" },
+      data: { recoveryMode: false, recoveryEnteredAt: null },
+    });
+  }
+
+  return {
+    ok: true,
+    hardPaused: false,
+    recoveryAllowed: false,
+    mode: "HEALTHY",
+    stage: await getEffectiveRampStage(),
+    rates: rates7,
+  };
 }
 
 export type RampEval = {

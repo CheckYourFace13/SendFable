@@ -309,8 +309,20 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
     return { ok: false, reason: msg.dryRun ? "dry_run" : "sending_disabled" };
   }
 
+  const {
+    getAcquisitionOperationalState,
+    isRecoveryEligibleMessage,
+    recoverySlotsLeftToday,
+    recordRecoverySend,
+  } = await import("@/lib/acquisition/recovery");
+  const opState = await getAcquisitionOperationalState();
+  const recoverySend =
+    opState.state === "RECOVERY" && isRecoveryEligibleMessage(msg);
+
   const paused = await isPipelinePaused();
-  if (paused.paused) return { ok: false, reason: `pipeline_paused:${paused.reason}` };
+  if (paused.paused && !recoverySend) {
+    return { ok: false, reason: `pipeline_paused:${paused.reason}` };
+  }
 
   if (msg.step === "INITIAL") {
     const priorInitial = await prisma.acquisitionMessage.findFirst({
@@ -331,13 +343,24 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
     }
   }
 
-  const safety = await checkOutreachSafetyAndMaybePause();
-  if (!safety.ok) return { ok: false, reason: "safety_pause" };
+  if (!recoverySend) {
+    const safety = await checkOutreachSafetyAndMaybePause();
+    if (!safety.ok) return { ok: false, reason: "safety_pause" };
+  }
 
   if (msg.step === "INITIAL" && msg.copyVersion === WEBSITE_DEMO_COPY_VERSION) {
+    if (recoverySend) return { ok: false, reason: "recovery_no_demo" };
     if (!(await canSendWebsiteDemoToday())) return { ok: false, reason: "daily_demo_cap" };
   } else if (msg.step === "INITIAL") {
-    if (!(await canSendNewToday())) return { ok: false, reason: "daily_new_cap" };
+    if (recoverySend) {
+      if ((await recoverySlotsLeftToday()) <= 0) {
+        return { ok: false, reason: "recovery_daily_cap" };
+      }
+    } else if (!(await canSendNewToday())) {
+      return { ok: false, reason: "daily_new_cap" };
+    }
+  } else if (recoverySend) {
+    return { ok: false, reason: "recovery_initial_only" };
   } else if (!(await canSendAnyToday())) {
     return { ok: false, reason: "daily_total_cap" };
   }
@@ -406,6 +429,9 @@ export async function sendAcquisitionMessage(messageId: string): Promise<{
         sesMessageId: sesId || result.messageId,
       },
     });
+    if (recoverySend) {
+      await recordRecoverySend({ messageId: msg.id, prospectId: p.id });
+    }
 
     let nextStatus = p.status;
     let nextFollowUpAt: Date | null = null;

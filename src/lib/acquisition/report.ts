@@ -505,6 +505,31 @@ export async function buildWeeklyAcquisitionReport(now = new Date()): Promise<{
     `Safety/backoff: ${paused.paused ? `PAUSED (${paused.reason || "—"})` : softBackoffActive ? "SOFT BACKOFF ACTIVE" : "INACTIVE"}`,
     `7D safety: ${rates7.sent} sends, ${rates7.unsubscribed} unsubs, ${rates7.bounced} bounces`,
     "",
+    ...(await (async () => {
+      const { getAcquisitionOperationalState, recoveryStatsSince, RECOVERY_NEW_PER_DAY } =
+        await import("@/lib/acquisition/recovery");
+      const op = await getAcquisitionOperationalState();
+      const rec = await recoveryStatsSince(since);
+      const resumed =
+        op.state === "HEALTHY" &&
+        (await prisma.acquisitionEvent.count({
+          where: {
+            type: { in: ["pipeline_auto_resumed", "recovery_graduated"] },
+            createdAt: { gte: since },
+          },
+        })) > 0;
+      return [
+        `ACQUISITION STATE: ${op.state}`,
+        `STATE WHY: ${op.why}`,
+        `RECOVERY CAP (new/day): ${RECOVERY_NEW_PER_DAY}`,
+        `RECOVERY SENDS (week): ${rec.sends}`,
+        `RECOVERY DELIVERIES (week): ${rec.deliveries}`,
+        `RECOVERY BOUNCES (week): ${rec.bounces}`,
+        `ROLLING BOUNCE RATE (7d): ${(rates7.bounceRate * 100).toFixed(2)}%`,
+        `NORMAL ACQUISITION AUTO-RESUMED THIS WEEK: ${resumed ? "YES" : "NO"}`,
+        "",
+      ];
+    })()),
     "FUNNEL",
     `Delivered → Click → Try → Signup → First Send → Paid`,
     `${delivered} → ${clicks} (${clickPct}%) → ${tryVisits} (${tryPct}%) → ${signups} (${signupPct}%) → ${firstSends} (${firstPct}%) → ${paid} (${paidPct}%)`,
@@ -741,18 +766,23 @@ export async function getAcquisitionDashboard() {
     (e) => (e.meta as { replyClass?: string })?.replyClass === "POSITIVE"
   ).length;
 
+  const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const { getAcquisitionOperationalState, recoveryStatsSince, RECOVERY_NEW_PER_DAY } =
+    await import("@/lib/acquisition/recovery");
+  const opState = await getAcquisitionOperationalState();
+  const recoveryWeek = await recoveryStatsSince(since7);
+
   let autonomyStatus = "DISABLED";
-  if (paused.paused) autonomyStatus = control.hardPause ? "HARD_PAUSED" : "PAUSED";
+  if (opState.state === "RECOVERY") autonomyStatus = "RECOVERY";
+  else if (paused.paused) autonomyStatus = control.hardPause ? "HARD_PAUSED" : "PAUSED";
   else if (flags.SENDFABLE_ACQUISITION_ENABLED) {
     if (!flags.SENDFABLE_ACQUISITION_SENDING_ENABLED) autonomyStatus = "DISCOVERY_ONLY";
     else if (!sender.ok) autonomyStatus = "SENDER_BLOCKED";
-    else autonomyStatus = "AUTONOMOUS";
+    else autonomyStatus = "HEALTHY";
   }
 
   const { getInventoryHealth } = await import("@/lib/acquisition/discovery/inventory");
   const inventory = await getInventoryHealth();
-
-  const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const growthHealth = {
     discovery: inventory.status,
     inventoryStatus: inventory.status,
@@ -792,9 +822,14 @@ export async function getAcquisitionDashboard() {
 
   const autonomy = {
     status: autonomyStatus,
+    acquisitionState: opState.state,
+    acquisitionStateWhy: opState.why,
     stage: stageCaps.stage,
     newPerDay: stageCaps.newPerDay,
     totalPerDay: stageCaps.totalPerDay,
+    recoveryNewPerDay: RECOVERY_NEW_PER_DAY,
+    recoveryMode: control.recoveryMode,
+    recoveryWeek,
     todaySent: today.sent,
     rates7d: {
       bouncePct: Math.round(rates7.bounceRate * 10000) / 100,
@@ -836,6 +871,8 @@ export async function getAcquisitionDashboard() {
     paused: paused.paused,
     pauseReason: paused.reason,
     hardPause: control.hardPause,
+    acquisitionState: opState.state,
+    acquisitionStateWhy: opState.why,
     today,
     overall,
     pipeline,

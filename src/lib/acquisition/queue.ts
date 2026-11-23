@@ -177,3 +177,36 @@ export async function loadWebsiteDemoCandidates(limit = 2) {
     take: limit,
   });
 }
+
+/**
+ * RECOVERY cadence: highest-score current INITIAL only (no follow-ups, no demos).
+ * Quality gate + MX still run at send time.
+ */
+export async function loadRecoverySendCandidates(limit = 10) {
+  const initials = await prisma.acquisitionMessage.findMany({
+    where: {
+      dryRun: false,
+      status: { in: ["DRAFT", "SCHEDULED"] },
+      step: "INITIAL",
+      copyVersion: { not: WEBSITE_DEMO_COPY_VERSION },
+      prospect: {
+        contactEmail: { not: null },
+        status: { notIn: ["BOUNCED", "COMPLAINT", "UNSUBSCRIBED", "SUPPRESSED", "REJECTED"] },
+        suppressionReason: null,
+      },
+    },
+    include: { prospect: true },
+    orderBy: [{ prospect: { score: "desc" } }, { createdAt: "asc" }],
+    take: Math.max(limit * 3, 30),
+  });
+  const current = initials.filter((m) => isCurrentAutopilotInitial(m));
+  const seen = new Set<string>();
+  const out: typeof current = [];
+  for (const m of current) {
+    if (seen.has(m.prospectId)) continue;
+    seen.add(m.prospectId);
+    out.push(m);
+    if (out.length >= limit) break;
+  }
+  return out;
+}

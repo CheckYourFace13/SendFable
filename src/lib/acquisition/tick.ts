@@ -13,6 +13,7 @@ import {
   sendAcquisitionMessage,
 } from "@/lib/acquisition/send";
 import {
+  loadRecoverySendCandidates,
   loadSendCandidates,
   loadWebsiteDemoCandidates,
   reconcileStaleInitialDrafts,
@@ -119,15 +120,27 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
       actions.push(`auto_approve:${ap.approved}`);
     }
 
-    // Always evaluate safety — recoverable bounce/unsub hard pauses auto-resume here.
-    // (Previously safety only ran when unpaused, so a single-bounce pause stuck forever.)
+    // Always evaluate safety — recoverable bounce/unsub hard pauses auto-resume
+    // or enter RECOVERY (bounce-rate only) here.
     const safety = await evaluateSafetyPauseAndBackoff();
     actions.push(
-      `safety:${safety.autoResumed ? "auto_resumed" : safety.ok ? "ok" : "paused"}`
+      `safety:${
+        safety.autoResumed
+          ? "auto_resumed"
+          : safety.ok
+            ? "ok"
+            : safety.recoveryAllowed
+              ? "recovery"
+              : "paused"
+      }:${safety.mode}`
     );
 
     const paused = await isPipelinePaused();
-    if (!paused.paused && acquisitionSendingEnabled()) {
+    const sendingOn = acquisitionSendingEnabled();
+    const normalSend = !paused.paused && sendingOn && safety.ok;
+    const recoverySend = paused.paused && sendingOn && safety.recoveryAllowed;
+
+    if (normalSend || recoverySend) {
       const sender = await verifyAcquisitionSender();
       if (!sender.ok) {
         actions.push(`sender_blocked:${sender.detail}`);
@@ -144,7 +157,7 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
             data: { type: "sender_blocked_alert", meta: { detail: sender.detail } },
           });
         }
-      } else if (safety.ok) {
+      } else {
         const queue = await reconcileStaleInitialDrafts();
         if (queue.regenerated || queue.retired || queue.cancelled) {
           actions.push(
@@ -152,23 +165,28 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
           );
         }
 
-        const tryFollow = await sendDueTryFollowUps(now);
-        if (tryFollow) actions.push(`try_followup:${tryFollow}`);
+        // Follow-ups and demos only in normal HEALTHY cadence — not during RECOVERY.
+        if (normalSend) {
+          const tryFollow = await sendDueTryFollowUps(now);
+          if (tryFollow) actions.push(`try_followup:${tryFollow}`);
 
-        const due = await prisma.acquisitionProspect.findMany({
-          where: {
-            nextFollowUpAt: { lte: now },
-            status: { in: ["CONTACTED", "FOLLOW_UP_1"] },
-            contactEmail: { not: null },
-          },
-          take: 15,
-        });
-        for (const p of due) {
-          const step = p.status === "CONTACTED" ? "FOLLOW_UP_1" : "FOLLOW_UP_2";
-          await draftMessageForProspect(p.id, step, { dryRun: false });
+          const due = await prisma.acquisitionProspect.findMany({
+            where: {
+              nextFollowUpAt: { lte: now },
+              status: { in: ["CONTACTED", "FOLLOW_UP_1"] },
+              contactEmail: { not: null },
+            },
+            take: 15,
+          });
+          for (const p of due) {
+            const step = p.status === "CONTACTED" ? "FOLLOW_UP_1" : "FOLLOW_UP_2";
+            await draftMessageForProspect(p.id, step, { dryRun: false });
+          }
         }
 
-        const candidates = await loadSendCandidates(30);
+        const candidates = recoverySend
+          ? await loadRecoverySendCandidates(10)
+          : await loadSendCandidates(30);
 
         let sent = 0;
         let failStreak = 0;
@@ -181,8 +199,20 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
           if (r.ok) {
             sent++;
             failStreak = 0;
-            actions.push(`sent:${m.step}:${m.copyVersion || "fu"}`);
-          } else if (r.reason === "daily_new_cap") {
+            actions.push(
+              `sent:${recoverySend ? "recovery:" : ""}${m.step}:${m.copyVersion || "fu"}`
+            );
+            // Recompute health after each recovery delivery attempt path.
+            if (recoverySend) {
+              const again = await evaluateSafetyPauseAndBackoff();
+              actions.push(`recovery_health:${again.mode}`);
+              if (!again.recoveryAllowed && !again.ok) break;
+              if (again.ok) break; // graduated to HEALTHY mid-tick
+            }
+          } else if (
+            r.reason === "daily_new_cap" ||
+            r.reason === "recovery_daily_cap"
+          ) {
             initialCapHit = true;
           } else if (r.reason === "send_failed") {
             failStreak++;
@@ -194,26 +224,28 @@ export async function runAcquisitionTick(now = new Date()): Promise<{
             }
           }
         }
-        const demos = await loadWebsiteDemoCandidates(2);
-        let demoCapHit = false;
-        for (const m of demos) {
-          if (demoCapHit) break;
-          const tz = defaultProspectTimeZone(m.prospect.state);
-          if (!isWithinSendWindow(now, tz).ok) continue;
-          const r = await sendAcquisitionMessage(m.id);
-          if (r.ok) {
-            sent++;
-            actions.push(`sent:${m.step}:${m.copyVersion || "demo"}`);
-          } else if (r.reason === "daily_demo_cap") {
-            demoCapHit = true;
+        if (normalSend) {
+          const demos = await loadWebsiteDemoCandidates(2);
+          let demoCapHit = false;
+          for (const m of demos) {
+            if (demoCapHit) break;
+            const tz = defaultProspectTimeZone(m.prospect.state);
+            if (!isWithinSendWindow(now, tz).ok) continue;
+            const r = await sendAcquisitionMessage(m.id);
+            if (r.ok) {
+              sent++;
+              actions.push(`sent:${m.step}:${m.copyVersion || "demo"}`);
+            } else if (r.reason === "daily_demo_cap") {
+              demoCapHit = true;
+            }
           }
         }
-        if (sent === 0) actions.push("send:none");
+        if (sent === 0) actions.push(recoverySend ? "recovery:none" : "send:none");
       }
-    } else if (!acquisitionSendingEnabled()) {
+    } else if (!sendingOn) {
       actions.push("sending_off");
     } else {
-      actions.push(`paused:${paused.reason || "yes"}`);
+      actions.push(`paused:${safety.mode}:${paused.reason || "yes"}`);
     }
 
     // Ramp eval once daily ~22:00 UTC

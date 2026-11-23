@@ -1749,6 +1749,9 @@ model AcquisitionPipelineControl {
   pauseReason       String?
   /// Owner/security hard pause — requires owner resume
   hardPause         Boolean   @default(false)
+  /// Restricted bounce-rate recovery cadence (max 2 new INITIAL/day). Never bypasses complaint/unsub pauses.
+  recoveryMode      Boolean   @default(false)
+  recoveryEnteredAt DateTime?
   rampStage         Int       @default(1)
   stageEnteredAt    DateTime?
   lastRampEvalAt    DateTime?
