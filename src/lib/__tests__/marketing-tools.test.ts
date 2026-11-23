@@ -20,6 +20,7 @@ test("subject line checklist does not invent an open rate", () => {
 
   const pressure = assessSubjectLine("FREE!!! Act now - 50% off everything today only");
   assert.ok(pressure.notes.some((n) => /pressure|act now/i.test(n)));
+  assert.ok(pressure.score < 70);
   assert.ok(pressure.examples.length >= 1);
   assert.doesNotMatch(pressure.examples.join(" "), /act now/i);
   assert.doesNotMatch(pressure.examples.join(" "), /FREE!!!/i);
@@ -33,7 +34,9 @@ test("spam checker flags patterns without calling them an automatic block", () =
   const hit = checkSpamCopy("Act now", "Click here for a guaranteed winner!!!");
   assert.ok(hit.phrases.some((p) => p.label === "act now"));
   assert.ok(hit.phrases.some((p) => p.label === "click here"));
-  assert.match(hit.phrases.map((p) => p.detail).join(" "), /does not automatically/i);
+  assert.ok(hit.phrases.some((p) => p.label === "act now" && /Pressure timing/i.test(p.detail)));
+  assert.ok(hit.phrases.some((p) => p.label === "click here" && /Vague link/i.test(p.detail)));
+  assert.ok(hit.suggestions.some((s) => /instead of “act now”/i.test(s)));
   assert.ok(hit.formatting.some((f) => /exclamation/i.test(f.label)));
 
   const links = checkSpamCopy(

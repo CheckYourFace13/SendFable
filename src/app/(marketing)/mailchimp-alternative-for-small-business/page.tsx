@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 import { PLANS } from "@/lib/plans";
 
@@ -15,12 +15,6 @@ export const metadata = marketingPageMeta({
 export default function Page() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Small business", path: "/mailchimp-alternative-for-small-business" },
-        ])}
-      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

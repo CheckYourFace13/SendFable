@@ -223,6 +223,8 @@ export async function handleAcquisitionSesEvent(opts: {
   sesMessageId: string;
   eventType: string;
   bounceType?: string;
+  bounceSubType?: string;
+  diagnosticCode?: string;
   emails?: string[];
   /** Optional SES mail tags for fallback attribution */
   tags?: Record<string, string[] | string | undefined>;
@@ -337,7 +339,12 @@ export async function handleAcquisitionSesEvent(opts: {
         data: {
           prospectId: msg.prospectId,
           type: "bounced",
-          meta: { sesMessageId: normalizedId, bounceType: opts.bounceType || null },
+          meta: {
+            sesMessageId: normalizedId,
+            bounceType: opts.bounceType || null,
+            bounceSubType: opts.bounceSubType || null,
+            diagnosticCode: opts.diagnosticCode || null,
+          },
         },
       });
     }

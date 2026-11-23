@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { PLANS } from "@/lib/plans";
 import { autopilotMaxDraftsPerMonth } from "@/lib/autopilot/plans";
 import { isSmsPublicEnabled } from "@/lib/sms/flags";
@@ -15,7 +15,6 @@ const baseMetadata = marketingPageMeta({
   path: "/features",
   image: "/product/autopilot-feature-page.webp",
 });
-
 
 export async function generateMetadata() {
   return applyManagedMetadata("/features", baseMetadata);
@@ -152,12 +151,6 @@ export default function FeaturesPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Features", path: "/features" },
-        ])}
-      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

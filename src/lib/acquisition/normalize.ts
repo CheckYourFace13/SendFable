@@ -128,10 +128,28 @@ export function preferredBusinessLocalParts(): Set<string> {
   ]);
 }
 
+/**
+ * Catch scrape artifacts like "ninfo@" (stray character glued onto "info@").
+ * Prefer rejecting these over sending and hard-bouncing.
+ */
+export function looksLikeGarbledRoleLocal(local: string): boolean {
+  const l = local.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!l || preferredBusinessLocalParts().has(l)) return false;
+  for (const role of preferredBusinessLocalParts()) {
+    if (l === role) return false;
+    // Single leading/trailing junk char around a known role mailbox.
+    if (l.length === role.length + 1) {
+      if (l.endsWith(role) || l.startsWith(role)) return true;
+    }
+  }
+  return false;
+}
+
 /** Higher = better for outreach. Generic info@ scores below role inboxes. */
 export function businessEmailLocalScore(local: string): number {
   const l = local.toLowerCase();
   if (l.includes("noreply") || l.includes("no-reply") || l.includes("donotreply")) return -100;
+  if (looksLikeGarbledRoleLocal(l)) return -80;
   if (["owner", "owners", "manager", "hello", "hi", "contact"].includes(l)) return 40;
   if (["marketing", "events", "newsletter", "reservations", "booking", "team", "office"].includes(l))
     return 35;

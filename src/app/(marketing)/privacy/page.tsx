@@ -207,7 +207,7 @@ export default function PrivacyPage() {
       <p>
         <strong>Analytics:</strong> SendFable records first-party product funnel events when enabled
         (no advertising cookies). Optional Google Analytics 4 may be loaded when a measurement ID is
-        configured by the operator; it is not required for the Service to function. We do not load
+        configured for the site; it is not required for the Service to function. We do not load
         Meta Pixel, PostHog, or Plausible by default. Campaign open/click tracking is first-party
         product functionality for Customers. Monitoring is primarily application health checks and
         operational logs.

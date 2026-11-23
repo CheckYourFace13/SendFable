@@ -91,6 +91,16 @@ export function websiteJsonLd() {
 }
 
 export function softwareApplicationJsonLd() {
+  const planOffers = (["FREE", "STARTER", "GROWTH", "PRO", "PRO_PLUS"] as const).map((key) => {
+    const plan = PLANS[key];
+    return {
+      "@type": "Offer" as const,
+      name: plan.name,
+      price: String(plan.monthlyPrice),
+      priceCurrency: "USD",
+      url: appUrl("/pricing"),
+    };
+  });
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -99,12 +109,7 @@ export function softwareApplicationJsonLd() {
     operatingSystem: "Web",
     url: appUrl("/"),
     description: SENDFABLE_FACTS.positioning,
-    offers: {
-      "@type": "Offer",
-      price: String(PLANS.FREE.monthlyPrice),
-      priceCurrency: "USD",
-      description: `Free plan available; paid plans from $${PLANS.STARTER.monthlyPrice}/mo`,
-    },
+    offers: planOffers,
   };
 }
 

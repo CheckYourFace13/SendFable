@@ -4,7 +4,7 @@ import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { SmsPricingSection } from "@/components/marketing/sms-pricing";
 import { Button } from "@/components/ui/button";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { isSmsCodeEnabled, isSmsPublicEnabled } from "@/lib/sms/flags";
 import {
   SMS_ACTIVATION_FEE_CENTS,
@@ -32,12 +32,6 @@ export default function SmsProductPage() {
   return (
     <div className="editorial-bg">
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-        <JsonLd
-          data={breadcrumbJsonLd([
-            { name: "Home", path: "/" },
-            { name: "Text messaging", path: "/sms" },
-          ])}
-        />
         <Breadcrumbs
           items={[
             { label: "Home", href: "/" },

@@ -415,7 +415,7 @@ function SignupForm() {
           {planIntent
             ? `You'll confirm ${PLANS[planIntent.plan].name} at checkout. Nothing is charged until you do.${
                 planIntent.code === "TEXT20"
-                  ? " TEXT20 applies automatically for monthly Starter or Growth."
+                  ? " TEXT20 is for monthly Starter or Growth. Checkout shows the exact discount before you pay."
                   : ""
               }`
             : tryToken

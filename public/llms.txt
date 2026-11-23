@@ -31,7 +31,7 @@
 - **Mailchimp Free (verified 2026-09-19)?** Up to 250 contacts; max 500 emails/mo or 250/day. Paid entry roughly Essentials from $13/mo and Standard from $20/mo — verify on mailchimp.com/pricing.
 
 ## Indexing notes
-- Canonical source of truth: https://sendfable.com/sitemap.xml and https://sendfable.com/robots.txt
+- Canonical list of public pages: https://sendfable.com/sitemap.xml and https://sendfable.com/robots.txt
 - Authenticated app routes, tracking pixels, and private campaign data are not for indexing.
 - Competitor pricing on comparison pages includes a last-checked date and may change.
 - Competitor names are used nominatively for comparison; SendFable is not affiliated with them.

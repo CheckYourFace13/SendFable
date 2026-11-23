@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { JsonLd, faqJsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+
 import {
   COMPARISON_DISCLAIMER,
   capabilityLabel,
@@ -81,14 +81,6 @@ export function ComparePageFromRecord({ competitor }: { competitor: CompetitorRe
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
       <CompetitorPageTracker slug={competitor.slug} />
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Compare", path: "/compare" },
-          { name: competitor.name, path },
-        ])}
-      />
-      <JsonLd data={faqJsonLd(faqs)} />
 
       <Breadcrumbs
         items={[

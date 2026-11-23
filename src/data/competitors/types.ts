@@ -63,7 +63,7 @@ export const PRICING_STALE_DAYS = 30;
 export const FEATURES_STALE_DAYS = 90;
 
 export const COMPARISON_DISCLAIMER =
-  "Pricing and features change. Figures are approximate public list prices as of each competitor’s pricingLastChecked date. Verify on the vendor’s official site before deciding. SendFable does not guarantee that any tool is always cheaper or better.";
+  "Pricing and features change. Figures are approximate public list prices as of each competitor’s last-checked date shown on the page. Verify on the vendor’s official site before deciding. SendFable does not guarantee that any tool is always cheaper or better.";
 
 export function daysSince(isoDate: string, now = new Date()): number {
   const t = Date.parse(isoDate + "T00:00:00Z");

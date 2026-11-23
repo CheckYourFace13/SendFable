@@ -101,9 +101,9 @@ export default function RefundPolicyPage() {
           manage changes in the Stripe Customer Portal.
         </li>
         <li>
-          Portal subscription updates are configured with{" "}
-          <strong>proration_behavior: create_prorations</strong> — upgrades/plan changes generally
-          create prorations for the remainder of the period as Stripe calculates them.
+          When you upgrade or change plans in the Customer Portal, Stripe generally prorates the
+          remainder of the billing period so you pay (or receive credit) for the unused part of the
+          old plan.
         </li>
         <li>
           Downgrades and plan switches take effect according to the options shown in the Customer
@@ -115,9 +115,9 @@ export default function RefundPolicyPage() {
       <LegalH2>4. Cancellation (not the same as a refund)</LegalH2>
       <LegalUl>
         <li>
-          Cancel from Billing → Manage subscription (Stripe Customer Portal). Cancellation is
-          configured as <strong>cancel at period end</strong> (
-          <code>subscription_cancel.mode = at_period_end</code>, proration on cancel: none).
+          Cancel from Billing → Manage subscription (Stripe Customer Portal). Cancellation takes
+          effect at the end of the current paid period — you keep access until then, and the next
+          renewal does not charge.
         </li>
         <li>
           You keep paid features until the end of the period already paid for. Cancellation stops

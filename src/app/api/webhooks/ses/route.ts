@@ -22,7 +22,12 @@ interface SesNotification {
   };
   bounce?: {
     bounceType?: string;
-    bouncedRecipients?: Array<{ emailAddress: string }>;
+    bouncedRecipients?: Array<{
+      emailAddress: string;
+      diagnosticCode?: string;
+      status?: string;
+    }>;
+    bounceSubType?: string;
   };
   complaint?: {
     complainedRecipients?: Array<{ emailAddress: string }>;
@@ -137,6 +142,8 @@ export async function POST(req: Request) {
         sesMessageId: messageId,
         eventType,
         bounceType: note.bounce?.bounceType,
+        bounceSubType: note.bounce?.bounceSubType,
+        diagnosticCode: note.bounce?.bouncedRecipients?.[0]?.diagnosticCode,
         emails: [
           ...(note.bounce?.bouncedRecipients?.map((r) => r.emailAddress).filter(Boolean) ?? []),
           ...(note.complaint?.complainedRecipients

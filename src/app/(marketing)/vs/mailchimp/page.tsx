@@ -8,7 +8,7 @@ import { marketingPageMeta } from "@/components/marketing/json-ld";
 export const metadata = marketingPageMeta({
   title: "SendFable vs Mailchimp",
   description:
-    "Side-by-side SendFable vs Mailchimp: pricing estimates, From-rewrite for Gmail/Yahoo, free plan limits, and honest trade-offs. Verify Mailchimp pricing on their site.",
+    "SendFable vs Mailchimp side by side: pricing estimates, From-rewrite for Gmail and Yahoo, free plan limits, and trade-offs. Verify Mailchimp pricing on their site.",
   path: "/vs/mailchimp",
 });
 

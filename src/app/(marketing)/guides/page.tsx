@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 
 export const metadata = marketingPageMeta({
   title: "Guides — email marketing how-tos",
@@ -81,12 +81,6 @@ const GUIDE_GROUPS = [
 export default function GuidesIndexPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Guides", path: "/guides" },
-        ])}
-      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

@@ -108,7 +108,7 @@ export async function POST(req: Request) {
   }).customDomains;
   if (!domainsAllowed) {
     return NextResponse.json(
-      { error: "Custom domain authentication is available on Growth and Pro plans.", upgradeRequired: true },
+      { error: "Custom domain authentication is available on Growth and above.", upgradeRequired: true },
       { status: 402 }
     );
   }

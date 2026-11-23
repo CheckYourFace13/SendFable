@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, faqJsonLd, breadcrumbJsonLd, organizationJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 
 export const metadata = marketingPageMeta({
@@ -15,14 +15,6 @@ export const metadata = marketingPageMeta({
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd data={organizationJsonLd()} />
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "About", path: "/about" },
-        ])}
-      />
-      <JsonLd data={faqJsonLd(SENDFABLE_FACTS.faqs.slice(0, 4))} />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

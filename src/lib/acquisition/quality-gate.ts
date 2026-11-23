@@ -2,12 +2,15 @@ import type { AcquisitionProspect } from "@prisma/client";
 import { acquisitionFromAddress, acquisitionMinScore } from "@/lib/acquisition/flags";
 import { ENTERPRISE_DOMAIN_BLOCKLIST } from "@/lib/acquisition/discovery/overpass";
 import {
+  emailLocalPart,
   isLikelyPersonalConsumerEmail,
   isValidEmailSyntax,
+  looksLikeGarbledRoleLocal,
   normalizeDomain,
 } from "@/lib/acquisition/normalize";
 import { openerLooksFabricated } from "@/lib/acquisition/personalize";
 import { isSuppressed, TERMINAL_SUPPRESSION_STATUSES } from "@/lib/acquisition/suppression";
+import { lookupMailDns } from "@/lib/inquiry/email";
 
 export type QualityGateResult = {
   ok: boolean;
@@ -77,6 +80,17 @@ export async function runQualityGate(
     }
     if (!emailMatchesWebsiteDomain(prospect.contactEmail, prospect.domain)) {
       failures.push("email_domain_mismatch");
+    }
+    if (looksLikeGarbledRoleLocal(emailLocalPart(prospect.contactEmail))) {
+      failures.push("garbled_role_email");
+    }
+    // MX/A lookup — refuse domains with no mail/host DNS (fail closed only on clear miss).
+    try {
+      const host = prospect.contactEmail.split("@")[1] || "";
+      const dns = await lookupMailDns(host);
+      if (dns === "missing") failures.push("email_dns_missing");
+    } catch {
+      /* DNS unknown — do not hard-fail */
     }
   }
   if (prospect.score < acquisitionMinScore()) {

@@ -2,13 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import {
-  marketingPageMeta,
-  JsonLd,
-  breadcrumbJsonLd,
-  howToJsonLd,
-  faqJsonLd,
-} from "@/components/marketing/json-ld";
+import { marketingPageMeta, JsonLd, howToJsonLd } from "@/components/marketing/json-ld";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 
 const STEPS = [
@@ -53,12 +47,6 @@ export default function HowSendFableWorksPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "How SendFable works", path: "/how-sendfable-works" },
-        ])}
-      />
-      <JsonLd
         data={howToJsonLd({
           name: "How to start with SendFable",
           description: "Step-by-step path from signup to first campaign.",
@@ -66,7 +54,6 @@ export default function HowSendFableWorksPage() {
           steps: STEPS,
         })}
       />
-      <JsonLd data={faqJsonLd(faqs)} />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

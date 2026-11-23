@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { listPublicCompetitors, COMPARISON_DISCLAIMER } from "@/data/competitors";
 import { pairComparisons } from "@/data/competitors/pricing-matrix";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
@@ -19,12 +19,6 @@ export default function CompareHubPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Compare", path: "/compare" },
-        ])}
-      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

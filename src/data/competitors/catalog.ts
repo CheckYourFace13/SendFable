@@ -260,7 +260,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   },
 
   brevo: rec({
-    pricingLastChecked: "2026-11-21",
+    pricingLastChecked: "2026-11-23",
     slug: "brevo",
     name: "Brevo",
     officialUrl: "https://www.brevo.com/",
@@ -272,7 +272,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
       "https://help.brevo.com/hc/en-us/articles/208580669-FAQs-What-are-the-limits-of-the-Free-plan",
     ],
     freePlanSummary:
-      "Free forever: up to 100,000 contacts stored; 300 email sends/day (official help + pricing.md, 2026-11-21).",
+      "Free forever: up to 100,000 contacts stored; 300 email sends/day (official help + pricing.md, 2026-11-23).",
     paidPlanSummary:
       "Starter from $9/mo, Standard from $18/mo, Professional from $499/mo (USD) — priced by email volume; verify tiers.",
     billingBasis: "Send-volume based (emails/month).",
@@ -304,9 +304,26 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "Both provide campaign analytics; Brevo adds multi-channel reporting.",
     migrationNote: "Export CSV from Brevo; map fields in SendFable import.",
     tiers: [
-      { name: "Free", monthlyPrice: 0, notes: "Daily send caps — confirm current limits" },
-      { name: "Starter (send-based)", monthlyPrice: "from ~$9", notes: "Priced by emails/month" },
-      { name: "Business (send-based)", monthlyPrice: "from ~$18", notes: "Higher volume + features" },
+      {
+        name: "Free",
+        monthlyPrice: 0,
+        notes: "Official 2026-11-23: up to 300 emails/day; large contact storage",
+      },
+      {
+        name: "Starter",
+        monthlyPrice: 9,
+        notes: "Official pricing.md 2026-11-23: from $9/mo USD base",
+      },
+      {
+        name: "Standard",
+        monthlyPrice: 18,
+        notes: "Official pricing.md 2026-11-23: from $18/mo USD base",
+      },
+      {
+        name: "Professional",
+        monthlyPrice: 499,
+        notes: "Official pricing.md 2026-11-23: from $499/mo USD entry",
+      },
     ],
     relatedSlugs: ["mailchimp", "mailjet", "omnisend"],
     faqs: [
@@ -472,18 +489,22 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   activecampaign: rec({
-    pricingLastChecked: "2026-09-20",
+    pricingLastChecked: "2026-11-23",
     slug: "activecampaign",
     name: "ActiveCampaign",
     officialUrl: "https://www.activecampaign.com/",
     pricingUrl: "https://www.activecampaign.com/pricing",
     publicComparisonEnabled: true,
-    sources: ["https://www.activecampaign.com/pricing"],
-    freePlanSummary: "Typically paid-first; trials may be available.",
-    paidPlanSummary: "Starter through Enterprise with CRM/automation depth.",
-    billingBasis: "Contacts + feature tier (Email, Plus, Professional, Enterprise).",
+    sources: [
+      "https://www.activecampaign.com/pricing",
+      "https://www.activecampaign.com/lp/pricing-summary",
+    ],
+    freePlanSummary: "No free plan; free trial available (official LP, 2026-11-23).",
+    paidPlanSummary:
+      "Starter from $15/mo, Plus from $49/mo, Pro from $79/mo, Enterprise from $145/mo (USD, billed annually; official pricing-summary LP, 2026-11-23). Scales by contacts.",
+    billingBasis: "Contacts + feature tier (Starter, Plus, Pro, Enterprise).",
     contactLimitsSummary: "Scales by contacts; automation tiers matter as much as list size.",
-    emailLimitsSummary: "Plan-dependent.",
+    emailLimitsSummary: "Plan-dependent (Starter example: 10,000 emails/mo at 1,000 contacts).",
     automation: "suite",
     crm: "suite",
     ecommerce: "strong",
@@ -509,8 +530,30 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "ActiveCampaign attribution and CRM reporting are stronger.",
     migrationNote: "Export contacts; rebuild automations deliberately.",
     tiers: [
-      { name: "Starter (approx.)", contacts: 1_000, monthlyPrice: "from ~$29", notes: "Confirm current contact tier pricing" },
-      { name: "Plus / Professional", monthlyPrice: "higher", notes: "CRM + automation feature jumps" },
+      {
+        name: "Starter",
+        contacts: 1_000,
+        monthlyPrice: 15,
+        notes: "Official LP 2026-11-23: from $15/mo billed annually; monthly higher",
+      },
+      {
+        name: "Plus",
+        contacts: 1_000,
+        monthlyPrice: 49,
+        notes: "Official LP 2026-11-23: from $49/mo billed annually",
+      },
+      {
+        name: "Pro",
+        contacts: 1_000,
+        monthlyPrice: 79,
+        notes: "Official LP 2026-11-23: from $79/mo billed annually",
+      },
+      {
+        name: "Enterprise",
+        contacts: 1_000,
+        monthlyPrice: 145,
+        notes: "Official LP 2026-11-23: from $145/mo billed annually",
+      },
     ],
     relatedSlugs: ["hubspot", "engagebay", "getresponse"],
     faqs: [
@@ -522,18 +565,20 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   emailoctopus: rec({
-    pricingLastChecked: "2026-09-20",
+    pricingLastChecked: "2026-11-23",
     slug: "emailoctopus",
     name: "EmailOctopus",
     officialUrl: "https://emailoctopus.com/",
     pricingUrl: "https://emailoctopus.com/pricing",
     publicComparisonEnabled: true,
     sources: ["https://emailoctopus.com/pricing"],
-    freePlanSummary: "Free tier with contact/send limits.",
-    paidPlanSummary: "Low-cost list-based plans; AWS SES bring-your-own option historically notable.",
+    freePlanSummary:
+      "Free (Starter): 2,500 subscribers and 10,000 emails/month (official, 2026-11-23).",
+    paidPlanSummary:
+      "Pro from $9/mo billed yearly at entry subscriber band (official, 2026-11-23); scales by subscribers. Connect (BYO SES) sold separately.",
     billingBasis: "Subscribers (and optional self-hosted SES cost models on some plans).",
-    contactLimitsSummary: "Scales affordably by list size.",
-    emailLimitsSummary: "Depends on plan / sending setup.",
+    contactLimitsSummary: "Free up to 2,500; Pro scales by list size.",
+    emailLimitsSummary: "Free 10,000/mo; Pro allotment scales with subscriber band.",
     automation: "basic",
     crm: "none",
     ecommerce: "none",
@@ -555,8 +600,17 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "Core metrics.",
     migrationNote: "CSV migrate.",
     tiers: [
-      { name: "Free", contacts: 2_500, monthlyPrice: 0, notes: "Confirm current Free contact/send caps" },
-      { name: "Paid (approx.)", contacts: 10_000, monthlyPrice: "from ~$24", notes: "Approximate — verify official pricing" },
+      {
+        name: "Free",
+        contacts: 2_500,
+        monthlyPrice: 0,
+        notes: "Official 2026-11-23: 2,500 subscribers / 10,000 emails/mo",
+      },
+      {
+        name: "Pro",
+        monthlyPrice: 9,
+        notes: "Official 2026-11-23: from $9/mo billed yearly at entry band",
+      },
     ],
     relatedSlugs: ["mailerlite", "mailchimp", "brevo"],
     faqs: [
@@ -660,15 +714,16 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   hubspot: rec({
-    pricingLastChecked: "2026-09-20",
+    pricingLastChecked: "2026-11-23",
     slug: "hubspot",
     name: "HubSpot",
     officialUrl: "https://www.hubspot.com/",
     pricingUrl: "https://www.hubspot.com/pricing/marketing",
     publicComparisonEnabled: true,
     sources: ["https://www.hubspot.com/pricing/marketing"],
-    freePlanSummary: "Generous Free CRM tools; marketing email sends limited on Free.",
-    paidPlanSummary: "Marketing Hub Starter/Pro/Enterprise — suite pricing.",
+    freePlanSummary: "Free CRM / free tools available; marketing email sends limited on Free (official, 2026-11-23).",
+    paidPlanSummary:
+      "Marketing Hub Starter/Professional/Enterprise — suite pricing that varies by seats and marketing contacts (official calculator; exact dollars Varies).",
     billingBasis: "Seats + marketing contacts + hub tier.",
     contactLimitsSummary: "Marketing contacts are a key paid lever.",
     emailLimitsSummary: "Free has send caps; paid hubs expand.",
@@ -696,9 +751,12 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "HubSpot attribution is stronger.",
     migrationNote: "Export lists; keep HubSpot CRM if still the system of record.",
     tiers: [
-      { name: "Free tools", monthlyPrice: 0, notes: "Limited marketing email — confirm current Free send caps" },
-      { name: "Marketing Hub Starter (approx.)", monthlyPrice: "from ~$20", notes: "Plus marketing contacts — verify" },
-      { name: "Professional / Enterprise", monthlyPrice: "much higher", notes: "Suite pricing" },
+      { name: "Free tools", monthlyPrice: 0, notes: "Official 2026-11-23: Free CRM tools; marketing email limited" },
+      {
+        name: "Marketing Hub paid",
+        monthlyPrice: "Varies",
+        notes: "Official calculator — seats + marketing contacts; no single published entry dollar without interactive quote",
+      },
     ],
     relatedSlugs: ["activecampaign", "engagebay", "mailchimp"],
     faqs: [
@@ -710,18 +768,20 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   mailjet: rec({
-    pricingLastChecked: "2026-09-20",
+    pricingLastChecked: "2026-11-23",
     slug: "mailjet",
     name: "Mailjet",
     officialUrl: "https://www.mailjet.com/",
     pricingUrl: "https://www.mailjet.com/pricing/",
     publicComparisonEnabled: true,
     sources: ["https://www.mailjet.com/pricing/"],
-    freePlanSummary: "Free plan with daily send limits.",
-    paidPlanSummary: "Send-volume based plans; collaborative editing strengths.",
+    freePlanSummary:
+      "Free: $0/mo, 6,000 emails/month (200/day), 1,000 contacts (official, 2026-11-23).",
+    paidPlanSummary:
+      "Starter from $8.10/mo billed annually (8,000 emails); Essential from $17.10/mo billed annually (15,000 emails example); Premium higher (official, 2026-11-23).",
     billingBasis: "Emails sent / month.",
-    contactLimitsSummary: "Less central than send volume.",
-    emailLimitsSummary: "Primary pricing dimension.",
+    contactLimitsSummary: "Free 1,000; Starter 2,000; Essential unlimited contacts.",
+    emailLimitsSummary: "Primary pricing dimension; Free also has a daily cap.",
     automation: "basic",
     crm: "none",
     ecommerce: "none",
@@ -743,8 +803,23 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "Core metrics.",
     migrationNote: "CSV + rebuild campaigns.",
     tiers: [
-      { name: "Free", monthlyPrice: 0, notes: "Daily send caps" },
-      { name: "Paid (send-based)", monthlyPrice: "from ~$15", notes: "Approximate — verify volume tiers" },
+      {
+        name: "Free",
+        contacts: 1_000,
+        monthlyPrice: 0,
+        notes: "Official 2026-11-23: 6,000 emails/mo, 200/day",
+      },
+      {
+        name: "Starter",
+        contacts: 2_000,
+        monthlyPrice: "from $8.10",
+        notes: "Official 2026-11-23: billed annually at 8,000 emails/mo example",
+      },
+      {
+        name: "Essential",
+        monthlyPrice: "from $17.10",
+        notes: "Official 2026-11-23: billed annually at 15,000 emails/mo example",
+      },
     ],
     relatedSlugs: ["brevo", "emailoctopus", "mailchimp"],
     faqs: [
@@ -818,18 +893,20 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   beehiiv: rec({
-    pricingLastChecked: "2026-09-20",
+    pricingLastChecked: "2026-11-23",
     slug: "beehiiv",
     name: "beehiiv",
     officialUrl: "https://www.beehiiv.com/",
     pricingUrl: "https://www.beehiiv.com/pricing",
     publicComparisonEnabled: true,
     sources: ["https://www.beehiiv.com/pricing"],
-    freePlanSummary: "Launch free tier for newsletters.",
-    paidPlanSummary: "Scale/Max for growth and monetization.",
+    freePlanSummary:
+      "Free: $0, up to 2,500 subscribers, unlimited email sends (official, 2026-11-23).",
+    paidPlanSummary:
+      "Lite from $59/mo monthly ($49/mo billed annually) at up to 1,000 subscribers; Pro from $109/mo monthly ($95/mo annual) at same band; Enterprise custom (official, 2026-11-23).",
     billingBasis: "Subscribers + monetization features.",
-    contactLimitsSummary: "Subscriber tiers.",
-    emailLimitsSummary: "Plan-dependent.",
+    contactLimitsSummary: "Free up to 2,500; Lite/Pro scale by subscriber bucket.",
+    emailLimitsSummary: "Unlimited sends on Free and paid (official).",
     automation: "basic",
     crm: "none",
     ecommerce: "none",
@@ -851,9 +928,25 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "beehiiv emphasizes growth/monetization analytics.",
     migrationNote: "CSV subscribers; monetization features stay on beehiiv.",
     tiers: [
-      { name: "Launch", contacts: 2_500, monthlyPrice: 0, notes: "Newsletter-first free tier" },
-      { name: "Scale", monthlyPrice: "from ~$42", notes: "Subscriber-based — verify" },
-      { name: "Max", monthlyPrice: "custom", notes: "Higher volume / monetization" },
+      {
+        name: "Free",
+        contacts: 2_500,
+        monthlyPrice: 0,
+        notes: "Official 2026-11-23: up to 2,500 subscribers, unlimited sends",
+      },
+      {
+        name: "Lite",
+        contacts: 1_000,
+        monthlyPrice: 59,
+        notes: "Official 2026-11-23: $59/mo monthly or $49/mo billed annually at up to 1,000",
+      },
+      {
+        name: "Pro",
+        contacts: 1_000,
+        monthlyPrice: 109,
+        notes: "Official 2026-11-23: $109/mo monthly or $95/mo billed annually at up to 1,000",
+      },
+      { name: "Enterprise", monthlyPrice: "custom", notes: "Official custom pricing" },
     ],
     relatedSlugs: ["kit", "mailchimp", "mailerlite"],
     faqs: [
@@ -911,18 +1004,19 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   aweber: rec({
-    pricingLastChecked: "2026-09-20",
+    pricingLastChecked: "2026-11-23",
     slug: "aweber",
     name: "AWeber",
     officialUrl: "https://www.aweber.com/",
     pricingUrl: "https://www.aweber.com/pricing.htm",
     publicComparisonEnabled: true,
     sources: ["https://www.aweber.com/pricing.htm"],
-    freePlanSummary: "Limited free/trial options historically; confirm current Free.",
-    paidPlanSummary: "List-based plans popular with long-time email marketers.",
+    freePlanSummary: "14-day free trial (official, 2026-11-23); no permanent free plan highlighted.",
+    paidPlanSummary:
+      "Lite from $15/mo monthly at 500 subscribers ($12.49/mo billed annually display); Plus from $30/mo monthly at 500 ($19.99/mo annual display); Done For You add-on with setup fee (official, 2026-11-23).",
     billingBasis: "Subscribers.",
-    contactLimitsSummary: "Subscriber tiers.",
-    emailLimitsSummary: "Plan-dependent.",
+    contactLimitsSummary: "Subscriber tiers from 500 upward.",
+    emailLimitsSummary: "Lite ~10× subscriber max/mo; Plus ~12× subscriber max/mo.",
     automation: "basic",
     crm: "none",
     ecommerce: "basic",
@@ -944,8 +1038,18 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "Core metrics.",
     migrationNote: "CSV migrate; rebuild automations.",
     tiers: [
-      { name: "Paid entry (approx.)", contacts: 500, monthlyPrice: "from ~$12", notes: "Approximate — verify official pricing" },
-      { name: "~2,500 subscribers (approx.)", contacts: 2_500, monthlyPrice: "from ~$29", notes: "Approximate" },
+      {
+        name: "Lite",
+        contacts: 500,
+        monthlyPrice: 15,
+        notes: "Official 2026-11-23: $15/mo monthly at 500; annual display ~$12.49/mo",
+      },
+      {
+        name: "Plus",
+        contacts: 500,
+        monthlyPrice: 30,
+        notes: "Official 2026-11-23: $30/mo monthly at 500; annual display ~$19.99/mo",
+      },
     ],
     relatedSlugs: ["mailchimp", "benchmark-email", "mailerlite"],
     faqs: [
@@ -1008,18 +1112,19 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   klaviyo: rec({
-    pricingLastChecked: "2026-11-21",
+    pricingLastChecked: "2026-11-23",
     slug: "klaviyo",
     name: "Klaviyo",
     officialUrl: "https://www.klaviyo.com/",
     pricingUrl: "https://www.klaviyo.com/pricing",
     publicComparisonEnabled: true,
     sources: ["https://www.klaviyo.com/pricing"],
-    freePlanSummary: "Free tier roughly 250 active profiles and 500 emails/mo — verify current limits.",
-    paidPlanSummary: "Paid pricing scales by active profiles and channel usage; ecommerce-oriented.",
+    freePlanSummary: "Free plan available for small profile counts (official, 2026-11-23).",
+    paidPlanSummary:
+      "Email plan from $20/mo at 500 active profiles / 5,000 emails; Marketing plan higher (promo pricing may appear); scales by active profiles (official, 2026-11-23).",
     billingBasis: "Active profiles + email/SMS usage.",
     contactLimitsSummary: "Active profile based (not the same as raw list size).",
-    emailLimitsSummary: "Usage-based; free tier limited — verify calculator.",
+    emailLimitsSummary: "Usage-based; Email example 5,000 emails/mo at 500 profiles.",
     automation: "suite",
     crm: "suite",
     ecommerce: "specialized",
@@ -1051,8 +1156,18 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     migrationNote:
       "Export consented profiles carefully. Do not import suppressed buyers as active. Rebuild flows — ecommerce events will not map 1:1.",
     tiers: [
-      { name: "Free", contacts: 250, monthlyPrice: 0, notes: "Approx. 250 active profiles / 500 emails — verify" },
-      { name: "Paid", monthlyPrice: "Varies by profiles", notes: "Use Klaviyo calculator — do not invent" },
+      { name: "Free", monthlyPrice: 0, notes: "Official 2026-11-23: free plan for small profile counts" },
+      {
+        name: "Email",
+        contacts: 500,
+        monthlyPrice: 20,
+        notes: "Official 2026-11-23: from $20/mo at 500 active profiles / 5,000 emails",
+      },
+      {
+        name: "Marketing",
+        monthlyPrice: "Varies",
+        notes: "Official calculator; limited-time promos may appear",
+      },
     ],
     relatedSlugs: ["omnisend", "mailchimp", "hubspot"],
     faqs: [
@@ -1136,18 +1251,20 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
   }),
 
   flodesk: rec({
-    pricingLastChecked: "2026-09-20",
+    pricingLastChecked: "2026-11-23",
     slug: "flodesk",
     name: "Flodesk",
     officialUrl: "https://flodesk.com/",
     pricingUrl: "https://flodesk.com/pricing",
     publicComparisonEnabled: true,
     sources: ["https://flodesk.com/pricing"],
-    freePlanSummary: "No free plan — paid flat pricing.",
-    paidPlanSummary: "Approximately $25/mo monthly or ~$19/mo annual-equivalent at entry (~1,000 subscribers), unlimited sends — verify.",
-    billingBasis: "Flat subscriber bands; unlimited sends.",
-    contactLimitsSummary: "Entry around 1,000 active subscribers — verify current bands.",
-    emailLimitsSummary: "Unlimited sends on paid.",
+    freePlanSummary:
+      "Free plan for forms/landing/link-in-bio; does not include email sending (official, 2026-11-23).",
+    paidPlanSummary:
+      "Email: $46/mo monthly or $38/mo billed annually; Everything: $99/mo monthly or $79/mo billed annually — unlimited subscribers and emails on paid (official, 2026-11-23).",
+    billingBasis: "Flat paid plans; unlimited subscribers/sends on Email and Everything.",
+    contactLimitsSummary: "Unlimited subscribers on paid Email/Everything.",
+    emailLimitsSummary: "Unlimited emails on paid; Free has no email sending.",
     automation: "basic",
     crm: "none",
     ecommerce: "basic",
@@ -1156,11 +1273,11 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     integrationsSummary: "Design-focused integrations.",
     supportSummary: "In-product help.",
     bestFor: ["Brand-forward visual email"],
-    potentialDrawbacks: ["Less CRM/automation depth", "No free tier"],
-    sendfableStronger: ["Free plan", "Clear contact+send caps", "SMB campaign workflow"],
+    potentialDrawbacks: ["Less CRM/automation depth", "Free plan does not send email"],
+    sendfableStronger: ["Free plan that can send email", "Clear contact+send caps", "SMB campaign workflow"],
     competitorStronger: ["Design polish", "Unlimited sends on paid"],
     shortAnswer:
-      "Flodesk wins on visual brand design. SendFable wins on free tier and transparent SMB plan caps.",
+      "Flodesk wins on visual brand design and unlimited paid sends. SendFable wins when you need a free sending plan and transparent SMB caps.",
     whoSendfableIsFor: "Small businesses that need affordable caps and simple sending.",
     whoCompetitorIsFor: "Brands prioritizing design aesthetics and unlimited sends.",
     deliverabilityNote: "Both expect consented lists.",
@@ -1169,31 +1286,45 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "Core metrics on both.",
     migrationNote: "CSV export/import; rebuild workflows.",
     tiers: [
-      { name: "Entry (monthly)", contacts: 1_000, monthlyPrice: 25, notes: "Approx. — verify flodesk.com/pricing" },
-      { name: "Entry (annual-equivalent)", contacts: 1_000, monthlyPrice: 19, notes: "Approx. annual-equivalent — verify" },
+      {
+        name: "Free",
+        monthlyPrice: 0,
+        notes: "Official 2026-11-23: forms/pages only — no email sending",
+      },
+      {
+        name: "Email",
+        monthlyPrice: 46,
+        notes: "Official 2026-11-23: $46/mo monthly or $38/mo billed annually; unlimited subscribers/emails",
+      },
+      {
+        name: "Everything",
+        monthlyPrice: 99,
+        notes: "Official 2026-11-23: $99/mo monthly or $79/mo billed annually",
+      },
     ],
     relatedSlugs: ["mailerlite", "mailchimp", "beehiiv"],
     faqs: [
       {
         q: "Does Flodesk have unlimited emails?",
-        a: "Paid Flodesk plans are commonly described as unlimited sends within subscriber bands — verify current terms on their pricing page.",
+        a: "Paid Email and Everything plans include unlimited subscribers and unlimited emails at a flat price — confirm current terms on flodesk.com/pricing.",
       },
     ],
   }),
 
   "campaign-monitor": rec({
-    pricingLastChecked: "2026-09-20",
+    pricingLastChecked: "2026-11-23",
     slug: "campaign-monitor",
     name: "Campaign Monitor",
     officialUrl: "https://www.campaignmonitor.com/",
     pricingUrl: "https://www.campaignmonitor.com/pricing/",
     publicComparisonEnabled: true,
     sources: ["https://www.campaignmonitor.com/pricing/"],
-    freePlanSummary: "No permanent free plan — verify trials.",
-    paidPlanSummary: "Contact-tier pricing via calculator — exact dollars vary.",
+    freePlanSummary: "Free trial available; no permanent free plan highlighted (official, 2026-11-23).",
+    paidPlanSummary:
+      "Lite, Essentials, Premier, Enterprise — contact-tier calculator pricing (exact dollars Varies by contact count; official, 2026-11-23).",
     billingBasis: "Contact-based.",
-    contactLimitsSummary: "Scales by contacts.",
-    emailLimitsSummary: "Plan-dependent — verify.",
+    contactLimitsSummary: "Scales by contacts; Lite starts with low contact bands.",
+    emailLimitsSummary: "Plan-dependent monthly send volume by contact tier.",
     automation: "strong",
     crm: "basic",
     ecommerce: "basic",
@@ -1215,7 +1346,7 @@ export const COMPETITORS: Record<string, CompetitorRecord> = {
     analyticsNote: "Campaign and client reporting differ by plan.",
     migrationNote: "CSV migrate; rebuild journeys.",
     tiers: [
-      { name: "Paid", monthlyPrice: "Varies", notes: "Use official calculator — do not invent" },
+      { name: "Paid", monthlyPrice: "Varies", notes: "See the vendor’s official pricing calculator" },
     ],
     relatedSlugs: ["mailchimp", "activecampaign", "flodesk"],
     faqs: [

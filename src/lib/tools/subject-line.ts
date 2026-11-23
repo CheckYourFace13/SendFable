@@ -15,7 +15,9 @@ const VAGUE =
   /^(re:|fw:|fwd:)?\s*(newsletter|update|updates|hello|hi|hey|checking in|quick question|important|reminder|announcement|news|monthly update)\s*[!.]*$/i;
 
 const PRESSURE =
-  /\b(act now|limited time|click here|buy now|order now|100% free|risk-?free|winner|congratulations|urgent|guaranteed|don't miss|dont miss)\b/i;
+  /\b(act now|limited time|click here|buy now|order now|100% free|risk-?free|winner|congratulations|urgent|guaranteed|don't miss|dont miss|today only|this weekend only|ends tonight|last chance)\b/gi;
+
+const SHOUT_WORD = /\b(FREE|URGENT|WINNER|GUARANTEED|ACT NOW)\b/;
 
 export function assessSubjectLine(raw: string): SubjectAssessment {
   const subject = raw.replace(/\s+/g, " ").trim();
@@ -36,6 +38,9 @@ export function assessSubjectLine(raw: string): SubjectAssessment {
   if (shouty) {
     score -= 20;
     notes.push("Most of this is capital letters. A normal sentence is easier to read.");
+  } else if (SHOUT_WORD.test(subject)) {
+    score -= 15;
+    notes.push("All-caps shout words like FREE or URGENT read like a flyer. Title case is clearer.");
   }
 
   const bangs = (subject.match(/!/g) || []).length;
@@ -66,9 +71,12 @@ export function assessSubjectLine(raw: string): SubjectAssessment {
     notes.push("This could be any email. Say what the reader gets, or what changed.");
   }
 
-  if (PRESSURE.test(subject)) {
-    score -= 15;
-    notes.push("Pressure phrases (“act now”, “click here”, “limited time”) are a common spam pattern. They do not by themselves block a message.");
+  const pressureHits = subject.match(PRESSURE) ?? [];
+  if (pressureHits.length > 0) {
+    score -= 15 + Math.min(20, (pressureHits.length - 1) * 10);
+    notes.push(
+      "Pressure phrases (“act now”, “click here”, “limited time”, “today only”) are a common spam pattern. They do not by themselves block a message.",
+    );
   }
 
   if (/\{\{[^}]+\}\}|%\w+%|\[(first name|name|fname)\]/i.test(subject)) {
@@ -106,7 +114,7 @@ function soften(subject: string, shouty: boolean): string {
   // Strip pressure phrases the checklist flags so the plainer version actually fixes them.
   next = next
     .replace(
-      /\b(act now|limited time|click here|buy now|order now|100% free|risk-?free|winner|congratulations|urgent|guaranteed|don't miss|dont miss)\b/gi,
+      /\b(act now|limited time|click here|buy now|order now|100% free|risk-?free|winner|congratulations|urgent|guaranteed|don't miss|dont miss|today only|this weekend only|ends tonight|last chance)\b/gi,
       " "
     )
     .replace(/\s+/g, " ")

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { MailchimpCostCalculator } from "@/components/marketing/mailchimp-cost-calculator";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { getCompetitor } from "@/data/competitors";
 import { PLANS } from "@/lib/plans";
 
@@ -17,12 +17,6 @@ export default function MailchimpPricingAlternativePage() {
   const mc = getCompetitor("mailchimp")!;
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Mailchimp pricing alternative", path: "/mailchimp-pricing-alternative" },
-        ])}
-      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

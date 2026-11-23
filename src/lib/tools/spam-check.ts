@@ -13,24 +13,24 @@ export type SpamCheck = {
   suggestions: string[];
 };
 
-const PHRASES: Array<{ re: RegExp; label: string }> = [
-  { re: /\bact now\b/i, label: "act now" },
-  { re: /\blimited time\b/i, label: "limited time" },
-  { re: /\bclick here\b/i, label: "click here" },
-  { re: /\bbuy now\b/i, label: "buy now" },
-  { re: /\border now\b/i, label: "order now" },
-  { re: /\b100%\s*free\b/i, label: "100% free" },
-  { re: /\brisk-?free\b/i, label: "risk-free" },
-  { re: /\bwinner\b/i, label: "winner" },
-  { re: /\bcongratulations\b/i, label: "congratulations" },
-  { re: /\bguaranteed\b/i, label: "guaranteed" },
-  { re: /\burgent\b/i, label: "urgent" },
-  { re: /\bmake money\b/i, label: "make money" },
-  { re: /\bno obligation\b/i, label: "no obligation" },
-  { re: /\bonce in a lifetime\b/i, label: "once in a lifetime" },
-  { re: /\$\$\$/, label: "$$$" },
-  { re: /\bthis is not spam\b/i, label: "this is not spam" },
-  { re: /\bdear friend\b/i, label: "dear friend" },
+const PHRASES: Array<{ re: RegExp; label: string; detail: string; replaceWith: string }> = [
+  { re: /\bact now\b/i, label: "act now", detail: "Pressure timing. Say what happens next instead.", replaceWith: "today" },
+  { re: /\blimited time\b/i, label: "limited time", detail: "Fake scarcity. Name a real end date if you have one.", replaceWith: "this week" },
+  { re: /\bclick here\b/i, label: "click here", detail: "Vague link text. Name the destination.", replaceWith: "see details" },
+  { re: /\bbuy now\b/i, label: "buy now", detail: "Hard sell. Invite people to the offer page.", replaceWith: "shop the offer" },
+  { re: /\border now\b/i, label: "order now", detail: "Hard sell. Invite people to place an order.", replaceWith: "place an order" },
+  { re: /\b100%\s*free\b/i, label: "100% free", detail: "Overclaim. “Free” is enough when it is true.", replaceWith: "free" },
+  { re: /\brisk-?free\b/i, label: "risk-free", detail: "Guarantee language. Describe the real policy.", replaceWith: "easy to try" },
+  { re: /\bwinner\b/i, label: "winner", detail: "Lottery bait. Avoid prize framing unless it is a real contest.", replaceWith: "you’re in" },
+  { re: /\bcongratulations\b/i, label: "congratulations", detail: "Often used in scam openers. Lead with the real news.", replaceWith: "good news" },
+  { re: /\bguaranteed\b/i, label: "guaranteed", detail: "Absolute claim. Soften to what you can deliver.", replaceWith: "backed by" },
+  { re: /\burgent\b/i, label: "urgent", detail: "Artificial urgency. Explain why timing matters.", replaceWith: "time-sensitive" },
+  { re: /\bmake money\b/i, label: "make money", detail: "Get-rich framing. Describe the actual offer.", replaceWith: "earn" },
+  { re: /\bno obligation\b/i, label: "no obligation", detail: "Sales filler. Skip it if the next step is free to browse.", replaceWith: "no pressure" },
+  { re: /\bonce in a lifetime\b/i, label: "once in a lifetime", detail: "Hype. Prefer a concrete offer.", replaceWith: "rare" },
+  { re: /\$\$\$/, label: "$$$", detail: "Money symbols look spammy. Use a clear price.", replaceWith: "" },
+  { re: /\bthis is not spam\b/i, label: "this is not spam", detail: "Saying it does not help. Remove the line.", replaceWith: "" },
+  { re: /\bdear friend\b/i, label: "dear friend", detail: "Impersonal opener. Use a name or skip the greeting.", replaceWith: "hi" },
 ];
 
 export function checkSpamCopy(subjectRaw: string, bodyRaw: string): SpamCheck {
@@ -39,13 +39,19 @@ export function checkSpamCopy(subjectRaw: string, bodyRaw: string): SpamCheck {
   const combined = [subject, body].filter(Boolean).join("\n");
 
   const phrases: SpamFinding[] = [];
+  const phraseSuggestions: string[] = [];
   if (combined) {
     for (const item of PHRASES) {
       if (item.re.test(combined)) {
         phrases.push({
           label: item.label,
-          detail: "Common pressure or bait language. Inboxes weigh it with reputation and engagement. One phrase does not automatically filter the mail.",
+          detail: item.detail,
         });
+        if (item.replaceWith) {
+          phraseSuggestions.push(`Try “${item.replaceWith}” instead of “${item.label}”.`);
+        } else {
+          phraseSuggestions.push(`Remove “${item.label}”.`);
+        }
       }
     }
   }
@@ -72,8 +78,8 @@ export function checkSpamCopy(subjectRaw: string, bodyRaw: string): SpamCheck {
   }
 
   const suggestions = [
+    ...phraseSuggestions.slice(0, 6),
     "Authenticate the domain (SPF, DKIM, DMARC) and send only to people who asked.",
-    "Say the offer in plain language. Reputation, list quality, and whether people open and stay matter more than any single word.",
   ];
   if (!combined) {
     suggestions.unshift("Paste a subject, a body, or both. Nothing is saved.");

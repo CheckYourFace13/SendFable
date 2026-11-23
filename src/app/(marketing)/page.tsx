@@ -14,7 +14,12 @@ import { PricingPreview } from "@/components/marketing/home/pricing-preview";
 import { HomeFaq } from "@/components/marketing/home/home-faq";
 import { FinalCta } from "@/components/marketing/home/final-cta";
 import { VideoSection } from "@/components/marketing/youtube-embed";
-import { JsonLd, marketingPageMeta, videoObjectJsonLd } from "@/components/marketing/json-ld";
+import {
+  JsonLd,
+  marketingPageMeta,
+  softwareApplicationJsonLd,
+  videoObjectJsonLd,
+} from "@/components/marketing/json-ld";
 import { OFFICIAL_VIDEOS } from "@/data/official-videos";
 import { PLANS } from "@/lib/plans";
 
@@ -32,6 +37,7 @@ export default function HomePage() {
   const overview = OFFICIAL_VIDEOS.overview;
   return (
     <>
+      <JsonLd data={softwareApplicationJsonLd()} />
       <JsonLd
         data={videoObjectJsonLd({
           name: overview.title,

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { JsonLd, breadcrumbJsonLd, faqJsonLd, marketingPageMeta } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SOLUTION_RELATED_LINKS } from "@/data/solution-related-links";
 import { isSmsPublicEnabled } from "@/lib/sms/flags";
 
@@ -82,13 +82,6 @@ const FAQS = [
 export default function SolutionsHubPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Solutions", path: "/solutions" },
-        ])}
-      />
-      <JsonLd data={faqJsonLd(FAQS)} />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

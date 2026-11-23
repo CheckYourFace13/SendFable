@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd, howToJsonLd, faqJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta, JsonLd, howToJsonLd } from "@/components/marketing/json-ld";
 
 const STEPS = [
   { name: "Export contacts from Mailchimp", text: "Download a CSV of subscribed contacts. Exclude unsubscribed and cleaned addresses when possible." },
@@ -34,12 +34,6 @@ export default function SwitchFromMailchimpPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Switch from Mailchimp", path: "/switch-from-mailchimp" },
-        ])}
-      />
-      <JsonLd
         data={howToJsonLd({
           name: "Switch from Mailchimp to SendFable",
           description: "Export, import, verify, and send.",
@@ -47,7 +41,6 @@ export default function SwitchFromMailchimpPage() {
           steps: STEPS,
         })}
       />
-      <JsonLd data={faqJsonLd(FAQS)} />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

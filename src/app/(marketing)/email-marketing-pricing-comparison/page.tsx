@@ -2,11 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { PricingMatrixTable } from "@/components/marketing/pricing-matrix-table";
-import {
-  marketingPageMeta,
-  JsonLd,
-  breadcrumbJsonLd,
-} from "@/components/marketing/json-ld";
+import { marketingPageMeta, JsonLd } from "@/components/marketing/json-ld";
 import {
   allMatrixRows,
   matrixDisclaimer,
@@ -43,12 +39,6 @@ export default function EmailMarketingPricingComparisonPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Pricing comparison", path: "/email-marketing-pricing-comparison" },
-        ])}
-      />
       <JsonLd data={itemList} />
 
       <Breadcrumbs
@@ -69,9 +59,9 @@ export default function EmailMarketingPricingComparisonPage() {
         Email marketing pricing comparison
       </h1>
       <p className="mt-4 max-w-3xl text-lg text-ink/75">
-        One money page: free caps, entry paid plans, SMS class, and honest “varies” where we cannot
-        verify. Figures checked {PRICING_MATRIX_VERIFIED}. Confirm on each vendor’s site before you
-        buy.
+        Free caps, entry paid plans, SMS notes, and “varies” where a single published price is not
+        available. Figures checked {PRICING_MATRIX_VERIFIED}. Confirm on each vendor’s site before
+        you buy.
       </p>
 
       <div className="mt-8 flex flex-wrap gap-3">

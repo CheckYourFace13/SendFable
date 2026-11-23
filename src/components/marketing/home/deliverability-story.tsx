@@ -7,7 +7,7 @@ const STEPS = [
   },
   {
     title: "Authenticate your domain",
-    body: "On Growth and Pro, add DNS records so inboxes can trust your domain.",
+    body: "On Growth, Pro, and Pro Plus, add DNS records so inboxes can trust your domain.",
   },
   {
     title: "SendFable handles delivery",

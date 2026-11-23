@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ComparePageFromRecord } from "@/components/marketing/compare-page";
 import { capabilityLabel, getCompetitor, listPublicCompetitors } from "@/data/competitors";
 import { pairComparisons, TRADEMARK_DISCLAIMER } from "@/data/competitors/pricing-matrix";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
 import { PLANS } from "@/lib/plans";
@@ -29,13 +29,22 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
     return { title: "Comparison" };
   }
   const year = new Date().getFullYear();
-  const short =
-    c.shortAnswer.length > 140
-      ? `${c.shortAnswer.slice(0, 137).trim()}…`
-      : c.shortAnswer;
+  const suffix = ` Pricing checked ${c.pricingLastChecked}.`;
+  const budget = 160 - suffix.length;
+  let short = c.shortAnswer.trim();
+  if (short.length > budget) {
+    // Prefer a whole sentence; otherwise cut at a word boundary. No literal ellipsis.
+    const firstSentence = short.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? "";
+    if (firstSentence && firstSentence.length <= budget) {
+      short = firstSentence;
+    } else {
+      const cut = short.slice(0, budget - 1);
+      short = `${cut.slice(0, Math.max(cut.lastIndexOf(" "), 0) || cut.length).replace(/[\s,;:—–-]+$/, "")}.`;
+    }
+  }
   return marketingPageMeta({
     title: `SendFable vs ${c.name} (${year})`,
-    description: `${short} Pricing checked ${c.pricingLastChecked}.`,
+    description: `${short}${suffix}`,
     path: `/compare/${c.slug}`,
   });
 }
@@ -49,13 +58,6 @@ function PairPage({ slug }: { slug: string }) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Compare", path: "/compare" },
-          { name: p.title, path },
-        ])}
-      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
@@ -130,7 +132,7 @@ function PairPage({ slug }: { slug: string }) {
           {a.sendfableStronger[0] ? ` — ${a.sendfableStronger[0]}` : ""}.
         </li>
       </ul>
-      <h2 className="mt-10 text-xl font-semibold">Pricing posture</h2>
+      <h2 className="mt-10 text-xl font-semibold">Pricing snapshot</h2>
       <p className="mt-2 text-sm text-ink/75">
         {a.name} ({a.pricingLastChecked}): {a.paidPlanSummary}{" "}
         <a href={a.pricingUrl} className="underline" rel="nofollow noopener" target="_blank">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd, faqJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { PLANS, PLAN_ORDER } from "@/lib/plans";
 
 export const metadata = marketingPageMeta({
@@ -29,13 +29,6 @@ const FAQS = [
 export default function EmailMarketingCostPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Email marketing cost", path: "/email-marketing-cost" },
-        ])}
-      />
-      <JsonLd data={faqJsonLd(FAQS)} />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

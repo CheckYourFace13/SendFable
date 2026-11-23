@@ -75,6 +75,8 @@ describe("owner admin route access", () => {
     const middleware = src("src/middleware.ts");
     assert.match(middleware, /"\/admin"/);
     assert.match(middleware, /callbackUrl/);
+    // Signed-out app redirects must preserve query (billing plan/code/checkout).
+    assert.match(middleware, /callbackUrl\",\s*pathname \+ req\.nextUrl\.search/);
     const viewAs = src("src/app/api/admin/view-as/route.ts");
     assert.match(viewAs, /if \(!ws\.isInternal\)/);
     assert.match(viewAs, /admin\.view_as\.entered/);

@@ -8,7 +8,7 @@ import { MarketingCta } from "@/components/marketing/marketing-cta";
 export const metadata = marketingPageMeta({
   title: "Best affordable email marketing",
   description:
-    "Affordable email marketing means clear published prices and limits you understand — Free through Pro Plus on SendFable, with honest notes on when cheaper volume tools win.",
+    "Affordable email marketing means clear prices and limits you understand. See SendFable Free through Pro Plus, plus when cheaper volume tools win.",
   path: "/best-affordable-email-marketing",
 });
 

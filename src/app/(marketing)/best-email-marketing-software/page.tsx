@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { SENDFABLE_FACTS } from "@/data/sendfable-facts";
 
 export const metadata = marketingPageMeta({
   title: "Best email marketing software by use case",
   description:
-    "Picks by use case: simple small-business email, advanced automation, ecommerce, CRM suites, creators, and volume sending — SendFable is not forced to win every category.",
+    "Picks by use case: simple small-business email, advanced automation, ecommerce, CRM suites, creators, and volume sending. SendFable won't win every category.",
   path: "/best-email-marketing-software",
 });
 
@@ -65,12 +65,6 @@ const PICKS = [
 export default function BestEmailMarketingPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Best email marketing software", path: "/best-email-marketing-software" },
-        ])}
-      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

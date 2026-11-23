@@ -8,6 +8,18 @@ export type ChangelogEntry = {
 /** Honest product changelog — only features that ship in the current product. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-23",
+    title: "Activation checklist and migrate handoff",
+    body: "New accounts see a live setup checklist. Compare and migrate CTAs can carry a competitor through signup into CSV import presets.",
+    tags: ["activation", "migration"],
+  },
+  {
+    date: "2026-11-22",
+    title: "Competitor pricing refresh",
+    body: "Rechecked public list prices for several ESPs and cleaned leftover internal wording on public pages.",
+    tags: ["compare"],
+  },
+  {
     date: "2026-11-21",
     title: "Official product videos",
     body: "Click-to-load YouTube walkthroughs on overview, Scribe, Free Tools, and pricing pages.",
@@ -32,12 +44,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     tags: ["scheduling"],
   },
   {
-    date: "2026-09-20",
-    title: "Send now or schedule",
-    body: "Campaign review supports sending immediately or scheduling a send with clearer trust copy.",
-    tags: ["sending", "scheduling"],
-  },
-  {
     date: "2026-10-12",
     title: "Free Tools",
     body: "Public tools for subject lines, risky copy, send-time planning, and email pricing comparison — no account required.",
@@ -48,6 +54,12 @@ export const CHANGELOG: ChangelogEntry[] = [
     title: "Scribe",
     body: "Scribe drafts campaigns on an owner-selected schedule with plan-based monthly creation allowances.",
     tags: ["scribe"],
+  },
+  {
+    date: "2026-09-20",
+    title: "Send now or schedule",
+    body: "Campaign review supports sending immediately or scheduling a send with clearer trust copy.",
+    tags: ["sending", "scheduling"],
   },
   {
     date: "2026-09-12",

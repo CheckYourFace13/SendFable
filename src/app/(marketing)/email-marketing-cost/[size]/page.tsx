@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import {
   LIST_SIZE_PAGES,
   allMatrixRows,
@@ -48,13 +48,6 @@ export default function EmailMarketingCostBySizePage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Email marketing cost", path: "/email-marketing-cost" },
-          { name: `${contacts.toLocaleString()} contacts`, path },
-        ])}
-      />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

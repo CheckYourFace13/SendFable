@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { isText20Public } from "@/components/marketing/text20-hint";
+import { isText20CheckoutConfigured, isText20Public } from "@/lib/text20";
 import { PromoViewTracker } from "@/components/marketing/promo-view-tracker";
 import { PLANS } from "@/lib/plans";
 import { marketingPageMeta } from "@/components/marketing/json-ld";
@@ -17,6 +17,7 @@ export default function Text20PromoPage() {
     notFound();
   }
 
+  const autoApply = isText20CheckoutConfigured();
   const starterHref = "/signup?plan=STARTER&interval=month&code=TEXT20";
   const growthHref = "/signup?plan=GROWTH&interval=month&code=TEXT20";
 
@@ -34,8 +35,17 @@ export default function Text20PromoPage() {
         <li>Create your account (or sign in)</li>
         <li>Continue to billing for monthly Starter or Growth</li>
         <li>
-          Code <strong>TEXT20</strong> is applied automatically at Checkout when you arrive from
-          this promo
+          {autoApply ? (
+            <>
+              Code <strong>TEXT20</strong> is applied automatically at Checkout when you arrive from
+              this promo
+            </>
+          ) : (
+            <>
+              Enter code <strong>TEXT20</strong> at Checkout (automatic apply is not configured
+              right now)
+            </>
+          )}
         </li>
       </ol>
       <div className="mt-8 flex flex-wrap gap-3">

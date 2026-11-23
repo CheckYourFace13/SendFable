@@ -143,7 +143,8 @@ export default auth((req) => {
   if (pathname === "/brand" || pathname.startsWith("/brand/")) {
     if (!isLoggedIn) {
       const url = new URL("/login", req.nextUrl.origin);
-      url.searchParams.set("callbackUrl", pathname);
+      // Preserve query (e.g. deep-links) — pathname alone drops intent.
+      url.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
       return NextResponse.redirect(url);
     }
   }
@@ -171,7 +172,8 @@ export default auth((req) => {
       return NextResponse.next();
     }
     const url = new URL("/login", req.nextUrl.origin);
-    url.searchParams.set("callbackUrl", pathname);
+    // Keep billing/checkout/plan/interval/code (and other safe query) through login.
+    url.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
     return NextResponse.redirect(url);
   }
   if (isLoggedIn && (pathname === "/login" || pathname === "/signup")) {

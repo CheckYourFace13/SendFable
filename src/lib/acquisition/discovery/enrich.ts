@@ -3,6 +3,7 @@ import {
   emailLocalPart,
   isLikelyPersonalConsumerEmail,
   isValidEmailSyntax,
+  looksLikeGarbledRoleLocal,
   normalizeDomain,
   preferredBusinessLocalParts,
 } from "@/lib/acquisition/normalize";
@@ -52,6 +53,7 @@ function extractEmails(html: string, pageDomain: string): string[] {
     // Prefer same-domain or preferred local parts; skip obvious image/asset noise
     if (e.endsWith(".png") || e.endsWith(".jpg") || e.includes("example.com")) continue;
     const local = emailLocalPart(e);
+    if (looksLikeGarbledRoleLocal(local)) continue;
     const ed = e.split("@")[1] || "";
     if (
       ed === pageDomain ||

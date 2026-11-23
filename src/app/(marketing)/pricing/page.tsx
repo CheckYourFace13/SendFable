@@ -6,7 +6,12 @@ import { PricingPreview } from "@/components/marketing/home/pricing-preview";
 import { SmsPricingSection } from "@/components/marketing/sms-pricing";
 import { Faq } from "@/components/marketing/faq";
 import { Button } from "@/components/ui/button";
-import { JsonLd, marketingPageMeta, videoObjectJsonLd } from "@/components/marketing/json-ld";
+import {
+  JsonLd,
+  marketingPageMeta,
+  softwareApplicationJsonLd,
+  videoObjectJsonLd,
+} from "@/components/marketing/json-ld";
 import { YoutubeEmbed } from "@/components/marketing/youtube-embed";
 import { OFFICIAL_VIDEOS } from "@/data/official-videos";
 import { PLANS } from "@/lib/plans";
@@ -28,6 +33,7 @@ export default function PricingPage() {
   const pricingVideo = OFFICIAL_VIDEOS.pricing;
   return (
     <div className="editorial-bg">
+      <JsonLd data={softwareApplicationJsonLd()} />
       <JsonLd
         data={videoObjectJsonLd({
           name: pricingVideo.title,

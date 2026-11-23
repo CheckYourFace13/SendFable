@@ -16,16 +16,12 @@ export function Hero() {
             SendFable
           </p>
           <h1 className="mt-3 font-display text-display-lg text-ink text-balance sm:text-display-xl">
-            Email and text marketing without the marketing-software headache
+            Email and text marketing for small businesses
           </h1>
-          <p className="mt-5 max-w-prose text-lg leading-relaxed text-charcoal/80">
-            Email. Text. Or both. Free {PLANS.FREE.contactCap.toLocaleString()} contacts and{" "}
-            {PLANS.FREE.emailsPerMonth.toLocaleString()} emails a month. Starter $
-            {PLANS.STARTER.monthlyPrice}.
-          </p>
-          <p className="mt-3 max-w-prose text-base leading-relaxed text-charcoal/75">
-            Scribe turns fresh content into a campaign that looks like you. You choose when it
-            sends.
+          <p className="mt-4 max-w-prose text-lg leading-relaxed text-charcoal/80">
+            Without the marketing-software headache. Free{" "}
+            {PLANS.FREE.contactCap.toLocaleString()} contacts · Starter $
+            {PLANS.STARTER.monthlyPrice}/mo.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button asChild size="lg" className="bg-coral-solid text-white hover:bg-coral-hover">

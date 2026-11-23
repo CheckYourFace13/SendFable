@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/marketing/breadcrumbs";
 import { Faq } from "@/components/marketing/faq";
 import { MarketingCta } from "@/components/marketing/marketing-cta";
-import { marketingPageMeta, JsonLd, breadcrumbJsonLd, faqJsonLd } from "@/components/marketing/json-ld";
+import { marketingPageMeta } from "@/components/marketing/json-ld";
 import { PartnerApplyForm } from "@/components/marketing/partner-apply-form";
 import { issueInquiryToken } from "@/lib/inquiry/guard";
 
@@ -33,13 +33,6 @@ const FAQS = [
 export default function PartnersPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Home", path: "/" },
-          { name: "Partners", path: "/partners" },
-        ])}
-      />
-      <JsonLd data={faqJsonLd(FAQS)} />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
@@ -52,7 +45,7 @@ export default function PartnersPage() {
       </h1>
       <p className="mt-4 text-lg text-ink/75">
         Help clients run permission-based email without forcing a CRM. Referrals are attributed;
-        any rewards stay inactive until the referral program is approved and credits are enabled.
+        any rewards stay inactive until the referral program is approved.
       </p>
 
       <section className="mt-10 space-y-4 text-sm text-slate-700">
